@@ -1,0 +1,15 @@
+#import "../fragments/user-card.gql"
+
+query Deck_LiveSearch($query: String!, $first: Int, $after: String, $previewWidth: Int, $previewHeight: Int) {
+	searchFor(userQuery: $query, platform: "web", target: {cursor: $after, index: LIVE, limit: $first}) {
+		liveChannels {
+			cursor
+			pageInfo {
+				hasNextPage
+			}
+			items {
+				...UserCard
+			}
+		}
+	}
+}

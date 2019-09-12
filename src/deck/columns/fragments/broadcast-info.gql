@@ -1,0 +1,6 @@
+fragment BroadcastInfo on BroadcastSettings {
+	id
+	language
+	isMature
+	title
+}

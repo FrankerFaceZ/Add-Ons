@@ -1,0 +1,13 @@
+fragment StreamInfo on Stream {
+	id
+	type
+	viewersCount
+	createdAt
+	previewImageURL(width: $previewWidth, height: $previewHeight)
+	tags {
+		id
+		isLanguageTag
+		localizedName
+		tagName
+	}
+}

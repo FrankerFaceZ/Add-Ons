@@ -1,0 +1,7 @@
+#import "./user-info.gql"
+
+fragment VideoOwner on Video {
+	owner {
+		...UserInfo
+	}
+}

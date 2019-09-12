@@ -1,0 +1,18 @@
+fragment VideoInfo on Video {
+	id
+	language
+	title
+	viewCount
+	broadcastType
+	publishedAt
+	lengthSeconds
+	animatedPreviewURL
+	previewThumbnailURL(width: $previewWidth, height: $previewHeight)
+	status
+	contentTags {
+		id
+		isLanguageTag
+		localizedName
+		tagName
+	}
+}

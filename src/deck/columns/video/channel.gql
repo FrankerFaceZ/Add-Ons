@@ -1,0 +1,32 @@
+#import "../fragments/user-info.gql"
+#import "../fragments/broadcast-info.gql"
+#import "../fragments/broadcast-game.gql"
+#import "../fragments/stream-info.gql"
+#import "../fragments/video-info.gql"
+#import "../fragments/video-game.gql"
+
+query Deck_Channel($id: ID, $first: Int, $after: Cursor, $types: [BroadcastType!], $sort: VideoSort, $previewWidth: Int, $previewHeight: Int) {
+	user(id: $id) {
+		...UserInfo
+		bannerImageURL
+		broadcastSettings {
+			...BroadcastInfo
+			...BroadcastGame
+		}
+		stream {
+			...StreamInfo
+		}
+		videos(first: $first, after: $after, types: $types, sort: $sort) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...VideoInfo
+					...VideoGame
+				}
+			}
+		}
+	}
+}

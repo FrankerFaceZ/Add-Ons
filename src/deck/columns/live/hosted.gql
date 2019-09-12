@@ -1,0 +1,41 @@
+#import "../fragments/user-info.gql"
+
+query Deck_LiveHosted($first: Int, $previewWidth: Int, $previewHeight: Int) {
+	currentUser {
+		id
+		follows {
+			totalCount
+		}
+		followedHosts(first: $first) {
+			nodes {
+				...UserInfo
+				hosting {
+					...UserInfo
+					broadcastSettings {
+						id
+						isMature
+						title
+						game {
+							id
+							name
+							displayName
+						}
+					}
+					stream {
+						id
+						type
+						viewersCount
+						createdAt
+						previewImageURL(width: $previewWidth, height: $previewHeight)
+						tags {
+							id
+							isLanguageTag
+							localizedName
+							tagName
+						}
+					}
+				}
+			}
+		}
+	}
+}

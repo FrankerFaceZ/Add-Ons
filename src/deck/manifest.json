@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"unlisted": true,
+
+	"version": "1.0.0",
+
+	"short_name": "Deck",
+	"name": "Deck",
+	"author": "SirStendec",
+	"description": "Deck provides a TweetDeck-like experience for finding content on Twitch."
+}

@@ -1,0 +1,21 @@
+#import "../fragments/user-card.gql"
+
+query Deck_LiveTeam($name: String!, $first: Int, $after: Cursor, $previewWidth: Int, $previewHeight: Int) {
+	team(name: $name) {
+		id
+		displayName
+		bannerURL
+		logoURL
+		liveMembers(first: $first, after: $after) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...UserCard
+				}
+			}
+		}
+	}
+}

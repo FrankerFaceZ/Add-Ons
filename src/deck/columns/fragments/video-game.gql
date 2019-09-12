@@ -1,0 +1,7 @@
+#import "./game-info.gql"
+
+fragment VideoGame on Video {
+	game {
+		...GameInfo
+	}
+}

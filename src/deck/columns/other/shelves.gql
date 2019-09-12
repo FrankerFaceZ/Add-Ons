@@ -1,0 +1,60 @@
+#import "../fragments/game-info.gql"
+#import "../fragments/clip-info.gql"
+#import "../fragments/user-info.gql"
+#import "../fragments/stream-info.gql"
+#import "../fragments/video-info.gql"
+#import "../fragments/video-game.gql"
+#import "../fragments/video-owner.gql"
+
+query Deck_Shelves($requestID: String!, $platform: String!, $langWeightedCCU: Boolean, $first: Int, $itemsPerRow: Int, $previewWidth: Int, $previewHeight: Int) {
+	shelves(requestID: $requestID, platform: $platform, langWeightedCCU: $langWeightedCCU, first: $first, itemsPerRow: $itemsPerRow) {
+		edges {
+			node {
+				id
+				displayType
+				title {
+					fallbackLocalizedTitle
+				}
+				content {
+					pageInfo {
+						hasNextPage
+					}
+					edges {
+						cursor
+						node {
+							... on Clip {
+								...ClipInfo
+								broadcaster {
+									...UserInfo
+								}
+								game {
+									...GameInfo
+								}
+							}
+							... on Game {
+								...GameInfo
+							}
+							... on Stream {
+								...StreamInfo
+								broadcaster {
+									...UserInfo
+									broadcastSettings {
+										id
+										language
+										isMature
+										title
+									}
+								}
+							}
+							... on Video {
+								...VideoInfo
+								...VideoOwner
+								...VideoGame
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

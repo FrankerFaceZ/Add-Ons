@@ -1,0 +1,16 @@
+#import "../fragments/video-info.gql"
+#import "../fragments/video-owner.gql"
+#import "../fragments/video-game.gql"
+
+query Deck_VideoFeatured($first: Int, $language: String!, $previewWidth: Int, $previewHeight: Int) {
+	featuredVideos(first: $first, language: $language) {
+		priorityLevel
+		title
+		imageURL
+		video {
+			...VideoInfo
+			...VideoOwner
+			...VideoGame
+		}
+	}
+}

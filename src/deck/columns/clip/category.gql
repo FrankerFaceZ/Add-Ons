@@ -1,0 +1,25 @@
+#import "../fragments/clip-info.gql"
+#import "../fragments/user-info.gql"
+
+query Deck_ClipCategory($name: String!, $first: Int, $after: Cursor, $criteria: GameClipsInput) {
+	game(name: $name) {
+		id
+		displayName
+		avatarURL(width: 40, height: 56)
+		coverURL(width: 400, height: 60)
+		clips(first: $first, after: $after, criteria: $criteria) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...ClipInfo
+					broadcaster {
+						...UserInfo
+					}
+				}
+			}
+		}
+	}
+}

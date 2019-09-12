@@ -1,0 +1,15 @@
+#import "./user-info.gql"
+
+fragment ClipInfo on Clip {
+	id
+	createdAt
+	durationSeconds
+	language
+	title
+	thumbnailURL
+	slug
+	viewCount
+	curator {
+		...UserInfo
+	}
+}

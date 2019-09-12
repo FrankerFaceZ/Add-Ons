@@ -1,0 +1,6 @@
+fragment GameInfo on Game {
+	id
+	name
+	displayName
+	avatarURL(width: 52, height: 72)
+}

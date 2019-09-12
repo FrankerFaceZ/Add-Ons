@@ -1,0 +1,5 @@
+# Ignoring the main input / output folders
+dist/
+
+# Ignoring node modules
+node_modules/

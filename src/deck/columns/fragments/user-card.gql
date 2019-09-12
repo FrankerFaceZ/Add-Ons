@@ -1,0 +1,15 @@
+#import "./user-info.gql"
+#import "./broadcast-info.gql"
+#import "./broadcast-game.gql"
+#import "./stream-info.gql"
+
+fragment UserCard on User {
+	...UserInfo
+	broadcastSettings {
+		...BroadcastInfo
+		...BroadcastGame
+	}
+	stream {
+		...StreamInfo
+	}
+}

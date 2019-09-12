@@ -1,0 +1,8 @@
+{
+	"plugins": [
+		"syntax-dynamic-import",
+		["transform-react-jsx", {
+			"pragma": "createElement"
+		}]
+	]
+}

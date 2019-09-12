@@ -1,0 +1,13 @@
+#import "./user-info.gql"
+#import "./broadcast-info.gql"
+#import "./broadcast-game.gql"
+
+fragment StreamBroadcaster on Stream {
+	broadcaster {
+		...UserInfo
+		broadcastSettings {
+			...BroadcastInfo
+			...BroadcastGame
+		}
+	}
+}

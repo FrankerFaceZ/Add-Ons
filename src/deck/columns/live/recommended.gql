@@ -1,0 +1,22 @@
+#import "../fragments/stream-info.gql"
+#import "../fragments/stream-broadcaster.gql"
+
+query Deck_LiveRecommended($first: Int, $id: String!, $language: String!, $location: String, $context: RecommendationsContext, $previewWidth: Int, $previewHeight: Int) {
+	currentUser {
+		id
+		recommendations {
+			liveRecommendations(first: $first, recRequestID: $id, language: $language, location: $location, context: $context) {
+				generationID
+				responseID
+				edges {
+					cursor
+					trackingID
+					node {
+						...StreamInfo
+						...StreamBroadcaster
+					}
+				}
+			}
+		}
+	}
+}

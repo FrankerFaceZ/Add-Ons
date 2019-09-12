@@ -1,0 +1,17 @@
+#import "../fragments/stream-info.gql"
+#import "../fragments/stream-broadcaster.gql"
+
+query Deck_LiveChannels($first: Int, $after: Cursor, $filters: StreamMetadataFilterInput, $options: StreamOptions, $previewWidth: Int, $previewHeight: Int) {
+	streams(first: $first, after: $after, options: $options, input: $filters) {
+		pageInfo {
+			hasNextPage
+		}
+		edges {
+			cursor
+			node {
+				...StreamInfo
+				...StreamBroadcaster
+			}
+		}
+	}
+}

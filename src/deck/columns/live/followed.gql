@@ -1,0 +1,18 @@
+#import "../fragments/user-card.gql"
+
+query Deck_LiveFollowed($first: Int, $after: Cursor, $sort: StreamSort, $previewWidth: Int, $previewHeight: Int) {
+	currentUser {
+		id
+		followedLiveUsers(first: $first, after: $after, sort: $sort) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...UserCard
+				}
+			}
+		}
+	}
+}

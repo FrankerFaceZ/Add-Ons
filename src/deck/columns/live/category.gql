@@ -1,0 +1,29 @@
+#import "../fragments/stream-info.gql"
+#import "../fragments/user-info.gql"
+#import "../fragments/broadcast-info.gql"
+
+query Deck_LiveCategory($name: String!, $first: Int, $after: Cursor, $filters: StreamMetadataFilterInput, $options: GameStreamOptions, $previewWidth: Int, $previewHeight: Int) {
+	game(name: $name) {
+		id
+		displayName
+		avatarURL(width: 40, height: 56)
+		coverURL(width: 400, height: 60)
+		streams(first: $first, after: $after, filters: $filters, options: $options) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...StreamInfo
+					broadcaster {
+						...UserInfo
+						broadcastSettings {
+							...BroadcastInfo
+						}
+					}
+				}
+			}
+		}
+	}
+}

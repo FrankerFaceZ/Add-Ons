@@ -1,0 +1,22 @@
+#import "../fragments/video-info.gql"
+#import "../fragments/video-owner.gql"
+#import "../fragments/video-game.gql"
+
+query Deck_VideoFollowed($first: Int, $after: Cursor, $types: [BroadcastType!], $languages: [String!], $sort: VideoSort, $previewWidth: Int, $previewHeight: Int) {
+	currentUser {
+		id
+		followedVideos(first: $first, after: $after, types: $types, languages: $languages, sort: $sort) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...VideoInfo
+					...VideoOwner
+					...VideoGame
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,20 @@
+#import "../fragments/user-info.gql"
+#import "../fragments/broadcast-info.gql"
+#import "../fragments/broadcast-game.gql"
+#import "../fragments/stream-info.gql"
+
+query Deck_LiveFeatured($first: Int, $language: String, $previewWidth: Int, $previewHeight: Int) {
+	featuredStreams(first: $first, language: $language) {
+		priorityLevel
+		broadcaster {
+			...UserInfo
+			broadcastSettings {
+				...BroadcastInfo
+				...BroadcastGame
+			}
+		}
+		stream {
+			...StreamInfo
+		}
+	}
+}

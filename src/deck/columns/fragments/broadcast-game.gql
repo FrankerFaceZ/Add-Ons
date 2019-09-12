@@ -1,0 +1,7 @@
+#import "./game-info.gql"
+
+fragment BroadcastGame on BroadcastSettings {
+	game {
+		...GameInfo
+	}
+}

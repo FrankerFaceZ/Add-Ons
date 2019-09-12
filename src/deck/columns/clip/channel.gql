@@ -1,0 +1,34 @@
+#import "../fragments/user-info.gql"
+#import "../fragments/broadcast-info.gql"
+#import "../fragments/broadcast-game.gql"
+#import "../fragments/stream-info.gql"
+#import "../fragments/clip-info.gql"
+#import "../fragments/game-info.gql"
+
+query Deck_ClipChannel($id: ID, $first: Int, $after: Cursor, $criteria: UserClipsInput, $previewWidth: Int, $previewHeight: Int) {
+	user(id: $id) {
+		...UserInfo
+		bannerImageURL
+		broadcastSettings {
+			...BroadcastInfo
+			...BroadcastGame
+		}
+		stream {
+			...StreamInfo
+		}
+		clips(first: $first, after: $after, criteria: $criteria) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...ClipInfo
+					game {
+						...GameInfo
+					}
+				}
+			}
+		}
+	}
+}
