@@ -22,6 +22,15 @@ jobs:
     - name: Build
       run: npm run build
 
+    - name: Deploy (Clean)
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: $HOME/clean-addons.sh
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+
     - name: Deploy (Copy)
       uses: garygrossgarten/github-action-scp@release
       with:
@@ -31,11 +40,11 @@ jobs:
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
-        
+
     - name: Deploy (Execute)
       uses: garygrossgarten/github-action-ssh@release
       with:
-        command: update-addons.sh
+        command:  $HOME/update-addons.sh
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
