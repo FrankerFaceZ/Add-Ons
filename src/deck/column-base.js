@@ -394,6 +394,11 @@ LiveColumnBase.SORT_OPTIONS = {
 		title: 'Recently Started', i18n: 'addons.deck.live.recent',
 		subtitle: 'Recent', sub_i18n: 'addons.deck.sub.recent',
 		icon: 'ffz-i-clock'
+	},
+	RELEVANCE: {
+		title: 'Recommended for You', i18n: 'addons.deck.live.recommended',
+		subtitle: 'Recommended', sub_i18n: 'addons.deck.sub.recommended',
+		icon: 'ffz-i-thumbs-up'
 	}
 };
 

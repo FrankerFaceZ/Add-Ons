@@ -3,10 +3,10 @@
 	"requires": [],
 	"unlisted": true,
 
-	"version": "1.0.0",
+	"version": "1.0.1",
 
 	"short_name": "Deck",
 	"name": "Deck",
 	"author": "SirStendec",
-	"description": "Deck provides a TweetDeck-like experience for finding content on Twitch."
+	"description": "Deck provides a TweetDeck-like experience for finding content on Twitch. Set up columns for live channels, videos, or clips. Filter by tags. Sort. Find what you want to watch."
 }

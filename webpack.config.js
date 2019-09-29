@@ -1,10 +1,12 @@
 /* global module __dirname */
 
+const slash = require('slash');
 const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const {
 	DefinePlugin
 } = require('webpack');
@@ -47,6 +49,14 @@ const config = {
 			basePath: 'addons/',
 			publicPath: 'addons/'
 		}),
+		new CopyPlugin([
+			{
+				from: 'src/**/logo.png',
+				to: '[1]/logo.png',
+				toType: 'template',
+				test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.png$/
+			}
+		]),
 		new ManifestPlugin({
 			fileName: path.resolve(__dirname, 'dist', 'addons.json'),
 			serialize: thing => JSON.stringify(thing, null, '\t'),
@@ -54,10 +64,15 @@ const config = {
 				const addons = [];
 				for (const manifest of glob.sync('./src/**/manifest.json')) {
 					const json = JSON.parse(fs.readFileSync(manifest));
-					if (!json.enabled) continue;
-					delete json.enabled;
+					if ( ! json.enabled )
+						continue;
 
+					delete json.enabled;
 					json.id = getFolderName(manifest);
+
+					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.png')) )
+						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.png`;
+
 					addons.push(json);
 				}
 				return addons;

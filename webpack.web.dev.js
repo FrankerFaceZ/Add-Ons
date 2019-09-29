@@ -1,6 +1,7 @@
 /* global module __dirname */
 
 const path = require('path');
+const fs = require('fs');
 const merge = require('webpack-merge');
 const common = require('./webpack.config.js');
 
@@ -23,6 +24,10 @@ module.exports = merge(common, {
 					delete json.enabled;
 
 					json.id = getFolderName(manifest);
+
+					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.png')) )
+						json.icon = `//localhost:8001/script/addons/${json.id}/logo.png`;
+
 					addons.push(json);
 				}
 				return addons;

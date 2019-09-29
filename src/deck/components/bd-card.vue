@@ -45,7 +45,7 @@
 			<div v-if="!!props.avatar || !!props.boxart || !!$scopedSlots['iconic']" class="tw-flex-grow-0 tw-flex-shrink-0 tw-mg-r-1">
 				<slot name="iconic" />
 				<react-link v-if="props.avatar" class="tw-interactive tw-link" :href="props.avatarLink || props.link" v-on="props.clickAvatar || props.click ? {click: props.clickAvatar || props.click} : {}">
-					<div class="preview-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
+					<div class="deck-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
 						<aspect>
 							<figure class="tw-avatar tw-avatar--size-40">
 								<div class="tw-border-radius-rounded tw-overflow-hidden">
@@ -56,7 +56,7 @@
 					</div>
 				</react-link>
 				<react-link v-else-if="props.boxart" class="tw-interactive tw-link" :href="props.boxartLink || props.link" v-on="props.clickBoxart || props.click ? {click: props.clickBoxart || props.click} : {}">
-					<div class="preview-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
+					<div class="deck-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
 						<aspect align="center" :ratio="0.75">
 							<img
 								class="tw-image"
@@ -66,12 +66,14 @@
 					</div>
 				</react-link>
 			</div>
-			<div class="preview-card__titles-wrapper tw-flex-grow-1 tw-flex-shrink-1 tw-full-width">
+			<div class="deck-card__titles-wrapper tw-flex-grow-1 tw-flex-shrink-1 tw-full-width">
 				<div>
-					<react-link class="tw-interactive tw-link tw-link--inherit" :href="props.titleLink || props.link" v-on="props.clickTitle || props.click ? {click: props.clickTitle || props.click} : {}">
-						<h3 class="tw-ellipsis tw-font-size-5 tw-strong" :title="props.title">{{ props.title }}</h3>
-					</react-link>
-					<div v-if="!!$scopedSlots['subtitles']" class="preview-card-titles__subtitle-wrapper">
+					<span class="tw-c-text-alt">
+						<react-link class="tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit" :href="props.titleLink || props.link" v-on="props.clickTitle || props.click ? {click: props.clickTitle || props.click} : {}">
+							<h3 class="tw-ellipsis tw-font-size-5" :title="props.title">{{ props.title }}</h3>
+						</react-link>
+					</span>
+					<div v-if="!!$scopedSlots['subtitles']" class="deck-card-titles__subtitle-wrapper">
 						<slot name="subtitles" />
 					</div>
 				</div>

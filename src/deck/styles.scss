@@ -11,6 +11,18 @@
 	z-index: 1000;
 }
 
+.deck-card-titles__subtitle-wrapper {
+	margin-top: .3rem
+}
+
+.deck-card__titles-wrapper {
+	min-width: 0
+}
+
+.deck-card-iconic-image__wrapper {
+	width: 4rem;
+}
+
 .bd--deck-scroller {
 	position: relative;
 	overflow: hidden;
@@ -188,10 +200,10 @@
 			top: 0; left: 0;
 			right: 0; bottom: 0;
 			content: '';
-			background: linear-gradient(0deg,#faf9fa 0,rgba(250,249,250,.9) 25%,rgba(250,249,250,.3));
+			background: linear-gradient(0deg,var(--color-background-alt) 0,rgba(250,249,250,.9) 25%,rgba(250,249,250,.3));
 
 			.tw-root--theme-dark & {
-				background: linear-gradient(0deg,#0f0e11 0,rgba(15,14,17,.9) 25%,rgba(15,14,17,.3));
+				background: linear-gradient(0deg,var(--color-background-alt) 0,rgba(15,14,17,.9) 25%,rgba(15,14,17,.3));
 			}
 		}
 	}

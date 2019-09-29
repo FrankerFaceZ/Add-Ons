@@ -233,7 +233,7 @@ class BrowseDeck extends Addon {
 				return;
 
 			button = (<a
-				class="bd--browse-deck-link top-nav__nav-link tw-interactive"
+				class="bd--browse-deck-link navigation-link tw-interactive"
 				href={this.router.getURL('addons.deck')}
 				onClick={e => { // eslint-disable-line react/jsx-no-bind
 					e.preventDefault();

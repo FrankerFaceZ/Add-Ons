@@ -4,10 +4,10 @@
 			v-for="tag in props.tags"
 			:key="tag.id"
 			:class="[props.noMargin ? '' : 'tw-mg-t-05']"
-			class="tw-inline-block tw-tag tw-mg-r-05"
+			class="tw-border-radius-rounded tw-semibold tw-inline-block tw-tag tw-mg-r-05"
 		>
 			<react-link
-				class="tw-border-radius-medium tw-block tw-interactable tw-interactable--alt tw-interactable--border tw-interactive"
+				class="tw-block tw-border-radius-rounded tw-interactable tw-interactable--alpha tw-interactable--hover-enabled tw-interactive"
 				:href="`/directory/all/tags/${tag.id}`"
 			>
 				<div
