@@ -245,11 +245,11 @@ class FFZAP extends Addon {
 			title: 'FFZ:AP Developer',
 			color: '#E4107F',
 			slot: 6,
-			image: 'https://api.ffzap.com/user/badge/26964566/1',
+			image: 'https://api.ffzap.com/v1/user/badge/26964566/1',
 			urls: {
-				1: 'https://api.ffzap.com/user/badge/26964566/1',
-				2: 'https://api.ffzap.com/user/badge/26964566/2',
-				4: 'https://api.ffzap.com/user/badge/26964566/3',
+				1: 'https://api.ffzap.com/v1/user/badge/26964566/1',
+				2: 'https://api.ffzap.com/v1/user/badge/26964566/2',
+				4: 'https://api.ffzap.com/v1/user/badge/26964566/3',
 			},
 		};
 
@@ -259,18 +259,18 @@ class FFZAP extends Addon {
 	}
 
 	async fetchSupporters() {
-		const host = 'https://api.ffzap.com/supporters';
+		const host = 'https://api.ffzap.com/v1/supporters';
 
 		const supporterBadge = {
 			id: 'supporter',
 			title: 'FFZ:AP Supporter',
 			color: '#755000',
 			slot: 6,
-			image: 'https://api.ffzap.com/user/badge/default/1',
+			image: 'https://api.ffzap.com/v1/user/badge/default/1',
 			urls: {
-				1: 'https://api.ffzap.com/user/badge/default/1',
-				2: 'https://api.ffzap.com/user/badge/default/2',
-				4: 'https://api.ffzap.com/user/badge/default/3',
+				1: 'https://api.ffzap.com/v1/user/badge/default/1',
+				2: 'https://api.ffzap.com/v1/user/badge/default/2',
+				4: 'https://api.ffzap.com/v1/user/badge/default/3',
 			},
 		};
 
@@ -291,11 +291,11 @@ class FFZAP extends Addon {
 				const badge = {
 					title: (this.helpers[user.id] && this.helpers[user.id].title) || 'FFZ:AP Supporter',
 					color: user.tier >= 2 && user.badge_color || supporterBadge.color,
-					image: `https://api.ffzap.com/user/badge/${user.id}/1`,
+					image: `https://api.ffzap.com/v1/user/badge/${user.id}/1`,
 					urls: {
-						1: `https://api.ffzap.com/user/badge/${user.id}/1`,
-						2: `https://api.ffzap.com/user/badge/${user.id}/2`,
-						4: `https://api.ffzap.com/user/badge/${user.id}/3`,
+						1: `https://api.ffzap.com/v1/user/badge/${user.id}/1`,
+						2: `https://api.ffzap.com/v1/user/badge/${user.id}/2`,
+						4: `https://api.ffzap.com/v1/user/badge/${user.id}/3`,
 					},
 				};
 
