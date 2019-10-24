@@ -195,40 +195,40 @@ class BetterTTV extends Addon {
 	}
 
 	async addBadges(attempts = 0) {
-		const response = await fetch('https://api.betterttv.net/2/badges');
+		const response = await fetch('https://api.betterttv.net/3/cached/badges');
 		if (response.ok) {
 			const data = await response.json();
 
 			const types = [];
-			const _types = data.types;
-			const _users = data.badges;
 
-			let i = _types.length;
+			const reg = new RegExp(/\/badge-(\w+)\.svg/);
+
+			let i = data.length;
 			while (i--) {
-				const _type = _types[i];
+				const _badge = data[i];
 
-				const badgeData = {
-					id: `bttv-${_type.name}`,
-					slot: 21,
-					image: _type.svg,
-					svg: true,
-					title: _type.description,
-					no_invert: true,
-				};
-
-				types[_type.name] = true;
-
-				this.badges.loadBadgeData(`addon--ffzap.betterttv--badges-bttv-${_type.name}`, badgeData);
-			}
-
-			i = _users.length;
-			while (i--) {
-				const _user = _users[i];
-
-				if (types[_user.type]) {
-					this.log.debug(`Adding badge "${_user.type}" for user "${_user.name}".`);
-					this.chat.getUser(undefined, _user.name).addBadge('addon--ffzap.betterttv', `addon--ffzap.betterttv--badges-bttv-${_user.type}`);
+				if (!reg.test(_badge.badge.svg)) {
+					continue;
 				}
+
+				const name = reg.exec(_badge.badge.svg)[1];
+
+				if (!types[name]) {
+					const badgeData = {
+						id: `bttv-${name}`,
+						slot: 21,
+						image: _badge.badge.svg,
+						svg: true,
+						title: _badge.badge.description,
+						no_invert: true,
+					};
+
+					types[name] = true;
+
+					this.badges.loadBadgeData(`addon--ffzap.betterttv--badges-bttv-${name}`, badgeData);
+				}
+
+				this.chat.getUser(_badge.providerId).addBadge('addon--ffzap.betterttv', `addon--ffzap.betterttv--badges-bttv-${name}`);
 			}
 		} else {
 			if (response.status === 404) return;
@@ -250,9 +250,9 @@ class BetterTTV extends Addon {
 			return;
 		}
 
-		const response = await fetch('https://api.betterttv.net/2/emotes');
+		const response = await fetch('https://api.betterttv.net/3/cached/emotes/global');
 		if (response.ok) {
-			const data = await response.json();
+			const emotes = await response.json();
 
 			const globalBttv = [];
 			const arbitraryEmotes = [];
@@ -266,8 +266,6 @@ class BetterTTV extends Addon {
 			//     'TopHat': null,
 			//     'SantaHat': null,
 			// };
-
-			const { emotes, urlTemplate } = data;
 
 			let i = emotes.length;
 			while (i--) {
@@ -288,11 +286,10 @@ class BetterTTV extends Addon {
 					// modifier_offset: overlayEmotes[dataEmote.code],
 				};
 
-				const emoteTemplate = `https:${urlTemplate.replace('{{id}}', emote.id)}`;
 				emote.urls = {
-					1: emoteTemplate.replace('{{image}}', '1x'),
-					2: emoteTemplate.replace('{{image}}', '2x'),
-					4: emoteTemplate.replace('{{image}}', '3x'),
+					1: `https://cdn.betterttv.net/emote/${emote.id}/1x`,
+					2: `https://cdn.betterttv.net/emote/${emote.id}/2x`,
+					4: `https://cdn.betterttv.net/emote/${emote.id}/3x`,
 				};
 
 				if (dataEmote.imageType === 'gif') { // If the emote is a GIF
@@ -376,10 +373,12 @@ class BetterTTV extends Addon {
 			return;
 		}
 
-		const response = await fetch(`https://api.betterttv.net/2/channels/${room.login}`);
+		const response = await fetch(`https://api.betterttv.net/3/cached/users/twitch/${room.id}`);
 		if (response.ok) {
 			const channelBttv = [];
-			const { emotes, bots } = await response.json();
+			const { channelEmotes, sharedEmotes, bots } = await response.json();
+
+			const emotes = channelEmotes.concat(sharedEmotes);
 
 			for (const bot of bots) {
 				const botUser = room.getUser(null, bot);
@@ -393,7 +392,7 @@ class BetterTTV extends Addon {
 				const requireSpaces = /[^A-Za-z0-9]/.test(emotes[i].code);
 
 				const emoteFromArray = emotes[i];
-				const { id } = emoteFromArray;
+				const { id, code, user } = emoteFromArray;
 
 				const emote = {
 					urls: {
@@ -402,12 +401,12 @@ class BetterTTV extends Addon {
 						4: `https://cdn.betterttv.net/emote/${id}/3x`,
 					},
 					id,
-					name: emoteFromArray.code,
+					name: code,
 					width: 28,
 					height: 28,
 					owner: {
-						display_name: emoteFromArray.channel || room.id,
-						name: emoteFromArray.channel,
+						display_name: (user && user.displayName) || (room && room.data && room.data.display_name) || room.login,
+						name: (user && user.name) || room.login,
 					},
 					require_spaces: requireSpaces,
 				};
