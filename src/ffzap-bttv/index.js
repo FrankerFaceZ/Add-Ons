@@ -34,7 +34,7 @@ class BetterTTV extends Addon {
 			ui: {
 				path: 'Add-Ons > BetterTTV Emotes >> Emotes',
 				title: 'Arbitrary Emotes',
-				description: 'Enable to show arbitrary emoticons (like D:, :tf:, (poolparty), :\'(  and similar).',
+				description: 'Enable to show arbitrary emoticons (like D:, :tf: and similar).',
 				component: 'setting-check-box',
 			},
 		});
