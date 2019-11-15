@@ -63,6 +63,7 @@ class FFZAP extends Addon {
 			default: false,
 
 			ui: {
+				sort: -10,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
 				title: 'Enable Highlight Sound',
 				description: 'Enable to hear a sound every time you\'re mentioned.',
@@ -85,6 +86,7 @@ class FFZAP extends Addon {
 			default: 'https://cdn.ffzap.com/sounds/default_wet.mp3',
 
 			ui: {
+				sort: -5,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
 				title: 'Sound File',
 				description: 'Change the sound that will play when you get mentioned.',
@@ -117,6 +119,8 @@ class FFZAP extends Addon {
 					{ value: 'https://cdn.ffzap.com/sounds/gnome.mp3', title: 'Gnome' },
 					{ value: 'https://cdn.ffzap.com/sounds/oof.mp3', title: 'Roblox Death Sound (OOF)' },
 				],
+				onUIChange: val => val && this.playPreviewSound(val),
+				buttons: () => import('./components/preview.vue')
 			},
 		});
 
@@ -124,6 +128,7 @@ class FFZAP extends Addon {
 			default: 50,
 
 			ui: {
+				sort: -4,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
 				title: 'Highlight Sound Volume',
 				description: 'Change the volume at which the highlight sounds will be played at.',
@@ -141,6 +146,7 @@ class FFZAP extends Addon {
 					{ value: 90, title: '90%' },
 					{ value: 100, title: '100%' },
 				],
+				onUIChange: val => this.playPreviewSound(null, val)
 			},
 		});
 
@@ -148,12 +154,10 @@ class FFZAP extends Addon {
 
 		this.chat.context.on('changed:ffzap.core.highlight_sound', url => {
 			this.highlight_sound.src = url;
-			this.playHighlightSound();
 		}, this);
-        
+
 		this.chat.context.on('changed:ffzap.core.highlight_sound_volume', volume => {
 			this.highlight_sound.volume = volume / 100;
-			this.playHighlightSound();
 		}, this);
 
 		this.highlight_sound = new Audio(this.chat.context.get('ffzap.core.highlight_sound'));
@@ -215,6 +219,23 @@ class FFZAP extends Addon {
 		} else if (chatDeletion == 2 && !this.isModeratorOrHigher(badges)) {
 			msg.message.ffz_removed = true;
 		}
+	}
+
+	playPreviewSound(val, vol) {
+		if ( val == null )
+			val = this.chat.context.get('ffzap.core.highlight_sound');
+
+		let sound;
+		if ( this._preview_sound ) {
+			sound = this._preview_sound;
+			sound.pause();
+			sound.src = val;
+			sound.currentTime = 0;
+		} else
+			sound = this._preview_sound = new Audio(val);
+
+		sound.volume = (vol != null ? vol : this.chat.context.get('ffzap.core.highlight_sound_volume')) / 100;
+		sound.play();
 	}
 
 	playHighlightSound () {
@@ -279,7 +300,7 @@ class FFZAP extends Addon {
 			const data = await response.json();
 
 			this.badges.loadBadgeData('addon--ffzap.core--badges-supporter', supporterBadge);
-	
+
 			for (let i = 0; i < data.length; i++) {
 				const user = data[i];
 				if (user.id === 26964566) continue;
@@ -287,7 +308,7 @@ class FFZAP extends Addon {
 				if (!user.tier) continue;
 
 				const ffzUser = this.chat.getUser(user.id);
-	
+
 				const badge = {
 					title: (this.helpers[user.id] && this.helpers[user.id].title) || 'FFZ:AP Supporter',
 					color: user.tier >= 2 && user.badge_color || supporterBadge.color,
