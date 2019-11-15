@@ -15,7 +15,7 @@
 						@click="deleting = false"
 					>
 						<span class="tw-button__text ffz-i-cancel">
-							{{ t('addons.deck.cancel', 'Cancel') }}
+							{{ t('addon.deck.cancel', 'Cancel') }}
 						</span>
 					</button>
 					<button
@@ -23,7 +23,7 @@
 						@click="remove"
 					>
 						<span class="tw-button__text ffz-i-trash">
-							{{ t('addons.deck.delete', 'Delete') }}
+							{{ t('addon.deck.delete', 'Delete') }}
 						</span>
 					</button>
 				</template>
@@ -33,7 +33,7 @@
 						@click="deleting = true"
 					>
 						<span class="tw-button__text ffz-i-trash">
-							{{ t('addons.deck.delete', 'Delete') }}
+							{{ t('addon.deck.delete', 'Delete') }}
 						</span>
 					</button>
 					<button
@@ -41,18 +41,18 @@
 						@click="save"
 					>
 						<span class="tw-button__text ffz-i-floppy">
-							{{ t('addons.deck.save', 'Save') }}
+							{{ t('addon.deck.save', 'Save') }}
 						</span>
 					</button>
 				</template>
 			</div>
 
 			<section class="tw-mg-1">
-				<h5 class="tw-border-b">{{ t('addons.deck.edit.appearance', 'Appearance') }}</h5>
+				<h5 class="tw-border-b">{{ t('addon.deck.edit.appearance', 'Appearance') }}</h5>
 
 				<div class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'title$' + column.id">
-						{{ t('addons.deck.edit.title', 'Title:') }}
+						{{ t('addon.deck.edit.title', 'Title:') }}
 					</label>
 					<input
 						:id="'title$' + column.id"
@@ -63,7 +63,7 @@
 
 				<div v-if="inst.useIcon()" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'icon$' + column.id">
-						{{ t('addons.deck.edit.icon', 'Icon:') }}
+						{{ t('addon.deck.edit.icon', 'Icon:') }}
 					</label>
 					<icon-picker
 						:clearable="true"
@@ -74,7 +74,7 @@
 
 				<div class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'width$' + column.id">
-						{{ t('addons.deck.edit.width', 'Width:') }}
+						{{ t('addon.deck.edit.width', 'Width:') }}
 					</label>
 					<select
 						ref="width"
@@ -90,7 +90,7 @@
 
 				<div class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'tag_count$' + column.id">
-						{{ t('addons.deck.edit.max-tags', 'Show Tags:') }}
+						{{ t('addon.deck.edit.max-tags', 'Show Tags:') }}
 					</label>
 					<input
 						:id="'tag_count$' + column.id"
@@ -115,17 +115,17 @@
 						class="tw-checkbox__input"
 					>
 					<label :for="'no_avatars$' + column.id" class="tw-checkbox__label">
-						{{ t('addons.deck.edit.avatars', 'Do not display avatars.') }}
+						{{ t('addon.deck.edit.avatars', 'Do not display avatars.') }}
 					</label>
 				</div>
 			</section>
 
 			<section class="tw-mg-1">
-				<h5 class="tw-border-b">{{ t('addons.deck.edit.behavior', 'Behavior') }}</h5>
+				<h5 class="tw-border-b">{{ t('addon.deck.edit.behavior', 'Behavior') }}</h5>
 
 				<div v-if="sort_options" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'sort$' + column.id">
-						{{ t('addons.deck.edit.sort', 'Sort By:') }}
+						{{ t('addon.deck.edit.sort', 'Sort By:') }}
 					</label>
 					<select
 						ref="sort"
@@ -147,7 +147,7 @@
 
 				<div v-if="useTags" class="tw-flex tw-align-items-start tw-mg-y-05">
 					<label :for="'tags$' + column.id">
-						{{ t('addons.deck.edit.required-tags', 'Required Tags:') }}
+						{{ t('addon.deck.edit.required-tags', 'Required Tags:') }}
 					</label>
 					<bd-tag-selector
 						:inputId="'tags$' + column.id"
@@ -206,7 +206,7 @@ export default {
 			else if ( out )
 				return out;
 
-			return this.t('addons.deck.edit.column', 'Edit Column');
+			return this.t('addon.deck.edit.column', 'Edit Column');
 		},
 
 		sort_options() {

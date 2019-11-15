@@ -76,7 +76,7 @@
 				>
 					<figure class="tw-button__text ffz-i-cog" />
 					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right">
-						{{ t('addons.deck.open-settings', 'Open Settings') }}
+						{{ t('addon.deck.open-settings', 'Open Settings') }}
 					</div>
 				</button>
 			</div>
@@ -95,7 +95,7 @@
 					@click="refresh"
 				>
 					<span class="ffz-i-arrows-cw">
-						{{ t('addons.deck.refresh', 'Refresh') }}
+						{{ t('addon.deck.refresh', 'Refresh') }}
 					</span>
 				</div>
 			</transition>
@@ -106,7 +106,7 @@
 					class="bd--top-link tw-align-center tw-c-background-base tw-pd-05 tw-border-b"
 					@click="scrollToTop"
 				>
-					{{ t('addons.deck.go-to-top', 'Return to Top') }}
+					{{ t('addon.deck.go-to-top', 'Return to Top') }}
 				</div>
 			</transition>
 			<simplebar v-observe-visibility="{callback: onVisibilityChange}">
@@ -128,7 +128,7 @@
 					<template v-if="! canRun">
 						<h1 class="ffz-i-up-big" />
 						<div>
-							{{ t('addons.deck.need-config', 'You need to finish configuring this column.') }}
+							{{ t('addon.deck.need-config', 'You need to finish configuring this column.') }}
 						</div>
 						<div class="tw-mg-t-1">
 							<button
@@ -136,7 +136,7 @@
 								@click="openMenu"
 							>
 								<span class="ffz-i-cog tw-button__text">
-									{{ t('addons.deck.open-settings', 'Open Settings') }}
+									{{ t('addon.deck.open-settings', 'Open Settings') }}
 								</span>
 							</button>
 						</div>
@@ -149,12 +149,12 @@
 							/>
 						</div>
 						<div v-if="finished" class="bd--width">
-							{{ t('addons.deck.end', 'You have reached the end.') }}
+							{{ t('addon.deck.end', 'You have reached the end.') }}
 							<div
 								v-if="filtered.length < items.length"
 								class="tw-mg-t-05"
 							>
-								{{ t('addons.deck.end-filtered', '({removed,number} of {total,number} item{total,en_plural} have been hidden by client-side filtering.)', {
+								{{ t('addon.deck.end-filtered', '({removed,number} of {total,number} item{total,en_plural} have been hidden by client-side filtering.)', {
 									removed: items.length - filtered.length,
 									total: items.length
 								}) }}
@@ -162,7 +162,7 @@
 						</div>
 						<div v-else-if="errored" class="bd--width">
 							<div class="tw-mg-b-1">
-								{{ t('addons.deck.error', 'An error occured while loading more data.') }}
+								{{ t('addon.deck.error', 'An error occured while loading more data.') }}
 							</div>
 							<div class="tw-mg-b-1">
 								<button
@@ -170,7 +170,7 @@
 									@click="refresh"
 								>
 									<span class="ffz-i-arrows-cw tw-button__text">
-										{{ t('addons.deck.refresh', 'Refresh') }}
+										{{ t('addon.deck.refresh', 'Refresh') }}
 									</span>
 								</button>
 							</div>
@@ -180,7 +180,7 @@
 								@click="show_error = true"
 							>
 								<span class="ffz-i-eye tw-button__text">
-									{{ t('addons.deck.show-error', 'Show Details') }}
+									{{ t('addon.deck.show-error', 'Show Details') }}
 								</span>
 							</button>
 							<div
@@ -190,7 +190,7 @@
 						</div>
 						<div v-else-if="too_throttled" class="bd--width">
 							<div class="tw-mg-b-1">
-								{{ t('addons.deck.too-much-loading', 'This column has stopped loading after client-side filtering has caused too much data to load.') }}
+								{{ t('addon.deck.too-much-loading', 'This column has stopped loading after client-side filtering has caused too much data to load.') }}
 							</div>
 							<div class="tw-mg-b-1">
 								<button
@@ -198,7 +198,7 @@
 									@click="btnLoadMore"
 								>
 									<span class="ffz-i-plus tw-button__text">
-										{{ t('addons.deck.load-more', 'Load More') }}
+										{{ t('addon.deck.load-more', 'Load More') }}
 									</span>
 								</button>
 							</div>
@@ -206,9 +206,9 @@
 					</template>
 					<template v-else>
 						<h1 class="ffz-i-zreknarf loading" />
-						<div v-if="loading">{{ t('addons.deck.loading', 'Loading...') }}</div>
-						<div v-else-if="throttled">{{ t('addons.deck.throttled', 'Waiting a bit...') }}</div>
-						<div v-else>{{ t('addons.deck.no-state', '(what am i doing)') }}</div>
+						<div v-if="loading">{{ t('addon.deck.loading', 'Loading...') }}</div>
+						<div v-else-if="throttled">{{ t('addon.deck.throttled', 'Waiting a bit...') }}</div>
+						<div v-else>{{ t('addon.deck.no-state', '(what am i doing)') }}</div>
 					</template>
 				</div>
 			</simplebar>

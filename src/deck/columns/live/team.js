@@ -17,7 +17,7 @@ export default class Team extends LiveColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.name )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		if ( this.cache && this.cache.displayName )
 			return this.cache.displayName;
@@ -83,7 +83,7 @@ Team.presets = {
 			list: {
 				icon: 'ffz-i-star',
 				title: 'Team',
-				i18n: 'addons.deck.team'
+				i18n: 'addon.deck.team'
 			}
 		}
 	]

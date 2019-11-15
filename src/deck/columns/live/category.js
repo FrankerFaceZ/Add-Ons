@@ -25,13 +25,13 @@ export default class Category extends LiveColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.name )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		let name = this.settings.name;
 		if ( this.cache && this.cache.displayName )
 			name = this.cache.displayName;
 
-		return ['addons.deck.live-category', '{name} Streams', {name}];
+		return ['addon.deck.live-category', '{name} Streams', {name}];
 	}
 
 	canRun() {
@@ -102,7 +102,7 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addons.deck.category'
+				i18n: 'addon.deck.category'
 			}
 		}
 	]

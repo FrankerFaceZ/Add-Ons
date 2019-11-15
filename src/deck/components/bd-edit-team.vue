@@ -4,7 +4,7 @@
 		class="tw-flex tw-align-items-center tw-mg-y-05"
 	>
 		<label :for="'team$' + value.id">
-			{{ t('addons.deck.edit.team', 'Team:') }}
+			{{ t('addon.deck.edit.team', 'Team:') }}
 		</label>
 		<input
 			:id="'team$' + value.id"

@@ -2,10 +2,10 @@
 	<div class="bd--deck-column tw-relative tw-c-background-base tw-border tw-elevation-1 tw-flex-column tw-mg-r-1">
 		<div class="bd--width tw-mg-1">
 			<h3 class="tw-border-b tw-mg-b-05">
-				{{ t('addons.deck.bad-column', 'Invalid Column') }}
+				{{ t('addon.deck.bad-column', 'Invalid Column') }}
 			</h3>
 			<p>
-				{{ t('addons.deck.bad-column.explain', 'This column type ("{type}") is no longer supported and this column cannot be displayed. Please remove it.', {
+				{{ t('addon.deck.bad-column.explain', 'This column type ("{type}") is no longer supported and this column cannot be displayed. Please remove it.', {
 					type: this.data.type
 				}) }}
 			</p>
@@ -15,7 +15,7 @@
 					@click="$emit('delete')"
 				>
 					<span class="ffz-i-trash tw-button__text">
-						{{ t('addons.deck.delete', 'Delete') }}
+						{{ t('addon.deck.delete', 'Delete') }}
 					</span>
 				</button>
 			</div>

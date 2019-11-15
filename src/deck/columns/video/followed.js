@@ -20,7 +20,7 @@ export default class Followed extends VideoColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.video-followed', 'Followed Videos'];
+		return ['addon.deck.video-followed', 'Followed Videos'];
 	}
 
 	reset() {
@@ -74,12 +74,12 @@ Followed.presets = {
 			display: {
 				icon: 'ffz-i-heart',
 				title: 'Followed Videos',
-				i18n: 'addons.deck.video-followed'
+				i18n: 'addon.deck.video-followed'
 			},
 			list: {
 				icon: 'ffz-i-heart',
 				title: 'Followed',
-				i18n: 'addons.deck.followed'
+				i18n: 'addon.deck.followed'
 			}
 		}
 	]

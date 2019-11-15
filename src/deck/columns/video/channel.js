@@ -40,14 +40,14 @@ export default class Channel extends VideoColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.id )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		if ( this.cache && this.cache.displayName )
-			return ['addons.deck.user-videos', '{user} Videos', {
+			return ['addon.deck.user-videos', '{user} Videos', {
 				user: this.cache.displayName
 			}];
 
-		return ['addons.deck.user', 'User #{id}', this.settings];
+		return ['addon.deck.user', 'User #{id}', this.settings];
 	}
 
 	canRun() {
@@ -91,7 +91,7 @@ export default class Channel extends VideoColumnBase {
 				was_stream = is_stream;
 				if ( is_stream )
 					out.push({
-						i18n: 'addons.deck.card.stream',
+						i18n: 'addon.deck.card.stream',
 						text: 'Live Stream',
 						color: 'tw-c-text-alt',
 						size: 5,
@@ -99,7 +99,7 @@ export default class Channel extends VideoColumnBase {
 					});
 				else
 					out.push({
-						i18n: 'addons.deck.card.video',
+						i18n: 'addon.deck.card.video',
 						text: 'Videos',
 						color: 'tw-c-text-alt',
 						size: 5,
@@ -189,7 +189,7 @@ Channel.presets = {
 			list: {
 				icon: 'ffz-i-user',
 				title: 'Channel',
-				i18n: 'addons.deck.channel'
+				i18n: 'addon.deck.channel'
 			}
 		}
 	]

@@ -1,7 +1,7 @@
 <template>
 	<div class="tw-flex tw-align-items-center tw-mg-y-05">
 		<label :for="'count$' + value.id">
-			{{ t('addons.deck.edit.count', 'Count:') }}
+			{{ t('addon.deck.edit.count', 'Count:') }}
 		</label>
 		<input
 			:id="'count$' + value.id"

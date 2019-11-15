@@ -8,7 +8,7 @@
 				class="tw-checkbox__input"
 			>
 			<label :for="'no_live$' + value.id" class="tw-checkbox__label">
-				{{ t('addons.deck.no-live', "Do not display the channel's live broadcast when they are streaming.") }}
+				{{ t('addon.deck.no-live', "Do not display the channel's live broadcast when they are streaming.") }}
 			</label>
 		</div>
 	</div>

@@ -20,8 +20,6 @@ export function makeReference(x, y) {
 }
 
 export function createMenu(item, navigate) {
-	const children = [];
-
 	return (<div class="bd--host-menu tw-balloon tw-block">
 		<div class="tw-border tw-elevation-1 tw-border-radius-small tw-c-background-base">
 			<div class="scrollable-area" data-simplebar>
@@ -50,7 +48,7 @@ export function createMenu(item, navigate) {
 function renderChannel(node, navigate) {
 	const url = `/${node.login}`
 	return (<a
-		class="tw-block tw-full-width tw-interactable tw-interactable--inverted tw-interactive tw-pd-x-1"
+		class="tw-block tw-full-width tw-interactable tw-interactable--inverted tw-interactable--hover-enabled tw-interactive tw-pd-x-1"
 		href={url}
 		onClick={e => navigate(url, e)}
 	>

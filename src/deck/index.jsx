@@ -50,7 +50,7 @@ class BrowseDeck extends Addon {
 			if ( data && data.description )
 				return data.description;
 			else if ( ! data || data.description === undefined )
-				return this.i18n.t('addons.deck.loading', 'Loading...');
+				return this.i18n.t('addon.deck.loading', 'Loading...');
 		}
 
 		tip_handler.delayShow = 500;
@@ -136,7 +136,7 @@ class BrowseDeck extends Addon {
 		if ( this.isActive ) {
 			const core = this.site.getCore();
 			if ( core && core.setPageTitle )
-				core.setPageTitle(this.i18n.t('addons.deck.title', 'Deck'));
+				core.setPageTitle(this.i18n.t('addon.deck.title', 'Deck'));
 			this.dialog.show();
 
 			if ( this._vue )
@@ -196,7 +196,7 @@ class BrowseDeck extends Addon {
 			<div class="tw-align-center tw-c-text-alt-2">
 				<h1 class="ffz-i-zreknarf loading" />
 				<div>
-					{this.i18n.t('addons.deck.loading', 'Loading...')}
+					{this.i18n.t('addon.deck.loading', 'Loading...')}
 				</div>
 			</div>
 		</div>);
@@ -224,11 +224,13 @@ class BrowseDeck extends Addon {
 		if ( ! root )
 			return;
 
-		const label = this.i18n.t('addons.deck.title', 'Deck');
+		const label = this.i18n.t('addon.deck.title', 'Deck');
 
-		let button = root.querySelector('.bd--browse-deck-link');
+		let button = root.querySelector('.bd--browse-deck-link'), indicator;
 		if ( ! button ) {
-			const peer = root.querySelector('[data-a-target="browse-link"]');
+			let peer = root.querySelector('[data-a-target="browse-link"]');
+			if ( peer )
+				peer = peer.parentElement.parentElement;
 			if ( ! peer )
 				return;
 
@@ -241,13 +243,13 @@ class BrowseDeck extends Addon {
 					this.router.navigate('addons.deck');
 				}}
 			>
-				<div class="tw-hide tw-sm-flex">
-					<div class="tw-hide tw-pd-x-2 tw-xl-flex">
+				<div class="tw-flex-column tw-hide tw-sm-flex">
+					<div class="tw-hide tw-xl-flex">
 						<p class="tw-font-size-4">
 							{label}
 						</p>
 					</div>
-					<div class="tw-flex tw-pd-x-1 tw-xl-hide">
+					<div class="tw-flex tw-xl-hide">
 						<p class="tw-font-size-5">
 							{label}
 						</p>
@@ -255,12 +257,24 @@ class BrowseDeck extends Addon {
 				</div>
 			</a>);
 
-			peer.parentElement.insertBefore(button, peer.nextElementSibling);
+			peer.parentElement.insertBefore(<div class="tw-flex tw-flex-column tw-full-height tw-pd-x-1 tw-xl-pd-x-2">
+				<div class="tw-align-self-center tw-flex tw-full-height">
+					{button}
+				</div>
+				{indicator = <div class="bd--indicator navigation-link__indicator-container" />}
+			</div>, peer.nextElementSibling);
 
 		} else {
+			indicator = root.querySelector('.bd--indicator');
 			for(const element of button.querySelectorAll('p'))
 				element.innerText = label;
 		}
+
+		const active_indicator = indicator.querySelector('.navigation-link__active-indicator');
+		if ( this.isActive && ! active_indicator )
+			indicator.appendChild(<div class="navigation-link__active-indicator" />);
+		else if ( ! this.isActive && active_indicator )
+			active_indicator.remove();
 
 		button.classList.toggle('active', this.isActive);
 	}

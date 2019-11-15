@@ -8,13 +8,13 @@
 				class="tw-checkbox__input"
 			>
 			<label :for="'no_recordings$' + value.id" class="tw-checkbox__label">
-				{{ t('addons.deck.no-recordings', 'Do not display videos from in-progress broadcasts.') }}
+				{{ t('addon.deck.no-recordings', 'Do not display videos from in-progress broadcasts.') }}
 			</label>
 		</div>
 
 		<div class="tw-flex tw-align-items-start tw-mg-y-05">
 			<label :class="{'tw-form-required': ! validTypes}">
-				{{ t('addons.deck.video-types', 'Video Types:') }}
+				{{ t('addon.deck.video-types', 'Video Types:') }}
 			</label>
 
 			<div>

@@ -25,13 +25,13 @@ export default class Category extends ClipColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.name )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		let name = this.settings.name;
 		if ( this.cache && this.cache.displayName )
 			name = this.cache.displayName;
 
-		return ['addons.deck.clip-category', '{name} Clips', {name}];
+		return ['addon.deck.clip-category', '{name} Clips', {name}];
 	}
 
 	canRun() {
@@ -104,7 +104,7 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addons.deck.category'
+				i18n: 'addon.deck.category'
 			}
 		}
 	]

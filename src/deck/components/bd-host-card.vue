@@ -8,7 +8,7 @@
 		:avatar="settings.show_avatars ? item.profileImageURL : null"
 		:avatarTitle="item.displayName"
 
-		:bottomLeft="t('addons.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
+		:bottomLeft="t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
 
 		:click="openMenu"
 	>
@@ -183,10 +183,15 @@ export default {
 			}
 		},
 
+		navigate(...args) {
+			this.closeMenu();
+			return this.reactNavigate(...args);
+		},
+
 		showMenu(event) {
 			this.closeMenu();
 
-			this.menu = createMenu(this.item, this.reactNavigate);
+			this.menu = createMenu(this.item, this.navigate);
 			const parent = document.querySelector('#root > div') || document.body;
 			parent.appendChild(this.menu);
 

@@ -4,7 +4,7 @@
 			:for="'channel$' + value.id"
 			:class="{'tw-form-required': ! hasChannel}"
 		>
-			{{ t('addons.deck.edit.channel', 'Channel:') }}
+			{{ t('addon.deck.edit.channel', 'Channel:') }}
 		</label>
 
 		<div class="ffz--search-avatar tw-mg-r-05">

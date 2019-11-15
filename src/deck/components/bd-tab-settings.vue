@@ -2,7 +2,7 @@
 	<bd-modal @close="save">
 		<template #title>
 			<h4 class="ffz-i-cog ffz-i-pd-1 tw-pd-x-1">
-				{{ t('addons.deck.tab-settings', 'Tab Settings') }}
+				{{ t('addon.deck.tab-settings', 'Tab Settings') }}
 			</h4>
 		</template>
 
@@ -14,7 +14,7 @@
 					@click="addTab"
 				>
 					<span class="tw-button__text ffz-i-plus">
-						{{ t('addons.deck.new-tab', 'New Tab') }}
+						{{ t('addon.deck.new-tab', 'New Tab') }}
 					</span>
 				</button>
 			</div>
@@ -77,7 +77,7 @@ export default {
 		addTab() {
 			this.tabs.push({
 				id: generateUUID(),
-				title: this.t('addons.deck.tab-name', 'Tab #{count}', {count: this.tabs.length + 1}),
+				title: this.t('addon.deck.tab-name', 'Tab #{count}', {count: this.tabs.length + 1}),
 				columns: []
 			});
 		},

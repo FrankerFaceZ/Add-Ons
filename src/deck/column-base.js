@@ -381,23 +381,23 @@ export class LiveColumnBase extends ColumnBase {
 
 LiveColumnBase.SORT_OPTIONS = {
 	VIEWER_COUNT: {
-		title: 'Viewers (High to Low)', i18n: 'addons.deck.sort.live.viewers',
-		subtitle: 'Viewers', sub_i18n: 'addons.deck.sort.sub.viewers',
+		title: 'Viewers (High to Low)', i18n: 'addon.deck.sort.live.viewers',
+		subtitle: 'Viewers', sub_i18n: 'addon.deck.sort.sub.viewers',
 		icon: 'ffz-i-sort-alt-down'
 	},
 	VIEWER_COUNT_ASC: {
-		title: 'Viewers (Low to High)', i18n: 'addons.deck.sort.live.viewers-asc',
-		subtitle: 'Viewers', sub_i18n: 'addons.deck.sort.sub.viewers',
+		title: 'Viewers (Low to High)', i18n: 'addon.deck.sort.live.viewers-asc',
+		subtitle: 'Viewers', sub_i18n: 'addon.deck.sort.sub.viewers',
 		icon: 'ffz-i-sort-alt-up'
 	},
 	RECENT: {
-		title: 'Recently Started', i18n: 'addons.deck.live.recent',
-		subtitle: 'Recent', sub_i18n: 'addons.deck.sub.recent',
+		title: 'Recently Started', i18n: 'addon.deck.live.recent',
+		subtitle: 'Recent', sub_i18n: 'addon.deck.sub.recent',
 		icon: 'ffz-i-clock'
 	},
 	RELEVANCE: {
-		title: 'Recommended for You', i18n: 'addons.deck.live.recommended',
-		subtitle: 'Recommended', sub_i18n: 'addons.deck.sub.recommended',
+		title: 'Recommended for You', i18n: 'addon.deck.live.recommended',
+		subtitle: 'Recommended', sub_i18n: 'addon.deck.sub.recommended',
 		icon: 'ffz-i-thumbs-up'
 	}
 };
@@ -478,27 +478,27 @@ export class ClipColumnBase extends ColumnBase {
 
 ClipColumnBase.SORT_OPTIONS = {
 	CREATED_AT_ASC: {
-		title: 'Recently Created', i18n: 'addons.deck.sort.clip.created-asc',
-		subtitle: 'Recent', sub_i18n: 'addons.deck.sub.recent',
+		title: 'Recently Created', i18n: 'addon.deck.sort.clip.created-asc',
+		subtitle: 'Recent', sub_i18n: 'addon.deck.sub.recent',
 		icon: 'ffz-i-clock'
 	},
 	CREATED_AT_DESC: {
-		title: 'Oldest First', i18n: 'addons.deck.sort.clip.created-desc',
-		subtitle: 'Oldest', sub_i18n: 'addons.deck.sub.oldest',
+		title: 'Oldest First', i18n: 'addon.deck.sort.clip.created-desc',
+		subtitle: 'Oldest', sub_i18n: 'addon.deck.sub.oldest',
 		icon: 'ffz-i-clock'
 	},
 	VIEWS_ASC: {
-		title: 'Views (Low to High)', i18n: 'addons.deck.sort.clip.views-asc',
-		subtitle: 'Views', sub_i18n: 'addons.deck.sub.views',
+		title: 'Views (Low to High)', i18n: 'addon.deck.sort.clip.views-asc',
+		subtitle: 'Views', sub_i18n: 'addon.deck.sub.views',
 		icon: 'ffz-i-sort-alt-up'
 	},
 	VIEWS_DESC: {
-		title: 'Views (High to Low)', i18n: 'addons.deck.sort.clip.views-desc',
+		title: 'Views (High to Low)', i18n: 'addon.deck.sort.clip.views-desc',
 		subtitle: 'Views', sub_i18n: 'addon.deck.sub.views',
 		icon: 'ffz-i-sort-alt-down'
 	},
 	TRENDING: {
-		title: 'Trending', i18n: 'addons.deck.sort.trending',
+		title: 'Trending', i18n: 'addon.deck.sort.trending',
 		icon: 'ffz-i-thumbs-up'
 	}
 };
@@ -507,27 +507,27 @@ Object.freeze(ClipColumnBase.SORT_OPTIONS);
 
 ClipColumnBase.CLIP_PERIOD = {
 	/*TRENDING: {
-		title: 'Trending', i18n: 'addons.deck.sort.trending',
+		title: 'Trending', i18n: 'addon.deck.sort.trending',
 		icon: 'ffz-i-thumbs-up'
 	},*/
 	LAST_DAY: {
-		title: '24 Hours', i18n: 'addons.deck.clip-period.24-hours',
-		subtitle: '24h', sub_i18n: 'addons.deck.clip-period.24h',
+		title: '24 Hours', i18n: 'addon.deck.clip-period.24-hours',
+		subtitle: '24h', sub_i18n: 'addon.deck.clip-period.24h',
 		icon: 'ffz-i-calendar'
 	},
 	LAST_WEEK: {
-		title: '7 Days', i18n: 'addons.deck.clip-period.7-days',
-		subtitle: '7d', sub_i18n: 'addons.deck.clip-period.7d',
+		title: '7 Days', i18n: 'addon.deck.clip-period.7-days',
+		subtitle: '7d', sub_i18n: 'addon.deck.clip-period.7d',
 		icon: 'ffz-i-calendar'
 	},
 	LAST_MONTH: {
-		title: '30 Days', i18n: 'addons.deck.clip-period.30-days',
-		subtitle: '30d', sub_i18n: 'addons.deck.clip-period.30d',
+		title: '30 Days', i18n: 'addon.deck.clip-period.30-days',
+		subtitle: '30d', sub_i18n: 'addon.deck.clip-period.30d',
 		icon: 'ffz-i-calendar'
 	},
 	ALL_TIME: {
-		title: 'All TIme', i18n: 'addons.deck.clip-period.all-time',
-		subtitle: 'All', sub_i18n: 'addons.deck.clip-period.all',
+		title: 'All TIme', i18n: 'addon.deck.clip-period.all-time',
+		subtitle: 'All', sub_i18n: 'addon.deck.clip-period.all',
 		icon: 'ffz-i-calendar'
 	}
 };
@@ -625,13 +625,13 @@ export class VideoColumnBase extends ColumnBase {
 
 VideoColumnBase.SORT_OPTIONS = {
 	TIME: {
-		title: 'Recently Published', i18n: 'addons.deck.sort.video.recent',
-		subtitle: 'Recent', sub_i18n: 'addons.deck.sub.recent',
+		title: 'Recently Published', i18n: 'addon.deck.sort.video.recent',
+		subtitle: 'Recent', sub_i18n: 'addon.deck.sub.recent',
 		icon: 'ffz-i-clock'
 	},
 	VIEWS: {
-		title: 'Views (High to Low)', i18n: 'addons.deck.sort.video.views',
-		subtitle: 'Views', sub_i18n: 'addons.deck.sort.sub.views',
+		title: 'Views (High to Low)', i18n: 'addon.deck.sort.video.views',
+		subtitle: 'Views', sub_i18n: 'addon.deck.sort.sub.views',
 		icon: 'ffz-i-sort-alt-down'
 	}
 };

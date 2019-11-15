@@ -30,13 +30,13 @@ export default class Category extends VideoColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.name )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		let name = this.settings.name;
 		if ( this.cache && this.cache.displayName )
 			name = this.cache.displayName;
 
-		return ['addons.deck.video-category', '{name} Videos', {name}];
+		return ['addon.deck.video-category', '{name} Videos', {name}];
 	}
 
 	canRun() {
@@ -101,7 +101,7 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addons.deck.category'
+				i18n: 'addon.deck.category'
 			}
 		}
 	]

@@ -16,7 +16,7 @@ export default class Recommended extends LiveColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.live-recommended', 'Recommended Streams']
+		return ['addon.deck.live-recommended', 'Recommended Streams']
 	}
 
 	reset() {
@@ -70,7 +70,7 @@ Recommended.presets = {
 			list: {
 				icon: 'ffz-i-thumbs-up',
 				title: 'Recommended',
-				i18n: 'addons.deck.recommended'
+				i18n: 'addon.deck.recommended'
 			}
 		}
 	]

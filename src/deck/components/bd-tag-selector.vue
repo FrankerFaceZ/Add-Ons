@@ -6,7 +6,7 @@
 			:suggestOnFocus="true"
 			:suggestWhenEmpty="true"
 			:clearOnSelect="true"
-			:placeholder="t('addons.deck.search-tags', 'Search Tags')"
+			:placeholder="t('addon.deck.search-tags', 'Search Tags')"
 			icon="ffz-i-search"
 			@selected="addTag"
 		/>
@@ -15,7 +15,7 @@
 				v-if="! showTags || ! showTags.length"
 				class="tw-mg-t-05 tw-c-text-alt-2"
 			>
-				{{ t('addons.deck.no-tags', 'no tags') }}
+				{{ t('addon.deck.no-tags', 'no tags') }}
 				&nbsp;
 			</div>
 			<button

@@ -10,7 +10,7 @@
 			<template v-if="! editing">
 				<h4>{{ title }}</h4>
 				<div class="tw-c-text-alt">
-					{{ t('addons.deck.column-count', '{count,number} column{count,en_plural}', {count: tab.columns && tab.columns.length}) }}
+					{{ t('addon.deck.column-count', '{count,number} column{count,en_plural}', {count: tab.columns && tab.columns.length}) }}
 				</div>
 				<bd-tag-list :tags="tags" />
 			</template>
@@ -18,7 +18,7 @@
 				<section>
 					<div class="tw-flex tw-align-items-center">
 						<label :for="'title$' + id" class="tw-mg-l-05">
-							{{ t('addons.deck.edit.title', 'Title:') }}
+							{{ t('addon.deck.edit.title', 'Title:') }}
 						</label>
 						<input
 							:id="'title$' + id"
@@ -29,7 +29,7 @@
 
 					<div class="tw-flex tw-align-items-center">
 						<label :for="'icon$' + id" class="tw-mg-l-05">
-							{{ t('addons.deck.edit.icon', 'Icon:') }}
+							{{ t('addon.deck.edit.icon', 'Icon:') }}
 						</label>
 						<icon-picker
 							:clearable="true"
@@ -40,7 +40,7 @@
 
 					<div class="tw-flex tw-align-items-start">
 						<label :for="'tags$' + id" class="tw-mg-l-05">
-							{{ t('addons.deck.edit.tags', 'Tags:') }}
+							{{ t('addon.deck.edit.tags', 'Tags:') }}
 						</label>
 						<bd-tag-selector
 							:id="'tags$' + id"

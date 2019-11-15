@@ -14,7 +14,7 @@ export default class Hosted extends LiveColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.live-hosted', 'Hosted Streams']
+		return ['addon.deck.live-hosted', 'Hosted Streams']
 	}
 
 	reset() {
@@ -88,7 +88,7 @@ Hosted.presets = {
 			list: {
 				icon: 'ffz-i-plus',
 				title: 'Hosted',
-				i18n: 'addons.deck.hosted'
+				i18n: 'addon.deck.hosted'
 			}
 		}
 	]

@@ -10,7 +10,7 @@ export default class Followed extends LiveColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.live-followed', 'Followed Streams']
+		return ['addon.deck.live-followed', 'Followed Streams']
 	}
 
 	reset() {
@@ -62,7 +62,7 @@ Followed.presets = {
 			list: {
 				icon: 'ffz-i-heart',
 				title: 'Followed',
-				i18n: 'addons.deck.followed'
+				i18n: 'addon.deck.followed'
 			}
 		}
 	]

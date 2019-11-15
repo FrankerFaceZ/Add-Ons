@@ -18,7 +18,7 @@
 		:topRight="duration"
 		topRightIcon="ffz-i-play"
 
-		:bottomLeft="t('addons.deck.views', '{count,number} view{count,en_plural}', item.viewCount)"
+		:bottomLeft="t('addon.deck.views', '{count,number} view{count,en_plural}', item.viewCount)"
 
 		@mouseenter="onHover"
 		@mouseleave="onLeave"
@@ -30,10 +30,10 @@
 		<template #bottom-right>
 			<div v-if="published" class="tw-tooltip-wrapper">
 				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center">
-					<p>{{ t('addons.deck.published-human', '{published,humantime,1} ago', {published}) }}</p>
+					<p>{{ t('addon.deck.published-human', '{published,humantime,1} ago', {published}) }}</p>
 				</div>
 				<div class="tw-tooltip tw-tooltip--up tw-tooltip--align-right">
-					{{ t('addons.deck.published', 'Published on {published,date} at {published,time}', {published}) }}
+					{{ t('addon.deck.published', 'Published on {published,date} at {published,time}', {published}) }}
 				</div>
 			</div>
 		</template>

@@ -24,7 +24,7 @@ export default class Shelves extends ColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.shelves', 'Discover (Front Page)']
+		return ['addon.deck.shelves', 'Discover (Front Page)']
 	}
 
 	reset() {
@@ -86,7 +86,7 @@ export default class Shelves extends ColumnBase {
 			list: {
 				icon: 'ffz-i-twitch',
 				title: 'Discover (Front Page)',
-				i18n: 'addons.deck.shelves'
+				i18n: 'addon.deck.shelves'
 			}
 		}
 	]

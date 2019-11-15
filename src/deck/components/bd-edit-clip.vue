@@ -1,7 +1,7 @@
 <template>
 	<div v-if="periods" class="tw-flex tw-align-items-center tw-mg-y-05">
 		<label :for="'period$' + value.id">
-			{{ t('addons.deck.edit.period', 'Period:') }}
+			{{ t('addon.deck.edit.period', 'Period:') }}
 		</label>
 		<select
 			ref="period"

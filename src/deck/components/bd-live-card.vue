@@ -13,7 +13,7 @@
 		:boxartTitle="game && game.displayName"
 		:boxartLink="game && getReactURL('dir-game-index', game.name)"
 
-		:bottomLeft="t('addons.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
+		:bottomLeft="t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
 	>
 		<template #top-left>
 			<bd-stream-indicator :type="item.stream.type" />

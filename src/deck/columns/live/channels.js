@@ -18,7 +18,7 @@ export default class Channels extends LiveColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.live-channels', 'Live Channels']
+		return ['addon.deck.live-channels', 'Live Channels']
 	}
 
 	reset() {
@@ -78,7 +78,7 @@ Channels.presets = {
 			list: {
 				icon: 'ffz-i-channels',
 				title: 'Live Channels',
-				i18n: 'addons.deck.live-channels'
+				i18n: 'addon.deck.live-channels'
 			}
 		}
 	]

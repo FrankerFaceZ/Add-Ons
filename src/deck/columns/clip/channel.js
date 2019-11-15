@@ -35,14 +35,14 @@ export default class Channel extends ClipColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.id )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		if ( this.cache && this.cache.displayName )
-			return ['addons.deck.user-clips', '{user} Clips', {
+			return ['addon.deck.user-clips', '{user} Clips', {
 				user: this.cache.displayName
 			}];
 
-		return ['addons.deck.user-id', 'User #{id}', this.settings];
+		return ['addon.deck.user-id', 'User #{id}', this.settings];
 	}
 
 	canRun() {
@@ -85,7 +85,7 @@ export default class Channel extends ClipColumnBase {
 				was_stream = is_stream;
 				if ( is_stream )
 					out.push({
-						i18n: 'addons.deck.card.stream',
+						i18n: 'addon.deck.card.stream',
 						text: 'Live Stream',
 						color: 'tw-c-text-alt',
 						size: 5,
@@ -93,7 +93,7 @@ export default class Channel extends ClipColumnBase {
 					});
 				else
 					out.push({
-						i18n: 'addons.deck.card.clip',
+						i18n: 'addon.deck.card.clip',
 						text: 'Clips',
 						color: 'tw-c-text-alt',
 						size: 5,
@@ -190,7 +190,7 @@ Channel.presets = {
 			list: {
 				icon: 'ffz-i-user',
 				title: 'Channel',
-				i18n: 'addons.deck.channel'
+				i18n: 'addon.deck.channel'
 			}
 		}
 	]

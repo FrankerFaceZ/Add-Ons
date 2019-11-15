@@ -13,7 +13,7 @@ export default class Featured extends VideoColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.video-featured', 'Featured Videos']
+		return ['addon.deck.video-featured', 'Featured Videos']
 	}
 
 	async load(first = 10) {
@@ -63,7 +63,7 @@ Featured.disabled_presets = {
 			list: {
 				icon: 'ffz-i-twitch',
 				title: 'Featured',
-				i18n: 'addons.deck.featured'
+				i18n: 'addon.deck.featured'
 			}
 		}
 	]

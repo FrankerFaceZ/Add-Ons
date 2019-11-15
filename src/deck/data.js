@@ -64,11 +64,11 @@ export function reduceTags(tags, count, required) {
 
 
 export const VideoTypes = {
-	ARCHIVE: {i18n: 'addons.deck.video-type.archive', text: 'Past Broadcasts'},
-	HIGHLIGHT: {i18n: 'addons.deck.video-type.highlight', text: 'Highlights'},
-	UPLOAD: {i18n: 'addons.deck.video-type.upload', text: 'Uploads'},
-	//PREMIERE_UPLOAD: {i18n: 'addons.deck.video-type.premiere_upload', text: 'Premiere'},
-	PAST_PREMIERE: {i18n: 'addons.deck.video-type.past_premiere', text: 'Past Premieres'}
+	ARCHIVE: {i18n: 'addon.deck.video-type.archive', text: 'Past Broadcasts'},
+	HIGHLIGHT: {i18n: 'addon.deck.video-type.highlight', text: 'Highlights'},
+	UPLOAD: {i18n: 'addon.deck.video-type.upload', text: 'Uploads'},
+	//PREMIERE_UPLOAD: {i18n: 'addon.deck.video-type.premiere_upload', text: 'Premiere'},
+	PAST_PREMIERE: {i18n: 'addon.deck.video-type.past_premiere', text: 'Past Premieres'}
 };
 
 Object.freeze(VideoTypes);

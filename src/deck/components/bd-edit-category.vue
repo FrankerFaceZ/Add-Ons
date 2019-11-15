@@ -4,7 +4,7 @@
 			:for="'game$' + value.id"
 			:class="{'tw-form-required': ! hasName}"
 		>
-			{{ t('addons.deck.edit.game', 'Category:') }}
+			{{ t('addon.deck.edit.game', 'Category:') }}
 		</label>
 		<autocomplete
 			:inputId="'game$' + value.id"

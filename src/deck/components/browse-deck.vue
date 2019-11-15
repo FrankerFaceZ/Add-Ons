@@ -1,5 +1,5 @@
 <template>
-	<div ref="deck" class="bd--deck tw-flex tw-full-width tw-relative">
+	<div ref="deck" class="bd--deck tw-c-background-body tw-flex tw-full-width tw-relative">
 		<div class="bd--deck-controls tw-flex tw-absolute tw-top-0 tw-left-0 tw-mg-t-1 tw-mg-x-3">
 			<div class="tw-flex tw-align-items-center tw-flex-shrink-0 tw-mg-r-1 tw-border-r tw-pd-r-1">
 				<div
@@ -11,7 +11,7 @@
 						@click="toggleMenu"
 					>
 						<span class="tw-button__text ffz-i-plus">
-							{{ t('addons.deck.new', 'New...') }}
+							{{ t('addon.deck.new', 'New...') }}
 						</span>
 						<span class="tw-button__icon tw-button__icon--right">
 							<figure class="ffz-i-down-dir" />
@@ -59,7 +59,7 @@
 					@click="refreshAll"
 				>
 					<span class="tw-button__text ffz-i-arrows-cw">
-						{{ t('addons.deck.refresh-all', 'Refresh All') }}
+						{{ t('addon.deck.refresh-all', 'Refresh All') }}
 					</span>
 				</button>
 			</div>
@@ -85,17 +85,17 @@
 				>
 					<span class="tw-button__text ffz-i-cog" />
 					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right">
-						{{ t('addons.deck.tab-settings', 'Tab Settings') }}
+						{{ t('addon.deck.tab-settings', 'Tab Settings') }}
 					</div>
 				</button>
 			</div>
 			<div v-if="currentTags && currentTags.length" class="bd--global-tags tw-flex tw-align-items-center tw-mg-l-1 tw-border-l tw-pd-l-1">
 				<div class="tw-mg-r-05">
-					{{ t('addons.deck.filtered', 'Filtered by') }}
+					{{ t('addon.deck.filtered', 'Filtered by') }}
 				</div>
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
 				<div v-if="currentTags.length > 3" class="tw-mg-l-05 tw-tooltip-wrapper">
-					{{ t('addons.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
+					{{ t('addon.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
 					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right tw-balloon--lg tw-pd-x-1 tw-pd-b-1">
 						<bd-tag-list
 							:tags="currentTags"
@@ -124,7 +124,7 @@
 				/>
 				<div v-if="! columns.length" class="tw-c-text-base">
 					<h1 class="ffz-i-up-big tw-mg-l-2 tw-c-text-alt-2" />
-					<markdown :source="t('addons.deck.intro', 'Welcome to Deck, the best way to discover content on Twitch.\n\nYou need to start by adding a column using the New button.')" />
+					<markdown :source="t('addon.deck.intro', 'Welcome to Deck, the best way to discover content on Twitch.\n\nYou need to start by adding a column using the New button.')" />
 				</div>
 				<div class="tw-mg-r-2" />
 			</div>
@@ -159,7 +159,7 @@ function getDefaultTab() {
 	return {
 		id: generateUUID(),
 		title: 'Default Tab',
-		i18n: 'addons.deck.default-tab',
+		i18n: 'addon.deck.default-tab',
 		columns: []
 	}
 };
@@ -246,7 +246,7 @@ export default {
 
 				out.push({
 					title: category_labels[cat] || cat,
-					i18n: `addons.deck.category.${cat}`
+					i18n: `addon.deck.category.${cat}`
 				});
 
 				for(const preset of presets)

@@ -4,7 +4,7 @@
 		class="tw-flex tw-align-items-center tw-mg-y-05"
 	>
 		<label :for="'query$' + value.id">
-			{{ t('addons.deck.edit.search', 'Search:') }}
+			{{ t('addon.deck.edit.search', 'Search:') }}
 		</label>
 		<input
 			:id="'query$' + value.id"

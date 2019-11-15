@@ -16,7 +16,7 @@ export default class Featured extends LiveColumnBase {
 	}
 
 	getTitle() {
-		return ['addons.deck.live-featured', 'Featured Streams']
+		return ['addon.deck.live-featured', 'Featured Streams']
 	}
 
 	async load(first = 10) {
@@ -67,7 +67,7 @@ Featured.presets = {
 			list: {
 				icon: 'ffz-i-twitch',
 				title: 'Featured',
-				i18n: 'addons.deck.featured'
+				i18n: 'addon.deck.featured'
 			}
 		}
 	]

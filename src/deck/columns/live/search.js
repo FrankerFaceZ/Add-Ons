@@ -17,7 +17,7 @@ export default class Search extends LiveColumnBase {
 
 	getTitle() {
 		if ( ! this.settings.query )
-			return ['addons.deck.unset', '(Unset)'];
+			return ['addon.deck.unset', '(Unset)'];
 
 		return this.settings.query;
 	}
@@ -71,7 +71,7 @@ Search.presets = {
 			list: {
 				icon: 'ffz-i-search',
 				title: 'Search',
-				i18n: 'addons.deck.search'
+				i18n: 'addon.deck.search'
 			}
 		}
 	]
