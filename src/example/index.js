@@ -19,6 +19,10 @@ class Example extends Addon {
 		// In this case, we're depending on the FFZ module "metadata".
 		this.inject('metadata');
 
+		// We also want to make a custom chat action, so let's import
+		// that too.
+		this.inject('chat.actions');
+
 		// All add-ons, by default, depend on the "settings" and
 		// "i18n" modules.
 
@@ -88,6 +92,52 @@ class Example extends Addon {
 
 			label: data => this.i18n.t('addon.example.rainbow', 'RAINBOW')
 		});
+
+
+		// Now, let's do our chat action.
+		this.actions.addAction('example', {
+			// Every action needs a preset, or multiple presets, that
+			// will be added to the New Action menu.
+			presets: [{
+				appearance: {
+					type: 'text',
+					text: 'E'
+				}
+			}],
+
+			// Default data for configuring a new action.
+			defaults: {
+				thingy: 1
+			},
+
+			// The information this action requires. It won't be
+			// possible to add the action to action providers that
+			// don't have a specific part of the context.
+			required_context: ['room', 'user', 'message'],
+
+			title: 'Example Action',
+
+			editor: () => import('./views/edit-action.vue'),
+
+			tooltip(data) {
+				return this.i18n.t(
+					'addon.example.action.tooltip',
+					'The user is {user.login} and they said: {message.text}',
+					data
+				);
+			},
+
+			click(event, data) {
+				// Yes, this example IS obnoxious. :D
+				for(let i=0; i < data.options.thingy; i++)
+					alert(this.i18n.t( // eslint-disable-line no-alert
+						'addon.example.action',
+						'Hey, you just clicked on {user.login}#{user.id}!\n\nMessage ID: {message.id}\nText: {message.text}',
+						data
+					));
+			}
+		})
+
 	}
 
 	// onDisable is called when the module should be disabled.
