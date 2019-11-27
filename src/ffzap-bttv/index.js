@@ -1,12 +1,6 @@
 import Socket from './socket';
 import ProUser from './pro_user';
 
-const GIF_EMOTES_MODE = {
-	DISABLED: 0,
-	STATIC: 1,
-	ANIMATED: 2,
-};
-
 class BetterTTV extends Addon {
 	constructor(...args) {
 		super(...args);
@@ -16,6 +10,12 @@ class BetterTTV extends Addon {
 		this.inject('chat.emotes');
 		this.inject('chat.badges');
 		this.inject('site');
+
+		this.GIF_EMOTES_MODE = {
+			DISABLED: 0,
+			STATIC: 1,
+			ANIMATED: 2,
+		};
 
 		this.settings.add('ffzap.betterttv.global_emoticons', {
 			default: true,
@@ -187,8 +187,8 @@ class BetterTTV extends Addon {
 
 	getAnimatedEmoteMode() {
 		let emoteMode = this.chat.context.get('ffzap.betterttv.gif_emoticons_mode');
-		if (window.BetterTTV && window.BetterTTV.settings.get('bttvGIFEmotes') && emoteMode !== GIF_EMOTES_MODE.DISABLED) {
-			emoteMode = GIF_EMOTES_MODE.ANIMATED;
+		if (window.BetterTTV && window.BetterTTV.settings.get('bttvGIFEmotes') && emoteMode !== this.GIF_EMOTES_MODE.DISABLED) {
+			emoteMode = this.GIF_EMOTES_MODE.ANIMATED;
 		}
 
 		return emoteMode;
@@ -293,10 +293,10 @@ class BetterTTV extends Addon {
 				};
 
 				if (dataEmote.imageType === 'gif') { // If the emote is a GIF
-					if (this.getAnimatedEmoteMode() === GIF_EMOTES_MODE.DISABLED) {
+					if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.DISABLED) {
 						// If the GIF setting is set to "Disabled", ignore it.
 						continue;
-					} else if (this.getAnimatedEmoteMode() === GIF_EMOTES_MODE.STATIC) {
+					} else if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.STATIC) {
 						// If the GIF setting is set to "Static", route them through the cache.
 						emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
 						emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
@@ -413,10 +413,10 @@ class BetterTTV extends Addon {
 
 				if (emoteFromArray.imageType === 'gif') {
 					switch (this.getAnimatedEmoteMode()) {
-						case GIF_EMOTES_MODE.DISABLED:
+						case this.GIF_EMOTES_MODE.DISABLED:
 							break;
 
-						case GIF_EMOTES_MODE.STATIC:
+						case this.GIF_EMOTES_MODE.STATIC:
 							emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
 							emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
 							emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
@@ -424,7 +424,7 @@ class BetterTTV extends Addon {
 							channelBttv.push(emote);
 							break;
 
-						case GIF_EMOTES_MODE.ANIMATED:
+						case this.GIF_EMOTES_MODE.ANIMATED:
 							channelBttv.push(emote);
 							break;
 
