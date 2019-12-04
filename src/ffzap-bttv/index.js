@@ -258,14 +258,14 @@ class BetterTTV extends Addon {
 			const arbitraryEmotes = [];
 			const nightSubEmotes = [];
 
-			// const overlayEmotes = {
-			//     'SoSnowy': '2px 0 0 0',
-			//     'CandyCane': null,
-			//     'ReinDeer': null,
-			//     'IceCold': '2px 0 0 0',
-			//     'TopHat': null,
-			//     'SantaHat': null,
-			// };
+			const overlayEmotes = {
+				'SoSnowy': '2px 0 0 1px',
+				'CandyCane': null,
+				'ReinDeer': null,
+				'IceCold': '2px 0 0 1px',
+				'TopHat': null,
+				'SantaHat': null,
+			};
 
 			let i = emotes.length;
 			while (i--) {
@@ -282,8 +282,8 @@ class BetterTTV extends Addon {
 					width: dataEmote.width,
 					height: dataEmote.height,
 					require_spaces: arbitraryEmote,
-					// modifier: overlayEmotes.hasOwnProperty(dataEmote.code),
-					// modifier_offset: overlayEmotes[dataEmote.code],
+					modifier: overlayEmotes.hasOwnProperty(dataEmote.code),
+					modifier_offset: overlayEmotes[dataEmote.code],
 				};
 
 				emote.urls = {
