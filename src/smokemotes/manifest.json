@@ -1,0 +1,16 @@
+{
+    "enabled": true,
+    "requires": [],
+    "unlisted": true,
+
+    "icon": "https://bot.smokey.gg/favicon.png",
+    "version": "0.0.2",
+
+    "short_name": "SmokEmotes",
+    "name": "SmokEmotes",
+    "author": "Smokey",
+    "description": "GIFs and popular global emotes.",
+
+    "website": "https://bot.smokey.gg/",
+    "settings": "add_ons.smokemotes"
+}
