@@ -1,6 +1,7 @@
 {
     "enabled": true,
     "requires": [],
+    "unlisted": true,
 
     "icon": "https://bot.smokey.gg/favicon.png",
     "version": "0.0.2",
