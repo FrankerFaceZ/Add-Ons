@@ -13,9 +13,9 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Global Emotes',
+				path: 'Add-Ons > smokEmotes >> Global Emotes',
 				title: 'Global Emotes',
-				description: 'Enable to show Smokeys global emoticons.',
+				description: 'Enable to show Smokey\'s global emoticons.',
 				component: 'setting-check-box',
 			},
 		});
@@ -24,9 +24,9 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Channel Emotes',
+				path: 'Add-Ons > smokEmotes >> Channel Emotes',
 				title: 'Channel Emotes',
-				description: 'Enable to show YOUR channel emoticons.',
+				description: 'Enable to show channel emoticons.',
 				component: 'setting-check-box',
 			},
 		});
@@ -35,7 +35,7 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Personal Emotes',
+				path: 'Add-Ons > smokEmotes >> Personal Emotes',
 				title: 'Personal Emotes',
 				description: 'Enable to show Personal emoticons (anywhere).',
 				component: 'setting-check-box',
@@ -48,7 +48,7 @@ class SmokEmotes extends Addon {
 	}
 
 	onEnable() {
-		this.log.debug('Smokey\'s Emotes module was enabled successfully.');
+		this.log.debug('smokEmotes module was enabled successfully.');
 
 		//this.on('chat:receive-message', this.onReceiveMessage);
 
@@ -118,7 +118,7 @@ class SmokEmotes extends Addon {
 			const set = {
 				emoticons: setEmotes,
 				title: 'Global Emotes',
-				source: 'SmokEmotes',
+				source: 'smokEmotes',
 				icon: 'https://bot.smokey.gg/favicon.png',
 				_type: 1,
 			};
@@ -183,7 +183,7 @@ class SmokEmotes extends Addon {
 			const set = {
 				emoticons: setEmotes,
 				title: 'Personal Emotes',
-				source: 'SmokEmotes',
+				source: 'smokEmotes',
 				icon: 'https://bot.smokey.gg/favicon.png',
 				_type: 1,
 			};
