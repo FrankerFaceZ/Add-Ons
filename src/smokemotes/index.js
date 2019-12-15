@@ -13,7 +13,7 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Global Emotes',
+				path: 'Add-Ons > smokEmotes >> Global Emotes',
 				title: 'Global Emotes',
 				description: 'Enable to show Smokeys global emoticons.',
 				component: 'setting-check-box',
@@ -24,7 +24,7 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Channel Emotes',
+				path: 'Add-Ons > smokEmotes >> Channel Emotes',
 				title: 'Channel Emotes',
 				description: 'Enable to show YOUR channel emoticons.',
 				component: 'setting-check-box',
@@ -35,7 +35,7 @@ class SmokEmotes extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > SmokEmotes >> Personal Emotes',
+				path: 'Add-Ons > smokEmotes >> Personal Emotes',
 				title: 'Personal Emotes',
 				description: 'Enable to show Personal emoticons (anywhere).',
 				component: 'setting-check-box',
@@ -48,7 +48,7 @@ class SmokEmotes extends Addon {
 	}
 
 	onEnable() {
-		this.log.debug('Smokey\'s Emotes module was enabled successfully.');
+		this.log.debug('smokEmotes module was enabled successfully.');
 
 		//this.on('chat:receive-message', this.onReceiveMessage);
 
@@ -75,7 +75,7 @@ class SmokEmotes extends Addon {
 			return;
 		}
 
-		const response = await fetch('https://bot.smokey.gg/api/?emotes=1&channel_id=global');
+		const response = await fetch('https://bot.smokey.gg/api/emotes/?channel_id=global');
 		if (response.ok) {
 			const emotes = await response.json();
 
@@ -118,7 +118,7 @@ class SmokEmotes extends Addon {
 			const set = {
 				emoticons: setEmotes,
 				title: 'Global Emotes',
-				source: 'SmokEmotes',
+				source: 'smokEmotes',
 				icon: 'https://bot.smokey.gg/favicon.png',
 				_type: 1,
 			};
@@ -145,7 +145,7 @@ class SmokEmotes extends Addon {
 			return;
 		}
 
-		const response = await fetch(`https://bot.smokey.gg/api/?emotes=1&channel_id=${user.id}`);
+		const response = await fetch(`https://bot.smokey.gg/api/emotes/?channel_id=${user.id}`);
 		if (response.ok) {
 			const emotes = await response.json();
 
@@ -183,7 +183,7 @@ class SmokEmotes extends Addon {
 			const set = {
 				emoticons: setEmotes,
 				title: 'Personal Emotes',
-				source: 'SmokEmotes',
+				source: 'smokEmotes',
 				icon: 'https://bot.smokey.gg/favicon.png',
 				_type: 1,
 			};
