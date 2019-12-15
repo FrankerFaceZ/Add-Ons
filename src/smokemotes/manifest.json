@@ -4,10 +4,10 @@
     "unlisted": true,
 
     "icon": "https://bot.smokey.gg/favicon.png",
-    "version": "0.0.2",
+    "version": "0.0.4",
 
-    "short_name": "SmokEmotes",
-    "name": "SmokEmotes",
+    "short_name": "smokEmotes",
+    "name": "smokEmotes",
     "author": "Smokey",
     "description": "GIFs and popular global emotes.",
 
