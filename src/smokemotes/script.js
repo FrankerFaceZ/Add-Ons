@@ -1,4 +1,3 @@
-
 class SmokEmotes extends Addon {
 	constructor(...args) {
 		super(...args);
@@ -8,6 +7,12 @@ class SmokEmotes extends Addon {
 		this.inject('chat.emotes');
 		this.inject('chat.badges');
 		this.inject('site');
+
+		this.GIF_EMOTES_MODE = {
+			DISABLED: 0,
+			STATIC: 1,
+			ANIMATED: 2,
+		};
 
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
@@ -50,11 +55,24 @@ class SmokEmotes extends Addon {
 	onEnable() {
 		this.log.debug('Smokey\'s Emotes module was enabled successfully.');
 
-		//this.on('chat:receive-message', this.onReceiveMessage);
+		/*this.on('chat:room-add', this.roomAdd);
+		this.on('chat:room-remove', this.roomRemove);*/
+		this.on('chat:receive-message', this.onReceiveMessage);
 
 		this.updateEmotes();
 
+		/*for (const room of this.chat.iterateRooms()) {
+			if (room) this.updateChannel(room);
+		}*/
 	}
+
+	/*roomAdd(room) {
+		this.updateChannel(room);
+	}
+
+	roomRemove(room) {
+		this.updateChannel(room);
+	}*/
 
 	onReceiveMessage(msg) {
 		const user = this.resolve('site').getUser();
