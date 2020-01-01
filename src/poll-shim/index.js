@@ -42,7 +42,7 @@ class PollShim extends Addon {
 				description: 'Connect to this address for polls.',
 				component: 'setting-text-box'
 			},
-			update: () => {
+			changed: () => {
 				if ( this._socket )
 					this._socket.reconnect();
 			}
@@ -56,7 +56,21 @@ class PollShim extends Addon {
 				description: 'The server you connect to must authenticate with this passphrase to be allowed to create polls.\n\n**Note:** This value changes every page load until you manually set it.',
 				component: 'setting-text-box'
 			},
-			update: () => {
+			changed: () => {
+				if ( this._socket )
+					this._socket.reconnect();
+			}
+		});
+
+		this.settings.add('addon.poll-shim.client-key', {
+			default: '',
+			ui: {
+				path: 'Add-Ons > Poll-Shim >> General',
+				title: 'Client Passphrase',
+				description: 'If this is set, the client will authenticate by sending this passphrase to the server once the server when it connects.',
+				component: 'setting-text-box'
+			},
+			changed: () => {
 				if ( this._socket )
 					this._socket.reconnect();
 			}
@@ -205,6 +219,10 @@ class PollShim extends Addon {
 		this.log.debug('WebSocket Connected');
 		this.emit(':update');
 
+		const key = this.settings.get('addon.poll-shim.client-key');
+		if ( key && key.length )
+			this.send('auth', {data: key});
+
 		this._open_timer = setTimeout(() => {
 			if ( this._open_timer ) {
 				clearTimeout(this._open_timer);
@@ -337,17 +355,54 @@ class PollShim extends Addon {
 			return;
 		}
 
+		if ( type === 'get' ) {
+			if ( ! msg.id )
+				this.send('error', {id: 'no_id'});
+
+			this.updating_polls.add(msg.id);
+			this.twitch_data.getPoll(msg.id).then(data => {
+				if ( ! this.updating_polls.has(msg.id) )
+					return;
+
+				if ( ! data )
+					data = {
+						id: msg.id,
+						status: 'COMPLETED',
+						choices: []
+					};
+
+				this.handlePoll(data, true);
+			});
+
+			this.emit(':update');
+			return;
+		}
+
+		if ( type === 'end' ) {
+			if ( ! msg.id )
+				this.send('error', {id: 'no_id'});
+
+			this.twitch_data.terminatePoll(msg.id).then(() => {
+				this.updating_polls.delete(msg.id);
+				this.polls.delete(msg.id);
+				this.send('ended', {id: msg.id})
+			});
+
+			this.emit(':update');
+			return;
+		}
+
 		this.send('error', {id: 'unknown_command'});
 	}
 
-	handlePoll(data) {
+	handlePoll(data, override = false, type = 'update') {
 		if ( ! this.active || ! this._socket )
 			return;
 
 		const poll = formatPoll(data);
 		this.updating_polls.delete(poll.id);
 
-		if ( ! this.polls.has(poll.id) )
+		if ( ! this.polls.has(poll.id) && ! override )
 			return;
 
 		if ( poll.ended ) {
@@ -355,7 +410,7 @@ class PollShim extends Addon {
 			this.emit(':update');
 		}
 
-		this.send('update', {poll});
+		this.send(type, {poll});
 	}
 
 }
