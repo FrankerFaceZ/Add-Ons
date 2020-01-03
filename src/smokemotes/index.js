@@ -3,8 +3,6 @@ class SmokEmotes extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.loadedUsers = [];
-
 		this.inject('settings');
 		this.inject('chat');
 		this.inject('chat.emotes');
@@ -71,17 +69,11 @@ class SmokEmotes extends Addon {
 	}
 
 	onReceiveMessage(msg) {
-		if (!this.chat.context.get('smokemotes.personal_emotes')) {
-			return;
-		}
 		const user = this.resolve('site').getUser();
 		if (user) {
 			const msg_user_id = msg.message.user.id;
-			if (user.id != msg_user_id
-				&& !this.loadedUsers.includes(msg_user_id)) {
+			if (user.id != msg_user_id) {
 				this.updateOtherPersonalEmotes(msg);
-				// this.loadedUsers.push(msg_user_id);
-				// this.loadedUsers = [...new Set(this.loadedUsers)];
 			}
 		}
 	}
@@ -268,12 +260,11 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	async updatePersonalEmotes() {
-
+	async updatePersonalEmotes(attempts = 0) {
+		const realID = 'addon--smokemotes--emotes-personal';
+		this.emotes.removeDefaultSet('addon--smokemotes', realID);
+		this.emotes.unloadSet(realID);
 		const user = this.resolve('site').getUser();
-
-		const _id_emotes = `addon--smokemotes--emotes-personal-${user.id}`;
-		this.emotes.unloadSet(_id_emotes);
 
 		if (!this.chat.context.get('smokemotes.personal_emotes')) {
 			return;
@@ -284,8 +275,6 @@ class SmokEmotes extends Addon {
 			const emotes = await response.json();
 
 			const personalEmotes = [];
-
-			if (emotes.length == 0) { return; }
 
 			let i = emotes.length;
 			while (i--) {
@@ -304,25 +293,39 @@ class SmokEmotes extends Addon {
 					width: dataEmote.width,
 					height: dataEmote.height,
 					require_spaces: arbitraryEmote,
-					owner: {
+					/*owner: {
 						display_name: dataEmote.user.displayName || '',
 						name: dataEmote.user.name || '',
-					},
+					},*/
 				};
 
 				personalEmotes.push(emote);
 			}
 
+			let setEmotes = [];
+			setEmotes = setEmotes.concat(personalEmotes);
+
+			if (setEmotes.length === 0) {
+				return;
+			}
+
 			const set = {
-				emoticons: personalEmotes,
+				emoticons: setEmotes,
 				title: 'Personal Emotes',
 				source: 'smokEmotes',
 				icon: 'https://bot.smokey.gg/favicon.png',
+				_type: 1,
 			};
 
-			this.emotes.loadSetData(_id_emotes, set, false);
-			this.chat.getUser(undefined, user.login).addSet('addon--smokemotes', _id_emotes);
+			this.emotes.addDefaultSet('addon--smokemotes', realID, set);
+		} else {
+			if (response.status === 404) return;
 
+			const newAttempts = (attempts || 0) + 1;
+			if (newAttempts < 12) {
+				this.log.error('Failed to fetch personal emotes. Trying again in 5 seconds.');
+				setTimeout(this.updatePersonalEmotes.bind(this, newAttempts), 5000);
+			}
 		}
 	}
 
