@@ -113,7 +113,15 @@ const config = {
 		{
 			test: /\.jsx?$/,
 			exclude: /node_modules/,
-			loader: 'babel-loader'
+			loader: 'babel-loader',
+			options: {
+				cacheDirectory: true,
+				plugins: [
+					['@babel/plugin-transform-react-jsx', {
+						pragma: 'createElement'
+					}]
+				]
+			}
 		},
 		{
 			test: /\.(graphql|gql)$/,

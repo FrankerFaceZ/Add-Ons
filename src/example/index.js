@@ -117,7 +117,31 @@ class Example extends Addon {
 
 			title: 'Example Action',
 
+			// The editor is a Vue component that is shown to edit the
+			// options of an action. It only has to allow configuration
+			// for that action type's specific settings. Appearance
+			// and other options are handled generically.
 			editor: () => import('./views/edit-action.vue'),
+
+			// Want your action to look different when stuff happens?
+			// This method lets you override a specific action's appearance.
+			// Please note that the data here is not the same as in most other
+			// methods to keep computations during rendering to a minimum.
+			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
+				if ( current_user ) {
+					appearance.type = 'text';
+					appearance.text = current_user.login.substr(0,2);
+				}
+
+				return appearance;
+			},
+
+			// Want to disable your action in certain cases, but still have
+			// it rendered? Like with override_appearance, data is different
+			// for this specific function.
+			disabled(data, msg, current_room, current_user, mod_icons) {
+				return current_room && current_user && current_room.id == current_user.id;
+			},
 
 			tooltip(data) {
 				return this.i18n.t(
