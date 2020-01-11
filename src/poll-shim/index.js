@@ -27,6 +27,9 @@ class PollShim extends Addon {
 			hasWS: () => this._socket != null && this._socket.readyState === WebSocket.OPEN,
 			isAuthed: () => this.socket_auth,
 
+			getChannel: () => this.getUser(),
+			getSelf: () => this.getSelf(),
+
 			getWS: () => this._socket,
 			getPolls: () => this.polls,
 
@@ -34,10 +37,50 @@ class PollShim extends Addon {
 			off: (...args) => this.off(...args)
 		});
 
+		this.settings.add('addon.poll-shim.enabled', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Poll-Shim >> General @{"sort": -500}',
+				title: 'Enable Poll-Shim.',
+				component: 'setting-check-box'
+			},
+			changed: () => this.onNavigate()
+		});
+
+		this.settings.add('addon.poll-shim.user', {
+			default: null,
+			requires: ['context.channelID', 'context.session.user.id', 'context.route.name'],
+			process: (ctx, val) => {
+				if ( val == null || typeof val !== 'string' ) {
+					const route = ctx.get('context.route.name');
+					if ( typeof route === 'string' && route.startsWith('dash-') )
+						return ctx.get('context.channelID');
+
+					return ctx.get('context.session.user.id');
+				}
+
+				return val;
+			},
+			ui: {
+				path: 'Add-Ons > Poll-Shim >> General',
+				title: 'Channel ID',
+				description: 'Set this to override the channel where polls should be run. Please note that you must be a moderator of the channel in question to run a poll.',
+				component: 'setting-text-box'
+			},
+			changed: () => {
+				if ( this.active ) {
+					this.deactivate();
+					if ( this.shouldBeActive )
+						this.activate();
+				} else
+					this.onNavigate();
+			}
+		});
+
 		this.settings.add('addon.poll-shim.address', {
 			default: 'ws://localhost:31337',
 			ui: {
-				path: 'Add-Ons > Poll-Shim >> General',
+				path: 'Add-Ons > Poll-Shim >> Connectivity',
 				title: 'Address',
 				description: 'Connect to this address for polls.',
 				component: 'setting-text-box'
@@ -51,7 +94,7 @@ class PollShim extends Addon {
 		this.settings.add('addon.poll-shim.key', {
 			default: generateUUID(),
 			ui: {
-				path: 'Add-Ons > Poll-Shim >> General',
+				path: 'Add-Ons > Poll-Shim >> Authentication',
 				title: 'Passphrase',
 				description: 'The server you connect to must authenticate with this passphrase to be allowed to create polls.\n\n**Note:** This value changes every page load until you manually set it.',
 				component: 'setting-text-box'
@@ -65,9 +108,9 @@ class PollShim extends Addon {
 		this.settings.add('addon.poll-shim.client-key', {
 			default: '',
 			ui: {
-				path: 'Add-Ons > Poll-Shim >> General',
+				path: 'Add-Ons > Poll-Shim >> Authentication',
 				title: 'Client Passphrase',
-				description: 'If this is set, the client will authenticate by sending this passphrase to the server once the server when it connects.',
+				description: 'If this is set, the client will authenticate by sending this passphrase to the server once the server connects.',
 				component: 'setting-text-box'
 			},
 			changed: () => {
@@ -94,12 +137,15 @@ class PollShim extends Addon {
 		if ( this.errored )
 			return false;
 
-		const user = this.site.getUser();
-		if ( ! user || ! user.id )
+		if ( ! this.settings.get('addon.poll-shim.enabled') )
 			return false;
 
-		const core = this.site.getCore();
-		if ( ! core || ! core.pubsub )
+		// Make sure this updates on navigation / whatever.
+		this.settings.main_context.update('addon.poll-shim.user');
+
+		const user_id = this.settings.get('addon.poll-shim.user'),
+			core = this.site.getCore();
+		if ( ! user_id || ! core || ! core.pubsub )
 			return false;
 
 		const route = this.router.current_name;
@@ -109,8 +155,8 @@ class PollShim extends Addon {
 		if ( ! VALID_ROUTES.includes(route) && ! route.startsWith('dash-') )
 			return false;
 
-		const name = this.router.match?.[1];
-		return name && name.toLowerCase() === user.login.toLowerCase();
+		const current_id = this.settings.get('context.channelID');
+		return current_id && current_id == user_id;
 	}
 
 	async onEnable() {
@@ -134,16 +180,30 @@ class PollShim extends Addon {
 			this.deactivate();
 	}
 
-	activate() {
-		const user = this.site.getUser(),
-			core = this.site.getCore();
-		if ( ! user || ! user.id || ! core || ! core.pubsub )
+	async activate() {
+		if ( ! this.enabled && ! this.enabling )
 			return;
 
+		const user_id = this.settings.get('addon.poll-shim.user'),
+			core = this.site.getCore();
+
+		if ( ! user_id || ! core || ! core.pubsub )
+			return;
+
+		this.channel_id = user_id;
+		const [user, self] = await Promise.all([
+			this.getUser(),
+			this.getSelf()
+		]);
+		if ( ! user ) {
+			this.channel_id = null;
+			return;
+		}
+
 		this.log.info('Activating shim.');
-		this.channel_id = user.id;
+
 		this._unsub = core.pubsub.subscribe({
-			topic: `polls.${user.id}`,
+			topic: `polls.${user_id}`,
 			success: () => {
 				this.pubsub_open = true;
 				this.emit(':update');
@@ -194,6 +254,8 @@ class PollShim extends Addon {
 		this.pubsub_open = false;
 		this.socket_auth = false;
 		this.channel_id = null;
+		this._user = null;
+		this._self = null;
 		this.active = false;
 		this.emit(':update');
 	}
@@ -240,11 +302,47 @@ class PollShim extends Addon {
 			this._open_timer = null;
 		}
 
-		this.log.info('WebSocket Closed');
+		this.log.debug('WebSocket Closed');
 		this.polls.clear();
 		this.updating_polls.clear();
 		this.socket_auth = false;
 		this.emit(':update');
+	}
+
+	async getUser() {
+		if ( this._user )
+			return this._user;
+
+		const user_id = this.channel_id;
+		if ( ! user_id ) {
+			this._user = null;
+			return null;
+		}
+
+		this._user = await this.twitch_data.getUser(user_id);
+		return this._user;
+	}
+
+	async getSelf() {
+		if ( this._self )
+			return this._self;
+
+		const user_id = this.channel_id;
+		if ( ! user_id ) {
+			this._self = null;
+			return null;
+		}
+
+		const current_user = this.site.getUser();
+		if ( current_user && current_user.id == user_id ) {
+			this._self = {
+				isModerator: true,
+				isEditor: true
+			}
+		} else
+			this._self = await this.twitch_data.getUserSelf(user_id);
+
+		return this._self;
 	}
 
 	onWSMessage(event) {
@@ -279,6 +377,24 @@ class PollShim extends Addon {
 			this.socket_auth = true;
 			this.send('auth_ok');
 			this.log.info('WebSocket Connected and Authorized');
+
+			Promise.all([
+				this.getUser(),
+				this.getSelf()
+			]).then(([user, self]) => {
+				if ( ! user )
+					return this.send('error', {id: 'no_user'});
+
+				const is_mod = (self && self.isModerator);
+				const roles = user.roles || {};
+
+				this.send('user', {
+					id: user.id,
+					login: user.login,
+					display_name: user.displayName,
+					can_create: is_mod && (roles.isAffiliate || roles.isPartner)
+				});
+			});
 
 			if ( this._open_timer ) {
 				clearTimeout(this._open_timer);
@@ -316,7 +432,18 @@ class PollShim extends Addon {
 				{
 					duration
 				}
-			).then(poll => {
+			).then(async poll => {
+				if ( ! poll ) {
+					const user = await this.getUser(),
+						roles = user?.roles || {};
+					if ( ! user )
+						return this.send('error', {id: 'cannot_poll', err: 'Invalid channel ID or API error.'});
+					if ( ! roles.isAffiliate && ! roles.isPartner )
+						return this.send('error', {id: 'cannot_poll', err: 'Channel does not have access to Polls. Must be affiliate or partner.'});
+
+					this.send('error', {id: 'cannot_poll', err: 'Unable to create poll.'})
+				}
+
 				this.polls.add(poll.id);
 				this.send('created', {id: poll.id});
 
