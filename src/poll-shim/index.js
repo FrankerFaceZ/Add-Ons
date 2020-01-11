@@ -425,12 +425,22 @@ class PollShim extends Addon {
 			if ( typeof duration !== 'number' || duration < 15 || isNaN(duration) || duration > 180 )
 				return this.send('error', {id: 'bad_duration'});
 
+			const subscriberMultiplier = msg.subscriberMultiplier || false;
+			const subscriberOnly = msg.subscriberOnly || false;
+
+			const bits = msg.bits || 0;
+			if ( typeof bits !== 'number' || bits > 10000 )
+				return this.send('error', {id: 'bad_bits'});
+
 			this.twitch_data.createPoll(
 				this.channel_id,
 				title,
 				msg.choices,
 				{
-					duration
+					duration,
+					subscriberMultiplier,
+					subscriberOnly,
+					bits
 				}
 			).then(async poll => {
 				if ( ! poll ) {
