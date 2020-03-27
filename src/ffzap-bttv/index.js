@@ -258,13 +258,18 @@ class BetterTTV extends Addon {
 			const arbitraryEmotes = [];
 			const nightSubEmotes = [];
 
+// 			const overlayEmotes = {
+// 				'SoSnowy': '2px 0 0 1px',
+// 				'CandyCane': null,
+// 				'ReinDeer': null,
+// 				'IceCold': '2px 0 0 1px',
+// 				'TopHat': null,
+// 				'SantaHat': null,
+// 			};
+			
 			const overlayEmotes = {
-				'SoSnowy': '2px 0 0 1px',
-				'CandyCane': null,
-				'ReinDeer': null,
-				'IceCold': '2px 0 0 1px',
-				'TopHat': null,
-				'SantaHat': null,
+				'cvMask': '3px 0 0 0',
+				'cvHazmat': '3px 0 0 0'
 			};
 
 			let i = emotes.length;
