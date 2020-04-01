@@ -93,8 +93,7 @@ class SmokEmotes extends Addon {
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
 				title: 'Border Color',
 				description: 'Color to use for the border of pinned mentions.',
-				component: 'setting-color-box',
-				alpha: false
+				component: 'setting-text-box'
 			}
 		});
 
@@ -105,8 +104,7 @@ class SmokEmotes extends Addon {
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
 				title: 'Font Color',
 				description: 'Color to use for the font of pinned mentions.',
-				component: 'setting-color-box',
-				alpha: false
+				component: 'setting-text-box'
 			}
 		});
 
@@ -117,8 +115,7 @@ class SmokEmotes extends Addon {
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
 				title: 'Background Color',
 				description: 'Color to use for the background of pinned mentions.',
-				component: 'setting-color-box',
-				alpha: false
+				component: 'setting-text-box'
 			}
 		});
 
@@ -170,6 +167,7 @@ class SmokEmotes extends Addon {
 		this.pinnedMentions();
 		this.keep_hd_video();
 		this.auto_point_claimer();
+
 	}
 
 	onReceiveMessage(msg) {
@@ -187,8 +185,6 @@ class SmokEmotes extends Addon {
 			}
 		}
 	}
-
-	// automatically claim channel points
 
 	auto_point_claimer() {
 
@@ -211,25 +207,23 @@ class SmokEmotes extends Addon {
 
 	}
 
-	// maintain high quality video even when tab isn't focused
-
 	keep_hd_video() {
 
 		if (this.chat.context.get('smokemotes.keep_hd_video')) {
 
-			try {
-				Object.defineProperty(document, 'hidden', { value: false, writable: false });
-			} catch (err) {
-				this.log.warn('Unable to install document visibility hook.', err);
-			}
+			Object.defineProperty(document, 'hidden', { value: false, writable: false });
+			Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: false });
+			Object.defineProperty(document, 'webkitVisibilityState', { value: 'visible', writable: false });
+			document.dispatchEvent(new Event('visibilitychange'));
+			document.hasFocus = function () { return true; };
+			window.localStorage.setItem('video-quality', '{"default":"chunked"}');
 
 		} else {
 
-			try {
-				Object.defineProperty(document, 'hidden', { value: false, writable: true });
-			} catch (err) {
-				this.log.warn('Unable to install document visibility hook.', err);
-			}
+			Object.defineProperty(document, 'hidden', { value: false, writable: true });
+			Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true });
+			Object.defineProperty(document, 'webkitVisibilityState', { value: 'visible', writable: true });
+			window.localStorage.setItem('video-quality', '{"default":"chunked"}');
 
 		}
 
@@ -238,8 +232,6 @@ class SmokEmotes extends Addon {
 	onNotifyWindowFocus() {
 		if (!document.hidden) document.querySelector('link[rel="icon"]').href = this.notify_icon_original;
 	}
-
-	// pin highlighted mentions to the top of chat
 
 	pinnedMentions() {
 
@@ -293,6 +285,20 @@ class SmokEmotes extends Addon {
 											e.currentTarget.parentNode.remove();
 											delete e.currentTarget.parentNode;
 										});
+										const chat_author__display_name__orig = chat_line.querySelector('.chat-author__display-name');
+										if (chat_author__display_name__orig) {
+											const chat_author__display_name__cloned = cloned_chat_line.querySelector('.chat-author__display-name');
+											if (chat_author__display_name__cloned) {
+												chat_author__display_name__cloned.onclick = () => chat_author__display_name__orig.click();
+											}
+										}
+										const chat_line__message_mention__orig = chat_line.querySelector('.chat-line__message-mention');
+										if (chat_line__message_mention__orig) {
+											const chat_line__message_mention__cloned = cloned_chat_line.querySelector('.chat-line__message-mention');
+											if (chat_line__message_mention__cloned) {
+												chat_line__message_mention__cloned.onclick = () => chat_line__message_mention__orig.click();
+											}
+										}
 										cloned_chat_line.appendChild(close_button);
 										pinned_log.appendChild(cloned_chat_line);
 										if (document.hidden) document.querySelector('link[rel="icon"]').href = this.notify_icon;
@@ -302,7 +308,7 @@ class SmokEmotes extends Addon {
 
 										}
 									}
-								}, 16.66666666666667);
+								}, 250);
 							}
 						});
 					});
@@ -315,8 +321,6 @@ class SmokEmotes extends Addon {
 		}
 
 	}
-
-	// global smokEmotes
 
 	async updateGlobalEmotes(attempts = 0) {
 		const realID = 'addon--smokemotes--emotes-global';
@@ -387,8 +391,6 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	// global smokEmote GIFs
-
 	async updateGlobalGIFs(attempts = 0) {
 		const realID = 'addon--smokemotes--emotes-global-gifs';
 		this.emotes.removeDefaultSet('addon--smokemotes', realID);
@@ -446,8 +448,6 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	// Others' Personal Emotes
-
 	async updateOtherPersonalEmotes(msg) {
 
 		const _id_emotes = `addon--smokemotes--emotes-personal-${msg.message.user.id}`;
@@ -503,8 +503,6 @@ class SmokEmotes extends Addon {
 
 		}
 	}
-
-	// Personal Emotes
 
 	async updatePersonalEmotes() {
 
@@ -563,8 +561,6 @@ class SmokEmotes extends Addon {
 
 		}
 	}
-
-	// update channel's emotes
 
 	async updateChannelEmotes(room) {
 		const realID = `addon--smokemotes--channel-${room.id}`;
@@ -633,8 +629,6 @@ class SmokEmotes extends Addon {
 			if (room) this.updateChannelEmotes(room);
 		}
 	}
-
-	// update all
 
 	updateEmotes() {
 		this.updateGlobalEmotes();
