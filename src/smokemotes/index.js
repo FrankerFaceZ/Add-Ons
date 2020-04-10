@@ -11,6 +11,7 @@ class SmokEmotes extends Addon {
 		this.inject('chat.emotes');
 		this.inject('chat.badges');
 		this.inject('site');
+		// this.inject('site.chat.viewer_cards'); save for later~
 
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
@@ -94,7 +95,8 @@ class SmokEmotes extends Addon {
 				title: 'Border Color',
 				description: 'Color to use for the border of pinned mentions.',
 				component: 'setting-color-box',
-				alpha: false
+				alpha: false,
+				openUp: true
 			}
 		});
 
@@ -106,7 +108,8 @@ class SmokEmotes extends Addon {
 				title: 'Font Color',
 				description: 'Color to use for the font of pinned mentions.',
 				component: 'setting-color-box',
-				alpha: false
+				alpha: false,
+				openUp: true
 			}
 		});
 
@@ -118,7 +121,8 @@ class SmokEmotes extends Addon {
 				title: 'Background Color',
 				description: 'Color to use for the background of pinned mentions.',
 				component: 'setting-color-box',
-				alpha: false
+				alpha: false,
+				openUp: true
 			}
 		});
 
@@ -146,6 +150,18 @@ class SmokEmotes extends Addon {
 			},
 		});
 
+		this.settings.add('smokemotes.mod_keybinds', {
+			default: false,
+
+			ui: {
+				sort: 1,
+				path: 'Add-Ons > smokEmotes >> Extra Settings',
+				title: 'Mod Keybinds',
+				description: 'Enable to be able to use T/B/P for Timeout/Ban/Purge.',
+				component: 'setting-check-box',
+			},
+		});
+
 		this.chat.context.on('changed:smokemotes.global_emoticons', this.updateGlobalEmotes, this);
 		this.chat.context.on('changed:smokemotes.global_gifs', this.updateGlobalGIFs, this);
 		this.chat.context.on('changed:smokemotes.channel_emoticons', this.updateChannels, this);
@@ -159,6 +175,54 @@ class SmokEmotes extends Addon {
 
 		this.chat.context.on('changed:smokemotes.keep_hd_video', this.keep_hd_video, this);
 		this.chat.context.on('changed:smokemotes.auto_point_claimer', this.auto_point_claimer, this);
+
+		this.chat.context.on('changed:smokemotes.mod_keybinds', this.mod_keybind_handler, this);
+
+		// saving for when ViewerCards are available for AddOns
+		/*
+		this.viewer_cards.on('viewer_cards:open', this.onCardOpen);
+		this.viewer_cards.on('viewer_cards:close', this.onCardClose);
+		this.viewer_cards.on('viewer_cards:load', this.onCardLoad);
+
+		this.card_info = undefined;
+		this.card_opened = false;*/
+
+	}
+
+	mod_keybind_handler(){
+
+		if (this.chat.context.get('smokemotes.mod_keybinds')) {
+			window.addEventListener('keydown', this.onKeyDown);
+		}else{
+			window.removeEventListener('keydown', this.onKeyDown);
+		}
+
+	}
+
+	onCardLoad(card) {
+
+		console.log('card loaded');
+
+		if (!card.channel || !card.user)
+			return;
+
+		this.card_info = card;
+
+	}
+
+	onCardOpen() {
+
+		this.card_opened = true;
+		console.log('card opened');
+
+	}
+
+	onCardClose() {
+
+		this.card_opened = false;
+		this.card_info = undefined;
+		console.log('card closed');
+
 	}
 
 	onEnable() {
@@ -182,10 +246,91 @@ class SmokEmotes extends Addon {
 			if (user.id != msg_user_id
 				&& !this.loadedUsers.includes(msg_user_id)) {
 				this.updateOtherPersonalEmotes(msg);
-				// this.loadedUsers.push(msg_user_id);
-				// this.loadedUsers = [...new Set(this.loadedUsers)];
+				this.loadedUsers.push(msg_user_id);
+				this.loadedUsers = [...new Set(this.loadedUsers)];
 			}
 		}
+	}
+
+	sendMessage(room, message) {
+
+		window.FrankerFaceZ.get().resolve('site.chat').sendMessage(room, message);
+
+	}
+
+	onKeyDown(e) {
+		if (e.ctrlKey
+			|| e.metaKey
+			|| e.shiftKey
+			|| !window.location.href.match('moderator')
+			|| !this.card_opened) return;
+
+		const keyCode = e.keyCode || e.which;
+
+		// window.FrankerFaceZ.get().resolve('site.chat').sendMessage('smokey', 'test');
+		// this._user = await this.twitch_data.getUser(user_id);
+		// window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage('test')
+		//t = 84 b = 80 p = 66
+
+		switch (keyCode) {
+
+			// timeout
+			case 84:
+
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage('tim');
+
+				break;
+
+			// ban
+			case 80:
+
+				break;
+
+			// purge
+			case 66:
+
+				break;
+
+		}
+
+		/*if (twitch.getCurrentUserIsModerator()) {
+			let command;
+			let duration;
+			switch (keyCode) {
+				case keyCodes.T:
+					command = Commands.TIMEOUT;
+					break;
+				case keyCodes.P:
+					command = Commands.TIMEOUT;
+					duration = 1;
+					break;
+				case keyCodes.A:
+					command = Commands.PERMIT;
+					break;
+				case keyCodes.U:
+					command = Commands.UNBAN;
+					break;
+				case keyCodes.B:
+					command = Commands.BAN;
+					break;
+			}
+			if (command) {
+				twitch.sendChatMessage(`${command} ${this.user.name}${duration ? ` ${duration}` : ''}`);
+				this.close();
+				return;
+			}
+		}
+
+		if (keyCode === keyCodes.I) {
+			twitch.sendChatMessage(`${Commands.IGNORE} ${this.user.name}`);
+			this.close();
+		} else if (keyCode === keyCodes.W) {
+			e.preventDefault();
+			const $chatInput = $(CHAT_INPUT_SELECTOR);
+			$chatInput.val(`${Commands.WHISPER} ${this.user.name} `);
+			$chatInput.focus();
+			this.close();
+		}*/
 	}
 
 	// automatically claim channel points
