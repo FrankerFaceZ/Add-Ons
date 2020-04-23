@@ -11,7 +11,7 @@ class SmokEmotes extends Addon {
 		this.inject('chat.emotes');
 		this.inject('chat.badges');
 		this.inject('site');
-		// this.inject('site.chat.viewer_cards'); save for later~
+		this.inject('site.fine');
 
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
@@ -71,6 +71,7 @@ class SmokEmotes extends Addon {
 
 		this.settings.add('smokemotes.pinned_timer', {
 			default: 60,
+
 			ui: {
 				sort: 0,
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
@@ -89,6 +90,7 @@ class SmokEmotes extends Addon {
 
 		this.settings.add('smokemotes.pinned_border', {
 			default: '#828282',
+
 			ui: {
 				sort: 1,
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
@@ -102,6 +104,7 @@ class SmokEmotes extends Addon {
 
 		this.settings.add('smokemotes.pinned_font_color', {
 			default: '#dadada',
+
 			ui: {
 				sort: 2,
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
@@ -115,6 +118,7 @@ class SmokEmotes extends Addon {
 
 		this.settings.add('smokemotes.pinned_bg', {
 			default: '#3e0b0b',
+
 			ui: {
 				sort: 3,
 				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
@@ -155,8 +159,8 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 1,
-				path: 'Add-Ons > smokEmotes >> Extra Settings',
-				title: 'Mod Keybinds',
+				path: 'Add-Ons > smokEmotes >> Mod Keybinds',
+				title: 'Toggle Mod Keybinds',
 				description: 'Enable to be able to use T/B/P for Timeout/Ban/Purge.',
 				component: 'setting-check-box',
 			},
@@ -178,50 +182,10 @@ class SmokEmotes extends Addon {
 
 		this.chat.context.on('changed:smokemotes.mod_keybinds', this.mod_keybind_handler, this);
 
-		// saving for when ViewerCards are available for AddOns
-		/*
-		this.viewer_cards.on('viewer_cards:open', this.onCardOpen);
-		this.viewer_cards.on('viewer_cards:close', this.onCardClose);
-		this.viewer_cards.on('viewer_cards:load', this.onCardLoad);
-
-		this.card_info = undefined;
-		this.card_opened = false;*/
-
-	}
-
-	mod_keybind_handler(){
-
-		if (this.chat.context.get('smokemotes.mod_keybinds')) {
-			window.addEventListener('keydown', this.onKeyDown);
-		}else{
-			window.removeEventListener('keydown', this.onKeyDown);
-		}
-
-	}
-
-	onCardLoad(card) {
-
-		console.log('card loaded');
-
-		if (!card.channel || !card.user)
-			return;
-
-		this.card_info = card;
-
-	}
-
-	onCardOpen() {
-
-		this.card_opened = true;
-		console.log('card opened');
-
-	}
-
-	onCardClose() {
-
-		this.card_opened = false;
-		this.card_info = undefined;
-		console.log('card closed');
+		this.ViewerCard = this.fine.define(
+			'chat-viewer-card',
+			n => n.trackViewerCardOpen && n.onWhisperButtonClick
+		);
 
 	}
 
@@ -234,6 +198,13 @@ class SmokEmotes extends Addon {
 		this.pinnedMentions();
 		this.keep_hd_video();
 		this.auto_point_claimer();
+		this.mod_keybind_handler();
+
+		this.ViewerCard.on('mount', this.updateCard, this);
+		this.ViewerCard.on('update', this.updateCard, this);
+		this.ViewerCard.on('unmount', this.unmountCard, this);
+
+		localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
 	}
 
 	onReceiveMessage(msg) {
@@ -252,87 +223,6 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	sendMessage(room, message) {
-
-		window.FrankerFaceZ.get().resolve('site.chat').sendMessage(room, message);
-
-	}
-
-	onKeyDown(e) {
-		if (e.ctrlKey
-			|| e.metaKey
-			|| e.shiftKey
-			|| !window.location.href.match('moderator')
-			|| !this.card_opened) return;
-
-		const keyCode = e.keyCode || e.which;
-
-		// window.FrankerFaceZ.get().resolve('site.chat').sendMessage('smokey', 'test');
-		// this._user = await this.twitch_data.getUser(user_id);
-		// window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage('test')
-		//t = 84 b = 80 p = 66
-
-		switch (keyCode) {
-
-			// timeout
-			case 84:
-
-				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage('tim');
-
-				break;
-
-			// ban
-			case 80:
-
-				break;
-
-			// purge
-			case 66:
-
-				break;
-
-		}
-
-		/*if (twitch.getCurrentUserIsModerator()) {
-			let command;
-			let duration;
-			switch (keyCode) {
-				case keyCodes.T:
-					command = Commands.TIMEOUT;
-					break;
-				case keyCodes.P:
-					command = Commands.TIMEOUT;
-					duration = 1;
-					break;
-				case keyCodes.A:
-					command = Commands.PERMIT;
-					break;
-				case keyCodes.U:
-					command = Commands.UNBAN;
-					break;
-				case keyCodes.B:
-					command = Commands.BAN;
-					break;
-			}
-			if (command) {
-				twitch.sendChatMessage(`${command} ${this.user.name}${duration ? ` ${duration}` : ''}`);
-				this.close();
-				return;
-			}
-		}
-
-		if (keyCode === keyCodes.I) {
-			twitch.sendChatMessage(`${Commands.IGNORE} ${this.user.name}`);
-			this.close();
-		} else if (keyCode === keyCodes.W) {
-			e.preventDefault();
-			const $chatInput = $(CHAT_INPUT_SELECTOR);
-			$chatInput.val(`${Commands.WHISPER} ${this.user.name} `);
-			$chatInput.focus();
-			this.close();
-		}*/
-	}
-
 	// automatically claim channel points
 
 	auto_point_claimer() {
@@ -340,14 +230,13 @@ class SmokEmotes extends Addon {
 		if (this.chat.context.get('smokemotes.auto_point_claimer')) {
 
 			const MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-			if (MutationObserver) console.log('Smokey\'s Auto point claimer is enabled.');
 			const observer = new MutationObserver(e => {
 				const bonus = document.querySelector('.claimable-bonus__icon');
 				if (bonus) {
 					bonus.click();
 					setTimeout(() => {
 						console.log('Claimed points! PogChamp');
-					}, Math.random() * 1000 + 5000);
+					}, Math.random() * 1000 + 5000)
 				}
 			});
 			observer.observe(document.body, { childList: true, subtree: true });
@@ -416,7 +305,7 @@ class SmokEmotes extends Addon {
 						mutations.forEach(mutation => {
 							if (mutation.addedNodes.length > 0) {
 								const chat_line = mutation.addedNodes[0];
-								setTimeout(() => {
+								requestAnimationFrame(() => {
 									if (chat_line.matches('.ffz-mentioned')) {
 										const cloned_chat_line = chat_line.cloneNode(true);
 										if (!cloned_chat_line.querySelector('.chat-line__timestamp')) {
@@ -447,7 +336,7 @@ class SmokEmotes extends Addon {
 
 										}
 									}
-								}, 16.66666666666667);
+								});
 							}
 						});
 					});
@@ -779,7 +668,77 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	// update all
+	// mod keybind stuff
+
+	onKeyDown(e) {
+
+		const user = JSON.parse(localStorage['smokemotes_usercard_login']).user;
+
+		if (e.ctrlKey
+			|| e.metaKey
+			|| e.shiftKey
+			|| !user) return;
+
+		const keyCode = e.keyCode || e.which;
+
+		switch (keyCode) {
+
+			// timeout
+			case 84:
+
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${user} 600`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+
+				break;
+
+			// ban
+			case 66:
+
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/ban ${user}`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+
+				break;
+
+			// purge
+			case 80:
+
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${user} 1`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+
+				break;
+
+		}
+
+	}
+
+	updateLogin(login) {
+		if (login) {
+			login = login.toLowerCase();
+			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: login}));
+		}else{
+			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+		}
+	}
+
+	updateCard(inst) {
+		this.updateLogin(inst.props && inst.props.targetLogin);
+	}
+
+	unmountCard() {
+		this.updateLogin();
+	}
+
+	mod_keybind_handler() {
+
+		if (this.chat.context.get('smokemotes.mod_keybinds')) {
+			window.addEventListener('keydown', this.onKeyDown);
+		} else {
+			window.removeEventListener('keydown', this.onKeyDown);
+		}
+
+	}
+
+	// update all emotes
 
 	updateEmotes() {
 		this.updateGlobalEmotes();
