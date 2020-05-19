@@ -13,6 +13,8 @@ class SmokEmotes extends Addon {
 		this.inject('site');
 		this.inject('site.fine');
 
+		this.user = this.site.getUser();
+
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
 
@@ -198,13 +200,18 @@ class SmokEmotes extends Addon {
 		this.pinnedMentions();
 		this.keep_hd_video();
 		this.auto_point_claimer();
-		this.mod_keybind_handler();
 
-		this.ViewerCard.on('mount', this.updateCard, this);
-		this.ViewerCard.on('update', this.updateCard, this);
-		this.ViewerCard.on('unmount', this.unmountCard, this);
+		if (this.user.moderator) {
 
-		localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+			this.mod_keybind_handler();
+
+			this.ViewerCard.on('mount', this.updateCard, this);
+			this.ViewerCard.on('update', this.updateCard, this);
+			this.ViewerCard.on('unmount', this.unmountCard, this);
+
+		}
+
+		localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
 	}
 
 	onReceiveMessage(msg) {
@@ -672,12 +679,31 @@ class SmokEmotes extends Addon {
 
 	onKeyDown(e) {
 
-		const user = JSON.parse(localStorage['smokemotes_usercard_login']).user;
+		const viewer_card_user = JSON.parse(localStorage['smokemotes_usercard_login']).user;
 
 		if (e.ctrlKey
 			|| e.metaKey
 			|| e.shiftKey
-			|| !user) return;
+			|| !viewer_card_user) return;
+
+		// find text area
+		const text_area = document.getElementsByClassName('tw-textarea')[0];
+
+		if (!text_area) return; // shouldn't happen but just in case?
+
+		if (document.activeElement === text_area) return;
+
+		const find_close = document.getElementsByClassName('tw-button-icon');
+
+		let close_button;
+
+		let i = find_close.length;
+
+		while (i--) {
+			if (find_close[i].getAttribute('data-test-selector') == 'close-viewer-card') {
+				close_button = find_close[i];
+			}
+		}
 
 		const keyCode = e.keyCode || e.which;
 
@@ -686,24 +712,45 @@ class SmokEmotes extends Addon {
 			// timeout
 			case 84:
 
-				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${user} 600`);
-				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${viewer_card_user} 600`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
+
+				if (close_button) {
+					close_button.click();
+				}
 
 				break;
 
 			// ban
 			case 66:
 
-				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/ban ${user}`);
-				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/ban ${viewer_card_user}`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
+
+				if (close_button) {
+					close_button.click();
+				}
 
 				break;
 
 			// purge
 			case 80:
 
-				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${user} 1`);
-				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+				window.FrankerFaceZ.get().resolve('site.chat').ChatService.first.sendMessage(`/timeout ${viewer_card_user} 1`);
+				localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
+
+				if (close_button) {
+					close_button.click();
+				}
+
+				break;
+
+			// Esc key to close viewer card
+			case 27:
+
+				if (close_button) {
+					close_button.click();
+				}
 
 				break;
 
@@ -714,9 +761,9 @@ class SmokEmotes extends Addon {
 	updateLogin(login) {
 		if (login) {
 			login = login.toLowerCase();
-			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: login}));
-		}else{
-			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({user: null}));
+			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: login }));
+		} else {
+			localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
 		}
 	}
 
