@@ -158,7 +158,10 @@ class SmokEmotes extends Addon {
 
 		this.settings.add('smokemotes.mod_keybinds', {
 			default: false,
-
+			requires: ['context.moderator'],
+			process(ctx, val) {
+				return ctx.get('context.moderator') ? val : false
+			},
 			ui: {
 				sort: 1,
 				path: 'Add-Ons > smokEmotes >> Mod Keybinds',
@@ -201,15 +204,11 @@ class SmokEmotes extends Addon {
 		this.keep_hd_video();
 		this.auto_point_claimer();
 
-		if (this.user.moderator) {
+		this.mod_keybind_handler();
 
-			this.mod_keybind_handler();
-
-			this.ViewerCard.on('mount', this.updateCard, this);
-			this.ViewerCard.on('update', this.updateCard, this);
-			this.ViewerCard.on('unmount', this.unmountCard, this);
-
-		}
+		this.ViewerCard.on('mount', this.updateCard, this);
+		this.ViewerCard.on('update', this.updateCard, this);
+		this.ViewerCard.on('unmount', this.unmountCard, this);
 
 		localStorage.setItem('smokemotes_usercard_login', JSON.stringify({ user: null }));
 	}
