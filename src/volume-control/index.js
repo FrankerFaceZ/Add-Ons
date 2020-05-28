@@ -3,10 +3,7 @@ class VolumeControl extends Addon {
 		super(...args);
 
 		this.inject('site.player');
-
-		// Mostly to avoid running into conflict with Twitch or other add-ons
-		// that want to use middle click on the player/extensions UI.
-		this.playerClickHandler = document.querySelector('[data-a-target=player-overlay-click-handler]');
+		this.inject('site.fine');
 
 		// If you .bind(this) for addEventListener, removeEventListener won't work
 		// most likely because `this` is different by the time `onDisable` is called.
@@ -14,30 +11,40 @@ class VolumeControl extends Addon {
 		this.changeVolume = this.changeVolume.bind(this);
 	}
 
-	/**
-	 * Avoid polluting the console with errors due to the player not being found.
-	 * E.g. Popout chat, alternative players...
-	 */
-	playerIsFound() {
-		return this.player.current;
-	}
-
 	onEnable() {
-		if (this.playerIsFound()) {
-			this.playerClickHandler?.addEventListener('mousedown', this.toggleMute);
+		this.player.Player.ready((cls, instances) => {
 			document.addEventListener('keydown', this.changeVolume);
-		}
+			for (let inst of instances)
+				this.fine.getChildNode(inst).addEventListener('mousedown', this.toggleMute);
+		});
+
+		this.player.Player.on('mount', inst => {
+			document.addEventListener('keydown', this.changeVolume);
+			this.fine.getChildNode(inst).addEventListener('mousedown', this.toggleMute);
+		});
+
+		this.player.Player.on('unmount', inst => {
+			document.removeEventListener('keydown', this.changeVolume);
+			this.fine.getChildNode(inst).removeEventListener('mousedown', this.toggleMute);
+		});
 	}
 
 	onDisable() {
-		if (this.playerIsFound()) {
-			this.playerClickHandler?.removeEventListener('mousedown', this.toggleMute);
-			document.removeEventListener('keydown', this.changeVolume);
-		}
+		document.removeEventListener('keydown', this.changeVolume);
+		for (let inst of this.player.Player.instances)
+			this.fine.getChildNode(inst).removeEventListener('mousedown', this.toggleMute);
+	}
+
+	/**
+	 * Mostly to avoid running into conflict with Twitch or other add-ons
+	 * that want to use middle click on the player/extensions UI.
+	 */
+	middleClickedOnPlayer(e) {
+		return e.which === 2 && e.path[0].dataset.aTarget === 'player-overlay-click-handler';
 	}
 
 	toggleMute(e) {
-		if (e.which !== 2) return; // 2 = middle click
+		if (! this.middleClickedOnPlayer(e)) return;
 
 		e.preventDefault();
 
