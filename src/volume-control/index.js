@@ -23,8 +23,6 @@ class VolumeControl extends Addon {
 	}
 
 	onEnable() {
-		this.log.info('onEnable');
-
 		if (this.playerIsFound()) {
 			this.playerClickHandler?.addEventListener('mousedown', this.toggleMute);
 			document.addEventListener('keydown', this.changeVolume);
@@ -32,8 +30,6 @@ class VolumeControl extends Addon {
 	}
 
 	onDisable() {
-		this.log.info('onDisable');
-
 		if (this.playerIsFound()) {
 			this.playerClickHandler?.removeEventListener('mousedown', this.toggleMute);
 			document.removeEventListener('keydown', this.changeVolume);
