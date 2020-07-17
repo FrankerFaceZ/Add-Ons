@@ -4,12 +4,12 @@
     "unlisted": true,
 
     "icon": "https://bot.smokey.gg/favicon.png",
-    "version": "0.0.5",
+    "version": "0.0.12",
 
     "short_name": "smokEmotes",
     "name": "smokEmotes",
     "author": "Smokey",
-    "description": "GIFs and popular global emotes.",
+    "description": "GIFs and popular global emotes, along with some extra options to make Twitch better.",
 
     "website": "https://bot.smokey.gg/",
     "settings": "add_ons.smokemotes"
