@@ -61,11 +61,12 @@ class BrowseDeck extends Addon {
 		this.router.on(':route', this.onNavigate, this);
 		this.on('i18n:update', this.updateNavigation, this);
 
-		this.on('settings:changed:directory.show-channel-avatars', val => this.updateSetting('show_avatars', val));
+		//this.on('settings:changed:directory.show-channel-avatars', val => this.updateSetting('show_avatars', val));
 		this.on('settings:changed:directory.hide-vodcasts', val => this.updateSetting('hide_reruns', val));
 		this.on('settings:changed:directory.uptime', val => this.updateSetting('uptime', val));
-		this.on('settings:changed:directory.following.group-hosts', val => this.updateSetting('group_hosts', val));
-		this.on('settings:changed:directory.following.host-menus', val => this.updateSetting('host_menus', val));
+		//this.on('settings:changed:directory.following.group-hosts', val => this.updateSetting('group_hosts', val));
+		//this.on('settings:changed:directory.following.host-menus', val => this.updateSetting('host_menus', val));
+		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
 
 		this.settings.provider.on('changed', this.onProviderChange, this);
 
@@ -156,11 +157,12 @@ class BrowseDeck extends Addon {
 
 		return {
 			settings: {
-				show_avatars: this.settings.get('directory.show-channel-avatars'),
+				show_avatars: true, // this.settings.get('directory.show-channel-avatars'),
+				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),
 				uptime: this.settings.get('directory.uptime'),
-				group_hosts: this.settings.get('directory.following.group-hosts'),
-				host_menus: this.settings.get('directory.following.host-menus'),
+				group_hosts: true, //this.settings.get('directory.following.group-hosts'),
+				host_menus: true, //this.settings.get('directory.following.host-menus'),
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
 				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', []))
 			},

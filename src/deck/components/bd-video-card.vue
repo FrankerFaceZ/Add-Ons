@@ -5,7 +5,7 @@
 		:image="image"
 		:tags="tags"
 
-		:class="[hasAnimation ? 'bd--animated-card' : '']"
+		:class="[hasAnimation ? 'bd--animated-card' : '', hideThumbnails ? 'ffz-hide-thumbnail' : '']"
 
 		:avatar="settings.show_avatars ? avatar : null"
 		:avatarTitle="item.owner.displayName"
@@ -116,7 +116,7 @@ export default {
 		},
 
 		hasAnimation() {
-			return this.hovered && this.animated_loaded && ! this.hideThumbnails;
+			return this.hovered && this.animated_loaded; // && ! this.hideThumbnails;
 		},
 
 		image() {
@@ -124,8 +124,8 @@ export default {
 				return this.item.animatedPreviewURL;
 
 			let template = 'https://static-cdn.jtvnw.net/ttv-static/404_preview-{width}x{height}.jpg';
-			if ( ! this.hideThumbnails )
-				template = this.item.previewThumbnailURL || template;
+			//if ( ! this.hideThumbnails )
+			template = this.item.previewThumbnailURL || template;
 
 			return template.replace(/{([^}]+)}/g, (match, key) => {
 				if ( key === 'height' )

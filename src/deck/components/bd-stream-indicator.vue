@@ -1,7 +1,7 @@
 <template>
 	<div
 		:class="`preview-card-stat--${type}${type !== 'live' ? ' tw-c-background-overlay' : ''}`"
-		class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center"
+		class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05"
 	>
 		<div v-if="useIcon || !!$scopedSlots['icon']" class="tw-align-items-center tw-flex tw-mg-r-05">
 			<slot name="icon" />

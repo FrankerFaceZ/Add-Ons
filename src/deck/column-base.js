@@ -31,11 +31,11 @@ export default class ColumnBase {
 		const set = new Set;
 		if ( this.settings && this.settings.lang )
 			for(const lang of this.settings.lang)
-				set.add(lang);
+				set.add(lang.toUpperCase());
 
 		if ( this.global_settings && this.global_settings.lang )
 			for(const lang of this.global_settings.lang)
-				set.add(lang);
+				set.add(lang.toUpperCase());
 
 		this.languages = set.size > 0 ? [...set] : null;
 	}

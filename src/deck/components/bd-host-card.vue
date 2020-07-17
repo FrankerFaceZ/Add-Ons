@@ -4,6 +4,7 @@
 		:title="title"
 		:image="image"
 		:tags="tags"
+		:class="klass"
 
 		:avatar="settings.show_avatars ? item.profileImageURL : null"
 		:avatarTitle="item.displayName"
@@ -105,10 +106,17 @@ export default {
 			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
 		},
 
+		klass() {
+			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+				return 'ffz-hide-thumbnail';
+
+			return '';
+		},
+
 		image() {
 			let template = 'https://static-cdn.jtvnw.net/ttv-static/404_preview-{width}x{height}.jpg';
-			if ( ! this.game || ! this.settings.hidden_thumbnails.includes(this.game.name) )
-				template = get('stream.previewImageURL', this.item) || template;
+			/*if ( ! this.game || ! this.settings.hidden_thumbnails.includes(this.game.name) )*/
+			template = get('stream.previewImageURL', this.item) || template;
 
 			return template.replace(/{([^}]+)}/g, (match, key) => {
 				if ( key === 'height' )

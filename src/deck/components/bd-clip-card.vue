@@ -3,6 +3,7 @@
 		:link="url"
 		:title="title"
 		:image="image"
+		:class="[hideThumbnails ? 'ffz-hide-thumbnail' : '']"
 
 		:avatar="settings.show_avatars ? avatar : null"
 		:avatarTitle="item.broadcaster.displayName"
@@ -115,8 +116,8 @@ export default {
 
 		image() {
 			let template = 'https://static-cdn.jtvnw.net/ttv-static/404_preview-{width}x{height}.jpg';
-			if ( ! this.hideThumbnails )
-				template = this.item.thumbnailURL || template;
+			//if ( ! this.hideThumbnails )
+			template = this.item.thumbnailURL || template;
 
 			let width = this.settings.previewWidth,
 				height = this.settings.previewHeight;
