@@ -4,6 +4,7 @@
 		:title="title"
 		:image="image"
 		:tags="tags"
+		:class="klass"
 
 		:avatar="settings.show_avatars ? avatar : null"
 		:avatarTitle="item.displayName"
@@ -16,12 +17,12 @@
 		:bottomLeft="t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
 	>
 		<template #top-left>
-			<bd-stream-indicator :type="item.stream.type" />
+			<bd-stream-indicator v-if="! settings.hide_live" :type="item.stream.type" />
 		</template>
 
 		<template #top-right>
 			<div v-if="uptime" class="tw-tooltip-wrapper">
-				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center">
+				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
 					<figure class="tw-c-text-live ffz-i-clock" />
 					<p>{{ upString }}</p>
 				</div>
@@ -93,10 +94,17 @@ export default {
 			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
 		},
 
+		klass() {
+			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+				return 'ffz-hide-thumbnail';
+
+			return '';
+		},
+
 		image() {
 			let template = 'https://static-cdn.jtvnw.net/ttv-static/404_preview-{width}x{height}.jpg';
-			if ( ! this.game || ! this.settings.hidden_thumbnails.includes(this.game.name) )
-				template = get('stream.previewImageURL', this.item) || template;
+			/*if ( ! this.game || ! this.settings.hidden_thumbnails.includes(this.game.name) )*/
+			template = get('stream.previewImageURL', this.item) || template;
 
 			// This particular URL is not responsive.
 			if ( template.includes('404_processing') )

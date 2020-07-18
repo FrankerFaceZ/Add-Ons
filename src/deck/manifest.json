@@ -1,12 +1,11 @@
 {
 	"enabled": true,
 	"requires": [],
-	"unlisted": true,
 
-	"version": "1.0.2",
+	"version": "1.0.3",
 
 	"short_name": "Deck",
 	"name": "Deck",
 	"author": "SirStendec",
-	"description": "Deck provides a TweetDeck-like experience for finding content on Twitch. Set up columns for live channels, videos, or clips. Filter by tags. Sort. Find what you want to watch."
+	"description": "Deck provides a TweetDeck-like experience for finding content on Twitch.\n\nYou can define columns for live channels, videos, or clips. Sort each column how you want. Filter by tags. Find the content you want to watch.\n\nThis extension is not super user-friendly for getting started, but I don't have the time to give it the polish it deserves."
 }

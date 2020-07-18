@@ -7,6 +7,13 @@
 	}
 }
 
+.bd--deck .stream-type-indicator__hosting-dot {
+	background: #ffca61;
+	height: .8rem;
+	margin: 0 .2rem;
+	width: .8rem;
+}
+
 .bd--deck-controls {
 	z-index: 1000;
 }
