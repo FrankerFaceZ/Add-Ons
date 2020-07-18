@@ -112,6 +112,18 @@ class FSChat extends Addon {
 		window.addEventListener('fullscreenchange', this.onFSChange);
 		this.on('site.player:update-gui', this.updateButton, this);
 
+		this.settings.addFilter('fschat', {
+			createTest(config) {
+				return ctx => ctx.fschat === config
+			},
+
+			title: 'Using FS Chat',
+			i18n: 'addon.fs-chat.using',
+
+			default: true,
+			editor: this.settings.getFilterBasicEditor()
+		});
+
 		if ( this.settings.get('addon.fs-chat.automatic') )
 			this.turnOn();
 
@@ -167,19 +179,6 @@ class FSChat extends Addon {
 }`);
 	}
 
-	onDisable() {
-		if ( this.style_link ) {
-			this.style_link.remove();
-			this.style_link = null;
-		}
-
-		window.removeEventListener('fullscreenchange', this.onFSChange);
-		this.off('site.player:update-gui', this.updateButton, this);
-
-		this.turnOff();
-		this.updateButtons();
-	}
-
 	turnOn() {
 		if ( document.fullscreenElement && ! this.chat ) {
 			this.chat_pane = document.querySelector('.channel-root__right-column');
@@ -221,7 +220,10 @@ class FSChat extends Addon {
 				onTouchStop: savePos
 			});
 
-			this.settings.updateContext({'force-theme': true});
+			this.settings.updateContext({
+				fschat: true,
+				'force-theme': this.dark
+			});
 		}
 	}
 
@@ -264,7 +266,10 @@ class FSChat extends Addon {
 			this.old_parent = this.chat = this.chat_pane = null;
 		}
 
-		this.settings.updateContext({'force-theme': null});
+		this.settings.updateContext({
+			fschat: false,
+			'force-theme': null
+		});
 	}
 
 	onFSChange() {
@@ -289,8 +294,10 @@ class FSChat extends Addon {
 		if ( ! container )
 			return;
 
+		const can_chat = this.chat || document.querySelector('.channel-root__right-column') != null;
+
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-fschat');
-		if ( ! is_fs ) {
+		if ( ! is_fs || ! can_chat ) {
 			if ( cont )
 				cont.remove();
 			return;
