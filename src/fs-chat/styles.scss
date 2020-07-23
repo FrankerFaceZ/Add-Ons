@@ -6,9 +6,26 @@
 	//height: 600px;
 	//width: var(--ffz-chat-width);
 
+	&.no-rounding {
+		.ffz--meta-tray,
+		.channel-root__right-column > div {
+			border-radius: 0 !important;
+		}
+	}
+
 	.video-chat__header,
 	&.no-input .chat-input {
 		display: none !important;
+	}
+
+	.pinned-callout {
+		background-color: var(--fschat-bg-color) !important;
+		margin-right: calc(-1rem + .2rem);
+	}
+
+	.channel-leaderboard-header-rotating {
+		margin-right: .2rem;
+		background-color: transparent !important;
 	}
 
 	&.minimal {
@@ -22,6 +39,7 @@
 			opacity: 0;
 		}
 
+		.channel-leaderboard,
 		.chat-input__buttons-container,
 		.stream-chat-header {
 			display: none !important;

@@ -104,6 +104,16 @@ class FSChat extends Addon {
 			changed: val => this.chat && this.chat.classList.toggle('no-input', val)
 		});
 
+		this.settings.add('addon.fs-chat.round', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > FS Chat >> Appearance',
+				title: 'Use rounded corners.',
+				component: 'setting-check-box'
+			},
+			changed: val => this.chat && this.chat.classList.toggle('no-rounding', ! val)
+		});
+
 		this.settings.add('addon.fs-chat.metadata', {
 			default: 2,
 			ui: {
@@ -231,7 +241,7 @@ class FSChat extends Addon {
 
 			let handle;
 
-			this.chat = (<div class={`ffz--fschat meta-${meta} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'}`}>
+			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base`}>
 				{handle = <div class="handle ffz-i-move" />}
 				{this.chat_pane}
 				{this.meta_pane}
@@ -329,9 +339,10 @@ class FSChat extends Addon {
 	}
 
 	onFSChange() {
-		if ( ! document.fullscreenElement )
+		if ( ! document.fullscreenElement ) {
+			this.was_active = !! this.chat;
 			this.turnOff();
-		else if ( this.settings.get('addon.fs-chat.automatic') )
+		} else if ( this.was_active || this.settings.get('addon.fs-chat.automatic') )
 			this.turnOn();
 
 		this.updateButtons();
