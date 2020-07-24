@@ -2,7 +2,7 @@
 	"enabled": true,
 	"requires": [],
 
-	"version": "1.3.0",
+	"version": "1.3.1",
 
 	"short_name": "fs-chat",
 	"name": "Fullscreen Chat",

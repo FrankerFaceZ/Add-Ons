@@ -412,8 +412,6 @@ class FSChat extends Addon {
 	}
 
 	onButtonClick(inst, e) {
-		this.log.info('button-click', inst, e);
-
 		if ( this.chat )
 			this.turnOff();
 		else
