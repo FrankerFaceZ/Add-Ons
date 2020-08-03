@@ -135,6 +135,7 @@ class FSChat extends Addon {
 		});
 
 		this.chat = null;
+		this.handle_right = false;
 		this.style = new ManagedStyle;
 		this.style_link = null;
 	}
@@ -241,11 +242,13 @@ class FSChat extends Addon {
 
 			let handle;
 
-			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base`}>
+			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base ${this.handle_right ? 'handle--right' : ''}`}>
 				{handle = <div class="handle ffz-i-move" />}
 				{this.chat_pane}
 				{this.meta_pane}
 			</div>);
+
+			this.chat.addEventListener('mouseout', () => this.checkHandle());
 
 			if ( this.settings.provider.has('fschat.top') ) {
 				this.chat.style.position = 'absolute';
@@ -253,6 +256,7 @@ class FSChat extends Addon {
 				this.chat.style.left = this.settings.provider.get('fschat.left');
 
 				this.checkConstraints();
+				this.checkHandle();
 			}
 
 			document.fullscreenElement.appendChild(this.chat);
@@ -299,19 +303,45 @@ class FSChat extends Addon {
 			const boundary = document.fullscreenElement.getBoundingClientRect(),
 				area = this.chat.getBoundingClientRect();
 
-			if ( area.right > boundary.right )
+			if ( area.right > boundary.right ) {
 				this.chat.style.left = `${boundary.right - area.width}px`;
+				this.checkHandle();
+			}
 
 			if ( area.bottom > boundary.bottom )
 				this.chat.style.top = `${boundary.bottom - area.height}px`;
 
-			if ( area.left < 0 )
+			if ( area.left < 0 ) {
 				this.chat.style.left = '0px';
+				this.checkHandle();
+			}
 
 			if ( area.top < 0 )
 				this.chat.style.top = '0px';
 		})
 	}
+
+	checkHandle() {
+		if ( this._handle_checker )
+			cancelAnimationFrame(this._handle_checker);
+
+		this._handle_checker = requestAnimationFrame(() => {
+			this._handle_checker = null;
+			if ( ! this.chat || ! document.fullscreenElement )
+				return;
+
+			const boundary = document.fullscreenElement.getBoundingClientRect(),
+				area = this.chat.getBoundingClientRect();
+
+			if ( this.handle_right && area.right >= (boundary.right - 40) )
+				this.handle_right = false;
+			else if ( ! this.handle_right && area.left <= (boundary.left + 40) )
+				this.handle_right = true;
+
+			this.chat.classList.toggle('handle--right', this.handle_right);
+		});
+	}
+
 
 	turnOff() {
 		if ( this.chat_mover ) {

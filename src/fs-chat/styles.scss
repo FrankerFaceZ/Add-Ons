@@ -39,6 +39,11 @@
 			opacity: 0;
 		}
 
+		&.handle--right .handle {
+			right: unset;
+			left: 100%;
+		}
+
 		.channel-leaderboard,
 		.chat-input__buttons-container,
 		.stream-chat-header {
