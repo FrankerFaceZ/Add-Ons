@@ -2,7 +2,6 @@ class SmokEmotes extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.loadedUsers = [];
 		this.notify_icon = document.querySelector('link[rel="icon"]')?.href;
 		this.pinned_handler = undefined;
 
@@ -14,6 +13,11 @@ class SmokEmotes extends Addon {
 		this.inject('site.fine');
 
 		this.user = this.site.getUser();
+		this.onKeyDown = this.onKeyDown.bind(this);
+		this.ModCardData = {
+			user: undefined,
+			message_id: undefined
+		};
 
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
@@ -258,11 +262,6 @@ class SmokEmotes extends Addon {
 		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('update', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
-
-		localStorage.setItem(
-			'smokemotes_usercard_login',
-			JSON.stringify({ user: null })
-		);
 	}
 
 	onReceiveMessage(msg) {
@@ -272,10 +271,8 @@ class SmokEmotes extends Addon {
 		const user = this.resolve('site').getUser();
 		if (user) {
 			const msg_user_id = msg.message.user.id;
-			if (user.id != msg_user_id && !this.loadedUsers.includes(msg_user_id)) {
+			if (user.id != msg_user_id) {
 				this.updateOtherPersonalEmotes(msg);
-				this.loadedUsers.push(msg_user_id);
-				this.loadedUsers = [...new Set(this.loadedUsers)];
 			}
 		}
 	}
@@ -764,14 +761,8 @@ class SmokEmotes extends Addon {
 	// mod keybind stuff
 
 	onKeyDown(e) {
-		const viewer_card_user = JSON.parse(
-			localStorage['smokemotes_usercard_login']
-		).user;
-		const viewer_card_msg_id = JSON.parse(
-			localStorage['smokemotes_usercard_login']
-		).message_id;
 
-		if (e.ctrlKey || e.metaKey || e.shiftKey || !viewer_card_user) return;
+		if (e.ctrlKey || e.metaKey || e.shiftKey || !this.ModCardData.user) return;
 
 		// find text area
 		const text_area = document.getElementsByClassName('tw-textarea')[0];
@@ -799,20 +790,14 @@ class SmokEmotes extends Addon {
 			}
 		}
 
-		console.log(close_button);
-
 		const keyCode = e.keyCode || e.which;
 
 		switch (keyCode) {
 			// timeout
 			case 84:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${viewer_card_user} 600`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: undefined, message_id: undefined })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 600`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -822,13 +807,9 @@ class SmokEmotes extends Addon {
 
 				// delete message
 			case 68:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/delete ${viewer_card_msg_id}`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: undefined, message_id: undefined })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/delete ${this.ModCardData.message_id}`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -838,13 +819,9 @@ class SmokEmotes extends Addon {
 
 				// ban
 			case 66:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/ban ${viewer_card_user}`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: undefined, message_id: undefined })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/ban ${this.ModCardData.user}`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -854,13 +831,9 @@ class SmokEmotes extends Addon {
 
 				// purge
 			case 80:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${viewer_card_user} 1`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: undefined, message_id: undefined })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 1`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -881,15 +854,11 @@ class SmokEmotes extends Addon {
 	updateLogin(login, msg_id) {
 		if (login && msg_id) {
 			login = login.toLowerCase();
-			localStorage.setItem(
-				'smokemotes_usercard_login',
-				JSON.stringify({ user: login, message_id: msg_id })
-			);
+			this.ModCardData.user = login;
+			this.ModCardData.message_id = msg_id;
 		} else {
-			localStorage.setItem(
-				'smokemotes_usercard_login',
-				JSON.stringify({ user: undefined, message_id: undefined })
-			);
+			this.ModCardData.user = undefined;
+			this.ModCardData.message_id = undefined;
 		}
 	}
 
