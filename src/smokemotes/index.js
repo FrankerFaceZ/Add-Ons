@@ -2,10 +2,7 @@ class SmokEmotes extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.loadedUsers = [];
-		this.notify_icon =
-      document.querySelector('link[rel="icon"]') &&
-      document.querySelector('link[rel="icon"]').href;
+		this.notify_icon = document.querySelector('link[rel="icon"]')?.href;
 		this.pinned_handler = undefined;
 
 		this.inject('settings');
@@ -16,6 +13,11 @@ class SmokEmotes extends Addon {
 		this.inject('site.fine');
 
 		this.user = this.site.getUser();
+		this.onKeyDown = this.onKeyDown.bind(this);
+		this.ModCardData = {
+			user: undefined,
+			message_id: undefined
+		};
 
 		this.settings.add('smokemotes.global_emoticons', {
 			default: true,
@@ -241,7 +243,7 @@ class SmokEmotes extends Addon {
 
 		this.ViewerCard = this.fine.define(
 			'chat-viewer-card',
-			(n) => n.trackViewerCardOpen && n.onWhisperButtonClick
+			n => n.trackViewerCardOpen && n.onWhisperButtonClick
 		);
 	}
 
@@ -260,11 +262,6 @@ class SmokEmotes extends Addon {
 		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('update', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
-
-		localStorage.setItem(
-			'smokemotes_usercard_login',
-			JSON.stringify({ user: null })
-		);
 	}
 
 	onReceiveMessage(msg) {
@@ -274,10 +271,8 @@ class SmokEmotes extends Addon {
 		const user = this.resolve('site').getUser();
 		if (user) {
 			const msg_user_id = msg.message.user.id;
-			if (user.id != msg_user_id && !this.loadedUsers.includes(msg_user_id)) {
+			if (user.id != msg_user_id) {
 				this.updateOtherPersonalEmotes(msg);
-				this.loadedUsers.push(msg_user_id);
-				this.loadedUsers = [...new Set(this.loadedUsers)];
 			}
 		}
 	}
@@ -286,11 +281,7 @@ class SmokEmotes extends Addon {
 
 	auto_point_claimer() {
 		if (this.chat.context.get('smokemotes.auto_point_claimer')) {
-			const MutationObserver =
-        window.MutationObserver ||
-        window.WebKitMutationObserver ||
-        window.MozMutationObserver;
-			const observer = new MutationObserver((e) => {
+			const observer = new MutationObserver(() => {
 				const bonus = document.querySelector('.claimable-bonus__icon');
 				if (bonus) {
 					bonus.click();
@@ -366,8 +357,8 @@ class SmokEmotes extends Addon {
 						`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
 					);
 					chat_log.parentNode.prepend(pinned_log);
-					this.pinned_handler = new MutationObserver((mutations) => {
-						mutations.forEach((mutation) => {
+					this.pinned_handler = new MutationObserver(mutations => {
+						mutations.forEach(mutation => {
 							if (mutation.addedNodes.length > 0) {
 								const chat_line = mutation.addedNodes[0];
 								requestAnimationFrame(() => {
@@ -401,7 +392,7 @@ class SmokEmotes extends Addon {
 										);
 										close_button.innerHTML =
                       '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
-										close_button.addEventListener('click', (e) => {
+										close_button.addEventListener('click', e => {
 											e.currentTarget.parentNode.remove();
 											delete e.currentTarget.parentNode;
 										});
@@ -770,11 +761,8 @@ class SmokEmotes extends Addon {
 	// mod keybind stuff
 
 	onKeyDown(e) {
-		const viewer_card_user = JSON.parse(
-			localStorage['smokemotes_usercard_login']
-		).user;
 
-		if (e.ctrlKey || e.metaKey || e.shiftKey || !viewer_card_user) return;
+		if (e.ctrlKey || e.metaKey || e.shiftKey || !this.ModCardData.user) return;
 
 		// find text area
 		const text_area = document.getElementsByClassName('tw-textarea')[0];
@@ -807,13 +795,21 @@ class SmokEmotes extends Addon {
 		switch (keyCode) {
 			// timeout
 			case 84:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${viewer_card_user} 600`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: null })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 600`);
+				this.updateLogin();
+
+				if (close_button) {
+					close_button.click();
+				}
+
+				break;
+
+				// delete message
+			case 68:
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/delete ${this.ModCardData.message_id}`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -823,13 +819,9 @@ class SmokEmotes extends Addon {
 
 				// ban
 			case 66:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/ban ${viewer_card_user}`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: null })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/ban ${this.ModCardData.user}`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -839,13 +831,9 @@ class SmokEmotes extends Addon {
 
 				// purge
 			case 80:
-				window.FrankerFaceZ.get()
-					.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${viewer_card_user} 1`);
-				localStorage.setItem(
-					'smokemotes_usercard_login',
-					JSON.stringify({ user: null })
-				);
+				this.resolve('site.chat')
+					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 1`);
+				this.updateLogin();
 
 				if (close_button) {
 					close_button.click();
@@ -863,23 +851,19 @@ class SmokEmotes extends Addon {
 		}
 	}
 
-	updateLogin(login) {
-		if (login) {
+	updateLogin(login, msg_id) {
+		if (login && msg_id) {
 			login = login.toLowerCase();
-			localStorage.setItem(
-				'smokemotes_usercard_login',
-				JSON.stringify({ user: login })
-			);
+			this.ModCardData.user = login;
+			this.ModCardData.message_id = msg_id;
 		} else {
-			localStorage.setItem(
-				'smokemotes_usercard_login',
-				JSON.stringify({ user: null })
-			);
+			this.ModCardData.user = undefined;
+			this.ModCardData.message_id = undefined;
 		}
 	}
 
 	updateCard(inst) {
-		this.updateLogin(inst.props && inst.props.targetLogin);
+		this.updateLogin(inst.props.targetLogin, inst.props.sourceID);
 	}
 
 	unmountCard() {
