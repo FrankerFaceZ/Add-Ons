@@ -3,14 +3,14 @@
     "requires": [],
     "unlisted": true,
 
-    "icon": "https://bot.smokey.gg/favicon.png",
-    "version": "0.0.14",
+    "icon": "https://i.imgur.com/WVFY4R5.png",
+    "version": "0.0.15",
 
-    "short_name": "smokEmotes",
-    "name": "smokEmotes",
+    "short_name": "smokeys_utils",
+    "name": "Smokey's Utilities",
     "author": "Smokey",
-    "description": "GIFs and popular global emotes, along with some extra options to make Twitch better.",
+    "description": "Stuff to make a better Twitch.",
 
-    "website": "https://bot.smokey.gg/",
+    "website": "https://smokey.gg/",
     "settings": "add_ons.smokemotes"
 }

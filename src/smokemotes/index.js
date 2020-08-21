@@ -1,4 +1,4 @@
-class SmokEmotes extends Addon {
+class SmokeysUtils extends Addon {
 	constructor(...args) {
 		super(...args);
 
@@ -19,56 +19,12 @@ class SmokEmotes extends Addon {
 			message_id: undefined
 		};
 
-		this.settings.add('smokemotes.global_emoticons', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > smokEmotes >> Emotes',
-				title: 'Global Emotes',
-				description: 'Enable to show global emoticons.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('smokemotes.global_gifs', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > smokEmotes >> Emotes',
-				title: 'Global GIFs',
-				description: 'Enable to show global GIFs. (disable to save bandwidth)',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('smokemotes.channel_emoticons', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > smokEmotes >> Emotes',
-				title: 'Channel Emotes',
-				description: "Enable to show emoticons you've uploaded.",
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('smokemotes.personal_emotes', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > smokEmotes >> Emotes',
-				title: 'Personal Emotes',
-				description: "Enable to show others' Personal emoticons.",
-				component: 'setting-check-box',
-			},
-		});
-
 		this.settings.add('smokemotes.pinned_mentions', {
 			default: true,
 
 			ui: {
 				sort: -1,
-				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
+				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
 				title: 'Pinned Mentions',
 				description: 'Enable to have mentions pinned to the top of chat.',
 				component: 'setting-check-box',
@@ -80,7 +36,7 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 0,
-				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
+				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
 				title: 'Auto Removal Timer',
 				description:
           'Time in seconds to auto remove pinned messages. 0 To Disable.',
@@ -99,7 +55,7 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 1,
-				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
+				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
 				title: 'Border Color',
 				description: 'Color to use for the border of pinned mentions.',
 				component: 'setting-color-box',
@@ -113,7 +69,7 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 2,
-				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
+				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
 				title: 'Font Color',
 				description: 'Color to use for the font of pinned mentions.',
 				component: 'setting-color-box',
@@ -127,7 +83,7 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 3,
-				path: 'Add-Ons > smokEmotes >> Pinned Mentions',
+				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
 				title: 'Background Color',
 				description: 'Color to use for the background of pinned mentions.',
 				component: 'setting-color-box',
@@ -141,7 +97,7 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: -1,
-				path: 'Add-Ons > smokEmotes >> Extra Settings',
+				path: 'Add-Ons > Smokey\'s Utilities >> Channel',
 				title: 'Maintain HD Quality',
 				description:
           'Enable to keep the video player from automatically decreasing video quality when out of focus.',
@@ -154,10 +110,23 @@ class SmokEmotes extends Addon {
 
 			ui: {
 				sort: 0,
-				path: 'Add-Ons > smokEmotes >> Extra Settings',
+				path: 'Add-Ons > Smokey\'s Utilities >> Channel',
 				title: 'Auto Point Claimer',
 				description:
           'Enable to automatically obtain channel points. After disabling, you must refresh to completely disable.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('smokemotes.auto_live_follow_page', {
+			default: false,
+
+			ui: {
+				sort: 0,
+				path: 'Add-Ons > Smokey\'s Utilities >> Following',
+				title: 'Auto go to Live channels on your Following Directory',
+				description:
+          'Enable to automatically go to the Live channel section on a fresh load of the following directory.',
 				component: 'setting-check-box',
 			},
 		});
@@ -170,33 +139,12 @@ class SmokEmotes extends Addon {
 			},
 			ui: {
 				sort: 1,
-				path: 'Add-Ons > smokEmotes >> Mod Keybinds',
+				path: 'Add-Ons > Smokey\'s Utilities >> Mod Keybinds',
 				title: 'Toggle Mod Keybinds',
 				description: 'Enable to be able to use T/B/P for Timeout/Ban/Purge.',
 				component: 'setting-check-box',
 			},
 		});
-
-		this.chat.context.on(
-			'changed:smokemotes.global_emoticons',
-			this.updateGlobalEmotes,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.global_gifs',
-			this.updateGlobalGIFs,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.channel_emoticons',
-			this.updateChannels,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.personal_emotes',
-			this.updatePersonalEmotes,
-			this
-		);
 
 		this.chat.context.on(
 			'changed:smokemotes.pinned_mentions',
@@ -248,33 +196,19 @@ class SmokEmotes extends Addon {
 	}
 
 	onEnable() {
-		this.log.debug('smokEmotes module was enabled successfully.');
+		this.log.debug('Smokey\'s Utilities module was enabled successfully.');
 
-		this.on('chat:receive-message', this.onReceiveMessage);
-
-		this.updateEmotes();
 		this.pinnedMentions();
 		this.keep_hd_video();
 		this.auto_point_claimer();
+
+		this.liveFollowing();
 
 		this.mod_keybind_handler();
 
 		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('update', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
-	}
-
-	onReceiveMessage(msg) {
-		if (!this.chat.context.get('smokemotes.personal_emotes')) {
-			return;
-		}
-		const user = this.resolve('site').getUser();
-		if (user) {
-			const msg_user_id = msg.message.user.id;
-			if (user.id != msg_user_id) {
-				this.updateOtherPersonalEmotes(msg);
-			}
-		}
 	}
 
 	// automatically claim channel points
@@ -313,6 +247,17 @@ class SmokEmotes extends Addon {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
 		}
+	}
+
+	liveFollowing(){
+
+		if (window.location.href == 'https://www.twitch.tv/directory/following'
+		&& this.chat.context.get('smokemotes.auto_live_follow_page')){
+
+			window.location.href = 'https://www.twitch.tv/directory/following/live';
+
+		}
+
 	}
 
 	onNotifyWindowFocus() {
@@ -419,342 +364,6 @@ class SmokEmotes extends Addon {
 					});
 				}
 			}
-		}
-	}
-
-	// global smokEmotes
-
-	async updateGlobalEmotes(attempts = 0) {
-		const realID = 'addon--smokemotes--emotes-global';
-		this.emotes.removeDefaultSet('addon--smokemotes', realID);
-		this.emotes.unloadSet(realID);
-
-		if (!this.chat.context.get('smokemotes.global_emoticons')) {
-			return;
-		}
-
-		const response = await fetch(
-			'https://api.smokey.gg/api/emotes/global/static'
-		);
-		if (response.ok) {
-			const emotes = await response.json();
-
-			const globalEmotes = [];
-			const arbitraryEmotes = [];
-
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-
-				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-
-				const emote = {
-					id: dataEmote.id,
-					urls: {
-						1: dataEmote.images['1x'],
-						2: dataEmote.images['2x'],
-						4: dataEmote.images['3x'],
-					},
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: arbitraryEmote,
-				};
-
-				globalEmotes.push(emote);
-			}
-
-			let setEmotes = [];
-			setEmotes = setEmotes.concat(globalEmotes);
-
-			if (this.chat.context.get('smokemotes.arbitrary_emoticons')) {
-				setEmotes = setEmotes.concat(arbitraryEmotes);
-			}
-
-			if (setEmotes.length === 0) {
-				return;
-			}
-
-			const set = {
-				emoticons: setEmotes,
-				title: 'Global Emotes',
-				source: 'smokEmotes',
-				icon: 'https://bot.smokey.gg/favicon.png',
-				_type: 1,
-			};
-
-			this.emotes.addDefaultSet('addon--smokemotes', realID, set);
-		} else {
-			if (response.status === 404) return;
-
-			const newAttempts = (attempts || 0) + 1;
-			if (newAttempts < 12) {
-				this.log.error(
-					'Failed to fetch global emotes. Trying again in 5 seconds.'
-				);
-				setTimeout(this.updateGlobalEmotes.bind(this, newAttempts), 5000);
-			}
-		}
-	}
-
-	// global smokEmote GIFs
-
-	async updateGlobalGIFs(attempts = 0) {
-		const realID = 'addon--smokemotes--emotes-global-gifs';
-		this.emotes.removeDefaultSet('addon--smokemotes', realID);
-		this.emotes.unloadSet(realID);
-
-		if (!this.chat.context.get('smokemotes.global_gifs')) {
-			return;
-		}
-
-		const response = await fetch('https://api.smokey.gg/api/emotes/global/gif');
-		if (response.ok) {
-			const emotes = await response.json();
-
-			const globalEmotes = [];
-
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-
-				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-
-				const emote = {
-					id: dataEmote.id,
-					urls: {
-						1: dataEmote.images['1x'],
-						2: dataEmote.images['2x'],
-						4: dataEmote.images['3x'],
-					},
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: arbitraryEmote,
-				};
-
-				globalEmotes.push(emote);
-			}
-
-			const set = {
-				emoticons: globalEmotes,
-				title: 'Global GIFs',
-				source: 'smokEmotes',
-				icon: 'https://bot.smokey.gg/favicon.png',
-				_type: 1,
-			};
-
-			this.emotes.addDefaultSet('addon--smokemotes', realID, set);
-		} else {
-			if (response.status === 404) return;
-
-			const newAttempts = (attempts || 0) + 1;
-			if (newAttempts < 12) {
-				this.log.error(
-					'Failed to fetch global GIFs. Trying again in 5 seconds.'
-				);
-				setTimeout(this.updateGlobalGIFs.bind(this, newAttempts), 5000);
-			}
-		}
-	}
-
-	// Others' Personal Emotes
-
-	async updateOtherPersonalEmotes(msg) {
-		const _id_emotes = `addon--smokemotes--emotes-personal-${
-			msg.message.user.id
-		}`;
-		this.emotes.unloadSet(_id_emotes);
-
-		if (!this.chat.context.get('smokemotes.personal_emotes')) {
-			return;
-		}
-
-		const response = await fetch(
-			`https://api.smokey.gg/api/emotes/${msg.message.user.id}/all`
-		);
-		if (response.ok) {
-			const emotes = await response.json();
-
-			const personalEmotes = [];
-
-			if (emotes.length == 0) {
-				return;
-			}
-
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-
-				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-
-				const emote = {
-					id: dataEmote.id,
-					urls: {
-						1: dataEmote.images['1x'],
-						2: dataEmote.images['2x'],
-						4: dataEmote.images['3x'],
-					},
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: arbitraryEmote,
-					owner: {
-						display_name: dataEmote.user.displayName || '',
-						name: dataEmote.user.name || '',
-					},
-				};
-
-				personalEmotes.push(emote);
-			}
-
-			const set = {
-				emoticons: personalEmotes,
-				title: 'Personal Emotes',
-				source: 'smokEmotes',
-				icon: 'https://bot.smokey.gg/favicon.png',
-			};
-
-			this.emotes.loadSetData(_id_emotes, set, false);
-			this.chat
-				.getUser(undefined, msg.message.user.login)
-				.addSet('addon--smokemotes', _id_emotes);
-		}
-	}
-
-	// Personal Emotes
-
-	async updatePersonalEmotes() {
-		const user = this.resolve('site').getUser();
-
-		const _id_emotes = `addon--smokemotes--emotes-personal-${user.id}`;
-		this.emotes.unloadSet(_id_emotes);
-
-		if (!this.chat.context.get('smokemotes.personal_emotes')) {
-			return;
-		}
-
-		const response = await fetch(
-			`https://api.smokey.gg/api/emotes/${user.id}/all`
-		);
-		if (response.ok) {
-			const emotes = await response.json();
-
-			const personalEmotes = [];
-
-			if (emotes.length == 0) {
-				return;
-			}
-
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-
-				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-
-				const emote = {
-					id: dataEmote.id,
-					urls: {
-						1: dataEmote.images['1x'],
-						2: dataEmote.images['2x'],
-						4: dataEmote.images['3x'],
-					},
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: arbitraryEmote,
-					owner: {
-						display_name: dataEmote.user.displayName || '',
-						name: dataEmote.user.name || '',
-					},
-				};
-
-				personalEmotes.push(emote);
-			}
-
-			const set = {
-				emoticons: personalEmotes,
-				title: 'Personal Emotes',
-				source: 'smokEmotes',
-				icon: 'https://bot.smokey.gg/favicon.png',
-			};
-
-			this.emotes.loadSetData(_id_emotes, set, false);
-			this.chat
-				.getUser(undefined, user.login)
-				.addSet('addon--smokemotes', _id_emotes);
-		}
-	}
-
-	// update channel's emotes
-
-	async updateChannelEmotes(room) {
-		const realID = `addon--smokemotes--channel-${room.id}`;
-		room.removeSet('addon--smokemotes', realID);
-		this.emotes.unloadSet(realID);
-
-		if (!this.chat.context.get('smokemotes.channel_emoticons')) {
-			return;
-		}
-
-		const response = await fetch(
-			`https://api.smokey.gg/api/emotes/${room.id}/all`
-		);
-		if (response.ok) {
-			const emotes = await response.json();
-
-			const personalEmotes = [];
-
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-
-				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-
-				const emote = {
-					id: dataEmote.id,
-					urls: {
-						1: dataEmote.images['1x'],
-						2: dataEmote.images['2x'],
-						4: dataEmote.images['3x'],
-					},
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: arbitraryEmote,
-					owner: {
-						display_name: dataEmote.user.displayName || '',
-						name: dataEmote.user.name || '',
-					},
-				};
-
-				personalEmotes.push(emote);
-			}
-
-			let setEmotes = [];
-			setEmotes = setEmotes.concat(personalEmotes);
-
-			if (setEmotes.length === 0) {
-				return;
-			}
-
-			const set = {
-				emoticons: setEmotes,
-				title: 'Channel Emotes',
-				source: 'smokEmotes',
-				icon: 'https://bot.smokey.gg/favicon.png',
-				_type: 1,
-			};
-
-			room.addSet('addon--smokemotes', realID, set);
-		} else {
-			this.log.error(`Failed to fetch channel (${room.id}) emotes.`);
-		}
-	}
-
-	updateChannels() {
-		for (const room of this.chat.iterateRooms()) {
-			if (room) this.updateChannelEmotes(room);
 		}
 	}
 
@@ -877,15 +486,6 @@ class SmokEmotes extends Addon {
 			window.removeEventListener('keydown', this.onKeyDown);
 		}
 	}
-
-	// update all emotes
-
-	updateEmotes() {
-		this.updateGlobalEmotes();
-		this.updateGlobalGIFs();
-		this.updatePersonalEmotes();
-		this.updateChannels();
-	}
 }
 
-SmokEmotes.register();
+SmokeysUtils.register();
