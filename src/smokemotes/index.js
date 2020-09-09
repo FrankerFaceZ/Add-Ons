@@ -234,15 +234,9 @@ class SmokeysUtils extends Addon {
 					value: false,
 					writable: false,
 				});
-			} catch (err) {
-				this.log.warn('Unable to install document visibility hook.', err);
-			}
-		} else {
-			try {
-				Object.defineProperty(document, 'hidden', {
-					value: false,
-					writable: true,
-				});
+				document.addEventListener('visibilitychange', e => {
+					e.stopImmediatePropagation();
+				}, true, true);
 			} catch (err) {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
