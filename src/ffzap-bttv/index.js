@@ -280,6 +280,7 @@ class BetterTTV extends Addon {
 					require_spaces: arbitraryEmote,
 					modifier: Object.prototype.hasOwnProperty.call(overlayEmotes, dataEmote.code),
 					modifier_offset: overlayEmotes[dataEmote.code],
+					click_url: `https://betterttv.com/emotes/${dataEmote.id}`
 				};
 
 				emote.urls = {
