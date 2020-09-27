@@ -406,6 +406,7 @@ class BetterTTV extends Addon {
 						name: (user && user.name) || room.login,
 					},
 					require_spaces: requireSpaces,
+					click_url: `https://betterttv.com/emotes/${id}`
 				};
 
 				if (emoteFromArray.imageType === 'gif') {
