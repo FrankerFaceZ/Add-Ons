@@ -4,6 +4,8 @@ class HighlightAction extends Addon {
 		this.inject('chat.actions');
 		this.inject('chat');
 
+		// TODO: re-enable once I can override color, if possible.
+		/*
 		this.settings.add('hlactions.color', {
 			ui: {
 				path: 'Add-Ons > Highlight Action >> Highlights',
@@ -12,6 +14,7 @@ class HighlightAction extends Addon {
 				component: 'setting-color-box',
 			},
 		});
+		*/
 		this.settings.addUI('hlactions.clear', {
 			ui: {
 				path: 'Add-Ons > Highlight Action >> Highlights',
@@ -46,10 +49,12 @@ class HighlightAction extends Addon {
 					(msg.highlights = (msg.highlights || new Set())).add('user2');
 					msg.mentioned = true;
 
+					// TODO: Should it be hex color? Also re-enable once I can override color, if possible.
+					/*
 					const color = this.settings.get('hlactions.color')
-					// TODO: Should it be hex color?
 					if(color)
 						msg.mention_color = color
+					*/
 				}
 				
 				if (msg.mentioned) {
@@ -65,7 +70,6 @@ class HighlightAction extends Addon {
 			},
 
 			click(event, data) {
-				console.log('click')
 				const val = this.settings.provider.get(settingsKey, [])
 				const idx = val.indexOf(data.user.id);
 				if ( idx === -1 )
@@ -73,8 +77,6 @@ class HighlightAction extends Addon {
 				else
 					val.splice(idx, 1);
 				this.settings.provider.set(settingsKey, val)
-				console.log(this)
-				console.log(data)
 				this.parent.emit('chat:update-lines')
 			}
 		})
