@@ -43,13 +43,13 @@ class HighlightAction extends Addon {
 				
 				if(this.settings.provider.get(settingsKey)?.includes?.(msg.user.userID))
 				{
-					(msg.highlights = (msg.highlights || new Set())).add('user');
+					(msg.highlights = (msg.highlights || new Set())).add('user2');
 					msg.mentioned = true;
 
 					const color = this.settings.get('hlactions.color')
-					console.log(color)
+					// TODO: Should it be hex color?
 					if(color)
-						msg.mention_color = 'rgba(0, 0, 255, 1.0)'
+						msg.mention_color = color
 				}
 				
 				if (msg.mentioned) {
