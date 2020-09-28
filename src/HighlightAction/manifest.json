@@ -1,0 +1,15 @@
+{
+    "enabled": false,
+    "requires": [],
+
+    "version": "1.0.0",
+    "icon": "https://cdn.frankerfacez.com/badge/2/4/solid",
+
+    "short_name": "Highlight Action",
+    "name": "Highlight Action",
+    "author": "Greger",
+    "description": "Adds a new action that lets you highlight specific users through a quick action",
+
+    "website": "",
+    "settings": "add_ons.highlight_action"
+}
