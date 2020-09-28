@@ -48,6 +48,8 @@ class HighlightAction extends Addon {
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user2');
 					msg.mentioned = true;
+					appearance.type = 'icon';
+					appearance.icon = 'ffz-i-eye-off';
 
 					// TODO: Should it be hex color? Also re-enable once I can override color, if possible.
 					/*
@@ -55,11 +57,6 @@ class HighlightAction extends Addon {
 					if(color)
 						msg.mention_color = color
 					*/
-				}
-				
-				if (msg.mentioned) {
-					appearance.type = 'icon';
-					appearance.icon = 'ffz-i-eye-off';
 				}
 
 				return appearance;
