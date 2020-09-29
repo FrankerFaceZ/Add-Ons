@@ -44,7 +44,7 @@ class HighlightAction extends Addon {
 			title: 'Highlight User',
 			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
 				
-				if(this.settings.provider.get(settingsKey)?.includes?.(msg.user.userID))
+				if(this.settings.provider.get(settingsKey, []).includes(msg.user.userID))
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user');
 					msg.mentioned = true;
