@@ -46,7 +46,7 @@ class HighlightAction extends Addon {
 				
 				if(this.settings.provider.get(settingsKey)?.includes?.(msg.user.userID))
 				{
-					(msg.highlights = (msg.highlights || new Set())).add('user2');
+					(msg.highlights = (msg.highlights || new Set())).add('user');
 					msg.mentioned = true;
 					appearance.type = 'icon';
 					appearance.icon = 'ffz-i-eye-off';
