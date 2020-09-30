@@ -15,7 +15,14 @@ class ModTools extends Addon {
 			},
 		});
 		*/
-		this.settings.addUI('modtools.highglights.clear', {
+		this.settings.addUI('modtools.about', {
+			ui: {
+				path: 'Add-Ons > Mod Tools >> Current Features',
+				title: 'Current features',
+				component: () => import('./views/current-features.vue'),
+			},
+		});
+		this.settings.addUI('modtools.highlights.clear', {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Highlights',
 				title: 'Clear highlights',
