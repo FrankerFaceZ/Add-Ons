@@ -6,16 +6,16 @@ class ModTools extends Addon {
 
 		// TODO: re-enable once I can override color, if possible.
 		/*
-		this.settings.add('hlactions.color', {
+		this.settings.add('modtools.highlights.color', {
 			ui: {
-				path: 'Add-Ons > Highlight Action >> Highlights',
+				path: 'Add-Ons > Mod Tools >> Highlights',
 				title: 'Highlight Color',
 				description: 'Set the color for your highlights',
 				component: 'setting-color-box',
 			},
 		});
 		*/
-		this.settings.addUI('hlactions.clear', {
+		this.settings.addUI('modtools.highglights.clear', {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Highlights',
 				title: 'Clear highlights',
@@ -41,6 +41,7 @@ class ModTools extends Addon {
 			required_context: ['user'],
 
 			title: 'Highlight User',
+			description: '',
 			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
 				
 				if(this.settings.provider.get('modtools.highlight-temp-users', []).includes(msg.user.userID))
@@ -52,7 +53,7 @@ class ModTools extends Addon {
 
 					// TODO: Should it be hex color? Also re-enable once I can override color, if possible.
 					/*
-					const color = this.settings.get('hlactions.color')
+					const color = this.settings.get('modtools.highlights.color')
 					if(color)
 						msg.mention_color = color
 					*/
@@ -62,7 +63,7 @@ class ModTools extends Addon {
 			},
 
 			tooltip(data) {
-				return this.i18n.t('chat.actions.highlight.tooltip', `Highlight ${data.user.login}`);
+				return this.i18n.t('modtools.actions.highlight.tooltip', `Highlight ${data.user.login}`);
 			},
 
 			click(event, data) {
@@ -74,6 +75,32 @@ class ModTools extends Addon {
 					val.splice(idx, 1);
 				this.settings.provider.set('modtools.highlight-temp-users', val)
 				this.parent.emit('chat:update-lines')
+			}
+		})
+
+		this.actions.addAction('botsuppression', {
+			presets: [{
+				appearance: {
+					type: 'icon',
+					icon: 'ffz-fa fa-shield'
+				},
+				display: {
+					mod: true,
+				}
+			}],
+			defaults: {},
+			required_context: ['room'],
+			title: 'Bot spam suppression',
+			description: 'Clears chat and enables follower only mode (10 min)',
+
+
+			tooltip(data) {
+				return this.i18n.t('modtools.actions.botsuppression.tooltip', `Clears chat and enables follower only mode (10 min)`);
+			},
+
+			click(event, data) {
+				this.sendMessage(data.room.login, '/clear');
+				this.sendMessage(data.room.login, '/followers 10');
 			}
 		})
 	}
