@@ -1,4 +1,4 @@
-class HighlightAction extends Addon {
+class ModTools extends Addon {
 	constructor(...args) {
 		super(...args);
 		this.inject('chat.actions');
@@ -17,7 +17,7 @@ class HighlightAction extends Addon {
 		*/
 		this.settings.addUI('hlactions.clear', {
 			ui: {
-				path: 'Add-Ons > Highlight Action >> Highlights',
+				path: 'Add-Ons > Mod Tools >> Highlights',
 				title: 'Clear highlights',
 				description: 'Clear all current highlights',
 				component: () => import('./views/clear-button.vue'),
@@ -29,7 +29,6 @@ class HighlightAction extends Addon {
 	}
 
 	onEnable() {
-		const settingsKey = 'hlaction.highlight-temp'
 
 		this.actions.addAction('highlight', {
 			presets: [{
@@ -44,7 +43,7 @@ class HighlightAction extends Addon {
 			title: 'Highlight User',
 			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
 				
-				if(this.settings.provider.get(settingsKey, []).includes(msg.user.userID))
+				if(this.settings.provider.get('modtools.highlight-temp-users', []).includes(msg.user.userID))
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user');
 					msg.mentioned = true;
@@ -67,13 +66,13 @@ class HighlightAction extends Addon {
 			},
 
 			click(event, data) {
-				const val = this.settings.provider.get(settingsKey, [])
+				const val = this.settings.provider.get('modtools.highlight-temp-users', [])
 				const idx = val.indexOf(data.user.id);
 				if ( idx === -1 )
 					val.push(data.user.id);
 				else
 					val.splice(idx, 1);
-				this.settings.provider.set(settingsKey, val)
+				this.settings.provider.set('modtools.highlight-temp-users', val)
 				this.parent.emit('chat:update-lines')
 			}
 		})
@@ -86,4 +85,4 @@ class HighlightAction extends Addon {
 	}
 }
 
-HighlightAction.register();
+ModTools.register();

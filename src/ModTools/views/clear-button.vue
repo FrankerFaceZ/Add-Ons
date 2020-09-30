@@ -8,10 +8,9 @@
 				<figure class="ffz-i-trash" />
 			</span>
 			<span class="tw-button__text">
-				{{ t('hlaction.highlights-temp.clear', 'Clear highlights') }}
+				{{ t('modtools.highlights-temp-users.clear', 'Clear highlights') }}
 			</span>
 		</button>
-		</setting-color-box>
 	</section>
 </template>
 
@@ -28,7 +27,7 @@ export default {
 	methods: {
 		clear(){
 			const settings = this.context.getFFZ().resolve('settings')
-			settings.provider.delete('hlaction.highlight-temp')
+			settings.provider.delete('modtools.highlight-temp-users')
 			this.context.getFFZ().resolve('chat').emit('chat:update-lines')
 		},
 	},
