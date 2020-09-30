@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import * as Constants from '../constants.js'
 export default {
 	props: ['item', 'context'],
 	data() {
@@ -27,7 +28,7 @@ export default {
 	methods: {
 		clear(){
 			const settings = this.context.getFFZ().resolve('settings')
-			settings.provider.delete('modtools.highlight-temp-users')
+			settings.provider.delete(Constants.HIGHLIGHT_USERS_KEY)
 			this.context.getFFZ().resolve('chat').emit('chat:update-lines')
 		},
 	},

@@ -1,3 +1,6 @@
+import * as Constants from './constants.js'
+import * as ModtoolsTokenizer from './ModtoolsHighlights.jsx'
+
 class ModTools extends Addon {
 	constructor(...args) {
 		super(...args);
@@ -5,8 +8,7 @@ class ModTools extends Addon {
 		this.inject('chat');
 
 		// TODO: re-enable once I can override color, if possible.
-		/*
-		this.settings.add('modtools.highlights.color', {
+		this.settings.add(Constants.HIGHLIGHT_COLOR_KEY, {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Highlights',
 				title: 'Highlight Color',
@@ -14,7 +16,6 @@ class ModTools extends Addon {
 				component: 'setting-color-box',
 			},
 		});
-		*/
 		this.settings.addUI('modtools.about', {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Current Features',
@@ -30,13 +31,14 @@ class ModTools extends Addon {
 				component: () => import('./views/clear-button.vue'),
 			},
 		});
+
+		this.chat.addTokenizer(ModtoolsTokenizer.ModtoolsHighlights);
 	}
 
 	async onLoad() {
 	}
 
 	onEnable() {
-
 		this.actions.addAction('highlight', {
 			presets: [{
 				appearance: {
@@ -50,22 +52,11 @@ class ModTools extends Addon {
 			title: 'Highlight User',
 			description: '',
 			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
-				
-				if(this.settings.provider.get('modtools.highlight-temp-users', []).includes(msg.user.userID))
+				if(this.settings.provider.get(Constants.HIGHLIGHT_USERS_KEY, []).includes(msg.user.userID))
 				{
-					(msg.highlights = (msg.highlights || new Set())).add('user');
-					msg.mentioned = true;
 					appearance.type = 'icon';
 					appearance.icon = 'ffz-i-eye-off';
-
-					// TODO: Should it be hex color? Also re-enable once I can override color, if possible.
-					/*
-					const color = this.settings.get('modtools.highlights.color')
-					if(color)
-						msg.mention_color = color
-					*/
 				}
-
 				return appearance;
 			},
 
@@ -74,13 +65,13 @@ class ModTools extends Addon {
 			},
 
 			click(event, data) {
-				const val = this.settings.provider.get('modtools.highlight-temp-users', [])
+				const val = this.settings.provider.get(Constants.HIGHLIGHT_USERS_KEY, [])
 				const idx = val.indexOf(data.user.id);
 				if ( idx === -1 )
 					val.push(data.user.id);
 				else
 					val.splice(idx, 1);
-				this.settings.provider.set('modtools.highlight-temp-users', val)
+				this.settings.provider.set(Constants.HIGHLIGHT_USERS_KEY, val)
 				this.parent.emit('chat:update-lines')
 			}
 		})
@@ -99,7 +90,6 @@ class ModTools extends Addon {
 			required_context: ['room'],
 			title: 'Bot spam suppression',
 			description: 'Clears chat and enables follower only mode (10 min)',
-
 
 			tooltip(data) {
 				return this.i18n.t('modtools.actions.botsuppression.tooltip', `Clears chat and enables follower only mode (10 min)`);
