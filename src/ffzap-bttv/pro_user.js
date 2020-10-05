@@ -34,6 +34,7 @@ export default class ProUser {
 					name: _emote.channel || '',
 				},
 				require_spaces: true,
+				click_url: `https://betterttv.com/emotes/${_emote.id}`
 			};
 
 			if (_emote.imageType === 'gif') {
