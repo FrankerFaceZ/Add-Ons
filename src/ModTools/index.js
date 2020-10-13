@@ -76,28 +76,37 @@ class ModTools extends Addon {
 			}
 		})
 
-		this.actions.addAction('botsuppression', {
+		this.actions.addAction('multiaction', {
 			presets: [{
 				appearance: {
-					type: 'icon',
-					icon: 'ffz-fa fa-shield'
-				},
-				display: {
-					mod: true,
+					type: 'text',
+					text: 'MC'
 				}
 			}],
-			defaults: {},
+
 			required_context: ['room'],
-			title: 'Bot spam suppression',
-			description: 'Clears chat and enables follower only mode (10 min)',
+
+			defaults: {
+				command: '@{{user.login}} HeyGuys\n/timeout {{user.login}}',
+			},
+
+			title: 'Multicommand',
+			description: '{options.command}',
+
+			editor: () => import('./views/edit-action.vue'),
 
 			tooltip(data) {
-				return this.i18n.t('modtools.actions.botsuppression.tooltip', `Clears chat and enables follower only mode (10 min)`);
+				const msg = this.replaceVariables(data.options.command, data);
+				return msg
 			},
 
 			click(event, data) {
-				this.sendMessage(data.room.login, '/clear');
-				this.sendMessage(data.room.login, '/followers 10');
+				const msg = this.replaceVariables(data.options.command, data).split('\n');
+				msg.forEach(element => {
+					var line = element.trim()
+					if(line && line !== "")
+						this.sendMessage(data.room.login, line);
+				});
 			}
 		})
 	}
