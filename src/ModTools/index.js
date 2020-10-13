@@ -96,8 +96,7 @@ class ModTools extends Addon {
 			editor: () => import('./views/edit-action.vue'),
 
 			tooltip(data) {
-				const msg = this.replaceVariables(data.options.command, data);
-				return msg
+				return this.replaceVariables(data.options.command, data)
 			},
 
 			click(event, data) {
