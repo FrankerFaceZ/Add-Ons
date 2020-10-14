@@ -76,7 +76,7 @@ class ModTools extends Addon {
 			}
 		})
 
-		this.actions.addAction('multiaction', {
+		this.actions.addAction('multicommand', {
 			presets: [{
 				appearance: {
 					type: 'text',
