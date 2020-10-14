@@ -1,16 +1,15 @@
 {
-    "enabled": true,
-    "requires": [],
-    "unlisted": true,
+  "enabled": true,
+  "requires": [],
 
-    "icon": "https://i.imgur.com/WVFY4R5.png",
-    "version": "0.0.16",
+  "icon": "https://i.imgur.com/WVFY4R5.png",
+  "version": "1.0.0",
 
-    "short_name": "smokeys_utils",
-    "name": "Smokey's Utilities",
-    "author": "Smokey",
-    "description": "Stuff to make a better Twitch.",
+  "short_name": "smokeys_utils",
+  "name": "Smokey's Utilities",
+  "author": "Smokey",
+  "description": "Stuff to make a better Twitch.",
 
-    "website": "https://smokey.gg/",
-    "settings": "add_ons.smokemotes"
+  "website": "https://smokey.gg/",
+  "settings": "add_ons.smokemotes"
 }
