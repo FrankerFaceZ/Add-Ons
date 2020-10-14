@@ -7,7 +7,6 @@ class ModTools extends Addon {
 		this.inject('chat.actions');
 		this.inject('chat');
 
-		// TODO: re-enable once I can override color, if possible.
 		this.settings.add(Constants.HIGHLIGHT_COLOR_KEY, {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Highlights',
@@ -76,28 +75,36 @@ class ModTools extends Addon {
 			}
 		})
 
-		this.actions.addAction('botsuppression', {
+		this.actions.addAction('multicommand', {
 			presets: [{
 				appearance: {
-					type: 'icon',
-					icon: 'ffz-fa fa-shield'
-				},
-				display: {
-					mod: true,
+					type: 'text',
+					text: 'MC'
 				}
 			}],
-			defaults: {},
+
 			required_context: ['room'],
-			title: 'Bot spam suppression',
-			description: 'Clears chat and enables follower only mode (10 min)',
+
+			defaults: {
+				command: '@{{user.login}} HeyGuys\n/timeout {{user.login}}',
+			},
+
+			title: 'Multicommand',
+			description: '{options.command}',
+
+			editor: () => import('./views/edit-action.vue'),
 
 			tooltip(data) {
-				return this.i18n.t('modtools.actions.botsuppression.tooltip', `Clears chat and enables follower only mode (10 min)`);
+				return this.replaceVariables(data.options.command, data)
 			},
 
 			click(event, data) {
-				this.sendMessage(data.room.login, '/clear');
-				this.sendMessage(data.room.login, '/followers 10');
+				const msg = this.replaceVariables(data.options.command, data).split('\n');
+				msg.forEach(element => {
+					const line = element.trim()
+					if(line && line !== '')
+						this.sendMessage(data.room.login, line);
+				});
 			}
 		})
 	}
