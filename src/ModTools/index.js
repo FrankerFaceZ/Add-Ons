@@ -7,7 +7,6 @@ class ModTools extends Addon {
 		this.inject('chat.actions');
 		this.inject('chat');
 
-		// TODO: re-enable once I can override color, if possible.
 		this.settings.add(Constants.HIGHLIGHT_COLOR_KEY, {
 			ui: {
 				path: 'Add-Ons > Mod Tools >> Highlights',
@@ -102,8 +101,8 @@ class ModTools extends Addon {
 			click(event, data) {
 				const msg = this.replaceVariables(data.options.command, data).split('\n');
 				msg.forEach(element => {
-					var line = element.trim()
-					if(line && line !== "")
+					const line = element.trim()
+					if(line && line !== '')
 						this.sendMessage(data.room.login, line);
 				});
 			}
