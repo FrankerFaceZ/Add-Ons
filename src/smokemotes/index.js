@@ -280,14 +280,14 @@ class SmokeysUtils extends Addon {
 				chat_list = this.site.children.chat.ChatContainer.first.state
 					.chatListElement;
 			} catch {
-				console.log('error getting chat_list');
+				this.log.debug('error getting chat_list');
 			}
 			if (chat_list) {
 				let chat_log;
 				try {
 					chat_log = chat_list.querySelector('[role="log"]');
 				} catch {
-					console.log('error getting chat_log');
+					this.log.debug('error getting chat_log');
 				}
 				if (chat_log) {
 					const pinned_log = document.createElement('div');
