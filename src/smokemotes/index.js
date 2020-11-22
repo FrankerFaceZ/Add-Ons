@@ -16,7 +16,7 @@ class SmokeysUtils extends Addon {
 		this.onKeyDown = this.onKeyDown.bind(this);
 		this.ModCardData = {
 			user: undefined,
-			message_id: undefined
+			message_id: undefined,
 		};
 
 		this.settings.add('smokemotes.pinned_mentions', {
@@ -24,7 +24,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: -1,
-				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Pinned Mentions',
 				description: 'Enable to have mentions pinned to the top of chat.',
 				component: 'setting-check-box',
@@ -36,7 +36,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 0,
-				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Auto Removal Timer',
 				description:
           'Time in seconds to auto remove pinned messages. 0 To Disable.',
@@ -55,7 +55,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 1,
-				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Border Color',
 				description: 'Color to use for the border of pinned mentions.',
 				component: 'setting-color-box',
@@ -69,7 +69,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 2,
-				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Font Color',
 				description: 'Color to use for the font of pinned mentions.',
 				component: 'setting-color-box',
@@ -83,7 +83,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 3,
-				path: 'Add-Ons > Smokey\'s Utilities >> Pinned Mentions',
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Background Color',
 				description: 'Color to use for the background of pinned mentions.',
 				component: 'setting-color-box',
@@ -97,7 +97,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: -1,
-				path: 'Add-Ons > Smokey\'s Utilities >> Channel',
+				path: "Add-Ons > Smokey's Utilities >> Channel",
 				title: 'Maintain HD Quality',
 				description:
           'Enable to keep the video player from automatically decreasing video quality when out of focus.',
@@ -110,7 +110,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 0,
-				path: 'Add-Ons > Smokey\'s Utilities >> Channel',
+				path: "Add-Ons > Smokey's Utilities >> Channel",
 				title: 'Auto Point Claimer',
 				description:
           'Enable to automatically obtain channel points. After disabling, you must refresh to completely disable.',
@@ -123,7 +123,7 @@ class SmokeysUtils extends Addon {
 
 			ui: {
 				sort: 0,
-				path: 'Add-Ons > Smokey\'s Utilities >> Following',
+				path: "Add-Ons > Smokey's Utilities >> Following",
 				title: 'Auto go to Live channels on your Following Directory',
 				description:
           'Enable to automatically go to the Live channel section on a fresh load of the following directory.',
@@ -139,7 +139,7 @@ class SmokeysUtils extends Addon {
 			},
 			ui: {
 				sort: 1,
-				path: 'Add-Ons > Smokey\'s Utilities >> Mod Keybinds',
+				path: "Add-Ons > Smokey's Utilities >> Mod Keybinds",
 				title: 'Toggle Mod Keybinds',
 				description: 'Enable to be able to use T/B/P for Timeout/Ban/Purge.',
 				component: 'setting-check-box',
@@ -191,12 +191,12 @@ class SmokeysUtils extends Addon {
 
 		this.ViewerCard = this.fine.define(
 			'chat-viewer-card',
-			n => n.trackViewerCardOpen && n.onWhisperButtonClick
+			(n) => n.trackViewerCardOpen && n.onWhisperButtonClick
 		);
 	}
 
 	onEnable() {
-		this.log.debug('Smokey\'s Utilities module was enabled successfully.');
+		this.log.debug("Smokey's Utilities module was enabled successfully.");
 
 		this.pinnedMentions();
 		this.keep_hd_video();
@@ -234,24 +234,27 @@ class SmokeysUtils extends Addon {
 					value: false,
 					writable: false,
 				});
-				document.addEventListener('visibilitychange', e => {
-					e.stopImmediatePropagation();
-				}, true, true);
+				document.addEventListener(
+					'visibilitychange',
+					(e) => {
+						e.stopImmediatePropagation();
+					},
+					true,
+					true
+				);
 			} catch (err) {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
 		}
 	}
 
-	liveFollowing(){
-
-		if (window.location.href == 'https://www.twitch.tv/directory/following'
-		&& this.chat.context.get('smokemotes.auto_live_follow_page')){
-
+	liveFollowing() {
+		if (
+			window.location.href == 'https://www.twitch.tv/directory/following' &&
+      this.chat.context.get('smokemotes.auto_live_follow_page')
+		) {
 			window.location.href = 'https://www.twitch.tv/directory/following/live';
-
 		}
-
 	}
 
 	onNotifyWindowFocus() {
@@ -296,8 +299,8 @@ class SmokeysUtils extends Addon {
 						`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
 					);
 					chat_log.parentNode.prepend(pinned_log);
-					this.pinned_handler = new MutationObserver(mutations => {
-						mutations.forEach(mutation => {
+					this.pinned_handler = new MutationObserver((mutations) => {
+						mutations.forEach((mutation) => {
 							if (mutation.addedNodes.length > 0) {
 								const chat_line = mutation.addedNodes[0];
 								requestAnimationFrame(() => {
@@ -331,7 +334,7 @@ class SmokeysUtils extends Addon {
 										);
 										close_button.innerHTML =
                       '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
-										close_button.addEventListener('click', e => {
+										close_button.addEventListener('click', (e) => {
 											e.currentTarget.parentNode.remove();
 											delete e.currentTarget.parentNode;
 										});
@@ -364,18 +367,16 @@ class SmokeysUtils extends Addon {
 	// mod keybind stuff
 
 	onKeyDown(e) {
-
 		if (e.ctrlKey || e.metaKey || e.shiftKey || !this.ModCardData.user) return;
 
 		// find text area
 		const text_area = document.getElementsByClassName('tw-textarea')[0];
-		const mod_comment = document.getElementsByTagName('input')[4];
 
 		if (!text_area) return; // shouldn't happen but just in case?
 
 		if (
-			document.activeElement === text_area ||
-      document.activeElement === mod_comment
+			document.activeElement.matches('input') ||
+			document.activeElement.matches('textarea')
 		)
 			return;
 
@@ -398,8 +399,9 @@ class SmokeysUtils extends Addon {
 		switch (keyCode) {
 			// timeout
 			case 84:
-				this.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 600`);
+				this.resolve('site.chat').ChatService.first.sendMessage(
+					`/timeout ${this.ModCardData.user} 600`
+				);
 				this.updateLogin();
 
 				if (close_button) {
@@ -410,8 +412,9 @@ class SmokeysUtils extends Addon {
 
 				// delete message
 			case 68:
-				this.resolve('site.chat')
-					.ChatService.first.sendMessage(`/delete ${this.ModCardData.message_id}`);
+				this.resolve('site.chat').ChatService.first.sendMessage(
+					`/delete ${this.ModCardData.message_id}`
+				);
 				this.updateLogin();
 
 				if (close_button) {
@@ -422,8 +425,9 @@ class SmokeysUtils extends Addon {
 
 				// ban
 			case 66:
-				this.resolve('site.chat')
-					.ChatService.first.sendMessage(`/ban ${this.ModCardData.user}`);
+				this.resolve('site.chat').ChatService.first.sendMessage(
+					`/ban ${this.ModCardData.user}`
+				);
 				this.updateLogin();
 
 				if (close_button) {
@@ -434,8 +438,9 @@ class SmokeysUtils extends Addon {
 
 				// purge
 			case 80:
-				this.resolve('site.chat')
-					.ChatService.first.sendMessage(`/timeout ${this.ModCardData.user} 1`);
+				this.resolve('site.chat').ChatService.first.sendMessage(
+					`/timeout ${this.ModCardData.user} 1`
+				);
 				this.updateLogin();
 
 				if (close_button) {
