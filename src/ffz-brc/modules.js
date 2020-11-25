@@ -2,7 +2,8 @@ import {getParentClassNames, sendMessage} from './util/utils';
 import {getConfigKey}                     from './util/constants';
 
 export const chat = {
-	onClick: (event, menuElement) => {
+	title       : 'Chat',
+	onClick     : (event, menuElement) => {
 		let chatEl;
 		let parentEl = event.target;
 		while (chatEl === undefined && parentEl.parentElement != null) {
@@ -17,40 +18,42 @@ export const chat = {
 		if (chatEl === undefined) return false;
 		
 		menuElement.setAttribute('user', chatEl.getAttribute('data-user'));
-		menuElement.setAttribute('user-id', chatEl.getAttribute('data-user-id'));
+		menuElement.setAttribute('user_id', chatEl.getAttribute('data-user-id'));
 		menuElement.setAttribute('room', chatEl.getAttribute('data-room'));
-		menuElement.setAttribute('room-id', chatEl.getAttribute('data-room-id'));
+		menuElement.setAttribute('room_id', chatEl.getAttribute('data-room-id'));
 		
 		return true;
 	},
 	checkElement: element => getParentClassNames(element, 5).includes('chat-line__message'),
 	modules     : {
-		ban    : {
-			enabledByDefault: false,
+		ban             : {
+			title           : 'Ban',
+			requiresMod     : true,
 			method          : (brc, values) => sendMessage(brc, `/ban ${values.user}`)
 		},
-		block  : {
+		block           : {
 			enabledByDefault: true,
 			method          : (brc, values) => sendMessage(brc, `/block ${values.user}`)
 		},
-		delete  : {
-			enabledByDefault: false,
+		delete          : {
+			title           : 'Delete',
+			requiresMod     : true,
 			method          : (brc, values) => sendMessage(brc, `/delete ${values.user}`)
 		},
-		open_in_this_tab   : {
+		open_in_this_tab: {
 			enabledByDefault: true,
 			method          : (brc, values) => window.location.href = `https://twitch.tv/${values.user}`
 		},
-		open_in_new_tab   : {
+		open_in_new_tab : {
 			enabledByDefault: true,
 			method          : (brc, values) => window.open(`https://twitch.tv/${values.user}`, '_blank')
 		},
-		ping   : {
+		ping            : {
 			enabledByDefault: true,
-			method          : (brc, values) => sendMessage(brc, `@${values.user}`)
+			method          : (brc, values) => brc.followUser(values.user_id)//sendMessage(brc, `@${values.user}`)
 		},
-		purge   : {
-			enabledByDefault: false,
+		purge           : {
+			requiresMod     : true,
 			method          : (brc, values) => sendMessage(brc, `/timeout ${values.user} 1`)
 		},
 		// eslint-disable-next-line no-warning-comments
@@ -60,8 +63,8 @@ export const chat = {
 		// 	method          : (brc, values) =>
 		// 		document.getElementsByClassName('chat-input__textarea')[0].children[0].children[0].value = `/reply ${values.user}`
 		// },
-		timeout: {
-			enabledByDefault: false,
+		timeout         : {
+			requiresMod     : true,
 			method          : (brc, values) =>
 				sendMessage(brc, `/timeout ${values.user} ${brc.settings.get(getConfigKey('chat', 'timeout_duration'))}`),
 			config          : {
@@ -83,12 +86,11 @@ export const chat = {
 				type       : 'list'
 			}
 		},
-		unban  : {
-			enabledByDefault: false,
+		unban           : {
+			requiresMod     : true,
 			method          : (brc, values) => sendMessage(brc, `/unban ${values.user}`)
 		},
-		unblock: {
-			enabledByDefault: false,
+		unblock         : {
 			method          : (brc, values) => sendMessage(brc, `/unblock ${values.user}`)
 		}
 	}
