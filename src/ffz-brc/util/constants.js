@@ -1,4 +1,4 @@
-const keyStarter          = 'addon.ffz-brc';
+const keyStarter          = 'add_ons.ffz-brc';
 export const getLangKey   = (...keys) => `${keyStarter}.lang.${keys.join('.')}`;
 export const getConfigKey = (moduleName, configName) => `${keyStarter}.config.${moduleName}.${configName === 'enabled' ? '' : 'config.'}${configName}`;
 const getMenuKey          = (isColor, configName) => `${keyStarter}.config.menu.${isColor ? 'color' : 'config'}.${configName}`;

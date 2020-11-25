@@ -2,28 +2,8 @@ import {getConfigKey, lang, menu} from './util/constants';
 import * as modules               from './modules';
 import * as Utils                 from './util/utils';
 
-/*
-// Shit to test IE
-
-const getMousePos = (event) => {
-	return {
-		x: event.pageY ? event.pageY : event.clientY + (document.documentElement.scrollTop ?
-			document.documentElement.scrollTop : document.body.scrollTop),
-		y: event.pageX ? event.pageX : event.clientX + (document.documentElement.scrollLeft ?
-			document.documentElement.scrollLeft : document.body.scrollLeft)
-	};
-};
-
-document.attachEvent('oncontextmenu', event => {
-	console.log(event.constructor.name);
-	console.log(event.target.className);
-	console.log(event.target.parentElement.className);
-	console.log(getMousePos(event));
-});
-*/
-
 const capitalize = str => str.split('_').map(word => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(' ');
-const lower      = str => str.replace('_', ' ').toLowerCase();
+const lower      = str => str.toLowerCase().split('_').join(' ');
 
 class ValueMissingError extends Error {
 	constructor(missingValue) {
@@ -40,18 +20,24 @@ class UnknownValueTypeError extends Error {
 }
 
 // Make IntelliJ stop complaining about stuff that works/is needed
-// noinspection JSUnresolvedVariable, JSUnresolvedFunction, JSUnusedGlobalSymbols
+// noinspection JSUnresolvedVariable, JSUnresolvedFunction, JSUnusedGlobalSymbols,CssInvalidPropertyValue
 class FFZBRC extends Addon {
 	constructor(...args) {
 		super(...args);
 		
+		this.log.info('Constructing ffz-brc');
+		
 		this.inject('chat');
+		this.inject('i18n');
+		this.inject('site.chat');
 		
 		for (const menuKey in menu) {
 			if (!{}.hasOwnProperty.call(menu, menuKey)) continue;
 			
+			this.log.info(`Loading ${menuKey} config`);
 			const menuLang = lang.menu[menuKey];
 			
+			let sort = 0;
 			for (const submenuKey in menu[menuKey]) {
 				if (!{}.hasOwnProperty.call(menu[menuKey], submenuKey)) continue;
 				
@@ -61,6 +47,7 @@ class FFZBRC extends Addon {
 					this.settings.add(submenu.key, this.loadMenuOps({
 						default: submenu.default,
 						ui     : {
+							sort       : sort++,
 							path       : `Add-Ons > FFZ: BRC >> ${this.i18n.t(menuLang.name.key, menuLang.name.default)}`,
 							title      : this.i18n.t(menuLang.title.key, menuLang.title.default).replace('[key]', capitalize(submenuKey)),
 							description: (menuLang.description ? this.i18n.t(menuLang.description.key,
@@ -81,22 +68,28 @@ class FFZBRC extends Addon {
 					}
 				}
 			}
+			
+			this.log.info(`Loaded ${menuKey} config`);
 		}
 		
 		for (const moduleKey in modules) {
 			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
 			
-			const module  = modules[moduleKey];
-			const moduleC = capitalize(moduleKey);
+			this.log.info(`Loading ${moduleKey} config`);
 			
+			const module     = modules[moduleKey];
+			const moduleC    = module.title || capitalize(moduleKey);
+			const moduleDesc = module.description ? `@{"description": "${module.description}"}` : '';
+			
+			let sort = 0;
 			this.settings.add(getConfigKey(moduleKey, 'enabled'), {
 				default: true,
 				ui     : {
-					path       : `Add-Ons > FFZ: BRC > ${moduleC} >> ${this.i18n.t(lang.module.enabled.name.key,
+					sort       : sort++,
+					path       : `Add-Ons > FFZ: BRC > ${moduleC}${moduleDesc} >> ${this.i18n.t(lang.module.enabled.name.key,
 						lang.module.enabled.name.default).replace('[module]', moduleC)}`,
 					title      : this.i18n.t(lang.module.enabled.title.key, lang.module.enabled.title.default),
-					description: `${this.i18n.t(lang.module.enabled.description.key,
-						lang.module.enabled.description.default)
+					description: `${this.i18n.t(lang.module.enabled.description.key, lang.module.enabled.description.default)
 						.replace('[module]', lower(moduleKey))}\n`,
 					component  : 'setting-check-box'
 				},
@@ -110,11 +103,12 @@ class FFZBRC extends Addon {
 				if (!{}.hasOwnProperty.call(module.modules, submoduleKey)) continue;
 				
 				const submodule  = module.modules[submoduleKey];
-				const submoduleC = capitalize(submoduleKey);
+				const submoduleC = (submodule.title || capitalize(submoduleKey));
 				
 				this.settings.add(getConfigKey(moduleKey, submoduleKey), {
-					default: submodule.enabledByDefault !== undefined ? submodule.enabledByDefault : true,
+					default: submodule.enabledByDefault || false,
 					ui     : {
+						sort       : sort++,
 						path       : `Add-Ons > FFZ: BRC > ${moduleC} >> ${
 							this.i18n.t(lang.module.toggle.name.key, lang.module.toggle.name.default)}`,
 						title      : submoduleC,
@@ -135,6 +129,7 @@ class FFZBRC extends Addon {
 						this.settings.add(submodule.config.key, this.loadMenuOps({
 							default: submodule.config.default,
 							ui     : {
+								sort       : sort++,
 								path       : `Add-Ons > FFZ: BRC > ${moduleC} >> ${
 									this.i18n.t(lang.menu.config.name.key, lang.menu.config.name.default)}`,
 								title      : submodule.config.title,
@@ -158,7 +153,11 @@ class FFZBRC extends Addon {
 					}
 				}
 			}
+			
+			this.log.info(`Loaded ${moduleKey} config`);
 		}
+		
+		this.log.info(`Successfully constructed ffz-brc`);
 	}
 	
 	loadMenuOps(baseMenuOps, module) {
@@ -175,6 +174,9 @@ class FFZBRC extends Addon {
 				case 'boolean':
 					baseMenuOps.ui.component = 'setting-check-box';
 					break;
+				case 'color':
+					baseMenuOps.ui.component = 'setting-color-box';
+					break;
 				default:
 					throw new UnknownValueTypeError(module.type);
 			}
@@ -188,15 +190,8 @@ class FFZBRC extends Addon {
 	onChange(moduleKey, forceDisable = false) {
 		const enabled = forceDisable ? false : this.settings.get(getConfigKey(moduleKey, 'enabled'));
 		
-		if (document.addEventListener) {
-			// All modern browsers should have document.addEventListener
-			if (enabled) document.addEventListener('contextmenu', event => this.onRightClick(event, this));
-			else document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
-		} else {
-			// Add support for IE version < 11 bc we gotta give them some love <3
-			if (enabled) document.attachEvent('oncontextmenu', event => this.onRightClick(event, this));
-			else document.detachEvent('oncontextmenu', event => this.onRightClick(event, this));
-		}
+		if (enabled) document.addEventListener('contextmenu', event => this.onRightClick(event, this));
+		else document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
 	}
 	
 	onEnable() {
@@ -213,11 +208,10 @@ class FFZBRC extends Addon {
 			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
 			
 			el.insertAdjacentHTML('beforeend', this.html[moduleKey]);
-			this.onChange(moduleKey);
+			document.addEventListener('contextmenu', event => this.onRightClick(event, this));
 		}
 		
-		if (document.addEventListener) document.addEventListener('click', event => this.onLeftClick(event, this));
-		else document.attachEvent('onclick', event => this.onLeftClick(event, this));
+		document.addEventListener('click', event => this.onLeftClick(event, this));
 		
 		this.log.info('Successfully setup ffz-brc');
 	}
@@ -230,11 +224,10 @@ class FFZBRC extends Addon {
 		for (const moduleKey in modules) {
 			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
 			
-			this.onChange(moduleKey, true);
+			document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
 		}
 		
-		if (document.removeEventListener) document.removeEventListener('click', event => this.onLeftClick(event, this));
-		else document.detachEvent('onclick', event => this.onLeftClick(event, this));
+		document.removeEventListener('click', event => this.onLeftClick(event, this));
 		
 		this.log.info('Successfully disabled ffz-brc');
 	}
@@ -268,15 +261,20 @@ class FFZBRC extends Addon {
 			if (event.target.parentElement.parentElement === child && child.id.split('-').length === 3) {
 				const moduleKey = child.id.split('-')[1];
 				if (moduleKey in modules && event.target.className in modules[moduleKey].modules) {
-					const ops = {};
-					child.getAttributeNames().forEach(attr => ops[attr] = child.getAttribute(attr));
-					modules[moduleKey].modules[event.target.className].method(brc, ops);
+					const submodule = modules[moduleKey].modules[event.target.className];
+					
+					if ((submodule.requiresMod ? this.isMod() : true)) {
+						const ops = {};
+						child.getAttributeNames().forEach(attr => ops[attr] = child.getAttribute(attr));
+						submodule.method(brc, ops);
+						break;
+					}
 				}
 			}
-			
-			if (child.className === 'show') {
-				child.className = 'hide';
-			}
+		}
+		
+		if (child.className === 'show') {
+			child.className = 'hide';
 		}
 	}
 	
@@ -392,15 +390,20 @@ class FFZBRC extends Addon {
 			for (const submoduleKey in modules[moduleKey].modules) {
 				if (!{}.hasOwnProperty.call(modules[moduleKey].modules, submoduleKey)) continue;
 				
-				if(this.settings.get(menu.config_common.display_separators.key) && html.endsWith('</li>'))
-					html += `<li class="separator"/>`
-				
-				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)))
-					html += `<li class="${submoduleKey}">${capitalize(submoduleKey)}</li>`;
+				const submodule = modules[moduleKey].modules[submoduleKey];
+				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) && (modules[moduleKey].modules[submoduleKey].requiresMod ? this.isMod() : true)) {
+					if (this.settings.get(menu.config_common.display_separators.key) && html.endsWith('</li>'))
+						html += `<li class="separator"/>`;
+					html += `<li class="${submoduleKey}">${submodule.requiresMod ? '(Mod) ' : ''}${submodule.shortTitle || submodule.title || capitalize(submoduleKey)}</li>`;
+				}
 			}
 			html += `</ul></div>`;
 			this.html[moduleKey] = html;
 		}
+	}
+	
+	isMod() {
+		return this.chat.ChatContainer.first.props.isCurrentUserModerator;
 	}
 }
 
