@@ -141,7 +141,7 @@ class FFZBRC extends Addon {
 							}
 						}, submodule.config));
 					} catch (e) {
-						if (e instanceof ValueMissingError) { // Value missing
+						if (e instanceof ValueMissingError) {
 							this.log.info(this.i18n.t(lang.menu.config.missing_value.key, lang.menu.config.missing_value.default)
 								.replace('[valueType]', e.missingValue).replace('[module]', capitalize(submodule.config.title)));
 						} else if (e instanceof UnknownValueTypeError) {
