@@ -1,5 +1,6 @@
 {
   "enabled": true,
+  "unlisted": true,
   "requires": [],
 
   "version": "1.0.0",
