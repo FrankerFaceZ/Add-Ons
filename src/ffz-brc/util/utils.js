@@ -11,5 +11,7 @@ export const getParentClassNames = (element, parentCount, itr = 0) =>
 		[element.className];
 
 
-export const sendMessage = (brc, message) =>
-	brc.resolve('site.chat').ChatService.first.sendMessage(message);
+export const sendMessage = (brc, message) => brc.chat.ChatService.first.sendMessage(message);
+
+
+export const isMod = brc => brc.chat.ChatContainer.first.props.isCurrentUserModerator;
