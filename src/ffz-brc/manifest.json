@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "requires": [],
+
+  "version": "1.0.0",
+  "icon": "https://i.imgur.com/UHiYdus.png",
+
+  "short_name": "FFZ-BRC",
+  "name": "FFZ: Better Right Click",
+  "author": "L3afMe",
+  "description": "Adds a better right click menu.",
+
+  "settings": "addon.ffz-brc"
+}
