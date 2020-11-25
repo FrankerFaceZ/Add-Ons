@@ -263,7 +263,7 @@ class FFZBRC extends Addon {
 				if (moduleKey in modules && event.target.className in modules[moduleKey].modules) {
 					const submodule = modules[moduleKey].modules[event.target.className];
 					
-					if ((submodule.requiresMod ? this.isMod() : true)) {
+					if ((submodule.requiresMod ? Utils.isMod(this) : true)) {
 						const ops = {};
 						child.getAttributeNames().forEach(attr => ops[attr] = child.getAttribute(attr));
 						submodule.method(brc, ops);
@@ -391,7 +391,7 @@ class FFZBRC extends Addon {
 				if (!{}.hasOwnProperty.call(modules[moduleKey].modules, submoduleKey)) continue;
 				
 				const submodule = modules[moduleKey].modules[submoduleKey];
-				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) && (modules[moduleKey].modules[submoduleKey].requiresMod ? this.isMod() : true)) {
+				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) && (modules[moduleKey].modules[submoduleKey].requiresMod ? Utils.isMod(this) : true)) {
 					if (this.settings.get(menu.config_common.display_separators.key) && html.endsWith('</li>'))
 						html += `<li class="separator"/>`;
 					html += `<li class="${submoduleKey}">${submodule.requiresMod ? '(Mod) ' : ''}${submodule.shortTitle || submodule.title || capitalize(submoduleKey)}</li>`;
@@ -400,10 +400,6 @@ class FFZBRC extends Addon {
 			html += `</ul></div>`;
 			this.html[moduleKey] = html;
 		}
-	}
-	
-	isMod() {
-		return this.chat.ChatContainer.first.props.isCurrentUserModerator;
 	}
 }
 

@@ -1,5 +1,5 @@
-import {getParentClassNames, sendMessage} from './util/utils';
-import {getConfigKey}                     from './util/constants';
+import * as Utils     from './util/utils';
+import {getConfigKey} from './util/constants';
 
 export const chat = {
 	title       : 'Chat',
@@ -24,21 +24,21 @@ export const chat = {
 		
 		return true;
 	},
-	checkElement: element => getParentClassNames(element, 5).includes('chat-line__message'),
+	checkElement: element => Utils.getParentClassNames(element, 5).includes('chat-line__message'),
 	modules     : {
 		ban             : {
-			title           : 'Ban',
-			requiresMod     : true,
-			method          : (brc, values) => sendMessage(brc, `/ban ${values.user}`)
+			title      : 'Ban',
+			requiresMod: true,
+			method     : (brc, values) => Utils.sendMessage(brc, `/ban ${values.user}`)
 		},
 		block           : {
 			enabledByDefault: true,
-			method          : (brc, values) => sendMessage(brc, `/block ${values.user}`)
+			method          : (brc, values) => Utils.sendMessage(brc, `/block ${values.user}`)
 		},
 		delete          : {
-			title           : 'Delete',
-			requiresMod     : true,
-			method          : (brc, values) => sendMessage(brc, `/delete ${values.user}`)
+			title      : 'Delete',
+			requiresMod: true,
+			method     : (brc, values) => Utils.sendMessage(brc, `/delete ${values.user}`)
 		},
 		open_in_this_tab: {
 			enabledByDefault: true,
@@ -50,24 +50,16 @@ export const chat = {
 		},
 		ping            : {
 			enabledByDefault: true,
-			method          : (brc, values) => brc.followUser(values.user_id)//sendMessage(brc, `@${values.user}`)
+			method          : (brc, values) => Utils.sendMessage(brc, `@${values.user}`)
 		},
 		purge           : {
-			requiresMod     : true,
-			method          : (brc, values) => sendMessage(brc, `/timeout ${values.user} 1`)
+			requiresMod: true,
+			method     : (brc, values) => Utils.sendMessage(brc, `/timeout ${values.user} 1`)
 		},
-		// eslint-disable-next-line no-warning-comments
-		// TODO: Figure out why text clears itself after half a second
-		// reply  : {
-		// 	enabledByDefault: true,
-		// 	method          : (brc, values) =>
-		// 		document.getElementsByClassName('chat-input__textarea')[0].children[0].children[0].value = `/reply ${values.user}`
-		// },
 		timeout         : {
-			requiresMod     : true,
-			method          : (brc, values) =>
-				sendMessage(brc, `/timeout ${values.user} ${brc.settings.get(getConfigKey('chat', 'timeout_duration'))}`),
-			config          : {
+			requiresMod: true,
+			method     : (brc, values) => Utils.sendMessage(brc, `/timeout ${values.user} ${brc.settings.get(getConfigKey('chat', 'timeout_duration'))}`),
+			config     : {
 				default    : 300,
 				title      : 'Timeout Duration',
 				description: 'Duration to timeout someone for',
@@ -87,11 +79,11 @@ export const chat = {
 			}
 		},
 		unban           : {
-			requiresMod     : true,
-			method          : (brc, values) => sendMessage(brc, `/unban ${values.user}`)
+			requiresMod: true,
+			method     : (brc, values) => Utils.sendMessage(brc, `/unban ${values.user}`)
 		},
 		unblock         : {
-			method          : (brc, values) => sendMessage(brc, `/unblock ${values.user}`)
+			method: (brc, values) => Utils.sendMessage(brc, `/unblock ${values.user}`)
 		}
 	}
 };
