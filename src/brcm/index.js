@@ -2,6 +2,8 @@ import {getConfigKey, lang, menu} from './util/constants';
 import * as modules               from './modules';
 import * as Utils                 from './util/utils';
 
+const {createElement} = FrankerFaceZ.utilities.dom;
+
 const capitalize = str => str.split('_').map(word => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(' ');
 const lower      = str => str.toLowerCase().split('_').join(' ');
 
@@ -21,11 +23,11 @@ class UnknownValueTypeError extends Error {
 
 // Make IntelliJ stop complaining about stuff that works/is needed
 // noinspection JSUnresolvedVariable, JSUnresolvedFunction, JSUnusedGlobalSymbols,CssInvalidPropertyValue
-class FFZBRC extends Addon {
+class BRCM extends Addon {
 	constructor(...args) {
 		super(...args);
 		
-		this.log.info('Constructing ffz-brc');
+		this.log.info('Constructing BRCM');
 		
 		this.inject('chat');
 		this.inject('i18n');
@@ -48,14 +50,14 @@ class FFZBRC extends Addon {
 						default: submenu.default,
 						ui     : {
 							sort       : sort++,
-							path       : `Add-Ons > FFZ: BRC >> ${this.i18n.t(menuLang.name.key, menuLang.name.default)}`,
+							path       : `Add-Ons > BRCM >> ${this.i18n.t(menuLang.name.key, menuLang.name.default)}`,
 							title      : this.i18n.t(menuLang.title.key, menuLang.title.default).replace('[key]', capitalize(submenuKey)),
 							description: (menuLang.description ? this.i18n.t(menuLang.description.key,
 								menuLang.description.default) : submenu.description).replace('[key]', lower(submenuKey))
 						},
 						changed: () => {
-							this.reloadCSS();
-							this.reloadHTML();
+							this.loadCSS();
+							this.loadHTML();
 						}
 					}, submenu));
 				} catch (e) {
@@ -86,7 +88,7 @@ class FFZBRC extends Addon {
 				default: true,
 				ui     : {
 					sort       : sort++,
-					path       : `Add-Ons > FFZ: BRC > ${moduleC}${moduleDesc} >> ${this.i18n.t(lang.module.enabled.name.key,
+					path       : `Add-Ons > BRCM > ${moduleC}${moduleDesc} >> ${this.i18n.t(lang.module.enabled.name.key,
 						lang.module.enabled.name.default).replace('[module]', moduleC)}`,
 					title      : this.i18n.t(lang.module.enabled.title.key, lang.module.enabled.title.default),
 					description: `${this.i18n.t(lang.module.enabled.description.key, lang.module.enabled.description.default)
@@ -94,8 +96,8 @@ class FFZBRC extends Addon {
 					component  : 'setting-check-box'
 				},
 				changed: () => {
-					this.reloadCSS();
-					this.reloadHTML();
+					this.loadCSS();
+					this.loadHTML();
 				}
 			});
 			
@@ -103,13 +105,13 @@ class FFZBRC extends Addon {
 				if (!{}.hasOwnProperty.call(module.modules, submoduleKey)) continue;
 				
 				const submodule  = module.modules[submoduleKey];
-				const submoduleC = (submodule.title || capitalize(submoduleKey));
+				const submoduleC = (submodule.requiresMod ? '(Mod) ' : '') + (submodule.title || capitalize(submoduleKey));
 				
 				this.settings.add(getConfigKey(moduleKey, submoduleKey), {
 					default: submodule.enabledByDefault || false,
 					ui     : {
 						sort       : sort++,
-						path       : `Add-Ons > FFZ: BRC > ${moduleC} >> ${
+						path       : `Add-Ons > BRCM > ${moduleC} >> ${
 							this.i18n.t(lang.module.toggle.name.key, lang.module.toggle.name.default)}`,
 						title      : submoduleC,
 						description: this.i18n.t(lang.module.toggle.description.key,
@@ -119,8 +121,8 @@ class FFZBRC extends Addon {
 						component  : 'setting-check-box'
 					},
 					changed: () => {
-						this.reloadCSS();
-						this.reloadHTML();
+						this.loadCSS();
+						this.loadHTML();
 					}
 				});
 				
@@ -130,14 +132,14 @@ class FFZBRC extends Addon {
 							default: submodule.config.default,
 							ui     : {
 								sort       : sort++,
-								path       : `Add-Ons > FFZ: BRC > ${moduleC} >> ${
+								path       : `Add-Ons > BRCM > ${moduleC} >> ${
 									this.i18n.t(lang.menu.config.name.key, lang.menu.config.name.default)}`,
 								title      : submodule.config.title,
 								description: submodule.config.description
 							},
 							changed: () => {
-								this.reloadCSS();
-								this.reloadHTML();
+								this.loadCSS();
+								this.loadHTML();
 							}
 						}, submodule.config));
 					} catch (e) {
@@ -157,7 +159,7 @@ class FFZBRC extends Addon {
 			this.log.info(`Loaded ${moduleKey} config`);
 		}
 		
-		this.log.info(`Successfully constructed ffz-brc`);
+		this.log.info(`Successfully constructed BRCM`);
 	}
 	
 	loadMenuOps(baseMenuOps, module) {
@@ -187,49 +189,31 @@ class FFZBRC extends Addon {
 		return baseMenuOps;
 	}
 	
-	onChange(moduleKey, forceDisable = false) {
-		const enabled = forceDisable ? false : this.settings.get(getConfigKey(moduleKey, 'enabled'));
-		
-		if (enabled) document.addEventListener('contextmenu', event => this.onRightClick(event, this));
-		else document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
-	}
-	
 	onEnable() {
-		this.log.info('Setting up ffz-brc');
+		this.log.info('Setting up BRCM');
 		
-		this.setHTML();
-		this.setCSS();
-		
-		document.getElementsByTagName('body')[0].insertAdjacentHTML('beforeend', '<div id="ffzbrc-main-container">');
-		const el = document.getElementById('ffzbrc-main-container');
-		el.insertAdjacentHTML('afterbegin', this.css);
-		
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			el.insertAdjacentHTML('beforeend', this.html[moduleKey]);
-			document.addEventListener('contextmenu', event => this.onRightClick(event, this));
-		}
-		
+		document.addEventListener('contextmenu', event => this.onRightClick(event, this));
 		document.addEventListener('click', event => this.onLeftClick(event, this));
+		document.getElementsByTagName('body')[0]
+			.appendChild(createElement('div', {id: 'brcm-main-container'}));
 		
-		this.log.info('Successfully setup ffz-brc');
+		this.loadCSS();
+		this.loadHTML();
+		
+		this.log.info('Successfully setup BRCM');
 	}
 	
 	onDisable() {
-		this.log.info('Disabling ffz-brc');
+		this.log.info('Disabling BRCM');
 		
-		document.getElementById(`ffzbrc-main-container`).remove();
-		
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
-		}
-		
+		this.styleElement.remove();
+		this.styleElement = null;
+		document.getElementById(`brcm-main-container`).remove();
+		document.addEventListener('mousemove');
+		document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
 		document.removeEventListener('click', event => this.onLeftClick(event, this));
 		
-		this.log.info('Successfully disabled ffz-brc');
+		this.log.info('Successfully disabled BRCM');
 	}
 	
 	onRightClick(event, brc) {
@@ -237,15 +221,15 @@ class FFZBRC extends Addon {
 			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
 			
 			if (brc.settings.get(getConfigKey(moduleKey, 'enabled')) && modules[moduleKey].checkElement(event.target)) {
-				const el = document.getElementById(`ffzbrc-${moduleKey}-menu`);
+				const el = document.getElementById(`brcm-${moduleKey}-menu`);
 				
 				if (!modules[moduleKey].onClick(event, el)) continue;
 				event.preventDefault();
 				
 				const mousePos = Utils.getMousePos(event);
 				el.className   = 'show';
-				el.style.top   = `${mousePos.y}px`;
-				el.style.left  = `${mousePos.x}px`;
+				el.style.top   = `${mousePos.y - (window.innerHeight - event.pageY > el.offsetHeight ? 0 : el.offsetHeight)}px`;
+				el.style.left  = `${mousePos.x - (window.innerWidth - event.pageX > el.offsetWidth ? 0 : el.offsetWidth)}px`;
 				
 				// Break so only one menu is ever show at once
 				break;
@@ -255,7 +239,7 @@ class FFZBRC extends Addon {
 	
 	// eslint-disable-next-line no-unused-vars
 	onLeftClick(event, brc) {
-		const el = document.getElementById('ffzbrc-main-container');
+		const el = document.getElementById('brcm-main-container');
 		
 		for (const child of el.children) {
 			if (event.target.parentElement.parentElement === child && child.id.split('-').length === 3) {
@@ -267,33 +251,71 @@ class FFZBRC extends Addon {
 						const ops = {};
 						child.getAttributeNames().forEach(attr => ops[attr] = child.getAttribute(attr));
 						submodule.method(brc, ops);
-						break;
 					}
 				}
 			}
-		}
-		
-		if (child.className === 'show') {
-			child.className = 'hide';
+			
+			if (child.className === 'show') {
+				child.className = 'hide';
+				break;
+			}
 		}
 	}
 	
-	reloadCSS() {
-		const el = document.getElementById('ffzbrc-main-container');
+	loadHTML() {
+		const el = document.getElementById('brcm-main-container');
 		if (!el) return;
 		
-		for (const style of el.getElementsByTagName('style')) {
-			style.remove();
+		for (const div of el.getElementsByTagName('div')) {
+			div.remove();
 		}
 		
-		this.setCSS();
-		el.insertAdjacentHTML('afterbegin', this.css);
+		for (const moduleKey in modules) {
+			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
+			
+			const moduleEl = createElement('div', {id: `brcm-${moduleKey}-menu`, className: 'hide'});
+			const moduleUl = createElement('ul');
+			moduleEl.appendChild(moduleUl);
+			
+			if (this.settings.get(menu.config_common.display_header.key)) {
+				moduleUl.appendChild(createElement('li', {className: 'header'}, '[username]'));
+				moduleUl.appendChild(createElement('li', {className: 'separator'}));
+			}
+			
+			let appended = false;
+			for (const submoduleKey in modules[moduleKey].modules) {
+				if (!{}.hasOwnProperty.call(modules[moduleKey].modules, submoduleKey)) continue;
+				
+				const submodule = modules[moduleKey].modules[submoduleKey];
+				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) &&
+					(modules[moduleKey].modules[submoduleKey].requiresMod ? Utils.isMod(this) : true)) {
+					
+					if (this.settings.get(menu.config_common.display_separators.key) && appended)
+						moduleUl.appendChild(createElement('li', {className: 'separator'}));
+					
+					moduleUl.appendChild(createElement('li', {className: submoduleKey},
+						`${submodule.requiresMod ? '(Mod) ' : ''}${submodule.shortTitle || submodule.title || capitalize(submoduleKey)}`));
+					
+					appended = true;
+				}
+			}
+			
+			el.appendChild(moduleEl);
+		}
 	}
 	
-	setCSS() {
-		this.css = `
-<style>
-#ffzbrc-main-container .show {
+	loadCSS() {
+		if (this.styleElement) {
+			this.styleElement.textContent = this.getCSS().trim();
+		} else {
+			this.styleElement = createElement('style', null, this.getCSS().trim());
+			document.head.appendChild(this.styleElement);
+		}
+	}
+	
+	getCSS() {
+		return `
+#brcm-main-container .show {
   background-color: ${this.settings.get(menu.colors.background.key)};
   border: ${this.settings.get(menu.config_common.border_width.key)}px solid ${this.settings.get(menu.colors.border.key)};
   border-radius: ${this.settings.get(menu.config_common.border_radius.key)}px;
@@ -304,103 +326,63 @@ class FFZBRC extends Addon {
   z-index: 10000;
 }
 
-#ffzbrc-main-container .hide {
+#brcm-main-container .hide {
   display: none;
 }
 
-#ffzbrc-main-container .show li:not(.separator) {
+#brcm-main-container .show li:not(.separator) {
   padding-left: ${this.settings.get(menu.config_expert.border_padding_left.key)}px;
   padding-right: ${this.settings.get(menu.config_expert.border_padding_right.key)}px;
   margin-left: ${this.settings.get(menu.config_expert.border_margin_left.key)}px;
   margin-right: ${this.settings.get(menu.config_expert.border_margin_right.key)}px;
 }
 
-#ffzbrc-main-container .show li.separator {
+#brcm-main-container .show li.separator {
   background-color: ${this.settings.get(menu.colors.separators.key)};
   height: ${this.settings.get(menu.config_expert.separator_height.key)}px;
   margin-left: ${this.settings.get(menu.config_expert.separator_margin_left.key)}px;
   margin-right: ${this.settings.get(menu.config_expert.separator_margin_right.key)}px;
 }
 
-#ffzbrc-main-container .show li {
+#brcm-main-container .show li {
   list-style-type: none;
 }
 
-#ffzbrc-main-container .show a:link, a:visited, a:hover, a:active {
+#brcm-main-container .show a:link, a:visited, a:hover, a:active {
   color: ${this.settings.get(menu.colors.text.key)};
   cursor: default;
   text-decoration: none;
 }
 
-#ffzbrc-main-container .show li:first-child {
+#brcm-main-container .show li:first-child {
   padding-top: ${this.settings.get(menu.config_expert.border_padding_top.key) +
 		this.settings.get(menu.config_expert.module_padding_top.key)}px;
   margin-top: ${this.settings.get(menu.config_expert.border_margin_top.key) +
 		this.settings.get(menu.config_expert.module_margin_top.key)}px;
 }
 
-#ffzbrc-main-container .show li:last-child {
+#brcm-main-container .show li:last-child {
   padding-bottom: ${this.settings.get(menu.config_expert.border_padding_bottom.key) +
 		this.settings.get(menu.config_expert.module_padding_bottom.key)}px;
   margin-bottom: ${this.settings.get(menu.config_expert.border_margin_bottom.key) +
 		this.settings.get(menu.config_expert.module_margin_bottom.key)}px;
 }
 
-#ffzbrc-main-container .show li:not(.separator):not(:first-child) {
+#brcm-main-container .show li:not(.separator):not(:first-child) {
   padding-top: ${this.settings.get(menu.config_expert.module_padding_top.key)}px;
   margin-top: ${this.settings.get(menu.config_expert.module_margin_top.key)}px;
 }
 
-#ffzbrc-main-container .show li:not(.separator):not(:last-child) {
+#brcm-main-container .show li:not(.separator):not(:last-child) {
   padding-bottom: ${this.settings.get(menu.config_expert.module_padding_bottom.key)}px;
   margin-bottom: ${this.settings.get(menu.config_expert.module_margin_bottom.key)}px;
 }
 
-#ffzbrc-main-container .show li:not(.separator):hover {
+#brcm-main-container .show li:not(.separator):not(.header):hover {
   background-color: ${this.settings.get(menu.colors.highlight.key)};
   cursor: default;
-}
-</style>`;
-	}
-	
-	reloadHTML() {
-		const el = document.getElementById('ffzbrc-main-container');
-		if (!el) return;
-		
-		for (const div of el.getElementsByTagName('div')) {
-			div.remove();
-		}
-		
-		this.setHTML();
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			el.insertAdjacentHTML('beforeend', this.html[moduleKey]);
-			this.onChange(moduleKey);
-		}
-	}
-	
-	setHTML() {
-		this.html = {};
-		
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			let html = `<div id="ffzbrc-${moduleKey}-menu" class="hide"><ul>`;
-			for (const submoduleKey in modules[moduleKey].modules) {
-				if (!{}.hasOwnProperty.call(modules[moduleKey].modules, submoduleKey)) continue;
-				
-				const submodule = modules[moduleKey].modules[submoduleKey];
-				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) && (modules[moduleKey].modules[submoduleKey].requiresMod ? Utils.isMod(this) : true)) {
-					if (this.settings.get(menu.config_common.display_separators.key) && html.endsWith('</li>'))
-						html += `<li class="separator"/>`;
-					html += `<li class="${submoduleKey}">${submodule.requiresMod ? '(Mod) ' : ''}${submodule.shortTitle || submodule.title || capitalize(submoduleKey)}</li>`;
-				}
-			}
-			html += `</ul></div>`;
-			this.html[moduleKey] = html;
-		}
+}`;
 	}
 }
 
-FFZBRC.register();
+BRCM.register();

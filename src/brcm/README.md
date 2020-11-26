@@ -20,7 +20,7 @@ by default. The key name for this object will be what is
 displayed on the menu, for example a function with key
 `open_in_new_tab` will be displayed as `Open in new Tab`.
 The function takes an argument `brc` which is the current 
-instance of the ffz-brc addon class as well as a `values` object
+instance of the brcm addon class as well as a `values` object
 which-in the case of chat-contains the clicked user, their id, the
 room of which the chat was sent in and the room id.
 

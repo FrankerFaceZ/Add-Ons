@@ -6,8 +6,8 @@ export const chat = {
 	onClick     : (event, menuElement) => {
 		let chatEl;
 		let parentEl = event.target;
-		while (chatEl === undefined && parentEl.parentElement != null) {
-			if (parentEl.className === 'chat-line__message') {
+		while (chatEl === undefined && parentEl.parentElement) {
+			if (parentEl.classList.contains('chat-line__message')) {
 				chatEl = parentEl;
 			} else {
 				parentEl = parentEl.parentElement;
@@ -21,6 +21,11 @@ export const chat = {
 		menuElement.setAttribute('user_id', chatEl.getAttribute('data-user-id'));
 		menuElement.setAttribute('room', chatEl.getAttribute('data-room'));
 		menuElement.setAttribute('room_id', chatEl.getAttribute('data-room-id'));
+		
+		const headerEl = menuElement.getElementsByClassName('header');
+		if (headerEl.length === 1) {
+			headerEl[0].innerText = chatEl.getAttribute('data-user');
+		}
 		
 		return true;
 	},
@@ -36,7 +41,7 @@ export const chat = {
 			method          : (brc, values) => Utils.sendMessage(brc, `/block ${values.user}`)
 		},
 		delete          : {
-			title      : 'Delete',
+			title      : 'Delete Last Message',
 			requiresMod: true,
 			method     : (brc, values) => Utils.sendMessage(brc, `/delete ${values.user}`)
 		},

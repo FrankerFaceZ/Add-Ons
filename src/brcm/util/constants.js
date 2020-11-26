@@ -1,7 +1,7 @@
-const keyStarter          = 'add_ons.ffz-brc';
+const keyStarter          = 'add_ons.brcm';
 export const getLangKey   = (...keys) => `${keyStarter}.lang.${keys.join('.')}`;
 export const getConfigKey = (moduleName, configName) => `${keyStarter}.config.${moduleName}.${configName === 'enabled' ? '' : 'config.'}${configName}`;
-const getMenuKey          = (isColor, configName) => `${keyStarter}.config.menu.${isColor ? 'color' : 'config'}.${configName}`;
+const getMenuKey          = (isColor, configName) => `${keyStarter}.menu.config.${configName}`;
 
 export const lang = {
 	module: {
@@ -158,6 +158,12 @@ export const menu = {
 				{value: 175, title: '175px'}, {value: 200, title: '200px'}
 			],
 			type       : 'list'
+		},
+		display_header: {
+			default    : true,
+			description: 'Enable to display separators',
+			key        : getMenuKey(false, 'display_header'),
+			type       : 'boolean'
 		},
 		display_separators: {
 			default    : true,

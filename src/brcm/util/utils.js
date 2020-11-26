@@ -7,8 +7,7 @@ export const getMousePos = event => ({
 
 
 export const getParentClassNames = (element, parentCount, itr = 0) =>
-	itr < parentCount ? [element.className] + getParentClassNames(element.parentElement, parentCount, ++itr) :
-		[element.className];
+	`${element.className} ` + (itr < parentCount ? getParentClassNames(element.parentElement, parentCount, ++itr) : '');
 
 
 export const sendMessage = (brc, message) => brc.chat.ChatService.first.sendMessage(message);
