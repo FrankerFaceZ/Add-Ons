@@ -1,388 +1,438 @@
-import {getConfigKey, lang, menu} from './util/constants';
-import * as modules               from './modules';
-import * as Utils                 from './util/utils';
+import {BooleanConfig, Config}                 from './config/config.js';
+import * as MenuConfig                         from './config/menu_config.js';
+import {ChatModule}                            from './module/chat_module.js';
+import {RightClickModule}                      from './module/module.js';
+import {VideoPlayerModule}                     from './module/video_player_module.js';
+import {FirefoxDarkPreset, FirefoxLightPreset} from './preset/firefox_preset.js';
+import {Preset}                                from './preset/preset.js';
+import {TwitchDefaultPreset, TwitchFZZPreset}  from './preset/twitch_preset.js';
+import {getConfigKey, getMousePos}             from './utils.js';
 
+// noinspection JSUnresolvedVariable
 const {createElement} = FrankerFaceZ.utilities.dom;
 
-const capitalize = str => str.split('_').map(word => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(' ');
-const lower      = str => str.toLowerCase().split('_').join(' ');
-
-class ValueMissingError extends Error {
-	constructor(missingValue) {
-		super();
-		this.missingValue = missingValue;
-	}
-}
-
-class UnknownValueTypeError extends Error {
-	constructor(value) {
-		super();
-		this.value = value;
-	}
-}
-
-// Make IntelliJ stop complaining about stuff that works/is needed
-// noinspection JSUnresolvedVariable, JSUnresolvedFunction, JSUnusedGlobalSymbols,CssInvalidPropertyValue
-class BRCM extends Addon {
+// noinspection JSUnusedGlobalSymbols,JSUnresolvedVariable,JSUnresolvedFunction,SpellCheckingInspection
+export class BetterRightClickMenuAddon extends Addon {
+	/**
+	 * All modules in this array will be automatically
+	 * loaded when the addon is loaded. Modules are
+	 * required to extend {@link RightClickModule} and
+	 * implement both {@link RightClickModule#onClickElement}
+	 * and {@link RightClickModule#checkElement}. This
+	 * file requires no other modifications to add a module,
+	 * the same applies to presets below.
+	 *
+	 * @type {RightClickModule[]}
+	 */
+	modules = [
+		new ChatModule(this),
+		new VideoPlayerModule(this)
+	];
+	
+	/**
+	 * @type {Preset[]}
+	 */
+	menuPresets = [
+		new Preset('empty', 'Custom', ''),
+		new TwitchDefaultPreset(),
+		new TwitchFZZPreset(),
+		new FirefoxDarkPreset(),
+		new FirefoxLightPreset()
+	];
+	
+	/**
+	 * @type {HTMLElement}
+	 */
+	customStyleElement;
+	
+	/**
+	 * @type {HTMLElement}
+	 */
+	staticStyleElement;
+	
+	/**
+	 * @type {HTMLElement}
+	 */
+	containerElement;
+	
 	constructor(...args) {
 		super(...args);
 		
 		this.log.info('Constructing BRCM');
 		
-		this.inject('chat');
-		this.inject('i18n');
-		this.inject('site.chat');
+		const injects = ['chat.actions', 'chat.badges', 'site.chat', 'site.twitch_data'];
+		this.modules.forEach(module => module.injects.forEach(inject => injects.push(inject)));
+		[...new Set(injects)].forEach(inject => this.inject(inject));
 		
-		for (const menuKey in menu) {
-			if (!{}.hasOwnProperty.call(menu, menuKey)) continue;
-			
-			this.log.info(`Loading ${menuKey} config`);
-			const menuLang = lang.menu[menuKey];
-			
-			let sort = 0;
-			for (const submenuKey in menu[menuKey]) {
-				if (!{}.hasOwnProperty.call(menu[menuKey], submenuKey)) continue;
-				
-				const submenu = menu[menuKey][submenuKey];
-				
-				try {
-					this.settings.add(submenu.key, this.loadMenuOps({
-						default: submenu.default,
-						ui     : {
-							sort       : sort++,
-							path       : `Add-Ons > BRCM >> ${this.i18n.t(menuLang.name.key, menuLang.name.default)}`,
-							title      : this.i18n.t(menuLang.title.key, menuLang.title.default).replace('[key]', capitalize(submenuKey)),
-							description: (menuLang.description ? this.i18n.t(menuLang.description.key,
-								menuLang.description.default) : submenu.description).replace('[key]', lower(submenuKey))
-						},
-						changed: () => {
-							this.loadCSS();
-							this.loadHTML();
-						}
-					}, submenu));
-				} catch (e) {
-					if (e instanceof ValueMissingError) {
-						this.log.info(this.i18n.t(lang.menu.config.missing_value.key, lang.menu.config.missing_value.default)
-							.replace('[valueType]', 'list').replace('[module]', capitalize(submenuKey)));
-					} else if (e instanceof UnknownValueTypeError) {
-						this.log.info(this.i18n.t(lang.menu.config.unknown_type.key, lang.menu.config.unknown_type.default)
-							.replace('[valueType]', e.value).replace('[module]', capitalize(submenuKey)));
-					}
-				}
-			}
-			
-			this.log.info(`Loaded ${menuKey} config`);
+		this.loadMenuSettings();
+		this.loadModuleSettings();
+		this.loadDevBadge();
+		
+		this.log.info('Successfully constructed BRCM');
+	}
+	
+	//<editor-fold desc="Load Settings">
+	/**
+	 * @returns {void}
+	 */
+	loadMenuSettings() {
+		let menuSort = 0;
+		for (const configKey in MenuConfig) {
+			if (!(MenuConfig[configKey] instanceof Config)) continue;
+			this.settings.add(getConfigKey('menu', MenuConfig[configKey].key), MenuConfig[configKey].setSort(menuSort++).setOnChangeEvent(() => this.reloadElements()).config);
 		}
 		
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			this.log.info(`Loading ${moduleKey} config`);
-			
-			const module     = modules[moduleKey];
-			const moduleC    = module.title || capitalize(moduleKey);
-			const moduleDesc = module.description ? `@{"description": "${module.description}"}` : '';
-			
-			let sort = 0;
-			this.settings.add(getConfigKey(moduleKey, 'enabled'), {
-				default: true,
-				ui     : {
-					sort       : sort++,
-					path       : `Add-Ons > BRCM > ${moduleC}${moduleDesc} >> ${this.i18n.t(lang.module.enabled.name.key,
-						lang.module.enabled.name.default).replace('[module]', moduleC)}`,
-					title      : this.i18n.t(lang.module.enabled.title.key, lang.module.enabled.title.default),
-					description: `${this.i18n.t(lang.module.enabled.description.key, lang.module.enabled.description.default)
-						.replace('[module]', lower(moduleKey))}\n`,
-					component  : 'setting-check-box'
-				},
-				changed: () => {
-					this.loadCSS();
-					this.loadHTML();
+		this.settings.addUI(getConfigKey('menu', 'css'), {
+			ui: {
+				path     : `${MenuConfig.pathCSS}`,
+				sort     : 999999,
+				title    : 'Preset',
+				data     : this.menuPresets.map(preset => ({value: preset.key, title: preset.name})),
+				component: () => import('./components/preset-combobox.vue'),
+				getPreset: value => this.menuPresets[value],
+				onChange : () => this.reloadElements()
+			}
+		});
+		
+		this.settings.add(getConfigKey('menu', 'css'), {
+			default: this.menuPresets[0].css,
+			ui     : {
+				path     : `${MenuConfig.pathCSS}`,
+				sort     : Number.MAX_SAFE_INTEGER,
+				value    : this.getCSS(),
+				component: () => import('./components/setting-css-text-area.vue'),
+				isValid  : value => this._getCSS() !== value,
+				changed  : () => {
+					this.setCSS();
+					this.setHTML();
 				}
-			});
+			}
+		});
+	}
+	
+	/**
+	 * @returns {void}
+	 */
+	loadModuleSettings() {
+		let moduleSort = 0;
+		let configSort = 0;
+		for (const module of this.modules) {
+			this.settings.add(getConfigKey(module.key, 'enabled'), new BooleanConfig('enabled', true, module.path.copy().addSegment(`Main ${module.name} Toggle`, -100).toString()).setOnChangeEvent(() => this.reloadElements()).config);
+			for (const config of module.configs) {
+				this.settings.add(getConfigKey(module.key, config.key), config.setSort(configSort++).setOnChangeEvent(() => this.reloadElements()).config);
+			}
 			
-			for (const submoduleKey in module.modules) {
-				if (!{}.hasOwnProperty.call(module.modules, submoduleKey)) continue;
-				
-				const submodule  = module.modules[submoduleKey];
-				const submoduleC = (submodule.requiresMod ? '(Mod) ' : '') + (submodule.title || capitalize(submoduleKey));
-				
-				this.settings.add(getConfigKey(moduleKey, submoduleKey), {
-					default: submodule.enabledByDefault || false,
+			for (const submodule of module.modules) {
+				const props = {
+					default: true,
 					ui     : {
-						sort       : sort++,
-						path       : `Add-Ons > BRCM > ${moduleC} >> ${
-							this.i18n.t(lang.module.toggle.name.key, lang.module.toggle.name.default)}`,
-						title      : submoduleC,
-						description: this.i18n.t(lang.module.toggle.description.key,
-							lang.module.toggle.description.default)
-							.replace('[module]', lower(moduleKey))
-							.replace('[submodule]', lower(submoduleKey)),
-						component  : 'setting-check-box'
+						sort     : moduleSort++,
+						path     : `${submodule.path}`,
+						title    : (submodule.requiresMod ? '(Moderator) ' : '') + submodule.title,
+						component: 'setting-check-box'
 					},
-					changed: () => {
-						this.loadCSS();
-						this.loadHTML();
-					}
-				});
-				
-				if ('config' in submodule) {
-					try {
-						this.settings.add(submodule.config.key, this.loadMenuOps({
-							default: submodule.config.default,
-							ui     : {
-								sort       : sort++,
-								path       : `Add-Ons > BRCM > ${moduleC} >> ${
-									this.i18n.t(lang.menu.config.name.key, lang.menu.config.name.default)}`,
-								title      : submodule.config.title,
-								description: submodule.config.description
-							},
-							changed: () => {
-								this.loadCSS();
-								this.loadHTML();
-							}
-						}, submodule.config));
-					} catch (e) {
-						if (e instanceof ValueMissingError) {
-							this.log.info(this.i18n.t(lang.menu.config.missing_value.key, lang.menu.config.missing_value.default)
-								.replace('[valueType]', e.missingValue).replace('[module]', capitalize(submodule.config.title)));
-						} else if (e instanceof UnknownValueTypeError) {
-							this.log.info(this.i18n.t(lang.menu.config.unknown_type.key, lang.menu.config.unknown_type.default)
-								.replace('[valueType]', e.value).replace('[module]', capitalize(submodule.config.title)));
-						} else {
-							this.log.info(e);
-						}
-					}
-				}
+					changed: () => this.reloadElements()
+				};
+				if (submodule.description) props.ui.description = submodule.description;
+				this.settings.add(getConfigKey(module.key, submodule.key), props);
 			}
-			
-			this.log.info(`Loaded ${moduleKey} config`);
 		}
-		
-		this.log.info(`Successfully constructed BRCM`);
 	}
 	
-	loadMenuOps(baseMenuOps, module) {
-		if ('type' in module) {
-			switch (module.type) {
-				case 'list':
-					if (!('list' in module)) {
-						throw new ValueMissingError('list');
-					}
-					
-					baseMenuOps.ui.component = 'setting-select-box';
-					baseMenuOps.ui.data      = module.list;
-					break;
-				case 'boolean':
-					baseMenuOps.ui.component = 'setting-check-box';
-					break;
-				case 'color':
-					baseMenuOps.ui.component = 'setting-color-box';
-					break;
-				default:
-					throw new UnknownValueTypeError(module.type);
-			}
-		} else {
-			baseMenuOps.ui.component = 'setting-color-box';
-		}
-		
-		return baseMenuOps;
-	}
+	//</editor-fold>
 	
+	//<editor-fold desc="FFZ Events">
+	/**
+	 * @returns {void}
+	 */
 	onEnable() {
 		this.log.info('Setting up BRCM');
 		
-		document.addEventListener('contextmenu', event => this.onRightClick(event, this));
-		document.addEventListener('click', event => this.onLeftClick(event, this));
-		document.getElementsByTagName('body')[0]
-			.appendChild(createElement('div', {id: 'brcm-main-container'}));
-		
-		this.loadCSS();
-		this.loadHTML();
+		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container'}));
+		document.head.appendChild(this.staticStyleElement = createElement('style', null, this.getStaticCSS()));
+		this.reloadElements();
+		document.addEventListener('contextmenu', event => this.onRightClick(event));
+		document.addEventListener('click', event => this.onLeftClick(event));
 		
 		this.log.info('Successfully setup BRCM');
 	}
 	
+	/**
+	 * @returns {void}
+	 */
 	onDisable() {
 		this.log.info('Disabling BRCM');
 		
-		this.styleElement.remove();
-		this.styleElement = null;
-		document.getElementById(`brcm-main-container`).remove();
-		document.addEventListener('mousemove');
-		document.removeEventListener('contextmenu', event => this.onRightClick(event, this));
-		document.removeEventListener('click', event => this.onLeftClick(event, this));
+		document.removeEventListener('contextmenu', event => this.onRightClick(event));
+		document.removeEventListener('click', event => this.onLeftClick(event));
+		
+		if (this.containerElement) {
+			this.containerElement.remove();
+			this.containerElement = null;
+		}
+		if (this.customStyleElement) {
+			this.customStyleElement.remove();
+			this.customStyleElement = null;
+		}
+		if (this.staticStyleElement) {
+			this.staticStyleElement.remove();
+			this.staticStyleElement = null;
+		}
 		
 		this.log.info('Successfully disabled BRCM');
 	}
 	
-	onRightClick(event, brc) {
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
-			
-			if (brc.settings.get(getConfigKey(moduleKey, 'enabled')) && modules[moduleKey].checkElement(event.target)) {
-				const el = document.getElementById(`brcm-${moduleKey}-menu`);
-				
-				if (!modules[moduleKey].onClick(event, el)) continue;
+	//</editor-fold>
+	
+	//<editor-fold desc="Mouse Events">
+	/**
+	 * @param {MouseEvent} event
+	 * @returns {void}
+	 */
+	onRightClick(event) {
+		for (const child of this.containerElement.children) {
+			if (child === event.target.parentElement) {
+				this.onLeftClick(event);
+				event.preventDefault();
+				return;
+			}
+		}
+		
+		for (const child of this.containerElement.children) {
+			if (child.className === 'show') {
+				child.className = 'hide';
+				event.preventDefault();
+				return;
+			}
+		}
+		
+		for (const module of this.modules) {
+			if (this.settings.get(getConfigKey(module.key, 'enabled')) && module.checkElement(event.target)) {
+				const menuElement = document.getElementById(`brcm-${module.key}-menu`);
+				if (module.onClickElement(event, menuElement)) continue;
 				event.preventDefault();
 				
-				const mousePos = Utils.getMousePos(event);
-				el.className   = 'show';
-				el.style.top   = `${mousePos.y - (window.innerHeight - event.pageY > el.offsetHeight ? 0 : el.offsetHeight)}px`;
-				el.style.left  = `${mousePos.x - (window.innerWidth - event.pageX > el.offsetWidth ? 0 : el.offsetWidth)}px`;
-				
-				// Break so only one menu is ever show at once
+				const mousePos         = getMousePos(event);
+				menuElement.className  = 'show';
+				menuElement.style.top  = `${mousePos.y - (window.innerHeight - event.pageY > menuElement.offsetHeight ? 0 : menuElement.offsetHeight)}px`;
+				menuElement.style.left = `${mousePos.x - (window.innerWidth - event.pageX > menuElement.offsetWidth ? 0 : menuElement.offsetWidth)}px`;
 				break;
 			}
 		}
 	}
 	
-	// eslint-disable-next-line no-unused-vars
-	onLeftClick(event, brc) {
-		const el = document.getElementById('brcm-main-container');
-		
-		for (const child of el.children) {
-			if (event.target.parentElement.parentElement === child && child.id.split('-').length === 3) {
-				const moduleKey = child.id.split('-')[1];
-				if (moduleKey in modules && event.target.className in modules[moduleKey].modules) {
-					const submodule = modules[moduleKey].modules[event.target.className];
+	/**
+	 * @param {MouseEvent} event
+	 * @returns {void}
+	 */
+	onLeftClick(event) {
+		for (const child of this.containerElement.children) {
+			if (child.className === 'show') {
+				child.className = 'hide';
+			}
+			
+			if (event.target.parentElement === child && child.id.split('-').length === 3) {
+				const moduleKey       = child.id.split('-')[1];
+				const modulesFiltered = this.modules.filter(module => module.key === moduleKey);
+				
+				if (modulesFiltered.length === 1) {
+					const module            = modulesFiltered[0];
+					const submoduleFiltered = module.modules.filter(submodule => submodule.key === event.target.className);
 					
-					if ((submodule.requiresMod ? Utils.isMod(this) : true)) {
-						const ops = {};
-						child.getAttributeNames().forEach(attr => ops[attr] = child.getAttribute(attr));
-						submodule.method(brc, ops);
+					if (submoduleFiltered.length === 1) {
+						const submodule = submoduleFiltered[0];
+						
+						if ((submodule.requiresMod ? this.isMod() : true))
+							submodule.onClick(this);
 					}
 				}
 			}
-			
-			if (child.className === 'show') {
-				child.className = 'hide';
-				break;
-			}
 		}
 	}
 	
-	loadHTML() {
-		const el = document.getElementById('brcm-main-container');
-		if (!el) return;
+	//</editor-fold>
+	
+	//<editor-fold desc="Document manipulation (Need a better name)">
+	/**
+	 * @returns {void}
+	 */
+	reloadElements() {
+		console.log('reloading');
 		
-		for (const div of el.getElementsByTagName('div')) {
-			div.remove();
-		}
+		this.setCSS();
+		this.setHTML();
 		
-		for (const moduleKey in modules) {
-			if (!{}.hasOwnProperty.call(modules, moduleKey)) continue;
+		const textArea = document.getElementById('brcm-css-text-area');
+		if (textArea && !this.getMenuSetting('css')) textArea.textContent = this.getCSS();
+	}
+	
+	/**
+	 * @returns {void}
+	 */
+	setHTML() {
+		if (!this.containerElement) return;
+		
+		this.containerElement.remove();
+		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container'}));
+		
+		this.modules.forEach(module => {
+			const moduleElement = createElement('ul', {id: `brcm-${module.key}-menu`, className: 'hide'});
 			
-			const moduleEl = createElement('div', {id: `brcm-${moduleKey}-menu`, className: 'hide'});
-			const moduleUl = createElement('ul');
-			moduleEl.appendChild(moduleUl);
-			
-			if (this.settings.get(menu.config_common.display_header.key)) {
-				moduleUl.appendChild(createElement('li', {className: 'header'}, '[username]'));
-				moduleUl.appendChild(createElement('li', {className: 'separator'}));
-			}
-			
-			let appended = false;
-			for (const submoduleKey in modules[moduleKey].modules) {
-				if (!{}.hasOwnProperty.call(modules[moduleKey].modules, submoduleKey)) continue;
+			if (this.getMenuSetting(MenuConfig.config_displayHeader) && module.supportsHeader) {
+				moduleElement.appendChild(createElement('li', {className: 'header'}));
 				
-				const submodule = modules[moduleKey].modules[submoduleKey];
-				if (this.settings.get(getConfigKey(moduleKey, submoduleKey)) &&
-					(modules[moduleKey].modules[submoduleKey].requiresMod ? Utils.isMod(this) : true)) {
-					
-					if (this.settings.get(menu.config_common.display_separators.key) && appended)
-						moduleUl.appendChild(createElement('li', {className: 'separator'}));
-					
-					moduleUl.appendChild(createElement('li', {className: submoduleKey},
-						`${submodule.requiresMod ? '(Mod) ' : ''}${submodule.shortTitle || submodule.title || capitalize(submoduleKey)}`));
-					
-					appended = true;
-				}
+				if (this.getMenuSetting(MenuConfig.config_displayHeaderSeparators))
+					moduleElement.appendChild(createElement('li', {className: 'separator-header'}));
 			}
 			
-			el.appendChild(moduleEl);
-		}
+			module.modules.filter(submodule => this.settings.get(getConfigKey(module.key, submodule.key)) && (submodule.requiresMod ? this.isMod() : true))
+				.forEach(submodule => {
+					if (this.getMenuSetting(MenuConfig.config_displayMenuItemSeparators) && moduleElement.childElementCount > 0
+						&& (moduleElement.lastElementChild ? !moduleElement.lastElementChild.className.includes('separator') : true)) moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
+					moduleElement.appendChild(createElement('li', {className: submodule.key}, submodule.title));
+				});
+			
+			this.containerElement.appendChild(moduleElement);
+		});
 	}
 	
-	loadCSS() {
-		if (this.styleElement) {
-			this.styleElement.textContent = this.getCSS().trim();
+	/**
+	 * @returns {void}
+	 */
+	setCSS() {
+		const css = this.getCSS();
+		if (this.customStyleElement) {
+			this.customStyleElement.textContent = css;
 		} else {
-			this.styleElement = createElement('style', null, this.getCSS().trim());
-			document.head.appendChild(this.styleElement);
+			document.head.appendChild(this.customStyleElement = createElement('style', null, css));
 		}
 	}
 	
+	/**
+	 * @returns {string}
+	 */
 	getCSS() {
-		return `
+		return this.getMenuSetting('css_enabled') ? (this.getMenuSetting('css') ? this.getMenuSetting('css') : this._getCSS()) : this._getCSS();
+	}
+	
+	/**
+	 * @returns {string}
+	 */
+	_getCSS() {
+		return `#brcm-main-container .show {
+	background-color: ${this.getMenuSetting(MenuConfig.color_background)};
+	border:           ${this.getMenuSetting(MenuConfig.config_borderWidth)} solid ${this.getMenuSetting(MenuConfig.color_border)};
+	border-radius:    ${this.getMenuSetting(MenuConfig.config_borderRadius)};
+	color:            ${this.getMenuSetting(MenuConfig.color_text)};
+	box-shadow:       0 0 3px rgb(0,0,0);
+	min-width:        ${this.getMenuSetting(MenuConfig.config_menuWidth)};
+}
+
+#brcm-main-container .show li.separator-header {
+	background-color: ${this.getMenuSetting(MenuConfig.color_header_separators)};
+	height:           1px;
+}
+
+#brcm-main-container .show li.separator-menu-item {
+	background-color: ${this.getMenuSetting(MenuConfig.color_menu_item_separators)};
+	height:           1px;
+}
+
+#brcm-main-container .show li.header {
+	background-color: ${this.getMenuSetting(MenuConfig.color_header_background)};
+	font-size:        ${this.getMenuSetting(MenuConfig.config_headerTextSize)};
+	padding-top:      2px;
+	padding-bottom:   2px;
+	padding-left:     6px;
+	padding-right:    6px;
+}
+
+#brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header) {
+	background-color: ${this.getMenuSetting(MenuConfig.color_menu_item_background)};
+	font-size:        ${this.getMenuSetting(MenuConfig.config_menuItemTextSize)};
+	padding-top:      4px;
+	padding-bottom:   4px;
+	padding-left:     6px;
+	padding-right:    6px;
+}
+
+#brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header):hover {
+	background-color: ${this.getMenuSetting(MenuConfig.color_highlight)};
+}`;
+	}
+	
+	getStaticCSS() {
+		return `#brcm-css-text-area {
+	font-family:        "Roboto Mono";
+}
+
 #brcm-main-container .show {
-  background-color: ${this.settings.get(menu.colors.background.key)};
-  border: ${this.settings.get(menu.config_common.border_width.key)}px solid ${this.settings.get(menu.colors.border.key)};
-  border-radius: ${this.settings.get(menu.config_common.border_radius.key)}px;
-  color: ${this.settings.get(menu.colors.text.key)};
-  display: block;
-  position: absolute;
-  width: ${this.settings.get(menu.config_common.menu_width.key)}px;
-  z-index: 10000;
+	display:            block;
+	position:           absolute;
+	z-index:            ${Number.MAX_SAFE_INTEGER};
 }
 
 #brcm-main-container .hide {
-  display: none;
-}
-
-#brcm-main-container .show li:not(.separator) {
-  padding-left: ${this.settings.get(menu.config_expert.border_padding_left.key)}px;
-  padding-right: ${this.settings.get(menu.config_expert.border_padding_right.key)}px;
-  margin-left: ${this.settings.get(menu.config_expert.border_margin_left.key)}px;
-  margin-right: ${this.settings.get(menu.config_expert.border_margin_right.key)}px;
-}
-
-#brcm-main-container .show li.separator {
-  background-color: ${this.settings.get(menu.colors.separators.key)};
-  height: ${this.settings.get(menu.config_expert.separator_height.key)}px;
-  margin-left: ${this.settings.get(menu.config_expert.separator_margin_left.key)}px;
-  margin-right: ${this.settings.get(menu.config_expert.separator_margin_right.key)}px;
+	display:            none;
 }
 
 #brcm-main-container .show li {
-  list-style-type: none;
+	list-style-type:    none;
 }
 
-#brcm-main-container .show a:link, a:visited, a:hover, a:active {
-  color: ${this.settings.get(menu.colors.text.key)};
-  cursor: default;
-  text-decoration: none;
-}
-
-#brcm-main-container .show li:first-child {
-  padding-top: ${this.settings.get(menu.config_expert.border_padding_top.key) +
-		this.settings.get(menu.config_expert.module_padding_top.key)}px;
-  margin-top: ${this.settings.get(menu.config_expert.border_margin_top.key) +
-		this.settings.get(menu.config_expert.module_margin_top.key)}px;
-}
-
-#brcm-main-container .show li:last-child {
-  padding-bottom: ${this.settings.get(menu.config_expert.border_padding_bottom.key) +
-		this.settings.get(menu.config_expert.module_padding_bottom.key)}px;
-  margin-bottom: ${this.settings.get(menu.config_expert.border_margin_bottom.key) +
-		this.settings.get(menu.config_expert.module_margin_bottom.key)}px;
-}
-
-#brcm-main-container .show li:not(.separator):not(:first-child) {
-  padding-top: ${this.settings.get(menu.config_expert.module_padding_top.key)}px;
-  margin-top: ${this.settings.get(menu.config_expert.module_margin_top.key)}px;
-}
-
-#brcm-main-container .show li:not(.separator):not(:last-child) {
-  padding-bottom: ${this.settings.get(menu.config_expert.module_padding_bottom.key)}px;
-  margin-bottom: ${this.settings.get(menu.config_expert.module_margin_bottom.key)}px;
-}
-
-#brcm-main-container .show li:not(.separator):not(.header):hover {
-  background-color: ${this.settings.get(menu.colors.highlight.key)};
-  cursor: default;
+#brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header):hover {
+	background-color: var(--color-background-accent);
+	cursor:           default;
 }`;
 	}
+	
+	//</editor-fold>
+	
+	//<editor-fold desc="Util Methods">
+	/**
+	 * @param {string} message
+	 * @returns {void}
+	 */
+	sendMessage(message) {
+		this.chat.ChatService.first.sendMessage(message);
+	}
+	
+	/**
+	 * @returns {boolean}
+	 */
+	isMod() {
+		return this.chat.ChatContainer.first.props.isCurrentUserModerator;
+	}
+	
+	/**
+	 * @param {Config||string} config
+	 * @returns {*}
+	 */
+	getMenuSetting(config) {
+		return this.settings.get(getConfigKey('menu', config.key || config));
+	}
+	
+	/**
+	 * @returns {void}
+	 */
+	loadDevBadge() {
+		this.badges.loadBadgeData('add_ons.brcm--badge-developer', {
+			id   : 'brcm_developer',
+			title: 'BRCM Developer',
+			slot : 7,
+			color: '#71D400',
+			image: 'http://54.204.117.209/brcm/badge/dev/1.png',
+			urls : {
+				1: 'http://54.204.117.209/brcm/badge/dev/1.png',
+				2: 'http://54.204.117.209/brcm/badge/dev/2.png',
+				4: 'http://54.204.117.209/brcm/badge/dev/4.png'
+			}
+		});
+		
+		this.resolve('chat').getUser(523772148, 'l3afme').addBadge('add_ons.brcm', 'add_ons.brcm--badge-developer');
+	}
+	
+	//</editor-fold>
 }
 
-BRCM.register();
+BetterRightClickMenuAddon.register();
