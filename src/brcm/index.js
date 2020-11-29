@@ -421,11 +421,11 @@ export class BetterRightClickMenuAddon extends Addon {
 			title: 'BRCM Developer',
 			slot : 7,
 			color: '#71D400',
-			image: 'http://54.204.117.209/brcm/badge/dev/1.png',
+			image: 'https://i.imgur.com/OFA5S7d.png',
 			urls : {
-				1: 'http://54.204.117.209/brcm/badge/dev/1.png',
-				2: 'http://54.204.117.209/brcm/badge/dev/2.png',
-				4: 'http://54.204.117.209/brcm/badge/dev/4.png'
+				1: 'https://i.imgur.com/OFA5S7d.png',
+				2: 'https://i.imgur.com/bkIP2Sq.png',
+				4: 'https://i.imgur.com/rrD2aTS.png'
 			}
 		});
 		
