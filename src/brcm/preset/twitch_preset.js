@@ -3,7 +3,7 @@ import {Preset} from './preset.js';
 export class TwitchDefaultPreset extends Preset {
 	constructor() {
 		super('twitch', 'Twitch (Default)',
-			`#brcm-main-container .show {
+`#brcm-main-container .show {
 		border:           1px solid #232223;
 		border-radius:    3px;
 		color:            #FFFFFF;
@@ -42,7 +42,7 @@ export class TwitchDefaultPreset extends Preset {
 export class TwitchFZZPreset extends Preset {
 	constructor() {
 		super('twitch_ffz', 'Twitch (FFZ)',
-			`#brcm-main-container .show {
+`#brcm-main-container .show {
     color:            var(--color-text-base) !important;
     background-color: var(--color-background-alt) !important;
     border:           var(--border-width-default) solid var(--color-border-base) !important;
