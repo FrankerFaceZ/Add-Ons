@@ -85,10 +85,7 @@ export class FirefoxLightPreset extends Preset {
 #brcm-main-container .show li.header {
 	background-color: rgb(242,242,242);
 	font-size:        14px;
-	padding-top:      6px;
-	padding-bottom:   6px;
-	padding-left:     10px;
-	padding-right:    10px;
+	padding:          6px 10px;
 }
 
 #brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header) {

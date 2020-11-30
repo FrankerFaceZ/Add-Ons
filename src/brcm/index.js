@@ -1,4 +1,4 @@
-import {BooleanConfig, Config}                 from './config/config.js';
+import {BooleanConfig, Config, ConfigPath}     from './config/config.js';
 import * as MenuConfig                         from './config/menu_config.js';
 import {ChatModule}                            from './module/chat_module.js';
 import {RightClickModule}                      from './module/module.js';
@@ -84,13 +84,14 @@ export class BetterRightClickMenuAddon extends Addon {
 		
 		this.settings.addUI(getConfigKey('menu', 'css'), {
 			ui: {
-				path     : `${MenuConfig.pathCSS}`,
-				sort     : 999999,
-				title    : 'Preset',
-				data     : this.menuPresets.map(preset => ({value: preset.key, title: preset.name})),
-				component: () => import('./components/preset-combobox.vue'),
-				getPreset: value => this.menuPresets[value],
-				onChange : () => this.reloadElements()
+				path       : `${MenuConfig.pathCSS}`,
+				sort       : 999999,
+				title      : 'Preset',
+				description: 'Presets require Custom CSS to be enabled. Twitch (FFZ) preset uses variables provided by FFZ to mimic the custom style set by yourself.',
+				data       : this.menuPresets.map(preset => ({value: preset.key, title: preset.name})),
+				component  : () => import('./components/preset-combobox.vue'),
+				getPreset  : value => this.menuPresets[value],
+				onChange   : () => this.reloadElements()
 			}
 		});
 		
@@ -128,7 +129,7 @@ export class BetterRightClickMenuAddon extends Addon {
 					ui     : {
 						sort     : moduleSort++,
 						path     : `${submodule.path}`,
-						title    : (submodule.requiresMod ? '(Moderator) ' : '') + submodule.title,
+						title    : (module.displayConfigRequirements ? (submodule.requiresMod ? '(Moderator) ' : submodule.requiresBroadcaster ? '(Broadcaster) ' : '') : '') + submodule.title,
 						component: 'setting-check-box'
 					},
 					changed: () => this.reloadElements()
@@ -148,7 +149,7 @@ export class BetterRightClickMenuAddon extends Addon {
 	onEnable() {
 		this.log.info('Setting up BRCM');
 		
-		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container'}));
+		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
 		document.head.appendChild(this.staticStyleElement = createElement('style', null, this.getStaticCSS()));
 		this.reloadElements();
 		document.addEventListener('contextmenu', event => this.onRightClick(event));
@@ -273,7 +274,7 @@ export class BetterRightClickMenuAddon extends Addon {
 		if (!this.containerElement) return;
 		
 		this.containerElement.remove();
-		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container'}));
+		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
 		
 		this.modules.forEach(module => {
 			const moduleElement = createElement('ul', {id: `brcm-${module.key}-menu`, className: 'hide'});
@@ -285,11 +286,15 @@ export class BetterRightClickMenuAddon extends Addon {
 					moduleElement.appendChild(createElement('li', {className: 'separator-header'}));
 			}
 			
-			module.modules.filter(submodule => this.settings.get(getConfigKey(module.key, submodule.key)) && (submodule.requiresMod ? this.isMod() : true))
+			module.modules.filter(submodule => this.settings.get(getConfigKey(module.key, submodule.key)))
+				.filter(submodule => submodule.requiresVIP ? this.isVIP() : true)
+				.filter(submodule => submodule.requiresMod ? this.isMod() : true)
+				.filter(submodule => submodule.requiresBroadcaster ? this.isBroadcaster() : true)
 				.forEach(submodule => {
 					if (this.getMenuSetting(MenuConfig.config_displayMenuItemSeparators) && moduleElement.childElementCount > 0
-						&& (moduleElement.lastElementChild ? !moduleElement.lastElementChild.className.includes('separator') : true)) moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
-					moduleElement.appendChild(createElement('li', {className: submodule.key}, submodule.title));
+						&& (moduleElement.lastElementChild ? !moduleElement.lastElementChild.className.includes('separator') : true))
+						moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
+					moduleElement.appendChild(createElement('li', {className: submodule.key}, (module.displayMenuRequirements ? (submodule.requiresMod ? '(Mod) ' : submodule.requiresBroadcaster ? '(Streamer) ' : '') : '') + submodule.title));
 				});
 			
 			this.containerElement.appendChild(moduleElement);
@@ -398,10 +403,26 @@ export class BetterRightClickMenuAddon extends Addon {
 	}
 	
 	/**
+	 * @param {boolean} [explicit = false]
 	 * @returns {boolean}
 	 */
-	isMod() {
-		return this.chat.ChatContainer.first.props.isCurrentUserModerator;
+	isVIP(explicit = false) {
+		return (explicit ? false : this.isMod()) || this.chat.ChatContainer.first.props.commandPermissionLevel === 1;
+	}
+	
+	/**
+	 * @param {boolean} [explicit = false]
+	 * @returns {boolean}
+	 */
+	isMod(explicit) {
+		return (explicit ? false : this.isBroadcaster()) || this.chat.ChatContainer.first.props.commandPermissionLevel === 2;
+	}
+	
+	/**
+	 * @returns {boolean}
+	 */
+	isBroadcaster() {
+		return this.chat.ChatContainer.first.props.commandPermissionLevel === 3;
 	}
 	
 	/**

@@ -24,11 +24,6 @@ export class RightClickSubModule {
 	description;
 	
 	/**
-	 * @type {Config}
-	 */
-	config;
-	
-	/**
 	 * @type {function(BetterRightClickMenuAddon): void}
 	 */
 	clickFunc;
@@ -36,7 +31,17 @@ export class RightClickSubModule {
 	/**
 	 * @type {boolean}
 	 */
+	requiresVIP = false;
+	
+	/**
+	 * @type {boolean}
+	 */
 	requiresMod = false;
+	
+	/**
+	 * @type {boolean}
+	 */
+	requiresBroadcaster = false;
 	
 	/**
 	 * @param {string} key
@@ -53,8 +58,24 @@ export class RightClickSubModule {
 	/**
 	 * @returns {RightClickSubModule}
 	 */
+	setRequiresVIP() {
+		this.requiresVIP = true;
+		return this;
+	}
+	
+	/**
+	 * @returns {RightClickSubModule}
+	 */
 	setRequiresMod() {
 		this.requiresMod = true;
+		return this;
+	}
+	
+	/**
+	 * @returns {RightClickSubModule}
+	 */
+	setRequiresBroadcaster() {
+		this.requiresBroadcaster = true;
 		return this;
 	}
 	
@@ -125,6 +146,16 @@ export class RightClickModule {
 	 * @type {(Config||BooleanConfig||ColorConfig||ConfigPath||IntSelectBoxConfig||SelectBoxConfig)[]}
 	 */
 	configs = [];
+	
+	/**
+	 * @type {boolean}
+	 */
+	displayConfigRequirements = true;
+	
+	/**
+	 * @type {boolean}
+	 */
+	displayMenuRequirements = true;
 	
 	/**
 	 * @param {BetterRightClickMenuAddon} brcm

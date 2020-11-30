@@ -25,19 +25,13 @@ export class TwitchDefaultPreset extends Preset {
 #brcm-main-container .show li.header {
 	background-color: #0D0D0D;
 	font-size:        15px;
-	padding-top:      2px;
-	padding-bottom:   2px;
-	padding-left:     6px;
-	padding-right:    6px;
+	padding:          4px 6px;
 }
 
 #brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header) {
 	background-color: #1A1A1A;
 	font-size:        12px;
-	padding-top:      4px;
-	padding-bottom:   4px;
-	padding-left:     6px;
-	padding-right:    6px;
+	padding:          4px 6px;
 }
 
 #brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header):hover {
@@ -50,43 +44,37 @@ export class TwitchFZZPreset extends Preset {
 	constructor() {
 		super('twitch_ffz', 'Twitch (FFZ)',
 `#brcm-main-container .show {
-	background-color: var(--color-background-alt);
-	border:           var(--border-width-default) solid var(--color-border-base);
-	box-shadow:       var(--shadow-elevation-3);
-	border-radius:    var(--border-radius-small);
-	color:            var(--color-text-base);
-	min-width:        150px;
+    color:            var(--color-text-base) !important;
+    background-color: var(--color-background-alt) !important;
+    border:           var(--border-width-default) solid var(--color-border-base) !important;
+    box-shadow:       var(--shadow-elevation-3) !important;
+    border-radius:    var(--border-radius-small) !important;
+    min-width:        150px !important;
 }
 
 #brcm-main-container .show li.separator-header {
-	background-color: var(--color-border-base);
-	height:           var(--border-width-default);
+    background-color: var(--color-border-base) !important;
+    height:           var(--border-width-default) !important;
 }
 
 #brcm-main-container .show li.separator-menu-item {
-	background-color: var(--color-border-base);
-	height:           var(--border-width-default);
+    background-color: var(--color-border-base) !important;
+    height:           var(--border-width-default) !important;
 }
 
 #brcm-main-container .show li.header {
-	background-color: var(--color-background-base);
-	font-size:        var(--font-size-4);
-	padding-top:      var(--button-padding-y);
-	padding-bottom:   var(--button-padding-y);
-	padding-left:     var(--button-padding-x);
-	padding-right:    var(--button-padding-x);
+    background-color: var(--color-background-base) !important;
+    font-size:        var(--font-size-4) !important;
+    padding:          var(--button-padding-y) var(--button-padding-x) !important;
 }
 
 #brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header) {
-	font-size:        var(--font-size-5);
-	padding-top:      var(--button-padding-y);
-	padding-bottom:   var(--button-padding-y);
-	padding-left:     var(--button-padding-x);
-	padding-right:    var(--button-padding-x);
+    font-size:        var(--font-size-5) !important;
+    padding:          var(--button-padding-y) var(--button-padding-x) !important;
 }
 
 #brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header):hover {
-	background-color: var(--color-background-button-text-hover);
+    background-color: var(--color-background-button-text-hover) !important;
 }`);
 	}
 }
