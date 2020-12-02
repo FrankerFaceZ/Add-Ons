@@ -14,6 +14,7 @@
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.10.5",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/plugin-proposal-nullish-coalescing-operator": "^7.10.4",
     "@babel/plugin-proposal-object-rest-spread": "^7.10.4",
     "@babel/plugin-proposal-optional-chaining": "^7.10.4",
