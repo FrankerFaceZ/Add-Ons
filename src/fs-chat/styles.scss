@@ -18,6 +18,10 @@
 		display: none !important;
 	}
 
+	.qa-vod-chat {
+		background-color: transparent !important;
+	}
+
 	.pinned-callout {
 		background-color: var(--fschat-bg-color) !important;
 		margin-right: calc(-1rem + .2rem);
