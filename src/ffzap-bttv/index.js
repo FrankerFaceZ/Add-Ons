@@ -280,6 +280,7 @@ class BetterTTV extends Addon {
 					require_spaces: arbitraryEmote,
 					modifier: Object.prototype.hasOwnProperty.call(overlayEmotes, dataEmote.code),
 					modifier_offset: overlayEmotes[dataEmote.code],
+					click_url: `https://betterttv.com/emotes/${dataEmote.id}`
 				};
 
 				emote.urls = {
@@ -405,6 +406,7 @@ class BetterTTV extends Addon {
 						name: (user && user.name) || room.login,
 					},
 					require_spaces: requireSpaces,
+					click_url: `https://betterttv.com/emotes/${id}`
 				};
 
 				if (emoteFromArray.imageType === 'gif') {

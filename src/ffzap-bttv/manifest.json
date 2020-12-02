@@ -3,7 +3,7 @@
     "requires": ["ffzap-core"],
 
     "icon": "https://cdn.betterttv.net/assets/logos/mascot.png",
-    "version": "3.2.1",
+    "version": "3.2.3",
 
     "short_name": "FFZ:AP BTTV",
     "name": "BetterTTV Emotes",
