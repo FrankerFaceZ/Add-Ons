@@ -70,6 +70,13 @@ class BrowseDeck extends Addon {
 
 		this.settings.provider.on('changed', this.onProviderChange, this);
 
+		this.settings.addClearable('DeckTabs', {
+			label: 'Deck Tabs',
+			keys: [
+				'deck-tabs'
+			]
+		});
+
 		this.dialog.on('hide', this.destroyDialog, this);
 		this.onNavigate();
 	}
@@ -247,12 +254,12 @@ class BrowseDeck extends Addon {
 			>
 				<div class="tw-flex-column tw-hide tw-sm-flex">
 					<div class="tw-hide tw-xl-flex">
-						<p class="tw-font-size-4">
+						<p class="tw-font-size-4 tw-line-height-heading tw-semibold tw-title">
 							{label}
 						</p>
 					</div>
 					<div class="tw-flex tw-xl-hide">
-						<p class="tw-font-size-5">
+						<p class="tw-font-size-5 tw-line-height-heading tw-semibold tw-title tw-title--inherit">
 							{label}
 						</p>
 					</div>
