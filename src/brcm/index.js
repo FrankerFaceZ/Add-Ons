@@ -1,7 +1,7 @@
-import {BooleanConfig, Config, ConfigPath}     from './config/config.js';
+import {BooleanConfig, Config}                 from './config/config.js';
 import * as MenuConfig                         from './config/menu_config.js';
 import {ChatModule}                            from './module/chat_module.js';
-import {RightClickModule}                      from './module/module.js';
+import {ModuleSeparator, RightClickModule}     from './module/module.js';
 import {VideoPlayerModule}                     from './module/video_player_module.js';
 import {FirefoxDarkPreset, FirefoxLightPreset} from './preset/firefox_preset.js';
 import {Preset}                                from './preset/preset.js';
@@ -9,9 +9,13 @@ import {TwitchDefaultPreset, TwitchFZZPreset}  from './preset/twitch_preset.js';
 import {getConfigKey, getMousePos}             from './utils.js';
 
 // noinspection JSUnresolvedVariable
-const {createElement} = FrankerFaceZ.utilities.dom;
+/**
+ * @type {(function(tagName: string): HTMLElement) |
+ * (function(tagName: string, options: ElementCreationOptions): HTMLElement) |
+ * (function(tagName: string, options: ElementCreationOptions, innerText: string): HTMLElement)}
+ */
+const createElement = FrankerFaceZ.utilities.dom.createElement;
 
-// noinspection JSUnusedGlobalSymbols,JSUnresolvedVariable,JSUnresolvedFunction,SpellCheckingInspection
 export class BetterRightClickMenuAddon extends Addon {
 	/**
 	 * All modules in this array will be automatically
@@ -118,12 +122,14 @@ export class BetterRightClickMenuAddon extends Addon {
 		let moduleSort = 0;
 		let configSort = 0;
 		for (const module of this.modules) {
-			this.settings.add(getConfigKey(module.key, 'enabled'), new BooleanConfig('enabled', true, module.path.copy().addSegment(`Main ${module.name} Toggle`, -100).toString()).setOnChangeEvent(() => this.reloadElements()).config);
+			this.settings.add(getConfigKey(module.key, 'enabled'), new BooleanConfig('enabled', true, module.path.copy().addSegment(`Main ${module.title} Toggle`, -100).toString()).setOnChangeEvent(() => this.reloadElements()).config);
 			for (const config of module.configs) {
 				this.settings.add(getConfigKey(module.key, config.key), config.setSort(configSort++).setOnChangeEvent(() => this.reloadElements()).config);
 			}
 			
 			for (const submodule of module.modules) {
+				if (submodule instanceof ModuleSeparator || submodule.path === null) continue;
+				
 				const props = {
 					default: true,
 					ui     : {
@@ -141,7 +147,6 @@ export class BetterRightClickMenuAddon extends Addon {
 	}
 	
 	//</editor-fold>
-	
 	//<editor-fold desc="FFZ Events">
 	/**
 	 * @returns {void}
@@ -149,11 +154,17 @@ export class BetterRightClickMenuAddon extends Addon {
 	onEnable() {
 		this.log.info('Setting up BRCM');
 		
-		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
+		document.body.appendChild(this.containerElement = createElement('div', {
+			id       : 'brcm-main-container',
+			className: 'chat-shell'
+		}));
 		document.head.appendChild(this.staticStyleElement = createElement('style', null, this.getStaticCSS()));
 		this.reloadElements();
 		document.addEventListener('contextmenu', event => this.onRightClick(event));
 		document.addEventListener('click', event => this.onLeftClick(event));
+		this.setupURLChangeEvent();
+		window.addEventListener('locationchange', _ => this.reloadElements());
+		
 		
 		this.log.info('Successfully setup BRCM');
 	}
@@ -184,15 +195,37 @@ export class BetterRightClickMenuAddon extends Addon {
 	}
 	
 	//</editor-fold>
+	//<editor-fold desc="Document Events">
+	setupURLChangeEvent() {
+		history.pushState = (f => function pushState() {
+			const ret = f.apply(this, arguments);
+			window.dispatchEvent(new Event('pushstate'));
+			window.dispatchEvent(new Event('locationchange'));
+			return ret;
+		})(history.pushState);
+		
+		history.replaceState = (f => function replaceState() {
+			const ret = f.apply(this, arguments);
+			window.dispatchEvent(new Event('replacestate'));
+			window.dispatchEvent(new Event('locationchange'));
+			return ret;
+		})(history.replaceState);
+		
+		window.addEventListener('popstate', () => {
+			window.dispatchEvent(new Event('locationchange'));
+		});
+	}
 	
-	//<editor-fold desc="Mouse Events">
 	/**
 	 * @param {MouseEvent} event
 	 * @returns {void}
 	 */
 	onRightClick(event) {
-		for (const child of this.containerElement.children) {
-			if (child === event.target.parentElement) {
+		if (event.shiftKey)
+			return;
+		
+		for (const moduleKey of this.modules.map(module => module.key)) {
+			if (event.target.id && event.target.id.startsWith(`brcm-${moduleKey}-`)) {
 				this.onLeftClick(event);
 				event.preventDefault();
 				return;
@@ -200,8 +233,10 @@ export class BetterRightClickMenuAddon extends Addon {
 		}
 		
 		for (const child of this.containerElement.children) {
-			if (child.className === 'show') {
-				child.className = 'hide';
+			if (child.classList.contains('show')) {
+				child.classList.remove('show');
+				if (!child.classList.contains('hide'))
+					child.classList.add('hide');
 				event.preventDefault();
 				return;
 			}
@@ -213,10 +248,18 @@ export class BetterRightClickMenuAddon extends Addon {
 				if (module.onClickElement(event, menuElement)) continue;
 				event.preventDefault();
 				
-				const mousePos         = getMousePos(event);
-				menuElement.className  = 'show';
-				menuElement.style.top  = `${mousePos.y - (window.innerHeight - event.pageY > menuElement.offsetHeight ? 0 : menuElement.offsetHeight)}px`;
-				menuElement.style.left = `${mousePos.x - (window.innerWidth - event.pageX > menuElement.offsetWidth ? 0 : menuElement.offsetWidth)}px`;
+				const mousePos = getMousePos(event);
+				if (menuElement.classList.contains('hide'))
+					menuElement.classList.remove('hide');
+				menuElement.classList.add('show');
+				
+				menuElement.style.top  = `${mousePos.y - (mousePos.y + menuElement.offsetHeight > window.innerHeight ? menuElement.offsetHeight + mousePos.y - window.innerHeight : 0)}px`;
+				menuElement.style.left = `${mousePos.x - (mousePos.x + menuElement.offsetWidth > window.innerWidth ? menuElement.offsetWidth + mousePos.x - window.innerWidth : 0)}px`;
+				
+				// Hacky work around to hide the BetterTTV ban popup
+				const bttvElement = document.getElementById('bttv-custom-timeout-contain');
+				if (bttvElement) bttvElement.style.top = `${Number.MAX_SAFE_INTEGER}px`;
+				
 				break;
 			}
 		}
@@ -227,39 +270,46 @@ export class BetterRightClickMenuAddon extends Addon {
 	 * @returns {void}
 	 */
 	onLeftClick(event) {
+		if (event.shiftKey)
+			return;
+		
 		for (const child of this.containerElement.children) {
-			if (child.className === 'show') {
-				child.className = 'hide';
+			if (child.classList.contains('show'))
+				child.classList.remove('show');
+			
+			if (!child.classList.contains('hide'))
+				child.classList.add('hide');
+		}
+		
+		try {
+			let target = event.target.tagName === 'P' ? event.target.parentElement : event.target;
+			if (!target.id.startsWith('brcm-')) return;
+			
+			const ids = target.id.split('-');
+			ids.shift();
+			
+			let id     = ids.shift();
+			let module = this.modules.filter(module => module.key === id)[0];
+			while (ids.length !== 0) {
+				id     = ids.shift();
+				module = module.modules.filter(module => module.key === id)[0];
 			}
 			
-			if (event.target.parentElement === child && child.id.split('-').length === 3) {
-				const moduleKey       = child.id.split('-')[1];
-				const modulesFiltered = this.modules.filter(module => module.key === moduleKey);
-				
-				if (modulesFiltered.length === 1) {
-					const module            = modulesFiltered[0];
-					const submoduleFiltered = module.modules.filter(submodule => submodule.key === event.target.className);
-					
-					if (submoduleFiltered.length === 1) {
-						const submodule = submoduleFiltered[0];
-						
-						if ((submodule.requiresMod ? this.isMod() : true))
-							submodule.onClick(this);
-					}
-				}
-			}
+			if ((module.requiresVIP ? this.isVIP() : true) &&
+				(module.requiresMod ? this.isMod() : true) &&
+				(module.requiresBroadcaster ? this.isBroadcaster() : true))
+				module.onClick();
+		} catch (e) {
+			this.log.error(e);
 		}
 	}
 	
 	//</editor-fold>
-	
-	//<editor-fold desc="Document manipulation (Need a better name)">
+	//<editor-fold desc="Document Manipulation (Need a better name)">
 	/**
 	 * @returns {void}
 	 */
 	reloadElements() {
-		console.log('reloading');
-		
 		this.setCSS();
 		this.setHTML();
 		
@@ -274,31 +324,86 @@ export class BetterRightClickMenuAddon extends Addon {
 		if (!this.containerElement) return;
 		
 		this.containerElement.remove();
-		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
+		document.body.appendChild(this.containerElement = createElement('div', {
+			id       : 'brcm-main-container',
+			className: 'chat-shell'
+		}));
 		
-		this.modules.forEach(module => {
-			const moduleElement = createElement('ul', {id: `brcm-${module.key}-menu`, className: 'hide'});
+		this.modules.map(module => this.createModuleElement(module))
+			.forEach(element => this.containerElement.appendChild(element));
+	}
+	
+	/**
+	 * @param {RightClickModule} module
+	 * @param {string[]} [parentKeys = ['brcm']]
+	 * @returns {HTMLElement}
+	 */
+	createModuleElement(module, parentKeys = ['brcm']) {
+		parentKeys = parentKeys.slice();
+		parentKeys.push(module.key);
+		
+		const moduleElement = createElement('ul', {
+			id       : `${parentKeys.join('-')}-menu`,
+			className: 'hide'
+		});
+		
+		if (this.getMenuSetting(MenuConfig.config_displayHeader) && module.supportsHeader) {
+			moduleElement.appendChild(createElement('li', {className: 'header'}));
 			
-			if (this.getMenuSetting(MenuConfig.config_displayHeader) && module.supportsHeader) {
-				moduleElement.appendChild(createElement('li', {className: 'header'}));
-				
-				if (this.getMenuSetting(MenuConfig.config_displayHeaderSeparators))
-					moduleElement.appendChild(createElement('li', {className: 'separator-header'}));
+			if (this.getMenuSetting(MenuConfig.config_displayHeaderSeparators))
+				moduleElement.appendChild(createElement('li', {className: 'separator-header'}));
+		}
+		
+		
+		const filteredList = module.modules
+			.filter(submodule => submodule.requiresVIP ? this.isVIP() : true)
+			.filter(submodule => submodule.requiresMod ? this.isMod() : true)
+			.filter(submodule => submodule.requiresBroadcaster ? this.isBroadcaster() : true);
+		
+		for (const submodule of filteredList) {
+			if (submodule instanceof ModuleSeparator) {
+				if (this.getMenuSetting(MenuConfig.config_displayMenuItemSeparators))
+					moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
+				continue;
 			}
 			
-			module.modules.filter(submodule => this.settings.get(getConfigKey(module.key, submodule.key)))
-				.filter(submodule => submodule.requiresVIP ? this.isVIP() : true)
-				.filter(submodule => submodule.requiresMod ? this.isMod() : true)
-				.filter(submodule => submodule.requiresBroadcaster ? this.isBroadcaster() : true)
-				.forEach(submodule => {
-					if (this.getMenuSetting(MenuConfig.config_displayMenuItemSeparators) && moduleElement.childElementCount > 0
-						&& (moduleElement.lastElementChild ? !moduleElement.lastElementChild.className.includes('separator') : true))
-						moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
-					moduleElement.appendChild(createElement('li', {className: submodule.key}, (module.displayMenuRequirements ? (submodule.requiresMod ? '(Mod) ' : submodule.requiresBroadcaster ? '(Streamer) ' : '') : '') + submodule.title));
-				});
-			
-			this.containerElement.appendChild(moduleElement);
-		});
+			if (parentKeys.length === 2 ? this.settings.get(getConfigKey(module.key, submodule.key)) : true) {
+				const submoduleElement = createElement('li', {id: `${parentKeys.join('-')}-${submodule.key}`});
+				submoduleElement.appendChild(createElement('p', {}, (module.displayMenuRequirements ? (submodule.requiresVIP ? '(VIP) ' : submodule.requiresMod ? '(Mod) ' : submodule.requiresBroadcaster ? '(Streamer) ' : '') : '') + submodule.title));
+				
+				if (submodule.modules.length > 0) {
+					const chevronElement      = createElement('p', {className: 'chevron'}, ' >');
+					chevronElement.style.top  = `${submoduleElement.offsetTop}px`;
+					chevronElement.style.left = `${submoduleElement.offsetLeft + submoduleElement.offsetWidth - chevronElement.offsetWidth - 10}px`;
+					submoduleElement.appendChild(chevronElement);
+					
+					const childElement = this.createModuleElement(submodule, parentKeys);
+					submoduleElement.addEventListener('mouseover', () => {
+						if (childElement.classList.contains('hide'))
+							childElement.classList.remove('hide');
+						if (!childElement.classList.contains('show'))
+							childElement.classList.add('show');
+						
+						const pos               = submoduleElement.getBoundingClientRect();
+						childElement.style.top  = `${submoduleElement.offsetTop - (pos.top + childElement.offsetHeight > window.innerHeight ? pos.top + childElement.offsetHeight - window.innerHeight : 0)}px`;
+						childElement.style.left = `${submoduleElement.offsetLeft + (pos.left + submoduleElement.offsetWidth + childElement.offsetWidth > window.innerWidth ? -childElement.offsetWidth : submoduleElement.offsetWidth)}px`;
+					});
+					
+					submoduleElement.addEventListener('mouseleave', () => {
+						if (!childElement.classList.contains('hide'))
+							childElement.classList.add('hide');
+						if (childElement.classList.contains('show'))
+							childElement.classList.remove('show');
+					});
+					
+					submoduleElement.appendChild(childElement);
+				}
+				
+				moduleElement.appendChild(submoduleElement);
+			}
+		}
+		
+		return moduleElement;
 	}
 	
 	/**
@@ -317,7 +422,7 @@ export class BetterRightClickMenuAddon extends Addon {
 	 * @returns {string}
 	 */
 	getCSS() {
-		return this.getMenuSetting('css_enabled') ? (this.getMenuSetting('css') ? this.getMenuSetting('css') : this._getCSS()) : this._getCSS();
+		return this.getMenuSetting(MenuConfig.css_enabled) ? (this.getMenuSetting('css') ? this.getMenuSetting('css') : this._getCSS()) : this._getCSS();
 	}
 	
 	/**
@@ -374,6 +479,7 @@ export class BetterRightClickMenuAddon extends Addon {
 #brcm-main-container .show {
 	display:            block;
 	position:           absolute;
+	cursor:             default;
 	z-index:            ${Number.MAX_SAFE_INTEGER};
 }
 
@@ -383,16 +489,16 @@ export class BetterRightClickMenuAddon extends Addon {
 
 #brcm-main-container .show li {
 	list-style-type:    none;
+	display:            flex;
+	flex-grow:          1;
 }
 
-#brcm-main-container .show li:not(.separator-menu-item):not(.separator-header):not(.header):hover {
-	background-color: var(--color-background-accent);
-	cursor:           default;
+#brcm-main-container .show li p.chevron {
+	margin-left:        auto;
 }`;
 	}
 	
 	//</editor-fold>
-	
 	//<editor-fold desc="Util Methods">
 	/**
 	 * @param {string} message
@@ -450,7 +556,14 @@ export class BetterRightClickMenuAddon extends Addon {
 			}
 		});
 		
-		this.resolve('chat').getUser(523772148, 'l3afme').addBadge('add_ons.brcm', 'add_ons.brcm--badge-developer');
+		this.resolve('chat').getUser(523772148).addBadge('add_ons.brcm', 'add_ons.brcm--badge-developer');
+	}
+	
+	/**
+	 * @returns {Object}
+	 */
+	getMe() {
+		return this.resolve('site').getUser();
 	}
 	
 	//</editor-fold>
