@@ -24,7 +24,7 @@ let sort                                      = 0;
 export const pathConfig                       = new ConfigPath().addSegment('Config', sort++);
 export const config_displayHeader             = new BooleanConfig('display_header', true, pathConfig);
 export const config_displayHeaderSeparators   = new BooleanConfig('display_header_separator', true, pathConfig);
-export const config_displayMenuItemSeparators = new BooleanConfig('display_menu_item_separators', false, pathConfig);
+export const config_displayMenuItemSeparators = new BooleanConfig('display_menu_item_separators', true, pathConfig);
 export const config_headerTextSize            = new TextBoxConfig('header_text_size', `15px`, pathConfig).setUIProcess(n => process(n, 15));
 export const config_menuItemTextSize          = new TextBoxConfig('menu_item_text_size', `12px`, pathConfig).setUIProcess(n => process(n, 12));
 export const config_borderRadius              = new TextBoxConfig('border_radius', `3px`, pathConfig).setUIProcess(n => process(n, 3));
