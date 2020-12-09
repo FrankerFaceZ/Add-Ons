@@ -38,7 +38,7 @@
 										:disabled="preset.disabled"
 										:class="{'tw-button--disabled': preset.disabled, 'ffz-tooltip ffz-tooltip--no-mouse': preset.list && preset.list.desc}"
 										:data-title="preset.list ? (preset.list.desc_i18n ? t(preset.list.desc_i18n, preset.list.desc) : preset.list.desc) : null"
-										class="tw-interactable tw-interactable--alpha tw-interactable--hover-enabled tw-interactive tw-full-width"
+										class="tw-interactable tw-interactable--hover-enabled tw-interactable--default tw-interactive tw-full-width"
 										@click="addColumn(preset)"
 									>
 										<div class="tw-pd-y-05 tw-pd-x-1">

@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "requires": [],
+  "unlisted": true,
+
+  "version": "1.0.0",
+  "icon": "https://i.imgur.com/UHiYdus.png",
+
+  "short_name": "brcm",
+  "name": "Better Right Click Menu",
+  "author": "L3afMe",
+  "description": "Adds a better right click menu.",
+
+  "settings": "add_ons.brcm"
+}

@@ -48,14 +48,14 @@ export function createMenu(item, navigate) {
 function renderChannel(node, navigate) {
 	const url = `/${node.login}`
 	return (<a
-		class="tw-block tw-full-width tw-interactable tw-interactable--inverted tw-interactable--hover-enabled tw-interactive tw-pd-x-1"
+		class="tw-block tw-full-width tw-interactable tw-interactable--hover-enabled tw-interactable--default tw-interactive tw-pd-x-1"
 		href={url}
 		onClick={e => navigate(url, e)}
 	>
 		<div class="tw-align-items-center tw-flex tw-pd-05 tw-relative">
 			<div class="bd--host-menu--avatar tw-border-radius-small tw-overflow-hidden">
-				<div class="tw-aspect tw-aspect--align-top">
-					<div class="tw-aspect__spacer" style="padding-bottom: 100%" />
+				<div class="ffz-aspect ffz-aspect--align-top">
+					<div class="ffz-aspect__spacer" style="padding-bottom: 100%" />
 					<figure class="tw-avatar tw-avatar--size-40">
 						<div class="tw-border-radius-rounded tw-overflow-hidden">
 							<img

@@ -18,19 +18,23 @@
 				{{ t('addon.deck.no-tags', 'no tags') }}
 				&nbsp;
 			</div>
-			<button
+			<div
 				v-for="tag of showTags"
 				:key="tag.id"
-				class="tw-mg-t-05 tw-mg-r-05 tw-border tw-border-radius-medium tw-font-size-6 tw-form-tag tw-form-tag--selected tw-interactable tw-interactable--alt tw-interactive"
-				:title="tag.description"
-				@click="removeTag(tag.id)"
+				class="tw-inline-block tw-mg-t-05 tw-mg-r-05"
 			>
-				<div class="tw-flex tw-align-items-center tw-pd-l-1 tw-pd-r-05">
-					<figure v-if="tag.is_language" class="ffz-i-language" />
-					{{ tag.label }}
-					<figure class="ffz-i-cancel" />
-				</div>
-			</button>
+				<button
+					class="tw-border-radius-rounded tw-inline-flex tw-interactive tw-semibold tw-tag"
+					:title="tag.description"
+					@click="removeTag(tag.id)"
+				>
+					<div class="tw-align-items-center tw-flex tw-font-size-7 tw-tag__content">
+						<figure v-if="tag.is_language" class="ffz-i-language" />
+						{{ tag.label }}
+						<figure class="ffz-i-cancel" />
+					</div>
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
