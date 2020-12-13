@@ -206,7 +206,6 @@ class SmokeysUtils extends Addon {
 
 		this.mod_keybind_handler();
 
-		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('update', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
 	}
@@ -306,6 +305,10 @@ class SmokeysUtils extends Addon {
 								requestAnimationFrame(() => {
 									if (chat_line.matches('.ffz-mentioned')) {
 										const cloned_chat_line = chat_line.cloneNode(true);
+										const inline_actions = cloned_chat_line.getElementsByClassName('ffz--inline-actions');
+										if (inline_actions[0]){
+											inline_actions[0].remove();
+										}
 										if (
 											!cloned_chat_line.querySelector('.chat-line__timestamp')
 										) {
@@ -367,16 +370,14 @@ class SmokeysUtils extends Addon {
 	// mod keybind stuff
 
 	onKeyDown(e) {
-		if (e.ctrlKey || e.metaKey || e.shiftKey || !this.ModCardData.user) return;
-
-		// find text area
-		const text_area = document.getElementsByClassName('tw-textarea')[0];
-
-		if (!text_area) return; // shouldn't happen but just in case?
 
 		if (
 			document.activeElement.matches('input') ||
-			document.activeElement.matches('textarea')
+			document.activeElement.matches('textarea') ||
+			e.ctrlKey ||
+			e.metaKey ||
+			e.shiftKey ||
+			!this.ModCardData.user
 		)
 			return;
 
@@ -399,6 +400,7 @@ class SmokeysUtils extends Addon {
 		switch (keyCode) {
 			// timeout
 			case 84:
+
 				this.resolve('site.chat').ChatService.first.sendMessage(
 					`/timeout ${this.ModCardData.user} 600`
 				);
@@ -412,6 +414,7 @@ class SmokeysUtils extends Addon {
 
 				// delete message
 			case 68:
+
 				this.resolve('site.chat').ChatService.first.sendMessage(
 					`/delete ${this.ModCardData.message_id}`
 				);
@@ -425,6 +428,7 @@ class SmokeysUtils extends Addon {
 
 				// ban
 			case 66:
+
 				this.resolve('site.chat').ChatService.first.sendMessage(
 					`/ban ${this.ModCardData.user}`
 				);
@@ -438,6 +442,7 @@ class SmokeysUtils extends Addon {
 
 				// purge
 			case 80:
+
 				this.resolve('site.chat').ChatService.first.sendMessage(
 					`/timeout ${this.ModCardData.user} 1`
 				);
