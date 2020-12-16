@@ -1,3 +1,7 @@
+import STYLE_URL from './styles.scss';
+
+const {createElement} = FrankerFaceZ.utilities.dom;
+
 class SmokeysUtils extends Addon {
 	constructor(...args) {
 		super(...args);
@@ -43,7 +47,7 @@ class SmokeysUtils extends Addon {
 				component: 'setting-text-box',
 				process(val) {
 					val = parseFloat(val, 10);
-					if (isNaN(val) || !isFinite(val) || val <= 0) return 60;
+					if (isNaN(val) || !isFinite(val) || val < 0) return 60;
 
 					return val;
 				},
@@ -193,10 +197,20 @@ class SmokeysUtils extends Addon {
 			'chat-viewer-card',
 			(n) => n.trackViewerCardOpen && n.onWhisperButtonClick
 		);
+
+		this.style_link = null;
 	}
 
 	onEnable() {
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
+
+		if ( ! this.style_link )
+			document.head.appendChild(this.style_link = createElement('link', {
+				href: STYLE_URL,
+				rel: 'stylesheet',
+				type: 'text/css',
+				crossOrigin: 'anonymous'
+			}));
 
 		this.pinnedMentions();
 		this.keep_hd_video();
@@ -297,6 +311,7 @@ class SmokeysUtils extends Addon {
 						'style',
 						`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
 					);
+					pinned_log.classList.add('pinned-highlight-log');
 					chat_log.parentNode.prepend(pinned_log);
 					this.pinned_handler = new MutationObserver((mutations) => {
 						mutations.forEach((mutation) => {
