@@ -1,6 +1,6 @@
 <template lang="html">
 	<button
-		class="tw-mg-l-05 tw-mg-y-05 tw-button tw-button--text tw-tooltip-wrapper tw-relative"
+		class="tw-mg-l-05 tw-mg-y-05 tw-button tw-button--text tw-tooltip__container tw-relative"
 		@click="click"
 	>
 		<span class="tw-button__text ffz-i-right-dir" />
