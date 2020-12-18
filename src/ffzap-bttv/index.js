@@ -260,7 +260,13 @@ class BetterTTV extends Addon {
 
 			const overlayEmotes = {
 				'cvMask': '3px 0 0 0',
-				'cvHazmat': '3px 0 0 0'
+				'cvHazmat': '3px 0 0 0',
+
+				// Christmas emotes
+				'SoSnowy': '2px 0 0 0',
+			    'IceCold': '2px 0 0 0',
+			    'TopHat': null,
+			    'SantaHat': null,
 			};
 
 			let i = emotes.length;
