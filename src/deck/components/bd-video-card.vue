@@ -28,7 +28,7 @@
 		</template>
 
 		<template #bottom-right>
-			<div v-if="published" class="tw-tooltip-wrapper">
+			<div v-if="published" class="tw-tooltip__container">
 				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center">
 					<p>{{ t('addon.deck.published-human', '{published,humantime,1} ago', {published}) }}</p>
 				</div>

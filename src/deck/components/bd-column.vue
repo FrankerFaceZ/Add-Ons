@@ -71,7 +71,7 @@
 				</div>
 				<button
 					v-if="! is_collapsed"
-					class="tw-button tw-button--text tw-flex-shrink-0 tw-tooltip-wrapper"
+					class="tw-button tw-button--text tw-flex-shrink-0 tw-tooltip__container"
 					@click="openMenu"
 				>
 					<figure class="tw-button__text ffz-i-cog" />

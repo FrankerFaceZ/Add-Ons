@@ -21,7 +21,7 @@
 		</template>
 
 		<template #top-right>
-			<div v-if="uptime" class="tw-tooltip-wrapper">
+			<div v-if="uptime" class="tw-tooltip__container">
 				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
 					<figure class="tw-c-text-live ffz-i-clock" />
 					<p>{{ upString }}</p>
