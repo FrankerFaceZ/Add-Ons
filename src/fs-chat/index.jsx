@@ -401,7 +401,7 @@ class FSChat extends Addon {
 		}
 
 		if ( ! cont ) {
-			cont = (<div class="ffz--player-fschat tw-inline-flex tw-relative tw-tooltip-wrapper">
+			cont = (<div class="ffz--player-fschat tw-inline-flex tw-relative tw-tooltip__container">
 				{btn = (<button
 					class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon tw-button-icon--overlay tw-core-button tw-core-button--border tw-core-button--overlay tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative"
 					type="button"

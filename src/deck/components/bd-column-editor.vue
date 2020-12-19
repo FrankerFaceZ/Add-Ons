@@ -11,7 +11,7 @@
 				<div class="tw-flex-grow-1" />
 				<template v-if="deleting">
 					<button
-						class="tw-button tw-button--text tw-tooltip-wrapper tw-mg-r-1"
+						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
 						@click="deleting = false"
 					>
 						<span class="tw-button__text ffz-i-cancel">
@@ -29,7 +29,7 @@
 				</template>
 				<template v-else>
 					<button
-						class="tw-button tw-button--text tw-tooltip-wrapper tw-mg-r-1"
+						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
 						@click="deleting = true"
 					>
 						<span class="tw-button__text ffz-i-trash">

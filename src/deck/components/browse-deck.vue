@@ -80,7 +80,7 @@
 					</button>
 				</div>
 				<button
-					class="tw-button tw-button--hollow tw-tooltip-wrapper"
+					class="tw-button tw-button--hollow tw-tooltip__container"
 					@click="openTabSettings"
 				>
 					<span class="tw-button__text ffz-i-cog" />
@@ -94,7 +94,7 @@
 					{{ t('addon.deck.filtered', 'Filtered by') }}
 				</div>
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
-				<div v-if="currentTags.length > 3" class="tw-mg-l-05 tw-tooltip-wrapper">
+				<div v-if="currentTags.length > 3" class="tw-mg-l-05 tw-tooltip__container">
 					{{ t('addon.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
 					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right tw-balloon--lg tw-pd-x-1 tw-pd-b-1">
 						<bd-tag-list
