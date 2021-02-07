@@ -4,7 +4,6 @@ class NewAccountHighlighter extends Addon {
 
 	constructor(...args) {
 		super(...args);
-		this.inject('chat.actions');
 		this.inject('chat');
 
 		const NewAccountHighlights = {
@@ -12,8 +11,9 @@ class NewAccountHighlighter extends Addon {
 			priority: 95,
 		
 			process(tokens, msg, user) {
-				let minage = this.settings.get('newusers.minage');
-				let minuid = NewAccountHighlighter.Mappings[minage].uid;
+				const minage = this.settings.get('newusers.minage');
+				const minagemapping = NewAccountHighlighter.Mappings[minage];
+				const minuid = minagemapping ? minagemapping.uid : Number.MAX_VALUE;
 				if(msg.user.userID > minuid)
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user');
@@ -30,7 +30,7 @@ class NewAccountHighlighter extends Addon {
 	}
 
 	async refreshMappings() {
-		let url = 'https://ffz.0x.software/api/mappings.json';
+		const url = 'https://ffz.0x.software/api/mappings.json';
 
 		return fetch(url).then((res) => {
 			return res.json()
@@ -56,7 +56,6 @@ class NewAccountHighlighter extends Addon {
 			});
 		}
 		this.settings.add('newusers.minage', {
-			//default: "0",
 			ui: {
 				path: 'Add-Ons > New User Highlighter >> Highlights',
 				title: 'Minimum account age',
@@ -67,6 +66,7 @@ class NewAccountHighlighter extends Addon {
 		});
 
 		this.settings.add("newusers.highlightcolor", {
+			default: '#FFFFFF',
 			ui: {
 				path: 'Add-Ons > New User Highlighter >> Highlights',
 				title: 'Highlight Color',
