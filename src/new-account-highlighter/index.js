@@ -18,6 +18,7 @@ class NewAccountHighlighter extends Addon {
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user');
 					msg.mentioned = true;
+					msg.new_user_highlight = true;
 		
 					const color = this.settings.get('newusers.highlightcolor') || '#FFFFFF';
 					if(color)
