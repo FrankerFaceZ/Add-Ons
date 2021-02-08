@@ -313,7 +313,12 @@ class FFZAP extends Addon {
 				}
 			}
 			
-			const highlights = msg.message.highlights || new Set();
+			const highlights = msg.message.highlights;
+
+			// No highlights? No sounds.
+			if (!highlights || !highlights.size) {
+				return;
+			}
 
 			if (
 				(this.chat.context.get('ffzap.core.highlight_sound_type_mention') && highlights.has('mention')) ||
