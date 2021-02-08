@@ -3,10 +3,10 @@
     "requires": [],
     "sort": -100,
 
-    "version": "3.2.2",
+    "version": "3.2.3",
     "icon": "https://ffzap.com/img/logo.png",
 
-    "short_name": "FFZ:AP BTTV",
+    "short_name": "FFZ:AP Core",
     "name": "The FrankerFaceZ Add-On Pack - Core",
     "author": "Lordmau5",
     "description": "This is the core functionality for The FrankerFaceZ Add-On Pack. It includes FFZ:AP supporter functionality and various other required utilities for the FFZ:AP modules.",
