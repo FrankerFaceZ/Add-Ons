@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "requires": [],
+
+  "icon": "https://cdn.hurtwolf.com/manne/icon.png",
+  "version": "1.0.0",
+
+  "short_name": "mannemotes",
+  "name": "MannEmotes",
+  "author": "Hurtwolf",
+  "description": "Extra Emotes for ItsManne",
+
+  "website": "https://twitch.tv/itsmanne",
+  "settings": "add_ons.mannemotes"
+}
