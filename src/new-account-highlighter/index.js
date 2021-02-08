@@ -16,7 +16,7 @@ class NewAccountHighlighter extends Addon {
 				const minuid = minagemapping ? minagemapping.uid : Number.MAX_VALUE;
 				if(msg.user.userID > minuid)
 				{
-					(msg.highlights = (msg.highlights || new Set())).add('user');
+					(msg.highlights = (msg.highlights || new Set())).add('user-age');
 					msg.mentioned = true;
 		
 					const color = this.settings.get('newusers.highlightcolor') || '#FFFFFF';
