@@ -1,10 +1,35 @@
 class NewAccountHighlighter extends Addon {
-	static Mappings = {};
+	static Mappings = {"7d": 0};
 	updateTimer = null;
 
 	constructor(...args) {
 		super(...args);
 		this.inject('chat');
+
+		this.settings.add('newusers.minage', {
+			default: '7d',
+			ui: {
+				path: 'Add-Ons > New User Highlighter >> Highlights',
+				title: 'Minimum account age',
+				description: 'Users whose account is younger than the specified time will be highlighted in chat.',
+				component: 'setting-select-box',
+				data: () => {
+					const arr = Object.keys(NewAccountHighlighter.Mappings).map(age => ({value: age, title: age}));
+					arr.push({value: null, title: "disabled"});
+					return arr;
+				}
+			}
+		});
+
+		this.settings.add("newusers.highlightcolor", {
+			default: '#FFFFFF',
+			ui: {
+				path: 'Add-Ons > New User Highlighter >> Highlights',
+				title: 'Highlight Color',
+				description: 'Set the color for your highlights',
+				component: 'setting-color-box'
+			}
+		});
 
 		const NewAccountHighlights = {
 			type: 'newaccount_highlight',
@@ -47,34 +72,6 @@ class NewAccountHighlighter extends Addon {
 		this.updateTimer = setInterval(() => {
 			this.refreshMappings();
 		}, (1000*60*25)+Math.floor(Math.random() * Math.floor(1000*60*10)));
-
-		var dataArray = [];
-		for (const key in NewAccountHighlighter.Mappings) {
-			dataArray.push({
-				value: key,
-				title: key
-			});
-		}
-		this.settings.add('newusers.minage', {
-			ui: {
-				path: 'Add-Ons > New User Highlighter >> Highlights',
-				title: 'Minimum account age',
-				description: 'Users whose account is younger than the specified time will be highlighted in chat.',
-				component: 'setting-select-box',
-				data: dataArray,
-			},
-		});
-
-		this.settings.add("newusers.highlightcolor", {
-			default: '#FFFFFF',
-			ui: {
-				path: 'Add-Ons > New User Highlighter >> Highlights',
-				title: 'Highlight Color',
-				description: 'Set the color for your highlights',
-				component: 'setting-color-box',
-			},
-		});
-		
 	}
 
 	onDisable() {
