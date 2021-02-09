@@ -14,7 +14,9 @@ class NewAccountHighlighter extends Addon {
 				description: 'Users whose account is younger than the specified time will be highlighted in chat.',
 				component: 'setting-select-box',
 				data: () => {
-					return Object.keys(NewAccountHighlighter.Mappings).map(age => ({value: age, title: age}))
+					const arr = Object.keys(NewAccountHighlighter.Mappings).map(age => ({value: age, title: age}));
+					arr.push({value: null, title: "disabled"});
+					return arr;
 				}
 			}
 		});
