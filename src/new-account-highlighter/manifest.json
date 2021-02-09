@@ -2,7 +2,7 @@
     "enabled": true,
     "requires": [],
 
-    "version": "1.0.1",
+    "version": "1.0.2",
     "icon": "https://i.imgur.com/2od9Ir6.png",
 
     "short_name": "New Account Highlighter",
@@ -10,5 +10,5 @@
     "author": "0x",
     "description": "Highlights new user accounts in chat",
 
-    "settings": "add_ons.new_account_highlighter"
+    "settings": "add_ons.new_user_highlighter"
 }
