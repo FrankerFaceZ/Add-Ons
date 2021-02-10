@@ -6,13 +6,50 @@ const Color = FrankerFaceZ.utilities.color.Color;
 
 const STYLE_VALIDATOR = <span />;
 
+const BAD_SHORTCUTS = [
+	'f',
+	'space',
+	'k',
+	'shift+up',
+	'shift+down',
+	'esc',
+	'm',
+	'?',
+	'alt+t',
+	'alt+x'
+];
+
+function isValidShortcut(key) {
+	if ( ! key )
+		return false;
+
+	key = key.toLowerCase().trim();
+	return ! BAD_SHORTCUTS.includes(key);
+}
+
 class FSChat extends Addon {
 	constructor(...args) {
 		super(...args);
 
 		this.inject('site.fine');
 		this.inject('site.player');
+		this.inject('site.web_munch');
 		this.onFSChange = this.onFSChange.bind(this);
+		this.onShortcut = this.onShortcut.bind(this);
+
+		this.settings.add('addon.fs-chat.shortcut', {
+			default: 'alt+c',
+			ui: {
+				path: 'Add-Ons > FS Chat >> Behavior',
+				title: 'Shortcut Key',
+				description: 'This key sequence can be used to toggle FS Chat when in fullscreen.',
+				component: 'setting-hotkey'
+			},
+			changed: () => {
+				this.updateShortcut();
+				this.updateButtons();
+			}
+		});
 
 		this.settings.add('addon.fs-chat.automatic', {
 			default: false,
@@ -140,7 +177,7 @@ class FSChat extends Addon {
 		this.style_link = null;
 	}
 
-	onEnable() {
+	async onEnable() {
 		if ( ! this.style_link )
 			document.head.appendChild(this.style_link = createElement('link', {
 				href: STYLE_URL,
@@ -167,6 +204,34 @@ class FSChat extends Addon {
 		});
 
 		if ( this.settings.get('addon.fs-chat.automatic') )
+			this.turnOn();
+
+		this.updateButtons();
+		this.updateShortcut();
+	}
+
+	updateShortcut() {
+		const Mousetrap = this.Mousetrap = this.Mousetrap || this.web_munch.getModule('mousetrap') || window.Mousetrap;
+
+		if ( this._shortcut_bound ) {
+			Mousetrap.unbind(this._shortcut_bound);
+			this._shortcut_bound = null;
+		}
+
+		const key = this.settings.get('addon.fs-chat.shortcut');
+		if ( key && isValidShortcut(key) ) {
+			Mousetrap.bind(key, this.onShortcut);
+			this._shortcut_bound = key;
+		}
+	}
+
+	onShortcut() {
+		if ( ! document.fullscreenElement )
+			return;
+
+		if ( this.chat )
+			this.turnOff();
+		else
 			this.turnOn();
 
 		this.updateButtons();
@@ -429,10 +494,14 @@ class FSChat extends Addon {
 			tip = cont.querySelector('.tw-tooltip');
 		}
 
-		const active = this.chat != null,
-			label = active ?
-				this.i18n.t('addon.fs-chat.button.active', 'Disable FS Chat') :
-				this.i18n.t('addon.fs-chat.button.inactive', 'FS Chat');
+		const active = this.chat != null;
+		let label = active ?
+			this.i18n.t('addon.fs-chat.button.active', 'Disable FS Chat') :
+			this.i18n.t('addon.fs-chat.button.inactive', 'FS Chat');
+
+		const key = this.settings.get('addon.fs-chat.shortcut');
+		if ( key && isValidShortcut(key) )
+			label = `${label} (${key})`;
 
 		icon.classList.toggle('ffz-i-chat-empty', ! active);
 		icon.classList.toggle('ffz-i-chat', active);
