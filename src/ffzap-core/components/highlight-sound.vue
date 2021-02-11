@@ -30,7 +30,7 @@
 					:id="item.full_key"
 					ref="control"
 					class="tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 tw-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
-					@change="onChange"
+					@change="onPresetChange"
 				>
 					<option
 						v-for="i in data"
@@ -45,7 +45,7 @@
 					ref="text"
 					:value="value"
 					class="ffz-mg-t-1p tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-input"
-					@change="onTextChange"
+					@change="onCustomURLChange"
 				>
 				<button
 					v-if="isCustomFile"
@@ -158,7 +158,7 @@ export default {
 				this.isCustomFile = true;
 			}
 		},
-		onChange() {
+		onPresetChange() {
 			const idx = this.$refs.control.selectedIndex,
 				raw_value = this.data[idx];
 
@@ -166,7 +166,7 @@ export default {
 				this.set(raw_value.value);
 			}
 		},
-		onTextChange() {
+		onCustomURLChange() {
 			const value = this.$refs.text.value;
 			if (value != null) {
 				this.set(value);
