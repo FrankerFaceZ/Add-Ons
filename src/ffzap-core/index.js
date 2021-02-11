@@ -77,9 +77,10 @@ class FFZAP extends Addon {
 			ui: {
 				sort: -5,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
-				title: 'Sound File',
-				description: 'Change the sound that will play when you get mentioned.',
-				component: 'setting-combo-box',
+				title: 'Sound',
+				description: 'Change the sound that will play when a sound trigger is activated.',
+				component: () => import('./components/highlight-sound.vue'),
+				no_i18n: true,
 				data: [
 					// Default Sounds
 					{ value: 'https://cdn.ffzap.com/sounds/default_wet.mp3', title: 'Default - Wet' },
@@ -108,7 +109,7 @@ class FFZAP extends Addon {
 					{ value: 'https://cdn.ffzap.com/sounds/gnome.mp3', title: 'Gnome' },
 					{ value: 'https://cdn.ffzap.com/sounds/oof.mp3', title: 'Roblox Death Sound (OOF)' },
 				],
-				onUIChange: val => val && this.playPreviewSound(val),
+				onUIChange: (val, element) => val && this.playPreviewSound(element, val, null),
 				buttons: () => import('./components/preview.vue')
 			},
 		});
@@ -135,7 +136,7 @@ class FFZAP extends Addon {
 					{ value: 90, title: '90%' },
 					{ value: 100, title: '100%' },
 				],
-				onUIChange: val => this.playPreviewSound(null, val)
+				onUIChange: (val, element) => this.playPreviewSound(element, null, val)
 			},
 		});
 
@@ -208,16 +209,15 @@ class FFZAP extends Addon {
 
 		this.on('chat:receive-message', this.onReceiveMessage);
 
-		this.chat.context.on('changed:ffzap.core.highlight_sound', url => {
-			this.highlight_sound.src = url;
+		this.chat.context.on('changed:ffzap.core.highlight_sound', async url => {
+			this.highlight_sound.src = await this.getSoundURL(url);
 		}, this);
 
 		this.chat.context.on('changed:ffzap.core.highlight_sound_volume', volume => {
 			this.highlight_sound.volume = volume / 100;
 		}, this);
 
-		this.highlight_sound = new Audio(this.chat.context.get('ffzap.core.highlight_sound'));
-		this.highlight_sound.volume = this.chat.context.get('ffzap.core.highlight_sound_volume') / 100;
+		this.setupHighlightSound();
 
 		this.remove_spaces_tokenizer = {
 			type: 'remove_spaces',
@@ -277,9 +277,32 @@ class FFZAP extends Addon {
 		}
 	}
 
-	playPreviewSound(val, vol) {
+	async setupHighlightSound() {
+		this.highlight_sound = new Audio(await this.getSoundURL(this.chat.context.get('ffzap.core.highlight_sound')));
+		this.highlight_sound.volume = this.chat.context.get('ffzap.core.highlight_sound_volume') / 100;
+	}
+
+	async getSoundURL(url) {
+		if (url.startsWith('ffzap.sound-file:')) {
+			const provider = this.settings.provider;
+			
+			const blob = await provider.getBlob(url);
+			url = URL.createObjectURL(blob);
+		}
+		return url;
+	}
+
+	getElementSetting(element, setting) {
+		if (!element) return this.chat.context.get(setting);
+
+		return element.profile.get(setting) || this.chat.context.get(setting);
+	}
+
+	async playPreviewSound(element, val, vol) {
 		if ( val == null )
-			val = this.chat.context.get('ffzap.core.highlight_sound');
+			val = this.getElementSetting(element, 'ffzap.core.highlight_sound');
+
+		val = await this.getSoundURL(val);
 
 		let sound;
 		if ( this._preview_sound ) {
@@ -290,7 +313,7 @@ class FFZAP extends Addon {
 		} else
 			sound = this._preview_sound = new Audio(val);
 
-		sound.volume = (vol != null ? vol : this.chat.context.get('ffzap.core.highlight_sound_volume')) / 100;
+		sound.volume = (vol != null ? vol : this.getElementSetting(element, 'ffzap.core.highlight_sound_volume')) / 100;
 		sound.play();
 	}
 
