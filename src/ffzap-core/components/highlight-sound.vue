@@ -106,20 +106,6 @@
 const { openFile } = FrankerFaceZ.utilities.dom;
 const SettingMixin = FrankerFaceZ.get().resolve('main_menu').SettingMixin;
 
-function readFileAsync(file) {
-	return new Promise(resolve => {
-		let reader = new FileReader();
-
-		reader.onload = () => {
-			resolve(reader.result);
-		};
-
-		reader.onerror = () => resolve(false);
-
-		reader.readAsArrayBuffer(file);
-	})
-}
-
 export default {
 	mixins: [SettingMixin],
 	props: ['item', 'context'],
@@ -210,22 +196,14 @@ export default {
 				return;
 			}
 
-			const arrayBuffer = await readFileAsync(file);
-			if (!arrayBuffer) {
-				alert(this.t('addon.ffzap-core.highlight-sound.cant-read', 'Can\'t read audio file!'));
-				return;
-			}
-
-			const blob = new Blob([arrayBuffer], { type: file.type });
-
-			const audio = await this.canPlayAudio(blob);
+			const audio = await this.canPlayAudio(file);
 			if (!audio) {
 				alert(this.t('addon.ffzap-core.highlight-sound.cant-play', 'Can\'t play audio file!'));
 				return;
 			}
 
 			if (audio.duration > 10) { // Longer than 10s
-				alert(this.t('addon.ffzap-core.highlight-sound.too-long', 'Audio file is too long! (Max. 10 seconds)'));
+				alert(this.t('addon.ffzap-core.highlight-sound.file-too-long', 'Audio file is too long! (Max. 10 seconds)'));
 				return;
 			}
 
@@ -235,7 +213,7 @@ export default {
 			const provider = settings.provider;
 			await provider.awaitReady();
 
-			await provider.setBlob(`ffzap.sound-file:${file.name}`, blob);
+			await provider.setBlob(`ffzap.sound-file:${file.name}`, file);
 
 			this.set(`ffzap.sound-file:${file.name}`);
 
