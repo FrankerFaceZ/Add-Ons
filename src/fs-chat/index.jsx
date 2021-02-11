@@ -212,6 +212,8 @@ class FSChat extends Addon {
 
 	updateShortcut() {
 		const Mousetrap = this.Mousetrap = this.Mousetrap || this.web_munch.getModule('mousetrap') || window.Mousetrap;
+		if ( ! Mousetrap || ! Mousetrap.bind )
+			return;
 
 		if ( this._shortcut_bound ) {
 			Mousetrap.unbind(this._shortcut_bound);
