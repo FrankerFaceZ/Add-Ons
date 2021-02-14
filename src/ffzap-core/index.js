@@ -38,7 +38,7 @@ class FFZAP extends Addon {
 			ui: {
 				path: 'Add-Ons > FFZ:AP Core >> Emotes',
 				title: 'Remove Spaces Between Emotes',
-				description: 'Enable to remove spaces inbetween emotes when they are right after one another. (e.g. combo emotes)',
+				description: 'Remove spaces inbetween emotes when they are right after one another. (e.g. combo emotes)',
 				component: 'setting-check-box',
 			},
 		});
@@ -66,18 +66,7 @@ class FFZAP extends Addon {
 				sort: -10,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
 				title: 'Enable Highlight Sound',
-				description: 'Enable to hear a sound every time you\'re mentioned.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('ffzap.core.highlight_sound_prevent_own_channel', {
-			default: false,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
-				title: 'Prevent in own Channel',
-				description: 'Enable to prevent the sound from playing in your own channel.',
+				description: 'Hear a sound every time a message is highlighted.',
 				component: 'setting-check-box',
 			},
 		});
@@ -88,9 +77,10 @@ class FFZAP extends Addon {
 			ui: {
 				sort: -5,
 				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds',
-				title: 'Sound File',
-				description: 'Change the sound that will play when you get mentioned.',
-				component: 'setting-combo-box',
+				title: 'Sound',
+				description: 'Change the sound that will play when a sound trigger is activated.',
+				component: () => import('./components/highlight-sound.vue'),
+				no_i18n: true,
 				data: [
 					// Default Sounds
 					{ value: 'https://cdn.ffzap.com/sounds/default_wet.mp3', title: 'Default - Wet' },
@@ -119,7 +109,7 @@ class FFZAP extends Addon {
 					{ value: 'https://cdn.ffzap.com/sounds/gnome.mp3', title: 'Gnome' },
 					{ value: 'https://cdn.ffzap.com/sounds/oof.mp3', title: 'Roblox Death Sound (OOF)' },
 				],
-				onUIChange: val => val && this.playPreviewSound(val),
+				onUIChange: (val, element) => val && this.playPreviewSound(element, val, null),
 				buttons: () => import('./components/preview.vue')
 			},
 		});
@@ -146,22 +136,88 @@ class FFZAP extends Addon {
 					{ value: 90, title: '90%' },
 					{ value: 100, title: '100%' },
 				],
-				onUIChange: val => this.playPreviewSound(null, val)
+				onUIChange: (val, element) => this.playPreviewSound(element, null, val)
+			},
+		});
+
+		// Sound trigger settings
+		this.settings.add('ffzap.core.highlight_sound_prevent_own_channel', {
+			default: false,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Prevent In Own Channel',
+				description: 'Prevent the sound from playing in your own channel.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('ffzap.core.highlight_sound_type_mention', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When Mentioned',
+				description: 'Play a highlight sound when you are being mentioned in chat by your username.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('ffzap.core.highlight_sound_type_badge', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When Badge Highlighted',
+				description: 'Play a highlight sound when a badge from the "Highlight Badges" list is being highlighted.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('ffzap.core.highlight_sound_type_term', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When Term Highlighted',
+				description: 'Play a highlight sound when a term from the "Highlight Terms" list is being highlighted.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('ffzap.core.highlight_sound_type_user', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When User Highlighted',
+				description: 'Play a highlight sound when a user from the "Highlight Users" list is being highlighted.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('ffzap.core.highlight_sound_type_user_age', {
+			default: false,
+
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When New Account Highlighted',
+				description: 'Play a highlight sound when a new account is being highlighted. (Requires "New Account Highlighter" add-on)',
+				component: 'setting-check-box',
 			},
 		});
 
 		this.on('chat:receive-message', this.onReceiveMessage);
 
-		this.chat.context.on('changed:ffzap.core.highlight_sound', url => {
-			this.highlight_sound.src = url;
+		this.chat.context.on('changed:ffzap.core.highlight_sound', async url => {
+			this.highlight_sound.src = await this.getSoundURL(url);
 		}, this);
 
 		this.chat.context.on('changed:ffzap.core.highlight_sound_volume', volume => {
 			this.highlight_sound.volume = volume / 100;
 		}, this);
 
-		this.highlight_sound = new Audio(this.chat.context.get('ffzap.core.highlight_sound'));
-		this.highlight_sound.volume = this.chat.context.get('ffzap.core.highlight_sound_volume') / 100;
+		this.setupHighlightSound();
 
 		this.remove_spaces_tokenizer = {
 			type: 'remove_spaces',
@@ -221,9 +277,32 @@ class FFZAP extends Addon {
 		}
 	}
 
-	playPreviewSound(val, vol) {
+	async setupHighlightSound() {
+		this.highlight_sound = new Audio(await this.getSoundURL(this.chat.context.get('ffzap.core.highlight_sound')));
+		this.highlight_sound.volume = this.chat.context.get('ffzap.core.highlight_sound_volume') / 100;
+	}
+
+	async getSoundURL(url) {
+		if (url.startsWith('ffzap.sound-file:')) {
+			const provider = this.settings.provider;
+			
+			const blob = await provider.getBlob(url);
+			url = URL.createObjectURL(blob);
+		}
+		return url;
+	}
+
+	getElementSetting(element, setting) {
+		if (!element) return this.chat.context.get(setting);
+
+		return element.profile.get(setting) || this.chat.context.get(setting);
+	}
+
+	async playPreviewSound(element, val, vol) {
 		if ( val == null )
-			val = this.chat.context.get('ffzap.core.highlight_sound');
+			val = this.getElementSetting(element, 'ffzap.core.highlight_sound');
+
+		val = await this.getSoundURL(val);
 
 		let sound;
 		if ( this._preview_sound ) {
@@ -234,7 +313,7 @@ class FFZAP extends Addon {
 		} else
 			sound = this._preview_sound = new Audio(val);
 
-		sound.volume = (vol != null ? vol : this.chat.context.get('ffzap.core.highlight_sound_volume')) / 100;
+		sound.volume = (vol != null ? vol : this.getElementSetting(element, 'ffzap.core.highlight_sound_volume')) / 100;
 		sound.play();
 	}
 
@@ -249,14 +328,30 @@ class FFZAP extends Addon {
 		this.handleMessageDeletion(msg);
 
 		if (this.chat.context.get('ffzap.core.enable_highlight_sound') && msg.message.mentioned) {
+			// Prevent in own channel
 			if (this.chat.context.get('ffzap.core.highlight_sound_prevent_own_channel')) {
 				const user = this.resolve('site').getUser();
 				if (user && msg.channel == user.login) {
 					return;
 				}
 			}
+			
+			const highlights = msg.message.highlights;
 
-			this.playHighlightSound();
+			// No highlights? No sounds.
+			if (!highlights || !highlights.size) {
+				return;
+			}
+
+			if (
+				(this.chat.context.get('ffzap.core.highlight_sound_type_mention') && highlights.has('mention')) ||
+				(this.chat.context.get('ffzap.core.highlight_sound_type_badge') && highlights.has('badge')) ||
+				(this.chat.context.get('ffzap.core.highlight_sound_type_term') && highlights.has('term')) ||
+				(this.chat.context.get('ffzap.core.highlight_sound_type_user') && highlights.has('user')) ||
+				(this.chat.context.get('ffzap.core.highlight_sound_type_user_age') && highlights.has('user-age'))
+			) {
+				this.playHighlightSound();
+			}
 		}
 	}
 
