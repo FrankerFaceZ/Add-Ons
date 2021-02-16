@@ -38,7 +38,7 @@
 										:disabled="preset.disabled"
 										:class="{'tw-button--disabled': preset.disabled, 'ffz-tooltip ffz-tooltip--no-mouse': preset.list && preset.list.desc}"
 										:data-title="preset.list ? (preset.list.desc_i18n ? t(preset.list.desc_i18n, preset.list.desc) : preset.list.desc) : null"
-										class="tw-interactable tw-interactable--hover-enabled tw-interactable--default tw-interactive tw-full-width"
+										class="ffz-interactable ffz-interactable--hover-enabled ffz-interactable--default tw-interactive tw-full-width"
 										@click="addColumn(preset)"
 									>
 										<div class="tw-pd-y-05 tw-pd-x-1">
@@ -96,7 +96,7 @@
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
 				<div v-if="currentTags.length > 3" class="tw-mg-l-05 tw-tooltip__container">
 					{{ t('addon.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
-					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right tw-balloon--lg tw-pd-x-1 tw-pd-b-1">
+					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right ffz-balloon--lg tw-pd-x-1 tw-pd-b-1">
 						<bd-tag-list
 							:tags="currentTags"
 							class="tw-flex tw-flex-wrap"

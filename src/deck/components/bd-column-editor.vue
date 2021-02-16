@@ -57,7 +57,7 @@
 					<input
 						:id="'title$' + column.id"
 						v-model="column.display.title"
-						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-input"
+						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
 					>
 				</div>
 
@@ -80,7 +80,7 @@
 						ref="width"
 						:id="'width$' + column.id"
 						v-model="column.display.width"
-						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-select"
+						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 					>
 						<option :value="0">Narrow</option>
 						<option :value="1">Normal</option>
@@ -107,14 +107,14 @@
 					</div>
 				</div>
 
-				<div class="tw-flex tw-align-items-center tw-checkbox bd-checkbox--indent tw-mg-y-05">
+				<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05">
 					<input
 						:id="'no_avatars$' + column.id"
 						v-model="column.display.hide_avatars"
 						type="checkbox"
-						class="tw-checkbox__input"
+						class="ffz-checkbox__input"
 					>
-					<label :for="'no_avatars$' + column.id" class="tw-checkbox__label">
+					<label :for="'no_avatars$' + column.id" class="ffz-checkbox__label">
 						{{ t('addon.deck.edit.avatars', 'Do not display avatars.') }}
 					</label>
 				</div>
@@ -130,7 +130,7 @@
 					<select
 						ref="sort"
 						:id="'sort$' + column.id"
-						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-select"
+						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 						@change="sortChange"
 					>
 						<option

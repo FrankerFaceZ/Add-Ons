@@ -20,7 +20,7 @@ export function makeReference(x, y) {
 }
 
 export function createMenu(item, navigate) {
-	return (<div class="bd--host-menu tw-balloon tw-block">
+	return (<div class="bd--host-menu ffz-balloon tw-block">
 		<div class="tw-border tw-elevation-1 tw-border-radius-small tw-c-background-base">
 			<div class="scrollable-area" data-simplebar>
 				<div class="simplebar-scroll-content">
@@ -48,7 +48,7 @@ export function createMenu(item, navigate) {
 function renderChannel(node, navigate) {
 	const url = `/${node.login}`
 	return (<a
-		class="tw-block tw-full-width tw-interactable tw-interactable--hover-enabled tw-interactable--default tw-interactive tw-pd-x-1"
+		class="tw-block tw-full-width ffz-interactable ffz-interactable--hover-enabled ffz-interactable--default tw-interactive tw-pd-x-1"
 		href={url}
 		onClick={e => navigate(url, e)}
 	>
@@ -56,10 +56,10 @@ function renderChannel(node, navigate) {
 			<div class="bd--host-menu--avatar tw-border-radius-small tw-overflow-hidden">
 				<div class="ffz-aspect ffz-aspect--align-top">
 					<div class="ffz-aspect__spacer" style="padding-bottom: 100%" />
-					<figure class="tw-avatar tw-avatar--size-40">
+					<figure class="ffz-avatar ffz-avatar--size-40">
 						<div class="tw-border-radius-rounded tw-overflow-hidden">
 							<img
-								class="tw-avatar__img tw-image"
+								class="ffz-avatar__img tw-image"
 								alt={node.displayName}
 								src={node.profileImageURL}
 							/>

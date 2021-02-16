@@ -47,9 +47,9 @@
 				<react-link v-if="props.avatar" class="tw-interactive tw-link" :href="props.avatarLink || props.link" v-on="props.clickAvatar || props.click ? {click: props.clickAvatar || props.click} : {}">
 					<div class="deck-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
 						<aspect>
-							<figure class="tw-avatar tw-avatar--size-40">
+							<figure class="ffz-avatar ffz-avatar--size-40">
 								<div class="tw-border-radius-rounded tw-overflow-hidden">
-									<img class="tw-avatar__img tw-image" :alt="props.avatarTitle || props.title" :src="props.avatar">
+									<img class="ffz-avatar__img tw-image" :alt="props.avatarTitle || props.title" :src="props.avatar">
 								</div>
 							</figure>
 						</aspect>

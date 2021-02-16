@@ -7,7 +7,7 @@
 			class="tw-border-radius-rounded tw-semibold tw-inline-block tw-tag tw-mg-r-05"
 		>
 			<react-link
-				class="tw-block tw-border-radius-rounded tw-interactable tw-interactable--alpha tw-interactable--hover-enabled tw-interactive"
+				class="tw-block tw-border-radius-rounded ffz-interactable ffz-interactable--alpha ffz-interactable--hover-enabled tw-interactive"
 				:href="`/directory/all/tags/${tag.id}`"
 			>
 				<div
