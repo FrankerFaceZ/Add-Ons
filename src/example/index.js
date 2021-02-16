@@ -67,7 +67,7 @@ class Example extends Addon {
 
 			popup: async (data, tip) => {
 				await tip.waitForDom();
-				tip.element.classList.add('tw-balloon--lg');
+				tip.element.classList.add('ffz-balloon--lg');
 
 				return this.buildVue(data);
 			},
