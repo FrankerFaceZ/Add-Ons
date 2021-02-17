@@ -9,5 +9,6 @@
 	"author": "Alejo Pereyra",
 	"description": "Add Pronouns to Twitch Chat\n\nAdd Pronouns as a chat badge next to user's names on Twitch Chat!\n\nTo set your pronouns you should check https://pronouns.alejo.io/",
 
+	"website": "https://pronouns.alejo.io/",
 	"settings": "add_ons.pronouns"
 }
