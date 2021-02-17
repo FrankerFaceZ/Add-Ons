@@ -22,11 +22,21 @@ class Pronouns extends Addon {
 		await this.loadPronouns();
 
 		this.settings.add('addon.pronouns.color', {
-			default: '#008306',
+			default: '',
 			ui: {
 				path: 'Add-Ons > Pronouns >> Appearance',
 				title: 'Badge Color',
 				component: 'setting-color-box'
+			},
+			changed: () => this.updateBadges()
+		});
+
+		this.settings.add('addon.pronouns.border', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Pronouns >> Appearance',
+				title: 'Display a border around the badge.',
+				component: 'setting-check-box'
 			},
 			changed: () => this.updateBadges()
 		});
@@ -142,6 +152,10 @@ class Pronouns extends Addon {
 	}
 
 	updateBadge(name, display, update_css = false) {
+		let css = `display:inline-flex;align-items:center;`;
+		if ( this.settings.get('addon.pronouns.border') )
+			css = `${css}border:0.1rem solid;border-radius:0.5rem`;
+
 		this.badges.loadBadgeData(`addon-pn-${name}`, {
 			content: display,
 			title: this.i18n.t('addon.pronouns.title', 'Pronouns: {value}', {
@@ -149,7 +163,8 @@ class Pronouns extends Addon {
 			}),
 			click_url: 'https://pronouns.alejo.io/',
 			color: this.settings.get('addon.pronouns.color'),
-			slot: 40
+			slot: 40,
+			css
 		}, update_css);
 	}
 
