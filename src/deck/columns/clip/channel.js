@@ -190,7 +190,10 @@ Channel.presets = {
 			list: {
 				icon: 'ffz-i-user',
 				title: 'Channel',
-				i18n: 'addon.deck.channel'
+				i18n: 'addon.deck.channel',
+
+				desc_i18n: 'addon.deck.channel.clip-tip',
+				desc: 'This column shows clips from a specific channel.'
 			}
 		}
 	]

@@ -71,7 +71,10 @@ Search.presets = {
 			list: {
 				icon: 'ffz-i-search',
 				title: 'Search',
-				i18n: 'addon.deck.search'
+				i18n: 'addon.deck.search',
+
+				desc_i18n: 'addon.deck.search.live-tip',
+				desc: 'This column shows live channels that match a search query.'
 			}
 		}
 	]

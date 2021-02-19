@@ -79,7 +79,10 @@ Followed.presets = {
 			list: {
 				icon: 'ffz-i-heart',
 				title: 'Followed',
-				i18n: 'addon.deck.followed'
+				i18n: 'addon.deck.followed',
+
+				desc_i18n: 'addon.deck.followed.video-tip',
+				desc: 'This column shows videos from channels you\'ve followed.'
 			}
 		}
 	]

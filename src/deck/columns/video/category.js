@@ -101,7 +101,10 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addon.deck.category'
+				i18n: 'addon.deck.category',
+
+				desc_i18n: 'addon.deck.category.video-tip',
+				desc: 'This column shows videos in a specific category.'
 			}
 		}
 	]

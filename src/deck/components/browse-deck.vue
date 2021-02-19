@@ -21,10 +21,38 @@
 						v-if="menu_open"
 						color="background-base"
 						dir="down"
-						size="sm"
+						:size="add_pasting ? 'md' : 'sm'"
 					>
 						<simplebar classes="bd-column-select-menu">
-							<div class="tw-pd-y-1">
+							<div v-if="add_pasting" class="tw-pd-1">
+								<div class="tw-flex tw-align-items-center">
+									<input
+										ref="paste"
+										:placeholder="t('setting.paste-json.json', '[json]')"
+										class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
+										@keydown.enter="addFromJSON"
+									>
+									<button
+										class="tw-mg-l-05 tw-button"
+										@click="addFromJSON"
+									>
+										<span class="tw-button__text ffz-i-plus">
+											{{ t('setting.add', 'Add') }}
+										</span>
+									</button>
+								</div>
+							</div>
+							<div v-else class="tw-pd-y-1">
+								<button
+									class="ffz-interactable ffz-interactable--hover-enabled ffz-interactable--default tw-interactive tw-full-width"
+									@click="preparePaste"
+								>
+									<div class="tw-pd-y-05 tw-pd-x-1">
+										<div class="ffz-i-plus">
+											{{ t('setting.paste-json', 'Paste JSON') }}
+										</div>
+									</div>
+								</button>
 								<template v-for="(preset, idx) in presets">
 									<div v-if="preset.divider" :key="idx" class="tw-mg-1 tw-border-b" />
 									<div v-else-if="preset.title" :key="idx" class="tw-pd-1">
@@ -38,6 +66,9 @@
 										:disabled="preset.disabled"
 										:class="{'tw-button--disabled': preset.disabled, 'ffz-tooltip ffz-tooltip--no-mouse': preset.list && preset.list.desc}"
 										:data-title="preset.list ? (preset.list.desc_i18n ? t(preset.list.desc_i18n, preset.list.desc) : preset.list.desc) : null"
+										data-tooltip-type="markdown"
+										data-tooltip-side="right"
+										data-tooltip-align="justify"
 										class="ffz-interactable ffz-interactable--hover-enabled ffz-interactable--default tw-interactive tw-full-width"
 										@click="addColumn(preset)"
 									>
@@ -70,9 +101,12 @@
 					class="tw-mg-r-1"
 				>
 					<button
-						:class="{'tw-button--text': index !== tab_index}"
+						:class="index !== tab_index ? 'tw-button--text' : 'active'"
 						class="tw-button"
+						:data-tab-id="tab.id"
 						@click="switchTab(index)"
+						@dragover="dragOverTab($event)"
+						@drop="dropOnTab($event)"
 					>
 						<span :class="tab.icon" class="tw-button__text">
 							{{ tab.i18n ? t(tab.i18n, tab.title) : tab.title }}
@@ -143,6 +177,7 @@
 <script>
 
 import Sortable from 'sortablejs';
+
 import {getLoader, getLocale} from '../data';
 
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
@@ -182,6 +217,7 @@ export default {
 
 		data.refreshable = 0;
 		data.menu_open = false;
+		data.add_pasting = false;
 
 		data.modal = null;
 		data.modal_data = null;
@@ -283,6 +319,11 @@ export default {
 			draggable: '.bd--deck-column',
 			handle: '.bd--column-header',
 			filter: 'button',
+			revertOnSpill: true,
+
+			setData: (dt, el) => {
+				dt.setData('x-ffz/deck-column', el.dataset.columnId);
+			},
 
 			onUpdate: event => {
 				if ( event.newIndex === event.oldIndex )
@@ -304,6 +345,58 @@ export default {
 	},
 
 	methods: {
+		dragOverTab(event) {
+			// If we aren't dragging a tab, abort.
+			if ( ! event.dataTransfer.types.includes('x-ffz/deck-column') )
+				return;
+
+			event.preventDefault();
+		},
+
+		dropOnTab(event) {
+			const column_id = event.dataTransfer.getData('x-ffz/deck-column'),
+				target_tab_id = event.currentTarget.dataset.tabId;
+			if ( ! column_id || ! target_tab_id )
+				return;
+
+			let tab, col_tab, column;
+			for(const t of this.tabs) {
+				if ( t.id === target_tab_id )
+					tab = t;
+
+				if ( ! column )
+					for(const col of t.columns) {
+						if ( col.id === column_id ) {
+							column = col;
+							col_tab = t;
+							break;
+						}
+					}
+
+				if ( column && tab )
+					break;
+			}
+
+			if ( ! column || ! tab || ! col_tab || tab === col_tab )
+				return;
+
+			// To avoid messing with Sortable, do this soon.
+			requestAnimationFrame(() => {
+				// Remove from Old Tab
+				for(let i=0; i < col_tab.columns.length; i++) {
+					if ( col_tab.columns[i].id === column.id ) {
+						col_tab.columns.splice(i, 1);
+						break;
+					}
+				}
+
+				// Add to New Tab
+				tab.columns.push(column);
+
+				this.saveTabs(this.tabs);
+			});
+		},
+
 		getColumnComponent(column) {
 			const type = this.types[column.type];
 			if ( ! type )
@@ -357,23 +450,76 @@ export default {
 		},
 
 		closeMenu() {
-			this.menu_open = false
+			this.menu_open = false;
+			this.add_pasting = false;
 		},
 
 		toggleMenu() {
 			this.menu_open = ! this.menu_open;
+			this.add_pasting = false;
 		},
 
-		saveColumns(columns) {
+		saveColumns() {
 			this.saveTabs(this.tabs);
 		},
 
-		addTab() {
-			this.tabs.push({
-				id: generateUUID(),
-				title: `Tab #${this.tabs.length + 1}`,
-				columns: []
-			});
+		addFromJSON() {
+			let value = this.$refs.paste.value;
+			this.closeMenu();
+
+			if ( value ) {
+				try {
+					value = JSON.parse(value);
+				} catch(err) {
+					alert(err); // eslint-disable-line no-alert
+					return;
+				}
+
+				const type = value?.type;
+				if ( ! type )
+					return;
+
+				if ( type === 'tab' ) {
+					this.addTab(value.data);
+				} else
+					this.addColumn(value);
+			}
+		},
+
+		addTab(tab) {
+			if ( ! tab )
+				tab = {};
+
+			if ( ! Array.isArray(tab.columns) )
+				tab.columns = [];
+			else
+				for(const column of tab.columns)
+					column.id = generateUUID();
+
+			tab.id = generateUUID();
+
+			if ( ! tab.title || /^Tab #\d+/.test(tab.title) )
+				tab.title = `Tab #${this.tabs.length + 1}`;
+			else {
+				let matched = false;
+				do {
+					if ( matched ) {
+						tab.title += ` (Copy)`;
+						tab.i18n = undefined;
+						matched = false;
+					}
+
+					for(const t of this.tabs) {
+						if ( tab.title === t.title ) {
+							matched = true;
+							break;
+						}
+					}
+
+				} while ( matched )
+			}
+
+			this.tabs.push(tab);
 			this.saveTabs(this.tabs);
 			this.switchTab(this.tabs.length - 1);
 		},
@@ -477,18 +623,34 @@ export default {
 			}
 		},
 
+		preparePaste() {
+			this.add_pasting = true;
+			requestAnimationFrame(() => {
+				this.$refs.paste.focus();
+			})
+		},
+
 		moveColumn(from, to) {
 			this.columns.splice(to, 0, ...this.columns.splice(from, 1));
 			this.saveColumns(this.columns);
 		},
 
-		addColumn(preset) {
+		addColumn(preset, keep_id = false) {
 			this.menu_open = false;
 
-			const data = Object.assign({display: {}, settings: {}}, preset, {id: generateUUID()});
-			delete data.list;
+			const data = deep_copy(preset);
+			if ( ! data.display )
+				data.display = {};
+			if ( ! data.settings )
+				data.settings = {};
 
-			if ( ! has(data.display, 'max_tags') )
+			if ( ! keep_id || ! data.id )
+				data.id = generateUUID();
+
+			if ( data.list )
+				delete data.list;
+
+			if ( data.display.max_tags == null || typeof data.display.max_tags !== 'number' )
 				data.display.max_tags = 3;
 
 			this.columns.push(data);

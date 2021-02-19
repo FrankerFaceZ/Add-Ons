@@ -88,7 +88,10 @@ Hosted.presets = {
 			list: {
 				icon: 'ffz-i-plus',
 				title: 'Hosted',
-				i18n: 'addon.deck.hosted'
+				i18n: 'addon.deck.hosted',
+
+				desc_i18n: 'addon.deck.hosted.live-tip',
+				desc: 'This column shows live channels being hosted by channels you follow.'
 			}
 		}
 	]

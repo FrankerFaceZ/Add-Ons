@@ -18,6 +18,13 @@ export default class Channels extends LiveColumnBase {
 	}
 
 	getTitle() {
+		const tags = this.settings?.tags;
+		if ( tags?.length === 1 ) {
+			const tag = getLoader().getTagImmediate(tags[0], () => this.vue.refreshFromInst());
+			if ( tag )
+				return ['addon.deck.live-tag', '{name} Streams', {name: tag.label}];
+		}
+
 		return ['addon.deck.live-channels', 'Live Channels']
 	}
 
@@ -78,7 +85,10 @@ Channels.presets = {
 			list: {
 				icon: 'ffz-i-channels',
 				title: 'Live Channels',
-				i18n: 'addon.deck.live-channels'
+				i18n: 'addon.deck.live-channels',
+
+				desc_i18n: 'addon.deck.live-channels.tip',
+				desc: 'This column shows all live channels on Twitch. It\'s useful for filtering by certain tags.'
 			}
 		}
 	]

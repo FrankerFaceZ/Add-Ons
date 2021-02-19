@@ -43,14 +43,15 @@ class BrowseDeck extends Addon {
 
 		await this.site.awaitElement(Dialog.EXCLUSIVE);
 
-		const tip_handler = this.tooltips.types['twitch-tag'] = (target, tip) => {
+		const tip_handler = this.tooltips.types['twitch-tag'] = target => {
 			const tag_id = target.dataset.tagId,
-				data = getLoader().getTagImmediate(tag_id, tip.rerender, true);
+				loader = getLoader(),
+				data = loader.getTagImmediate(tag_id);
 
 			if ( data && data.description )
 				return data.description;
-			else if ( ! data || data.description === undefined )
-				return this.i18n.t('addon.deck.loading', 'Loading...');
+
+			return loader.getTag(tag_id, true).then(tag => tag.description);
 		}
 
 		tip_handler.delayShow = 500;

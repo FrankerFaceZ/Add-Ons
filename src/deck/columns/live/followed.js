@@ -62,7 +62,10 @@ Followed.presets = {
 			list: {
 				icon: 'ffz-i-heart',
 				title: 'Followed',
-				i18n: 'addon.deck.followed'
+				i18n: 'addon.deck.followed',
+
+				desc_i18n: 'addon.deck.followed.live-tip',
+				desc: 'This column shows live channels that you\'re following.'
 			}
 		}
 	]

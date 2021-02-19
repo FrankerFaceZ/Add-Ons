@@ -67,7 +67,10 @@ Featured.presets = {
 			list: {
 				icon: 'ffz-i-twitch',
 				title: 'Featured',
-				i18n: 'addon.deck.featured'
+				i18n: 'addon.deck.featured',
+
+				desc_i18n: 'addon.deck.featured.live-tip',
+				desc: 'This column shows live featured channels.\n\nFeatured channels are typically shown at the top of Twitch\'s homepage in the carousel.'
 			}
 		}
 	]

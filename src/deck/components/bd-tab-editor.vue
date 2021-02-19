@@ -14,6 +14,16 @@
 				</div>
 				<bd-tag-list :tags="tags" />
 			</template>
+			<template v-else-if="copying">
+				<textarea
+					ref="json"
+					v-model="json"
+					readonly
+					rows="15"
+					class="tw-full-width tw-full-height tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
+					@focus="$event.target.select()"
+				/>
+			</template>
 			<template v-else>
 				<section>
 					<div class="tw-flex tw-align-items-center">
@@ -53,7 +63,14 @@
 		</div>
 
 		<div class="tw-mg-l-1 tw-border-l tw-pd-l-1 tw-flex tw-flex-wrap tw-flex-column tw-justify-content-start tw-align-items-start">
-			<template v-if="editing">
+			<template v-if="copying">
+				<button class="tw-button tw-button--text" @click="copying = false">
+					<span class="tw-button__text ffz-i-cancel">
+						{{ t('setting.cancel', 'Cancel') }}
+					</span>
+				</button>
+			</template>
+			<template v-else-if="editing">
 				<button class="tw-button tw-button--text" @click="save">
 					<span class="tw-button__text ffz-i-floppy">
 						{{ t('setting.save', 'Save') }}
@@ -62,6 +79,11 @@
 				<button class="tw-button tw-button--text" @click="cancel">
 					<span class="tw-button__text ffz-i-cancel">
 						{{ t('setting.cancel', 'Cancel') }}
+					</span>
+				</button>
+				<button class="tw-button tw-button--text" @click="prepareCopy">
+					<span class="tw-button__text ffz-i-docs">
+						{{ t('setting.copy-json', 'Copy') }}
 					</span>
 				</button>
 			</template>
@@ -101,6 +123,14 @@
 import {getLoader} from '../data';
 const {get, has, deep_copy} = FrankerFaceZ.utilities.object;
 
+const BAD_KEYS = [
+	'id'
+];
+
+const BAD_COL_KEYS = [
+	'id', 'cache'
+];
+
 let last_id = 0;
 
 export default {
@@ -111,12 +141,34 @@ export default {
 			id: last_id++,
 			edit_data: null,
 			editing: false,
+			copying: false,
 			deleting: false,
 			loader: 0
 		}
 	},
 
 	computed: {
+		json() {
+			const copy = deep_copy(this.display);
+			for(const key of BAD_KEYS)
+				if ( has(copy, key) )
+					delete copy[key];
+
+			if ( ! Array.isArray(copy.columns) || copy.columns.length === 0 )
+				copy.columns = undefined;
+			else
+				for(const column of copy.columns) {
+					for(const key of BAD_COL_KEYS)
+						if ( has(column, key) )
+							delete column[key];
+				}
+
+			return JSON.stringify({
+				type: 'tab',
+				data: copy
+			});
+		},
+
 		display() {
 			if ( this.editing )
 				return this.edit_data;
@@ -163,6 +215,13 @@ export default {
 			this.editing = true;
 		},
 
+		prepareCopy() {
+			this.copying = true;
+			requestAnimationFrame(() => {
+				this.$refs.json.focus();
+			});
+		},
+
 		save() {
 			if ( this.edit_data ) {
 				const languages = getLoader().getLanguagesFromTags(this.edit_data.tags);
@@ -175,6 +234,7 @@ export default {
 		},
 
 		cancel() {
+			this.copying = false;
 			this.editing = false;
 			this.edit_data = null;
 		}

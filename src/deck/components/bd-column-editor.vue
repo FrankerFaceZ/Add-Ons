@@ -9,7 +9,17 @@
 		<simplebar>
 			<div class="tw-flex tw-flex-nowrap tw-align-items-center tw-mg-x-1 tw-mg-t-1">
 				<div class="tw-flex-grow-1" />
-				<template v-if="deleting">
+				<template v-if="copying">
+					<button
+						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						@click="copying = false"
+					>
+						<span class="tw-button__text ffz-i-cancel">
+							{{ t('addon.deck.cancel', 'Cancel') }}
+						</span>
+					</button>
+				</template>
+				<template v-else-if="deleting">
 					<button
 						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
 						@click="deleting = false"
@@ -30,6 +40,14 @@
 				<template v-else>
 					<button
 						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						@click="prepareCopy"
+					>
+						<span class="tw-button__text ffz-i-docs">
+							{{ t('addon.deck.copy', 'Copy') }}
+						</span>
+					</button>
+					<button
+						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
 						@click="deleting = true"
 					>
 						<span class="tw-button__text ffz-i-trash">
@@ -47,8 +65,21 @@
 				</template>
 			</div>
 
-			<section class="tw-mg-1">
-				<h5 class="tw-border-b">{{ t('addon.deck.edit.appearance', 'Appearance') }}</h5>
+			<section v-if="copying" class="tw-mg-1">
+				<textarea
+					ref="json"
+					v-model="json"
+					readonly
+					rows="10"
+					class="tw-full-width tw-full-height tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
+					@focus="$event.target.select()"
+				/>
+			</section>
+
+			<section v-if="! copying" class="tw-mg-1">
+				<h5 class="tw-border-b">
+					{{ t('addon.deck.edit.appearance', 'Appearance') }}
+				</h5>
 
 				<div class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'title$' + column.id">
@@ -66,8 +97,8 @@
 						{{ t('addon.deck.edit.icon', 'Icon:') }}
 					</label>
 					<icon-picker
-						:clearable="true"
 						v-model="column.display.icon"
+						:clearable="true"
 						class="tw-full-width"
 					/>
 				</div>
@@ -77,14 +108,20 @@
 						{{ t('addon.deck.edit.width', 'Width:') }}
 					</label>
 					<select
-						ref="width"
 						:id="'width$' + column.id"
+						ref="width"
 						v-model="column.display.width"
 						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 					>
-						<option :value="0">Narrow</option>
-						<option :value="1">Normal</option>
-						<option :value="2">Wide</option>
+						<option :value="0">
+							{{ t('addon.deck.width.0', 'Narrow') }}
+						</option>
+						<option :value="1">
+							{{ t('addon.deck.width.1', 'Normal') }}
+						</option>
+						<option :value="2">
+							{{ t('addon.deck.width.2', 'Wide') }}
+						</option>
 					</select>
 				</div>
 
@@ -120,25 +157,27 @@
 				</div>
 			</section>
 
-			<section class="tw-mg-1">
-				<h5 class="tw-border-b">{{ t('addon.deck.edit.behavior', 'Behavior') }}</h5>
+			<section v-if="! copying" class="tw-mg-1">
+				<h5 class="tw-border-b">
+					{{ t('addon.deck.edit.behavior', 'Behavior') }}
+				</h5>
 
 				<div v-if="sort_options" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'sort$' + column.id">
 						{{ t('addon.deck.edit.sort', 'Sort By:') }}
 					</label>
 					<select
-						ref="sort"
 						:id="'sort$' + column.id"
+						ref="sort"
 						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 						@change="sortChange"
 					>
 						<option
 							v-for="(option, key) in sort_options"
+							v-once
 							:key="key"
 							:value="key"
 							:selected="key === column.settings.sort"
-							v-once
 						>
 							{{ option.i18n ? t(option.i18n, option.title) : option.title }}
 						</option>
@@ -150,23 +189,23 @@
 						{{ t('addon.deck.edit.required-tags', 'Required Tags:') }}
 					</label>
 					<bd-tag-selector
-						:inputId="'tags$' + column.id"
 						v-model="column.settings.tags"
+						:input-id="'tags$' + column.id"
 						class="tw-full-width"
 					/>
 				</div>
 				<component
 					v-for="(component, idx) in editComponents"
-					:key="idx"
 					:is="component"
+					:key="idx"
 					:value="column"
 					:inst="inst"
 					:settings="settings"
 				/>
 			</section>
 
-			<div class="tw-pd-5" />
-			<div class="tw-pd-5" />
+			<div v-if="! copying" class="tw-pd-5" />
+			<div v-if="! copying" class="tw-pd-5" />
 		</simplebar>
 	</bd-modal>
 </template>
@@ -174,7 +213,13 @@
 <script>
 import { getLoader } from '../data';
 
-const {deep_copy, has, maybe_call} = FrankerFaceZ.utilities.object;
+const {deep_copy, has} = FrankerFaceZ.utilities.object;
+
+const BAD_KEYS = [
+	'id',
+	'collapsed',
+	'cache'
+];
 
 let last_id = 0;
 
@@ -185,11 +230,21 @@ export default {
 		return {
 			id: last_id++,
 			column: deep_copy(this.data.column),
-			deleting: false
+			deleting: false,
+			copying: false
 		}
 	},
 
 	computed: {
+		json() {
+			const copy = deep_copy(this.column);
+			for(const key of BAD_KEYS)
+				if ( has(copy, key) )
+					delete copy[key];
+
+			return JSON.stringify(copy);
+		},
+
 		settings() {
 			return this.data.settings;
 		},
@@ -213,6 +268,8 @@ export default {
 			const out = this.inst && this.inst.getSortOptions();
 			if ( out )
 				return deep_copy(out);
+
+			return null;
 		},
 
 		useTags() {
@@ -250,6 +307,13 @@ export default {
 				raw_value = this.sort_options[key];
 
 			this.column.settings.sort = raw_value ? key : null;
+		},
+
+		prepareCopy() {
+			this.copying = true;
+			requestAnimationFrame(() => {
+				this.$refs.json?.focus?.();
+			});
 		},
 
 		close() {

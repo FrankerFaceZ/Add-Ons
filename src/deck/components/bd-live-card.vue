@@ -83,11 +83,15 @@ export default {
 		avatar() {
 			if ( this.iconic_type === ColumnBase.ICONIC_TYPES.AVATAR )
 				return this.item.profileImageURL;
+
+			return null;
 		},
 
 		boxart() {
 			if ( this.iconic_type === ColumnBase.ICONIC_TYPES.BOXART )
 				return this.game && this.game.avatarURL;
+
+			return null;
 		},
 
 		tags() {

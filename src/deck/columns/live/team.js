@@ -83,7 +83,10 @@ Team.presets = {
 			list: {
 				icon: 'ffz-i-star',
 				title: 'Team',
-				i18n: 'addon.deck.team'
+				i18n: 'addon.deck.team',
+
+				desc_i18n: 'addon.deck.team.live-tip',
+				desc: 'This column shows live channels from members of a specific Team.'
 			}
 		}
 	]
