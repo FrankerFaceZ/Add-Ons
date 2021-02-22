@@ -1,6 +1,5 @@
-import {ConfigPath}                            from '../config/config.js';
 import {getParentClassNames}                   from '../utils.js';
-import {RightClickModule, RightClickSubModule} from './module.js';
+import {RightClickModule, RightClickSubmodule} from './module.js';
 
 export class VideoPlayerModule extends RightClickModule {
 	
@@ -12,11 +11,10 @@ export class VideoPlayerModule extends RightClickModule {
 		
 		this.injects = ['site.player'];
 		
-		this.path        = new ConfigPath().addSegment(this.name);
 		const configPath = this.path.copy().addSegment('Config', 1);
 		const togglePath = this.path.copy().addSegment('Toggles', 2);
 		
-		this.modules.push(new RightClickSubModule('clip', togglePath, brcm => {
+		this.modules.push(new RightClickSubmodule('clip', togglePath, () => {
 			const el = document.querySelectorAll('[data-a-target="player-clip-button"]');
 			if (el.length === 1) {
 				el[0].click();
@@ -28,13 +26,13 @@ export class VideoPlayerModule extends RightClickModule {
 		// noinspection JSUnresolvedVariable
 		if (document.pictureInPictureEnabled) {
 			// noinspection JSUnresolvedVariable,JSUnresolvedFunction
-			this.modules.push(new RightClickSubModule('picture_in_picture', togglePath, brcm =>
-				brcm.player.Player.instances.forEach(player => brcm.player.pipPlayer(player))));
+			this.modules.push(new RightClickSubmodule('picture_in_picture', togglePath, () =>
+				this.brcm.player.Player.instances.forEach(player => this.brcm.player.pipPlayer(player))));
 		}
 		
 		// noinspection JSUnresolvedVariable,JSUnresolvedFunction
-		this.modules.push(new RightClickSubModule('reset_player', togglePath, brcm =>
-			brcm.player.Player.instances.forEach(player => brcm.player.resetPlayer(player))));
+		this.modules.push(new RightClickSubmodule('reset_player', togglePath, () =>
+			this.brcm.player.Player.instances.forEach(player => this.brcm.player.resetPlayer(player))));
 	}
 	
 	checkElement(element) {

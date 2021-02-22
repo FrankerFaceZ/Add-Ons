@@ -47,3 +47,9 @@ export const capitalize = str => (str.charAt(0).toUpperCase() + str.substring(1)
  * @returns {string}
  */
 export const getConfigKey = (moduleKey, submoduleKey) => `add_ons.brcm.module.${moduleKey}.module.config.${submoduleKey}`;
+
+/**
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isNonNull = (value) => (value !== null && value !== undefined)

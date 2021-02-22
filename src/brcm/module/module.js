@@ -1,17 +1,18 @@
-import {BooleanConfig, ColorConfig, Config, ConfigPath, IntSelectBoxConfig, SelectBoxConfig} from '../config/config.js';
-import {BetterRightClickMenuAddon}                                                           from '../index.js';
-import {capitalize, titlize}                                                                 from '../utils.js';
+import {Config, ConfigPath}                from '../config/config.js';
+import * as MenuConfig                     from '../config/menu_config.js';
+import {BetterRightClickMenuAddon}         from '../index.js';
+import {capitalize, getConfigKey, titlize} from '../utils.js';
 
-export class RightClickSubModule {
+export class RightClickModule {
+	/**
+	 * @type {BetterRightClickMenuAddon} brcm
+	 */
+	brcm;
+	
 	/**
 	 * @type {string}
 	 */
 	key;
-	
-	/**
-	 * @type {ConfigPath}
-	 */
-	path;
 	
 	/**
 	 * @type {string}
@@ -24,9 +25,34 @@ export class RightClickSubModule {
 	description;
 	
 	/**
-	 * @type {function(BetterRightClickMenuAddon): void}
+	 * @type {boolean}
 	 */
-	clickFunc;
+	supportsHeader = false;
+	
+	/**
+	 * @type {string[]}
+	 */
+	injects = [];
+	
+	/**
+	 * @type {(RightClickSubmodule)[]}
+	 */
+	modules = [];
+	
+	/**
+	 * @type {Config[]}
+	 */
+	configs = [];
+	
+	/**
+	 * @type {boolean}
+	 */
+	displayConfigRequirements = true;
+	
+	/**
+	 * @type {boolean}
+	 */
+	displayMenuRequirements = true;
 	
 	/**
 	 * @type {boolean}
@@ -44,19 +70,19 @@ export class RightClickSubModule {
 	requiresBroadcaster = false;
 	
 	/**
-	 * @param {string} key
-	 * @param {ConfigPath} path
-	 * @param {function(BetterRightClickMenuAddon): void} clickFunc
+	 * @param {BetterRightClickMenuAddon} brcm
+	 * @param {string} key Unique key associated with the module
+	 * @param {string} [title]
 	 */
-	constructor(key, path, clickFunc) {
-		this.key       = key;
-		this.path      = path;
-		this.clickFunc = clickFunc;
-		this.title     = capitalize(key);
+	constructor(brcm, key, title) {
+		this.brcm  = brcm;
+		this.key   = key;
+		this.title = title || titlize(this.key);
+		this.path  = new ConfigPath().addSegment(this.title);
 	}
 	
 	/**
-	 * @returns {RightClickSubModule}
+	 * @returns {this}
 	 */
 	setRequiresVIP() {
 		this.requiresVIP = true;
@@ -64,7 +90,7 @@ export class RightClickSubModule {
 	}
 	
 	/**
-	 * @returns {RightClickSubModule}
+	 * @returns {this}
 	 */
 	setRequiresMod() {
 		this.requiresMod = true;
@@ -72,7 +98,7 @@ export class RightClickSubModule {
 	}
 	
 	/**
-	 * @returns {RightClickSubModule}
+	 * @returns {this}
 	 */
 	setRequiresBroadcaster() {
 		this.requiresBroadcaster = true;
@@ -81,7 +107,7 @@ export class RightClickSubModule {
 	
 	/**
 	 * @param {string} title
-	 * @returns {RightClickSubModule}
+	 * @returns {this}
 	 */
 	setTitle(title) {
 		this.title = title;
@@ -90,82 +116,11 @@ export class RightClickSubModule {
 	
 	/**
 	 * @param {string} description
-	 * @returns {RightClickSubModule}
+	 * @returns {this}
 	 */
 	setDescription(description) {
 		this.description = description;
 		return this;
-	}
-	
-	/**
-	 * @param {BetterRightClickMenuAddon} brcm
-	 * @returns {void}
-	 */
-	onClick(brcm) {
-		this.clickFunc(brcm);
-	}
-}
-
-export class RightClickModule {
-	/**
-	 * @type {BetterRightClickMenuAddon} brcm
-	 */
-	brcm;
-	
-	/**
-	 * @type {string}
-	 */
-	key;
-	
-	/**
-	 * @type {string}
-	 */
-	name;
-	
-	/**
-	 * @type {ConfigPath}
-	 */
-	path;
-	
-	/**
-	 * @type {boolean}
-	 */
-	supportsHeader = false;
-	
-	/**
-	 * @type {string[]}
-	 */
-	injects = [];
-	
-	/**
-	 * @type {RightClickSubModule[]}
-	 */
-	modules = [];
-	
-	/**
-	 * @type {(Config||BooleanConfig||ColorConfig||ConfigPath||IntSelectBoxConfig||SelectBoxConfig)[]}
-	 */
-	configs = [];
-	
-	/**
-	 * @type {boolean}
-	 */
-	displayConfigRequirements = true;
-	
-	/**
-	 * @type {boolean}
-	 */
-	displayMenuRequirements = true;
-	
-	/**
-	 * @param {BetterRightClickMenuAddon} brcm
-	 * @param {string} key Unique key associated with the module
-	 * @param {string} [name]
-	 */
-	constructor(brcm, key, name) {
-		this.brcm = brcm;
-		this.key  = key;
-		this.name = name || titlize(this.key);
 	}
 	
 	/**
@@ -184,5 +139,66 @@ export class RightClickModule {
 	 */
 	onClickElement(event, menuElement) {
 		return false;
+	}
+	
+	/**
+	 * @param {RightClickSubmodule|string} module
+	 * @param {ConfigPath} [path]
+	 * @param {function(): void} [clickFunc]
+	 * @returns {RightClickSubmodule}
+	 */
+	addSubmodule(module, path, clickFunc) {
+		if (module instanceof RightClickSubmodule) {
+			this.modules.push(module);
+			return module;
+		}
+		
+		const submodule = new RightClickSubmodule(module, path, clickFunc);
+		this.modules.push(submodule);
+		return submodule;
+	}
+	
+	/**
+	 * @param {Config} config
+	 */
+	addConfig(config) {
+		this.configs.push(config);
+		return config;
+	}
+}
+
+export class RightClickSubmodule extends RightClickModule {
+	/**
+	 * @type {ConfigPath}
+	 */
+	path;
+	
+	/**
+	 * @type {function(): void}
+	 */
+	clickFunc;
+	
+	/**
+	 * @param {string} key
+	 * @param {ConfigPath} path
+	 * @param {function(): void} [clickFunc]
+	 */
+	constructor(key, path, clickFunc) {
+		super(null, key, capitalize(key));
+		
+		this.path      = path;
+		this.clickFunc = clickFunc;
+	}
+	
+	onClick() {
+		if (this.clickFunc && typeof this.clickFunc === 'function')
+			this.clickFunc();
+	}
+}
+
+export class ModuleSeparator extends RightClickSubmodule {
+	constructor() {
+		// noinspection JSCheckFunctionSignatures
+		super('separator');
 	}
 }
