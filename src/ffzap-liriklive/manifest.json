@@ -1,8 +1,9 @@
 {
     "enabled": true,
+    "targets": ["main", "clips"],
     "requires": ["ffzap-core"],
 
-    "version": "3.2.0",
+    "version": "3.2.1",
     "icon": "https://cdn.ffzap.com/liriklive/icon.png",
 
     "short_name": "FFZ:AP LirikLIVE",
