@@ -1,8 +1,9 @@
 {
 	"enabled": true,
+	"targets": ["main", "clips"],
 	"requires": [],
 
-	"version": "1.0.0",
+	"version": "1.0.1",
 
 	"short_name": "pronouns",
 	"name": "Pronouns",

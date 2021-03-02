@@ -10,7 +10,7 @@ class Pronouns extends Addon {
 
 		this.inject('chat');
 		this.inject('chat.badges');
-		this.inject('site.chat.chat_line');
+		//this.inject('site.chat.chat_line');
 		this.inject('i18n');
 		this.inject('settings');
 
@@ -60,7 +60,8 @@ class Pronouns extends Addon {
 			if ( ret instanceof Promise )
 				ret.then(id => {
 					this.chat.getUser(user.id, login).addBadge('pronouns', `addon-pn-${id}`);
-					this.chat_line.updateLinesByUser(user.id, login);
+					this.emit('chat:update-lines-by-user', user.id, login);
+					//this.chat_line.updateLinesByUser(user.id, login);
 				});
 		}
 
