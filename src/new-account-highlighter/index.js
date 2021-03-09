@@ -55,7 +55,7 @@ class NewAccountHighlighter extends Addon {
 	}
 
 	async refreshMappings() {
-		const url = 'https://ffz.0x.software/api/mappings.json';
+		const url = 'https://ffz.0x.bot/api/mappings.json';
 
 		return fetch(url).then((res) => {
 			return res.json()
