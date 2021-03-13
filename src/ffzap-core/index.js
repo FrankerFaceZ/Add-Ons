@@ -285,7 +285,7 @@ class FFZAP extends Addon {
 	async getSoundURL(url) {
 		if (url.startsWith('ffzap.sound-file:')) {
 			const provider = this.settings.provider;
-			
+
 			const blob = await provider.getBlob(url);
 			url = URL.createObjectURL(blob);
 		}
@@ -335,7 +335,7 @@ class FFZAP extends Addon {
 					return;
 				}
 			}
-			
+
 			const highlights = msg.message.highlights;
 
 			// No highlights? No sounds.
@@ -377,7 +377,7 @@ class FFZAP extends Addon {
 	// Helpful cache-busting method from FFZ
 	getBuster(resolution = 5) {
 		const now = Math.floor(Date.now() / 1000);
-    	return now - (now % resolution);
+		return now - (now % resolution);
 	}
 
 	async fetchSupporters() {

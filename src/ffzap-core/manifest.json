@@ -1,17 +1,19 @@
 {
 	"enabled": true,
-	"targets": ["main", "clips"],
+	"targets": [
+		"main",
+		"clips"
+	],
 	"requires": [],
 	"sort": -100,
-
 	"version": "3.3.3",
 	"icon": "https://ffzap.com/img/logo.png",
-
 	"short_name": "FFZ:AP Core",
 	"name": "The FrankerFaceZ Add-On Pack - Core",
 	"author": "Lordmau5",
 	"description": "This is the core functionality for The FrankerFaceZ Add-On Pack. It includes FFZ:AP supporter functionality and various other required utilities for the FFZ:AP modules.",
-
 	"website": "https://ffzap.com/",
-	"settings": "add_ons.ffz_ap_core"
+	"settings": "add_ons.ffz_ap_core",
+	"created": "2021-03-13T20:53:38.441Z",
+	"updated": "2021-03-13T20:53:38.441Z"
 }

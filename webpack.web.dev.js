@@ -31,7 +31,7 @@ module.exports = merge(common, {
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.jpg')) )
 						json.icon = `//localhost:8001/script/addons/${json.id}/logo.jpg`;
 
-					// Calculate dates~
+					// Calculate dates for dev data~
 					let newest = 0, oldest = Infinity;
 					for(const file of glob.sync(`./src/${dir}/**`)) {
 						try {
