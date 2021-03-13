@@ -1,16 +1,18 @@
 {
-    "enabled": true,
-    "targets": ["main", "clips"],
-    "requires": ["ffzap-core"],
+	"enabled": true,
+	"targets": ["main", "clips"],
+	"requires": ["ffzap-core"],
 
-    "version": "3.2.1",
-    "icon": "https://cdn.ffzap.com/liriklive/icon.png",
+	"version": "3.2.1",
+	"icon": "https://cdn.ffzap.com/liriklive/icon.png",
 
-    "short_name": "FFZ:AP LirikLIVE",
-    "name": "LirikLIVE",
-    "author": "Lordmau5",
-    "description": "The LirikLIVE extension!",
+	"short_name": "FFZ:AP LirikLIVE",
+	"name": "LirikLIVE",
+	"author": "Lordmau5",
+	"description": "The LirikLIVE extension!",
 
-    "website": "https://ffzap.com/",
-    "settings": "add_ons.lirik_live"
+	"website": "https://ffzap.com/",
+	"settings": "add_ons.lirik_live",
+	"created": "2019-09-12T15:31:59.000Z",
+	"updated": "2021-03-02T18:21:22.000Z"
 }

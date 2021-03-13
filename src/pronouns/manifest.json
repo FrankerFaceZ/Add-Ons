@@ -11,5 +11,7 @@
 	"description": "Add Pronouns to Chat\n\nInclude Pronouns as a chat badge next to user's names in Chat!\n\nTo set your own pronouns, visit https://pronouns.alejo.io/",
 
 	"website": "https://pronouns.alejo.io/",
-	"settings": "add_ons.pronouns"
+	"settings": "add_ons.pronouns",
+	"created": "2021-02-17T17:53:38.000Z",
+	"updated": "2021-03-02T18:21:02.000Z"
 }
