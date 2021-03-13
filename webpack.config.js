@@ -76,13 +76,34 @@ const config = {
 						continue;
 
 					delete json.enabled;
-					json.id = getFolderName(manifest);
+					const dir = json.id = getFolderName(manifest);
 
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.png')) )
 						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.png`;
 
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.jpg')) )
 						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.jpg`;
+
+					// Calculate dates~
+					let newest = 0, oldest = Infinity;
+					for(const file of glob.sync(`./src/${dir}/**`)) {
+						try {
+							const stat = fs.statSync(file),
+								mtime = stat.mtime.getTime();
+
+							if ( mtime < oldest )
+								oldest = mtime;
+							if ( mtime > newest )
+								newest = mtime;
+						} catch(err) {
+							console.log(err);
+						}
+					}
+
+					if ( ! json.created )
+						json.created = oldest;
+
+					json.updated = newest;
 
 					addons.push(json);
 				}
