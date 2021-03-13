@@ -36,7 +36,7 @@ export function cleanViewersCount(copy, original) {
 
 
 export function reduceTags(tags, count, required) {
-	if ( ! Array.isArray(tags) )
+	if ( ! Array.isArray(tags) || ! count )
 		return null;
 
 	const out = [],
