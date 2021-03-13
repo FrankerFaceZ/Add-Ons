@@ -45,18 +45,3 @@ async function main() {
 }
 
 main();
-
-/*for(const manifest of glob.sync('src/** /manifest.json')) {
-	const id = getFolderName(manifest),
-		json = jsonfile.readFileSync(manifest, {throws: false});
-
-	if ( ! json ) {
-		console.info('Skipping invalid manifest:', id);
-		continue;
-	} else if ( ! json.enabled ) {
-		console.info('Skipping disabled add-on:', id);
-		continue;
-	}
-
-	if ( ! json.created )
-}*/
