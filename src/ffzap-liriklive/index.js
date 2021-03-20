@@ -1,10 +1,10 @@
 import Socket from './socket';
 
-const GIF_EMOTES_MODE = {
+/*const GIF_EMOTES_MODE = {
 	DISABLED: 0,
 	STATIC: 1,
 	ANIMATED: 2,
-};
+};*/
 
 class LirikLIVE extends Addon {
 	constructor(...args) {
@@ -26,7 +26,7 @@ class LirikLIVE extends Addon {
 			},
 		});
 
-		this.settings.add('ffzap.liriklive.gif_emotes_mode', {
+		/*this.settings.add('ffzap.liriklive.gif_emotes_mode', {
 			default: 2,
 
 			ui: {
@@ -40,7 +40,7 @@ class LirikLIVE extends Addon {
 					{ value: 2, title: 'Enabled (Animated GIF Emotes)' },
 				],
 			},
-		});
+		});*/
 
 		this.settings.add('ffzap.liriklive.sub_emoticons', {
 			default: true,
@@ -54,7 +54,7 @@ class LirikLIVE extends Addon {
 		});
 
 		this.chat.context.on('changed:ffzap.liriklive.global_emoticons', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.liriklive.gif_emotes_mode', this.updateEmotes, this);
+		//this.chat.context.on('changed:ffzap.liriklive.gif_emotes_mode', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.liriklive.sub_emoticons', this.updateEmotes, this);
 
 		this.socket = false;
@@ -143,30 +143,29 @@ class LirikLIVE extends Addon {
 		}
 
 		if (gifs) {
-			const gifMode = this.chat.context.get('ffzap.liriklive.gif_emotes_mode');
-			if (gifMode !== GIF_EMOTES_MODE.DISABLED) { // eslint-disable-line
-				for (const emoteName of gifs) {
-					const emote = {
-						id: ++this._last_emote_id,
-						urls: {
-							1: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_1.gif`,
-							2: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_2.gif`,
-							4: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_4.gif`,
-						},
-						name: emoteName,
-						width: 28,
-						height: 28,
-						modifier: emoteName === 'lirikRAIN',
-					};
+			/*const gifMode = this.chat.context.get('ffzap.liriklive.gif_emotes_mode');
+			if (gifMode !== GIF_EMOTES_MODE.DISABLED) { // eslint-disable-line*/
+			for (const emoteName of gifs) {
+				const emote = {
+					id: ++this._last_emote_id,
+					animated: {
+						1: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_1.gif`,
+						2: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_2.gif`,
+						4: `https://cdn.ffzap.com/liriklive/gifs/${emoteName}_4.gif`,
+					},
+					name: emoteName,
+					width: 28,
+					height: 28,
+					modifier: emoteName === 'lirikRAIN',
+				};
 
-					if (gifMode === GIF_EMOTES_MODE.STATIC) {
-						emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
-						emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
-						emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
-					}
-
-					emotes.push(emote);
+				emote.urls = {
+					1: `https://cache.ffzap.com/${emote.animated[1]}`,
+					2: `https://cache.ffzap.com/${emote.animated[2]}`,
+					4: `https://cache.ffzap.com/${emote.animated[4]}`
 				}
+
+				emotes.push(emote);
 			}
 		}
 
