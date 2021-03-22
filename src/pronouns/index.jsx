@@ -59,9 +59,11 @@ class Pronouns extends Addon {
 			const ret = this.getUser(login);
 			if ( ret instanceof Promise )
 				ret.then(id => {
+					if ( ! id )
+						return;
+
 					this.chat.getUser(user.id, login).addBadge('pronouns', `addon-pn-${id}`);
 					this.emit('chat:update-lines-by-user', user.id, login);
-					//this.chat_line.updateLinesByUser(user.id, login);
 				});
 		}
 
