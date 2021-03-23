@@ -1,13 +1,13 @@
 <template>
 	<div>
-		<div class="tw-flex tw-align-items-center tw-checkbox bd-checkbox--indent tw-mg-y-05">
+		<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05">
 			<input
 				:id="'no_recordings$' + value.id"
 				v-model="value.settings.no_recordings"
 				type="checkbox"
-				class="tw-checkbox__input"
+				class="ffz-checkbox__input"
 			>
-			<label :for="'no_recordings$' + value.id" class="tw-checkbox__label">
+			<label :for="'no_recordings$' + value.id" class="ffz-checkbox__label">
 				{{ t('addon.deck.no-recordings', 'Do not display videos from in-progress broadcasts.') }}
 			</label>
 		</div>
@@ -21,18 +21,18 @@
 				<div
 					v-for="(type, key) in types"
 					:key="key"
-					class="tw-checkbox"
+					class="ffz-checkbox"
 				>
 					<input
 						:id="'type$' + key + '$' + value.id"
 						:value="key"
 						:checked="hasType(key)"
 						type="checkbox"
-						class="tw-checkbox__input"
+						class="ffz-checkbox__input"
 						@input="setType(key, $event)"
 					>
 
-					<label :for="'type$' + key + '$' + value.id" class="tw-checkbox__label">
+					<label :for="'type$' + key + '$' + value.id" class="ffz-checkbox__label bd-checkbox--label-indent">
 						{{ type.i18n ? t(type.i18n, type.text, type) : type.text }}
 					</label>
 				</div>

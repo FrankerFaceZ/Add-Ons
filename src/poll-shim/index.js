@@ -63,9 +63,9 @@ class PollShim extends Addon {
 			},
 			ui: {
 				path: 'Add-Ons > Poll-Shim >> General',
-				title: 'Channel ID',
+				title: 'Channel',
 				description: 'Set this to override the channel where polls should be run. Please note that you must be a moderator of the channel in question to run a poll.',
-				component: 'setting-text-box'
+				component: () => import('./components/channel.vue')
 			},
 			changed: () => {
 				if ( this.active ) {

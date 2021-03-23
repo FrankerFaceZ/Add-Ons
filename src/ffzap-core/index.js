@@ -285,7 +285,7 @@ class FFZAP extends Addon {
 	async getSoundURL(url) {
 		if (url.startsWith('ffzap.sound-file:')) {
 			const provider = this.settings.provider;
-			
+
 			const blob = await provider.getBlob(url);
 			url = URL.createObjectURL(blob);
 		}
@@ -335,7 +335,7 @@ class FFZAP extends Addon {
 					return;
 				}
 			}
-			
+
 			const highlights = msg.message.highlights;
 
 			// No highlights? No sounds.
@@ -374,8 +374,14 @@ class FFZAP extends Addon {
 		this.chat.getUser(26964566).addBadge('addon--ffzap.core', 'addon--ffzap.core--badges-developer');
 	}
 
+	// Helpful cache-busting method from FFZ
+	getBuster(resolution = 5) {
+		const now = Math.floor(Date.now() / 1000);
+		return now - (now % resolution);
+	}
+
 	async fetchSupporters() {
-		const host = 'https://api.ffzap.com/v1/supporters';
+		const host = `https://api.ffzap.com/v1/supporters?_=${this.getBuster(30)}`;
 
 		const supporterBadge = {
 			id: 'supporter',

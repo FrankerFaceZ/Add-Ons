@@ -102,7 +102,10 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addon.deck.category'
+				i18n: 'addon.deck.category',
+
+				desc_i18n: 'addon.deck.category.live-tip',
+				desc: 'This column shows live channels streaming a specific category. For example, you can create an example showing all channels playing Super Mario 64.'
 			}
 		}
 	]

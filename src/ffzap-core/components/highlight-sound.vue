@@ -12,7 +12,7 @@
 			<div class="tw-flex tw-flex-column tw-mg-05">
 				<select
 					ref="type"
-					class="tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-font-size-6 tw-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
+					class="tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-font-size-6 ffz-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
 					@change="onTypeChange"
 				>
 					<option :selected="isPresetSound">
@@ -29,7 +29,7 @@
 					v-if="isPresetSound"
 					:id="item.full_key"
 					ref="control"
-					class="tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 tw-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
+					class="tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 ffz-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
 					@change="onPresetChange"
 				>
 					<option
@@ -44,7 +44,7 @@
 					v-if="isCustomURL"
 					ref="text"
 					:value="value"
-					class="ffz-mg-t-1p tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-input"
+					class="ffz-mg-t-1p tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
 					@change="onCustomURLChange"
 				>
 				<button
@@ -145,7 +145,7 @@ export default {
 	methods: {
 		onTypeChange() {
 			const idx = this.$refs.type.selectedIndex;
-			
+
 			this.isPresetSound = this.isCustomURL = this.isCustomFile = false;
 
 			if (idx === 0) {

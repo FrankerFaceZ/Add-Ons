@@ -104,7 +104,10 @@ Category.presets = {
 			list: {
 				icon: 'ffz-i-tag',
 				title: 'Category',
-				i18n: 'addon.deck.category'
+				i18n: 'addon.deck.category',
+
+				desc_i18n: 'addon.deck.category.clip-tip',
+				desc: 'This column shows clips from a specific category.'
 			}
 		}
 	]

@@ -63,7 +63,7 @@ Featured.disabled_presets = {
 			list: {
 				icon: 'ffz-i-twitch',
 				title: 'Featured',
-				i18n: 'addon.deck.featured'
+				i18n: 'addon.deck.featured',
 			}
 		}
 	]

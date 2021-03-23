@@ -70,7 +70,10 @@ Recommended.presets = {
 			list: {
 				icon: 'ffz-i-thumbs-up',
 				title: 'Recommended',
-				i18n: 'addon.deck.recommended'
+				i18n: 'addon.deck.recommended',
+
+				desc_i18n: 'addon.deck.recommended.live-tip',
+				desc: 'This column shows live channels that Twitch recommends for you, based on your viewing history.'
 			}
 		}
 	]

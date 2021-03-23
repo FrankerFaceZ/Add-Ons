@@ -11,26 +11,24 @@ class BrowseDeck extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.inject('i18n');
-		this.inject('settings');
 		this.inject('site');
 		this.inject('tooltips');
 		this.inject('site.fine');
 		this.inject('site.apollo');
 		this.inject('site.router');
 		this.inject('site.twitch_data');
+		this.inject('site.menu_button');
 
 		this.dialog = new Dialog(() => this.buildDialog());
 		this.dialog.exclusive = false;
 		this.dialog.maximized = true;
 
-		this.vue_loaded = false;
-		this.vue_loading = null;
-
-		this.NavBar = this.fine.define('nav-bar');
+		this.vue = this.vue_promise = null;
 	}
 
 	async onEnable() {
+		this.NavBar = this.fine.define('nav-bar');
+
 		document.head.appendChild(createElement('link', {
 			href: STYLE_URL,
 			rel: 'stylesheet',
@@ -43,14 +41,15 @@ class BrowseDeck extends Addon {
 
 		await this.site.awaitElement(Dialog.EXCLUSIVE);
 
-		const tip_handler = this.tooltips.types['twitch-tag'] = (target, tip) => {
+		const tip_handler = this.tooltips.types['twitch-tag'] = target => {
 			const tag_id = target.dataset.tagId,
-				data = getLoader().getTagImmediate(tag_id, tip.rerender, true);
+				loader = getLoader(),
+				data = loader.getTagImmediate(tag_id);
 
 			if ( data && data.description )
 				return data.description;
-			else if ( ! data || data.description === undefined )
-				return this.i18n.t('addon.deck.loading', 'Loading...');
+
+			return loader.getTag(tag_id, true).then(tag => tag.description);
 		}
 
 		tip_handler.delayShow = 500;
@@ -115,26 +114,24 @@ class BrowseDeck extends Addon {
 	}
 
 	loadVue() {
-		if ( this.vue_loaded )
-			return Promise.resolve();
+		if ( this.vue )
+			return Promise.resolve(this.vue);
 
-		if ( this.vue_loading )
-			return new Promise(s => this.vue_loading.push(s));
+		if ( this.vue_promise )
+			return Promise.resolve(this.vue_promise);
 
-		const loading = this.vue_loading = [];
-
-		return new Promise(async s => {
-			loading.push(s);
-
-			const vue = this.resolve('vue');
-			await vue.enable();
+		return this.vue_promise = (async () => {
+			const vue = await this.resolve('vue', true);
+			if ( ! vue.enabled )
+				await vue.enable();
 
 			vue.component((await import('./components.js')).default);
-			this.vue_loaded = true;
-			this.vue_loading = null;
-
-			for(const fn of loading)
-				fn();
+			this.vue = vue;
+			this.vue_promise = null;
+			return this.vue;
+		})().catch(err => {
+			this.vue_promise = null;
+			throw err;
 		});
 	}
 

@@ -9,7 +9,7 @@
 		<input
 			:id="'team$' + value.id"
 			v-model.trim="value.settings.name"
-			class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-input"
+			class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
 		>
 	</div>
 </template>

@@ -6,7 +6,7 @@
 		<select
 			ref="period"
 			:id="'period$' + value.id"
-			class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-select"
+			class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 			@change="periodChange"
 		>
 			<option

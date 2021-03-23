@@ -3,6 +3,7 @@
 		ref="root"
 		:class="[is_collapsed ? 'collapsed' : '', widthClass, hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
 		class="bd--deck-column tw-relative tw-border tw-elevation-1 tw-flex-column tw-mg-r-1"
+		:data-column-id="data.id"
 	>
 		<div
 			v-if="hasArt"
@@ -146,7 +147,7 @@
 							<img
 								src="//cdn.frankerfacez.com/emoticon/26608/2"
 								srcSet="//cdn.frankerfacez.com/emoticon/26608/2 1x, //cdn.frankerfacez.com/emoticon/26608/4 2x"
-							/>
+							>
 						</div>
 						<div v-if="finished" class="bd--width">
 							{{ t('addon.deck.end', 'You have reached the end.') }}

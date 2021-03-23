@@ -189,7 +189,10 @@ Channel.presets = {
 			list: {
 				icon: 'ffz-i-user',
 				title: 'Channel',
-				i18n: 'addon.deck.channel'
+				i18n: 'addon.deck.channel',
+
+				desc_i18n: 'addon.deck.channel.video-tip',
+				desc: 'This column shows videos from a specific channel.'
 			}
 		}
 	]

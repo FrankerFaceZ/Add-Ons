@@ -11,11 +11,11 @@ class BetterTTV extends Addon {
 		this.inject('chat.badges');
 		this.inject('site');
 
-		this.GIF_EMOTES_MODE = {
+		/*this.GIF_EMOTES_MODE = {
 			DISABLED: 0,
 			STATIC: 1,
 			ANIMATED: 2,
-		};
+		};*/
 
 		this.settings.add('ffzap.betterttv.global_emoticons', {
 			default: true,
@@ -50,7 +50,7 @@ class BetterTTV extends Addon {
 			},
 		});
 
-		this.settings.add('ffzap.betterttv.gif_emoticons_mode', {
+		/*this.settings.add('ffzap.betterttv.gif_emoticons_mode', {
 			default: 1,
 
 			ui: {
@@ -64,7 +64,7 @@ class BetterTTV extends Addon {
 					{ value: 2, title: 'Enabled (Animated GIF Emotes)' },
 				],
 			},
-		});
+		});*/
 
 		this.settings.add('ffzap.betterttv.pro_emoticons', {
 			default: true,
@@ -80,7 +80,7 @@ class BetterTTV extends Addon {
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.channel_emoticons', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.betterttv.gif_emoticons_mode', this.updateEmotes, this);
+		//this.chat.context.on('changed:ffzap.betterttv.gif_emoticons_mode', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', () => {
 			if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
 				this.socket.connect();
@@ -125,7 +125,7 @@ class BetterTTV extends Addon {
 			if (room) this.updateChannel(room);
 		}
 
-		this.hookBTTVSettingChange();
+		//this.hookBTTVSettingChange();
 	}
 
 	roomAdd(room) {
@@ -176,7 +176,7 @@ class BetterTTV extends Addon {
 		};
 	}
 
-	hookBTTVSettingChange(newAttempts = 0) {
+	/*hookBTTVSettingChange(newAttempts = 0) {
 		if (window.BetterTTV) {
 			window.BetterTTV.settings.on('changed.bttvGIFEmotes', () => this.updateEmotes());
 		}
@@ -192,7 +192,7 @@ class BetterTTV extends Addon {
 		}
 
 		return emoteMode;
-	}
+	}*/
 
 	async addBadges(attempts = 0) {
 		const response = await fetch('https://api.betterttv.net/3/cached/badges');
@@ -296,7 +296,14 @@ class BetterTTV extends Addon {
 				};
 
 				if (dataEmote.imageType === 'gif') { // If the emote is a GIF
-					if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.DISABLED) {
+					emote.animated = emote.urls;
+					emote.urls = {
+						1: `https://cache.ffzap.com/${emote.animated[1]}`,
+						2: `https://cache.ffzap.com/${emote.animated[2]}`,
+						4: `https://cache.ffzap.com/${emote.animated[4]}`
+					};
+
+					/*if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.DISABLED) {
 						// If the GIF setting is set to "Disabled", ignore it.
 						continue;
 					} else if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.STATIC) {
@@ -304,7 +311,7 @@ class BetterTTV extends Addon {
 						emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
 						emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
 						emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
-					}
+					}*/
 				}
 
 				if (dataEmote.channel && dataEmote.channel === 'night') {
@@ -416,7 +423,14 @@ class BetterTTV extends Addon {
 				};
 
 				if (emoteFromArray.imageType === 'gif') {
-					switch (this.getAnimatedEmoteMode()) {
+					emote.animated = emote.urls;
+					emote.urls = {
+						1: `https://cache.ffzap.com/${emote.animated[1]}`,
+						2: `https://cache.ffzap.com/${emote.animated[2]}`,
+						4: `https://cache.ffzap.com/${emote.animated[4]}`
+					};
+
+					/*switch (this.getAnimatedEmoteMode()) {
 						case this.GIF_EMOTES_MODE.DISABLED:
 							break;
 
@@ -435,10 +449,10 @@ class BetterTTV extends Addon {
 						default:
 							channelBttv.push(emote);
 							break;
-					}
-				} else {
-					channelBttv.push(emote);
+					}*/
 				}
+
+				channelBttv.push(emote);
 			}
 
 			if (!channelBttv.length) {

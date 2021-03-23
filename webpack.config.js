@@ -57,6 +57,14 @@ const config = {
 				test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.png$/
 			}
 		]),
+		new CopyPlugin([
+			{
+				from: 'src/**/logo.jpg',
+				to: '[1]/logo.jpg',
+				toType: 'template',
+				test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.jpg$/
+			}
+		]),
 		new ManifestPlugin({
 			fileName: path.resolve(__dirname, 'dist', 'addons.json'),
 			serialize: thing => JSON.stringify(thing, null, '\t'),
@@ -72,6 +80,9 @@ const config = {
 
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.png')) )
 						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.png`;
+
+					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.jpg')) )
+						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.jpg`;
 
 					addons.push(json);
 				}
