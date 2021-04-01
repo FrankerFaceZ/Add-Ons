@@ -4,7 +4,8 @@ import STYLE_URL from './styles.scss';
 const {createElement, ManagedStyle} = FrankerFaceZ.utilities.dom;
 const Color = FrankerFaceZ.utilities.color.Color;
 
-const STYLE_VALIDATOR = <span />;
+const STYLE_VALIDATOR = <span />,
+	SUPPORTS_BLUR = window.CSS?.supports?.('backdrop-filter:blur(1px)');
 
 const BAD_SHORTCUTS = [
 	'f',
@@ -34,8 +35,21 @@ class FSChat extends Addon {
 		this.inject('site.fine');
 		this.inject('site.player');
 		this.inject('site.web_munch');
+
 		this.onFSChange = this.onFSChange.bind(this);
 		this.onShortcut = this.onShortcut.bind(this);
+
+		this.settings.addFilter('fschat', {
+			createTest(config) {
+				return ctx => ctx.fschat === config
+			},
+
+			title: 'Using FS Chat',
+			i18n: 'addon.fs-chat.using',
+
+			default: true,
+			editor: this.settings.getFilterBasicEditor()
+		});
 
 		this.settings.add('addon.fs-chat.shortcut', {
 			default: 'alt+c',
@@ -71,28 +85,29 @@ class FSChat extends Addon {
 			changed: () => this.updateCSS()
 		})
 
-		this.settings.add('addon.fs-chat.bg.blur', {
-			default: 5,
-			ui: {
-				path: 'Add-Ons > FS Chat >> Appearance',
-				title: 'Background Blur',
-				description: '**Note:** Blur may cause performance issues depending on your browser and PC specs.',
-				component: 'setting-select-box',
-				data: [
-					{value: 0, title: 'Disabled'},
-					{value: 2, title: 'Minor (2px)'},
-					{value: 5, title: 'Normal (5px)'},
-					{value: 10, title: 'Large (10px)'},
-					{value: 50, title: 'Extreme (50px)'}
-				]
-			},
-			changed: () => this.updateCSS()
-		});
+		if ( SUPPORTS_BLUR )
+			this.settings.add('addon.fs-chat.bg.blur', {
+				default: 5,
+				ui: {
+					path: 'Add-Ons > FS Chat >> Appearance',
+					title: 'Background Blur',
+					description: '**Note:** Blur may cause performance issues depending on your browser and PC specs.',
+					component: 'setting-select-box',
+					data: [
+						{value: 0, title: 'Disabled'},
+						{value: 2, title: 'Minor (2px)'},
+						{value: 5, title: 'Normal (5px)'},
+						{value: 10, title: 'Large (10px)'},
+						{value: 50, title: 'Extreme (50px)'}
+					]
+				},
+				changed: () => this.updateCSS()
+			});
 
 		this.settings.add('addon.fs-chat.height', {
 			default: null,
 			ui: {
-				path: 'Add-Ons > FS Chat >> Appearance',
+				path: 'Add-Ons > FS Chat >> Size and Position',
 				title: 'Height',
 				description: 'How tall FS Chat should be, in pixels. If you know CSS, you can enter a different unit.',
 				component: 'setting-text-box'
@@ -110,7 +125,7 @@ class FSChat extends Addon {
 				return val;
 			},
 			ui: {
-				path: 'Add-Ons > FS Chat >> Appearance',
+				path: 'Add-Ons > FS Chat >> Size and Position',
 				title: 'Width',
 				description: 'How wide FS Chat should be, in pixels. Defaults to normal chat width. If you know CSS, you can enter a different unit.',
 				component: 'setting-text-box'
@@ -154,7 +169,7 @@ class FSChat extends Addon {
 		this.settings.add('addon.fs-chat.metadata', {
 			default: 2,
 			ui: {
-				path: 'Add-Ons > FS Chat >> Behavior',
+				path: 'Add-Ons > FS Chat >> Appearance',
 				title: 'Metadata Position',
 				component: 'setting-select-box',
 				data: [
@@ -177,7 +192,7 @@ class FSChat extends Addon {
 		this.style_link = null;
 	}
 
-	async onEnable() {
+	onEnable() {
 		if ( ! this.style_link )
 			document.head.appendChild(this.style_link = createElement('link', {
 				href: STYLE_URL,
@@ -190,18 +205,6 @@ class FSChat extends Addon {
 
 		window.addEventListener('fullscreenchange', this.onFSChange);
 		this.on('site.player:update-gui', this.updateButton, this);
-
-		this.settings.addFilter('fschat', {
-			createTest(config) {
-				return ctx => ctx.fschat === config
-			},
-
-			title: 'Using FS Chat',
-			i18n: 'addon.fs-chat.using',
-
-			default: true,
-			editor: this.settings.getFilterBasicEditor()
-		});
 
 		if ( this.settings.get('addon.fs-chat.automatic') )
 			this.turnOn();
@@ -240,7 +243,7 @@ class FSChat extends Addon {
 	}
 
 	updateCSS() {
-		const blur = this.settings.get('addon.fs-chat.bg.blur');
+		const blur = SUPPORTS_BLUR ? this.settings.get('addon.fs-chat.bg.blur') : 0;
 		if ( blur > 0 )
 			this.style.set('blur', `.ffz--fschat .ffz--meta-tray,.ffz--fschat .channel-root__right-column > div { backdrop-filter: blur(${blur}px); }`);
 		else
