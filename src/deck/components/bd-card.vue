@@ -1,7 +1,7 @@
 <template functional>
 	<div :id="data.attrs && data.attrs.id" class="preview-card" :class="data.class" v-on="listeners">
 		<div class="tw-relative">
-			<react-link class="tw-interactive tw-link" :href="props.link" data-a-target="preview-card-image-link" v-on="props.clickCard || props.click ? {click: props.clickCard || props.click} : {}">
+			<react-link class="tw-interactive ffz-link" :href="props.link" data-a-target="preview-card-image-link" v-on="props.clickCard || props.click ? {click: props.clickCard || props.click} : {}">
 				<div class="tw-border-radius-medium tw-c-background-alt-2 tw-overflow-hidden">
 					<aspect :ratio="16/9">
 						<div class="preview-card-thumbnail__image">
@@ -44,7 +44,7 @@
 		<div class="tw-flex tw-flex-nowrap tw-mg-t-1">
 			<div v-if="!!props.avatar || !!props.boxart || !!$scopedSlots['iconic']" class="tw-flex-grow-0 tw-flex-shrink-0 tw-mg-r-1">
 				<slot name="iconic" />
-				<react-link v-if="props.avatar" class="tw-interactive tw-link" :href="props.avatarLink || props.link" v-on="props.clickAvatar || props.click ? {click: props.clickAvatar || props.click} : {}">
+				<react-link v-if="props.avatar" class="tw-interactive ffz-link" :href="props.avatarLink || props.link" v-on="props.clickAvatar || props.click ? {click: props.clickAvatar || props.click} : {}">
 					<div class="deck-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
 						<aspect>
 							<figure class="ffz-avatar ffz-avatar--size-40">
@@ -55,7 +55,7 @@
 						</aspect>
 					</div>
 				</react-link>
-				<react-link v-else-if="props.boxart" class="tw-interactive tw-link" :href="props.boxartLink || props.link" v-on="props.clickBoxart || props.click ? {click: props.clickBoxart || props.click} : {}">
+				<react-link v-else-if="props.boxart" class="tw-interactive ffz-link" :href="props.boxartLink || props.link" v-on="props.clickBoxart || props.click ? {click: props.clickBoxart || props.click} : {}">
 					<div class="deck-card-iconic-image__wrapper tw-border-radius-small tw-overflow-hidden">
 						<aspect align="center" :ratio="0.75">
 							<img
@@ -69,7 +69,7 @@
 			<div class="deck-card__titles-wrapper tw-flex-grow-1 tw-flex-shrink-1 tw-full-width">
 				<div>
 					<span class="tw-c-text-alt">
-						<react-link class="tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit" :href="props.titleLink || props.link" v-on="props.clickTitle || props.click ? {click: props.clickTitle || props.click} : {}">
+						<react-link class="tw-interactive ffz-link ffz-link--hover-underline-none ffz-link--inherit" :href="props.titleLink || props.link" v-on="props.clickTitle || props.click ? {click: props.clickTitle || props.click} : {}">
 							<h3 class="tw-ellipsis tw-font-size-5" :title="props.title">{{ props.title }}</h3>
 						</react-link>
 					</span>

@@ -40,10 +40,10 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="getReactURL('user-videos', item.owner.login)">{{ item.owner.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-videos', item.owner.login)">{{ item.owner.displayName }}</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
 			</p>
 		</template>
 	</bd-card>

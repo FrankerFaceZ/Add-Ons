@@ -234,6 +234,13 @@ export default class ColumnBase {
 				tip.push(tag.label);
 		}
 
+		if ( tip.length === 1 )
+			return {
+				icon: 'ffz-i-tags',
+				text: tip[0],
+				tip: tip[0]
+			};
+
 		return {
 			icon: 'ffz-i-tags',
 			i18n: 'addon.deck.sub.tags',

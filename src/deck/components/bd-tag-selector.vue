@@ -24,11 +24,11 @@
 				class="tw-inline-block tw-mg-t-05 tw-mg-r-05"
 			>
 				<button
-					class="tw-border-radius-rounded tw-inline-flex tw-interactive tw-semibold tw-tag"
+					class="tw-border-radius-rounded tw-inline-flex tw-interactive tw-semibold ffz-tag"
 					:title="tag.description"
 					@click="removeTag(tag.id)"
 				>
-					<div class="tw-align-items-center tw-flex tw-font-size-7 tw-tag__content">
+					<div class="tw-align-items-center tw-flex tw-font-size-7 ffz-tag__content">
 						<figure v-if="tag.is_language" class="ffz-i-language" />
 						{{ tag.label }}
 						<figure class="ffz-i-cancel" />

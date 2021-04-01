@@ -11,8 +11,10 @@ fragment VideoInfo on Video {
 	status
 	contentTags {
 		id
+		isAutomated
 		isLanguageTag
 		localizedName
 		tagName
+		scope
 	}
 }

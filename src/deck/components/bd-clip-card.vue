@@ -31,10 +31,10 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="getReactURL('user-clips', item.broadcaster.login)">{{ item.broadcaster.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-clips', item.broadcaster.login)">{{ item.broadcaster.displayName }}</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
 			</p>
 			<p v-if="curator" class="tw-c-text-alt tw-ellipsis">
 				<t-list
@@ -42,7 +42,7 @@
 					default="Clipped by {user}"
 				>
 					<template #user>
-						<react-link class="tw-interactive tw-link tw-link--inherit" :href="getReactURL('user', curator.login)">{{ curator.displayName }}</react-link>
+						<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user', curator.login)">{{ curator.displayName }}</react-link>
 					</template>
 				</t-list>
 			</p>

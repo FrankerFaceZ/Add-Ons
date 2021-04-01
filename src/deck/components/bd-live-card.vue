@@ -41,10 +41,10 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive tw-link tw-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
 			</p>
 		</template>
 	</bd-card>
