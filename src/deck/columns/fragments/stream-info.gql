@@ -6,8 +6,10 @@ fragment StreamInfo on Stream {
 	previewImageURL(width: $previewWidth, height: $previewHeight)
 	tags {
 		id
+		isAutomated
 		isLanguageTag
 		localizedName
 		tagName
+		scope
 	}
 }

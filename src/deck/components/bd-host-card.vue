@@ -41,15 +41,15 @@
 				<template v-if="game">
 					<t-list phrase="directory.user-playing" default="{user} playing {game}">
 						<template #user>
-							<react-link class="tw-interactive tw-link tw-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
 						</template>
 						<template #game>
-							<react-link class="tw-interactive tw-link tw-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
+							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
 						</template>
 					</t-list>
 				</template>
 				<template v-else>
-					<react-link class="tw-interactive tw-link tw-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+					<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
 				</template>
 			</p>
 			<p class="tw-c-text-alt tw-ellipsis">
@@ -59,7 +59,7 @@
 				<t-list v-else phrase='directory.hosted.by-one' default='Hosted by {user}'>
 					<template #user>
 						<react-link
-							class="tw-interactive tw-link tw-link--inherit"
+							class="tw-interactive ffz-link ffz-link--inherit"
 							:href="`/${item.hosts[0].login}`"
 						>
 							{{ item.hosts[0].displayName }}
