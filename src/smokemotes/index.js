@@ -1,6 +1,3 @@
-import STYLE_URL from './styles.scss';
-
-const {createElement} = FrankerFaceZ.utilities.dom;
 
 class SmokeysUtils extends Addon {
 	constructor(...args) {
@@ -35,11 +32,42 @@ class SmokeysUtils extends Addon {
 			},
 		});
 
+		this.settings.add('smokemotes.pinned_messages_remove', {
+			default: true,
+
+			ui: {
+				sort: 0,
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
+				title: 'Remove Oldest Pinned Mention If At Max Number',
+				description: 'Enable to remove the oldest pinned mention and add the latest mention, otherwise it will stop pinning messages if you have the maximum amount until there is more room.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('smokemotes.pinned_messages_max', {
+			default: 6,
+
+			ui: {
+				sort: 1,
+				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
+				title: 'Maximum Pinned Messages',
+				description:
+          'Maximum amount of pinned messages allowed to be in the pinned mentions section.',
+				component: 'setting-text-box',
+				process(val) {
+					val = parseFloat(val, 10);
+					if (isNaN(val) || !isFinite(val) || val < 0) return 6;
+
+					return val;
+				},
+			},
+		});
+
 		this.settings.add('smokemotes.pinned_timer', {
 			default: 60,
 
 			ui: {
-				sort: 0,
+				sort: 2,
 				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Auto Removal Timer',
 				description:
@@ -58,7 +86,7 @@ class SmokeysUtils extends Addon {
 			default: '#828282',
 
 			ui: {
-				sort: 1,
+				sort: 3,
 				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Border Color',
 				description: 'Color to use for the border of pinned mentions.',
@@ -72,7 +100,7 @@ class SmokeysUtils extends Addon {
 			default: '#dadada',
 
 			ui: {
-				sort: 2,
+				sort: 4,
 				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Font Color',
 				description: 'Color to use for the font of pinned mentions.',
@@ -86,7 +114,7 @@ class SmokeysUtils extends Addon {
 			default: '#3e0b0b',
 
 			ui: {
-				sort: 3,
+				sort: 5,
 				path: "Add-Ons > Smokey's Utilities >> Pinned Mentions",
 				title: 'Background Color',
 				description: 'Color to use for the background of pinned mentions.',
@@ -151,32 +179,6 @@ class SmokeysUtils extends Addon {
 		});
 
 		this.chat.context.on(
-			'changed:smokemotes.pinned_mentions',
-			this.pinnedMentions,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.pinned_timer',
-			this.pinnedMentions,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.pinned_border',
-			this.pinnedMentions,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.pinned_font_color',
-			this.pinnedMentions,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.pinned_bg',
-			this.pinnedMentions,
-			this
-		);
-
-		this.chat.context.on(
 			'changed:smokemotes.keep_hd_video',
 			this.keep_hd_video,
 			this
@@ -199,20 +201,132 @@ class SmokeysUtils extends Addon {
 		);
 
 		this.style_link = null;
+
+		/**
+		 * Pinned Mentions
+		 */
+		const Pinned_Mentions = {
+			type: 'pinned_mentions',
+			priority: 0,
+
+			process(tokens, msg) {
+				this.inject('site');
+				if (msg.mentioned) {
+					if (!msg.highlights.has('mention')) return tokens;
+					const pinned_border = this.settings.get(
+						'smokemotes.pinned_border'
+					);
+					let chat_list;
+					try {
+						chat_list = this.site.children.chat.ChatContainer.first.state
+							.chatListElement;
+					} catch {
+						this.log.debug('error getting chat_list');
+					}
+					if (chat_list) {
+						let chat_log;
+						try {
+							chat_log = chat_list.querySelector('[role="log"]');
+						} catch {
+							this.log.debug('error getting chat_log');
+						}
+						if (chat_log) {
+							const pinned_background = this.settings.get(
+								'smokemotes.pinned_bg'
+							);
+							const pinned_font = this.settings.get(
+								'smokemotes.pinned_font_color'
+							);
+							const pinned_log =
+                document.getElementById('pinned_log') ||
+                document.createElement('div');
+							pinned_log.setAttribute(
+								'style',
+								`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
+							);
+							pinned_log.id = 'pinned_log';
+							pinned_log.classList.add('pinned-highlight-log');
+							chat_log.parentNode.prepend(pinned_log);
+							if (
+								pinned_log.childNodes.length >=
+                this.settings.get('smokemotes.pinned_messages_max')
+							) {
+								if (
+									this.settings.get('smokemotes.pinned_messages_remove')
+								) {
+									pinned_log.childNodes[0].remove();
+								} else {
+									return tokens;
+								}
+							}
+							requestAnimationFrame(() => {
+								const cloned_chat_line = document.createElement('div');
+								cloned_chat_line.classList.add('chat-line__message');
+								cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${
+									msg.user.login
+								}" data-is-mail="false" rel="noopener noreferrer" style="color: ${
+									msg.user.color
+								};" target="_blank" href="https://twitch.tv/${
+									msg.user.login
+								}">${
+									msg.user.displayName
+								}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${
+									msg.message
+								}</span>`;
+								const ts = document.createElement('span');
+								ts.classList.add('chat-line__timestamp');
+								ts.textContent = new Date().toLocaleTimeString(
+									window.navigator.userLanguage ||
+                    window.navigator.language,
+									{
+										hour: 'numeric',
+										minute: '2-digit',
+										second: '2-digit',
+									}
+								);
+								cloned_chat_line.prepend(ts);
+								cloned_chat_line.setAttribute(
+									'style',
+									`border: 1px solid ${pinned_border} !important; border-top: none !important;`
+								);
+								const pin_id = Date.now() + Math.floor(Math.random() * 101);
+								cloned_chat_line.setAttribute('id', pin_id);
+								const close_button = document.createElement('div');
+								close_button.setAttribute(
+									'style',
+									'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
+								);
+								close_button.innerHTML =
+                  '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
+								close_button.addEventListener('click', (e) => {
+									e.currentTarget.parentNode.remove();
+									delete e.currentTarget.parentNode;
+								});
+								cloned_chat_line.appendChild(close_button);
+								pinned_log.appendChild(cloned_chat_line);
+								if (document.hidden)
+									document.querySelector(
+										'link[rel="icon"]'
+									).href = this.notify_icon;
+								if (this.settings.get('smokemotes.pinned_timer') != 0) {
+									setTimeout(
+										() => cloned_chat_line.remove(),
+										this.settings.get('smokemotes.pinned_timer') * 1000
+									);
+								}
+							});
+						}
+					}
+				}
+				return tokens;
+			},
+		};
+		this.chat.addTokenizer(Pinned_Mentions);
 	}
 
 	onEnable() {
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
 
-		if ( ! this.style_link )
-			document.head.appendChild(this.style_link = createElement('link', {
-				href: STYLE_URL,
-				rel: 'stylesheet',
-				type: 'text/css',
-				crossOrigin: 'anonymous'
-			}));
-
-		this.pinnedMentions();
 		this.keep_hd_video();
 		this.auto_point_claimer();
 
@@ -224,7 +338,9 @@ class SmokeysUtils extends Addon {
 		this.ViewerCard.on('unmount', this.unmountCard, this);
 	}
 
-	// automatically claim channel points
+	/**
+	 * Automatically Claim Channel Points Observer
+	 */
 
 	auto_point_claimer() {
 		if (this.chat.context.get('smokemotes.auto_point_claimer')) {
@@ -238,7 +354,9 @@ class SmokeysUtils extends Addon {
 		}
 	}
 
-	// maintain high quality video even when tab isn't focused
+	/**
+	 * Actually does more than this now. Will keep video from falling behind as well as keep the video HD (in most cases).
+	 */
 
 	keep_hd_video() {
 		if (this.chat.context.get('smokemotes.keep_hd_video')) {
@@ -266,7 +384,17 @@ class SmokeysUtils extends Addon {
 			window.location.href == 'https://www.twitch.tv/directory/following' &&
       this.chat.context.get('smokemotes.auto_live_follow_page')
 		) {
-			window.location.href = 'https://www.twitch.tv/directory/following/live';
+			const find_liveChannelsButton = document.getElementsByClassName('tw-pd-x-1');
+
+			let i = find_liveChannelsButton.length;
+
+			while (i--) {
+				if (
+					find_liveChannelsButton[i].getAttribute('data-a-target') == 'following-live-tab'
+				) {
+					find_liveChannelsButton[i].click();
+				}
+			}
 		}
 	}
 
@@ -277,112 +405,9 @@ class SmokeysUtils extends Addon {
 			).href = this.notify_icon_original;
 	}
 
-	// pin highlighted mentions to the top of chat
-
-	pinnedMentions() {
-		const pinned_border = this.settings.get('smokemotes.pinned_border');
-		const pinned_background = this.settings.get('smokemotes.pinned_bg');
-		const pinned_font = this.settings.get('smokemotes.pinned_font_color');
-
-		if (this.pinned_handler) {
-			this.pinned_handler.disconnect();
-			delete this.pinned_handler;
-			window.removeEventListener('visibilitychange', this.onNotifyWindowFocus);
-		}
-		if (this.chat.context.get('smokemotes.pinned_mentions')) {
-			window.addEventListener('visibilitychange', this.onNotifyWindowFocus);
-			let chat_list;
-			try {
-				chat_list = this.site.children.chat.ChatContainer.first.state
-					.chatListElement;
-			} catch {
-				this.log.debug('error getting chat_list');
-			}
-			if (chat_list) {
-				let chat_log;
-				try {
-					chat_log = chat_list.querySelector('[role="log"]');
-				} catch {
-					this.log.debug('error getting chat_log');
-				}
-				if (chat_log) {
-					const pinned_log = document.createElement('div');
-					pinned_log.setAttribute(
-						'style',
-						`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
-					);
-					pinned_log.classList.add('pinned-highlight-log');
-					chat_log.parentNode.prepend(pinned_log);
-					this.pinned_handler = new MutationObserver((mutations) => {
-						mutations.forEach((mutation) => {
-							if (mutation.addedNodes.length > 0) {
-								const chat_line = mutation.addedNodes[0];
-								requestAnimationFrame(() => {
-									if (chat_line.matches('.ffz-mentioned')) {
-										const cloned_chat_line = chat_line.cloneNode(true);
-										const inline_actions = cloned_chat_line.getElementsByClassName('ffz--inline-actions');
-										if (inline_actions[0]){
-											inline_actions[0].remove();
-										}
-										if (
-											!cloned_chat_line.querySelector('.chat-line__timestamp')
-										) {
-											const ts = document.createElement('span');
-											ts.classList.add('chat-line__timestamp');
-											ts.textContent = new Date().toLocaleTimeString(
-												window.navigator.userLanguage ||
-                          window.navigator.language,
-												{
-													hour: 'numeric',
-													minute: '2-digit',
-												}
-											);
-											cloned_chat_line.prepend(ts);
-										}
-										cloned_chat_line.setAttribute(
-											'style',
-											`border: 1px solid ${pinned_border} !important; border-top: none !important;`
-										);
-										const pin_id = Date.now() + Math.floor(Math.random() * 101);
-										cloned_chat_line.setAttribute('id', pin_id);
-										const close_button = document.createElement('div');
-										close_button.setAttribute(
-											'style',
-											'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
-										);
-										close_button.innerHTML =
-                      '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
-										close_button.addEventListener('click', (e) => {
-											e.currentTarget.parentNode.remove();
-											delete e.currentTarget.parentNode;
-										});
-										cloned_chat_line.appendChild(close_button);
-										pinned_log.appendChild(cloned_chat_line);
-										if (document.hidden)
-											document.querySelector(
-												'link[rel="icon"]'
-											).href = this.notify_icon;
-										if (this.settings.get('smokemotes.pinned_timer') != 0) {
-											setTimeout(
-												() => cloned_chat_line.remove(),
-												this.settings.get('smokemotes.pinned_timer') * 1000
-											);
-										}
-									}
-								});
-							}
-						});
-					});
-					this.pinned_handler.observe(chat_log, {
-						childList: true,
-						subtree: false,
-					});
-				}
-			}
-		}
-	}
-
-	// mod keybind stuff
+	/**
+	 * Moderator Keybinds
+	 */
 
 	onKeyDown(e) {
 
