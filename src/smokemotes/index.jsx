@@ -1,3 +1,4 @@
+const {createElement} = FrankerFaceZ.utilities.dom;
 
 class SmokeysUtils extends Addon {
 	constructor(...args) {
@@ -11,6 +12,7 @@ class SmokeysUtils extends Addon {
 		this.inject('chat.emotes');
 		this.inject('chat.badges');
 		this.inject('site');
+		this.injectAs('site_chat', 'site.chat');
 		this.inject('site.fine');
 
 		this.user = this.site.getUser();
@@ -202,6 +204,8 @@ class SmokeysUtils extends Addon {
 
 		this.style_link = null;
 
+		const t = this;
+
 		/**
 		 * Pinned Mentions
 		 */
@@ -210,112 +214,142 @@ class SmokeysUtils extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				this.inject('site');
-				if (msg.mentioned) {
-					if (!msg.highlights.has('mention')) return tokens;
-					const pinned_border = this.settings.get(
-						'smokemotes.pinned_border'
-					);
-					let chat_list;
+				if ( ! msg.mentioned || msg.smokey_pinned || ! msg.highlights?.has?.('mention') )
+					return tokens;
+
+				msg.smokey_pinned = true;
+
+				const pinned_border = this.settings.get(
+					'smokemotes.pinned_border'
+				);
+				let chat_list;
+				try {
+					chat_list = t.site_chat.ChatContainer.first.state.chatListElement;
+				} catch {
+					this.log.debug('error getting chat_list');
+				}
+				if (chat_list) {
+					let chat_log;
 					try {
-						chat_list = this.site.children.chat.ChatContainer.first.state
-							.chatListElement;
+						chat_log = chat_list.querySelector('[role="log"]');
 					} catch {
-						this.log.debug('error getting chat_list');
+						this.log.debug('error getting chat_log');
 					}
-					if (chat_list) {
-						let chat_log;
-						try {
-							chat_log = chat_list.querySelector('[role="log"]');
-						} catch {
-							this.log.debug('error getting chat_log');
-						}
-						if (chat_log) {
-							const pinned_background = this.settings.get(
-								'smokemotes.pinned_bg'
-							);
-							const pinned_font = this.settings.get(
-								'smokemotes.pinned_font_color'
-							);
-							const pinned_log =
-								document.getElementById('pinned_log') ||
-								document.createElement('div');
-							pinned_log.setAttribute(
-								'style',
-								`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
-							);
-							pinned_log.id = 'pinned_log';
-							pinned_log.classList.add('pinned-highlight-log');
-							chat_log.parentNode.prepend(pinned_log);
+					if (chat_log) {
+						const pinned_background = this.settings.get(
+							'smokemotes.pinned_bg'
+						);
+						const pinned_font = this.settings.get(
+							'smokemotes.pinned_font_color'
+						);
+						const pinned_log =
+							document.getElementById('pinned_log') ||
+							document.createElement('div');
+						pinned_log.setAttribute(
+							'style',
+							`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
+						);
+						pinned_log.id = 'pinned_log';
+						pinned_log.classList.add('pinned-highlight-log');
+						chat_log.parentNode.prepend(pinned_log);
+						if (
+							pinned_log.childNodes.length >=
+							this.settings.get('smokemotes.pinned_messages_max')
+						) {
 							if (
-								pinned_log.childNodes.length >=
-								this.settings.get('smokemotes.pinned_messages_max')
+								this.settings.get('smokemotes.pinned_messages_remove')
 							) {
-								if (
-									this.settings.get('smokemotes.pinned_messages_remove')
-								) {
-									pinned_log.childNodes[0].remove();
-								} else {
-									return tokens;
-								}
+								pinned_log.childNodes[0].remove();
+							} else {
+								return tokens;
 							}
-							requestAnimationFrame(() => {
-								const cloned_chat_line = document.createElement('div');
-								cloned_chat_line.classList.add('chat-line__message');
-								cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${msg.user.login
-								}" data-is-mail="false" rel="noopener noreferrer" style="color: ${msg.user.color
-								};" target="_blank" href="https://twitch.tv/${msg.user.login
-								}">${msg.user.displayName
-								}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${msg.message
-								}</span>`;
-								const ts = document.createElement('span');
-								ts.classList.add('chat-line__timestamp');
-								ts.textContent = new Date().toLocaleTimeString(
-									window.navigator.userLanguage ||
-									window.navigator.language,
-									{
-										hour: 'numeric',
-										minute: '2-digit',
-										second: '2-digit',
-									}
-								);
-								cloned_chat_line.prepend(ts);
-								cloned_chat_line.setAttribute(
-									'style',
-									`border: 1px solid ${pinned_border} !important; border-top: none !important;`
-								);
-								const pin_id = Date.now() + Math.floor(Math.random() * 101);
-								cloned_chat_line.setAttribute('id', pin_id);
-								const close_button = document.createElement('div');
-								close_button.setAttribute(
-									'style',
-									'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
-								);
-								close_button.innerHTML =
-									'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
-								close_button.addEventListener('click', (e) => {
-									e.currentTarget.parentNode.remove();
-									delete e.currentTarget.parentNode;
-								});
-								cloned_chat_line.appendChild(close_button);
-								pinned_log.appendChild(cloned_chat_line);
-								if (document.hidden)
-									document.querySelector(
-										'link[rel="icon"]'
-									).href = this.notify_icon;
-								if (this.settings.get('smokemotes.pinned_timer') != 0) {
-									setTimeout(
-										() => cloned_chat_line.remove(),
-										this.settings.get('smokemotes.pinned_timer') * 1000
-									);
-								}
-							});
 						}
+						requestAnimationFrame(() => {
+							const pin_id = Date.now() + Math.floor(Math.random() * 101),
+								tokens = msg.ffz_tokens || null;
+							let line;
+							const close_fn = () => {
+								line && line.remove();
+								line = null;
+							};
+							line = (<div
+								id={pin_id}
+								class="chat-line__message"
+								style={`border: 1px solid ${pinned_border} !important; border-top: none !important`}
+							>
+								<div
+									style="width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute"
+									onclick={close_fn}
+								>
+									<figure class="ffz-i-cancel" />
+								</div>
+								<span class="chat-line__timestamp">
+									{ this.formatTime(msg.timestamp) }
+								</span>
+								<span class="chat-line__username notranslate" role="button">
+									<span class="chat-author__display-name">
+										<a rel="noopener noreferrer" target="_blank" href={`https://twitch.tv/${msg.user.login}`} style={{color: msg.user.color}}>
+											{ msg.user.displayName || msg.user.login }
+										</a>
+									</span>
+								</span>
+								{': '}
+								{tokens ? this.renderTokens(tokens) : msg.message}
+							</div>);
+							/*const cloned_chat_line = document.createElement('div');
+							cloned_chat_line.classList.add('chat-line__message');
+							cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${msg.user.login
+							}" data-is-mail="false" rel="noopener noreferrer" style="color: ${msg.user.color
+							};" target="_blank" href="https://twitch.tv/${msg.user.login
+							}">${msg.user.displayName
+							}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${msg.message
+							}</span>`;
+							const ts = document.createElement('span');
+							ts.classList.add('chat-line__timestamp');
+							ts.textContent = new Date().toLocaleTimeString(
+								window.navigator.userLanguage ||
+								window.navigator.language,
+								{
+									hour: 'numeric',
+									minute: '2-digit',
+									second: '2-digit',
+								}
+							);
+							cloned_chat_line.prepend(ts);
+							cloned_chat_line.setAttribute(
+								'style',
+								`border: 1px solid ${pinned_border} !important; border-top: none !important;`
+							);
+
+							cloned_chat_line.setAttribute('id', pin_id);
+							const close_button = document.createElement('div');
+							close_button.setAttribute(
+								'style',
+								'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
+							);
+							close_button.innerHTML =
+								'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
+							close_button.addEventListener('click', (e) => {
+								e.currentTarget.parentNode.remove();
+								delete e.currentTarget.parentNode;
+							});
+							cloned_chat_line.appendChild(close_button);*/
+							pinned_log.appendChild(line);
+							if (document.hidden)
+								document.querySelector(
+									'link[rel="icon"]'
+								).href = this.notify_icon;
+							if (this.settings.get('smokemotes.pinned_timer') != 0) {
+								setTimeout(close_fn, this.settings.get('smokemotes.pinned_timer') * 1000);
+							}
+						});
 					}
 				}
+
 				return tokens;
 			},
 		};
+
 		this.chat.addTokenizer(Pinned_Mentions);
 	}
 
