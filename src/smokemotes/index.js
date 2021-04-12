@@ -238,8 +238,8 @@ class SmokeysUtils extends Addon {
 								'smokemotes.pinned_font_color'
 							);
 							const pinned_log =
-                document.getElementById('pinned_log') ||
-                document.createElement('div');
+								document.getElementById('pinned_log') ||
+								document.createElement('div');
 							pinned_log.setAttribute(
 								'style',
 								`position: absolute; color: ${pinned_font}; background-color: ${pinned_background}; z-index: 1000; width: 100%;`
@@ -249,7 +249,7 @@ class SmokeysUtils extends Addon {
 							chat_log.parentNode.prepend(pinned_log);
 							if (
 								pinned_log.childNodes.length >=
-                this.settings.get('smokemotes.pinned_messages_max')
+								this.settings.get('smokemotes.pinned_messages_max')
 							) {
 								if (
 									this.settings.get('smokemotes.pinned_messages_remove')
@@ -262,22 +262,17 @@ class SmokeysUtils extends Addon {
 							requestAnimationFrame(() => {
 								const cloned_chat_line = document.createElement('div');
 								cloned_chat_line.classList.add('chat-line__message');
-								cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${
-									msg.user.login
-								}" data-is-mail="false" rel="noopener noreferrer" style="color: ${
-									msg.user.color
-								};" target="_blank" href="https://twitch.tv/${
-									msg.user.login
-								}">${
-									msg.user.displayName
-								}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${
-									msg.message
+								cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${msg.user.login
+								}" data-is-mail="false" rel="noopener noreferrer" style="color: ${msg.user.color
+								};" target="_blank" href="https://twitch.tv/${msg.user.login
+								}">${msg.user.displayName
+								}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${msg.message
 								}</span>`;
 								const ts = document.createElement('span');
 								ts.classList.add('chat-line__timestamp');
 								ts.textContent = new Date().toLocaleTimeString(
 									window.navigator.userLanguage ||
-                    window.navigator.language,
+									window.navigator.language,
 									{
 										hour: 'numeric',
 										minute: '2-digit',
@@ -297,7 +292,7 @@ class SmokeysUtils extends Addon {
 									'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
 								);
 								close_button.innerHTML =
-                  '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
+									'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
 								close_button.addEventListener('click', (e) => {
 									e.currentTarget.parentNode.remove();
 									delete e.currentTarget.parentNode;
