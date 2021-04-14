@@ -1,16 +1,13 @@
 {
 	"enabled": true,
 	"requires": [],
-
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"icon": "https://i.imgur.com/2od9Ir6.png",
-
 	"short_name": "New Account Highlighter",
 	"name": "New Account Highlighter",
 	"author": "0x",
 	"description": "Highlights new user accounts in chat",
-
 	"settings": "add_ons.new_user_highlighter",
 	"created": "2021-02-07T03:22:18.000Z",
-	"updated": "2021-03-09T15:16:38.000Z"
+	"updated": "2021-04-14T21:26:02.061Z"
 }

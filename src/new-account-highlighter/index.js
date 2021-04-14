@@ -1,10 +1,12 @@
 class NewAccountHighlighter extends Addon {
-	static Mappings = {"7d": 0};
+	static Mappings = {'7d': 0};
 	updateTimer = null;
 
 	constructor(...args) {
 		super(...args);
 		this.inject('chat');
+
+		this.chat.addHighlightReason('user-age', 'Minimum Account Age');
 
 		this.settings.add('newusers.minage', {
 			default: '7d',
@@ -15,13 +17,13 @@ class NewAccountHighlighter extends Addon {
 				component: 'setting-select-box',
 				data: () => {
 					const arr = Object.keys(NewAccountHighlighter.Mappings).map(age => ({value: age, title: age}));
-					arr.push({value: null, title: "disabled"});
+					arr.push({value: null, title: 'Disabled'});
 					return arr;
 				}
 			}
 		});
 
-		this.settings.add("newusers.highlightcolor", {
+		this.settings.add('newusers.highlightcolor', {
 			default: '#FFFFFF',
 			ui: {
 				path: 'Add-Ons > New User Highlighter >> Highlights',
@@ -34,8 +36,8 @@ class NewAccountHighlighter extends Addon {
 		const NewAccountHighlights = {
 			type: 'newaccount_highlight',
 			priority: 95,
-		
-			process(tokens, msg, user) {
+
+			process(tokens, msg) {
 				const minage = this.settings.get('newusers.minage');
 				const minagemapping = NewAccountHighlighter.Mappings[minage];
 				const minuid = minagemapping ? minagemapping.uid : Number.MAX_VALUE;
@@ -43,7 +45,7 @@ class NewAccountHighlighter extends Addon {
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user-age');
 					msg.mentioned = true;
-		
+
 					const color = this.settings.get('newusers.highlightcolor') || '#FFFFFF';
 					if(color)
 						msg.mention_color = color
@@ -57,14 +59,12 @@ class NewAccountHighlighter extends Addon {
 	async refreshMappings() {
 		const url = 'https://ffz.0x.bot/api/mappings.json';
 
-		return fetch(url).then((res) => {
-			return res.json()
-		}).then((out) => {
+		const out = await fetch(url).then(resp => resp.ok ? resp.json() : null);
+		if ( out )
 			NewAccountHighlighter.Mappings = out;
-		}).catch(err => { throw err });
 	}
 
-	async onLoad() {
+	onLoad() {
 		return this.refreshMappings();
 	}
 
