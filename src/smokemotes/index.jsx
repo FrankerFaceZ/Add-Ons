@@ -214,7 +214,7 @@ class SmokeysUtils extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				if ( ! msg.mentioned || msg.smokey_pinned || ! msg.highlights?.has?.('mention') )
+				if ( ! msg.mentioned || msg.smokey_pinned || ! msg.highlights?.has?.('mention') || ! this.settings.get('smokemotes.pinned_mentions') )
 					return tokens;
 
 				msg.smokey_pinned = true;
@@ -279,6 +279,7 @@ class SmokeysUtils extends Addon {
 							>
 								<div
 									style="width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute"
+									// eslint-disable-next-line react/jsx-no-bind
 									onclick={close_fn}
 								>
 									<figure class="ffz-i-cancel" />
@@ -296,44 +297,6 @@ class SmokeysUtils extends Addon {
 								{': '}
 								{tokens ? this.renderTokens(tokens) : msg.message}
 							</div>);
-							/*const cloned_chat_line = document.createElement('div');
-							cloned_chat_line.classList.add('chat-line__message');
-							cloned_chat_line.innerHTML = `<span class="chat-line__username notranslate" role="button"><span class="chat-author__display-name"><a data-tooltip-type="link" data-url="https://twitch.tv/${msg.user.login
-							}" data-is-mail="false" rel="noopener noreferrer" style="color: ${msg.user.color
-							};" target="_blank" href="https://twitch.tv/${msg.user.login
-							}">${msg.user.displayName
-							}</a></span></span>: <span class="text-fragment" style="color: ${pinned_font};" data-a-target="chat-message-text">${msg.message
-							}</span>`;
-							const ts = document.createElement('span');
-							ts.classList.add('chat-line__timestamp');
-							ts.textContent = new Date().toLocaleTimeString(
-								window.navigator.userLanguage ||
-								window.navigator.language,
-								{
-									hour: 'numeric',
-									minute: '2-digit',
-									second: '2-digit',
-								}
-							);
-							cloned_chat_line.prepend(ts);
-							cloned_chat_line.setAttribute(
-								'style',
-								`border: 1px solid ${pinned_border} !important; border-top: none !important;`
-							);
-
-							cloned_chat_line.setAttribute('id', pin_id);
-							const close_button = document.createElement('div');
-							close_button.setAttribute(
-								'style',
-								'width: 14px; cursor: pointer; top: 5px; right: 5px; position: absolute;'
-							);
-							close_button.innerHTML =
-								'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" style="enable-background:new 0 0 45 45;" xml:space="preserve" version="1.1" id="svg2"><metadata id="metadata8"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata><defs id="defs6"><clipPath id="clipPath16" clipPathUnits="userSpaceOnUse"><path id="path18" d="M 0,36 36,36 36,0 0,0 0,36 Z"/></clipPath></defs><g transform="matrix(1.25,0,0,-1.25,0,45)" id="g10"><g id="g12"><g clip-path="url(#clipPath16)" id="g14"><g transform="translate(21.5332,17.9976)" id="g20"><path id="path22" style="fill:#dd2e44;fill-opacity:1;fill-rule:nonzero;stroke:none" d="m 0,0 12.234,12.234 c 0.977,0.976 0.977,2.559 0,3.535 -0.976,0.977 -2.558,0.977 -3.535,0 L -3.535,3.535 -15.77,15.769 c -0.975,0.977 -2.559,0.977 -3.535,0 -0.976,-0.976 -0.976,-2.559 0,-3.535 L -7.07,0 -19.332,-12.262 c -0.977,-0.977 -0.977,-2.559 0,-3.535 0.488,-0.489 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.244 1.767,0.733 L -3.535,-3.535 8.699,-15.769 c 0.489,-0.488 1.128,-0.733 1.768,-0.733 0.639,0 1.279,0.245 1.767,0.733 0.977,0.976 0.977,2.558 0,3.535 L 0,0 Z"/></g></g></g></g></svg>';
-							close_button.addEventListener('click', (e) => {
-								e.currentTarget.parentNode.remove();
-								delete e.currentTarget.parentNode;
-							});
-							cloned_chat_line.appendChild(close_button);*/
 							pinned_log.appendChild(line);
 							if (document.hidden)
 								document.querySelector(
@@ -350,7 +313,9 @@ class SmokeysUtils extends Addon {
 			},
 		};
 
-		this.chat.addTokenizer(Pinned_Mentions);
+		if (this.settings.get('smokemotes.pinned_mentions')){
+			this.chat.addTokenizer(Pinned_Mentions);
+		}
 	}
 
 	onEnable() {
