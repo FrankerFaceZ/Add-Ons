@@ -152,7 +152,20 @@ class FFZAP extends Addon {
 			},
 		});
 
-		this.settings.add('ffzap.core.highlight_sound_type_mention', {
+		this.settings.add('ffzap.core.highlight_sound_types', {
+			default: ['badge', 'mention', 'term', 'user'],
+			type: 'basic_array_merge',
+			ui: {
+				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
+				title: 'Play When',
+				description: 'Play a highlight sound when a chat line is highlighted for one of the selected reasons.',
+				component: 'setting-select-box',
+				multiple: true,
+				data: () => this.chat.getHighlightReasons()
+			}
+		});
+
+		/*this.settings.add('ffzap.core.highlight_sound_type_mention', {
 			default: true,
 
 			ui: {
@@ -205,7 +218,7 @@ class FFZAP extends Addon {
 				description: 'Play a highlight sound when a new account is being highlighted. (Requires "New Account Highlighter" add-on)',
 				component: 'setting-check-box',
 			},
-		});
+		});*/
 
 		this.on('chat:receive-message', this.onReceiveMessage);
 
@@ -343,15 +356,12 @@ class FFZAP extends Addon {
 				return;
 			}
 
-			if (
-				(this.chat.context.get('ffzap.core.highlight_sound_type_mention') && highlights.has('mention')) ||
-				(this.chat.context.get('ffzap.core.highlight_sound_type_badge') && highlights.has('badge')) ||
-				(this.chat.context.get('ffzap.core.highlight_sound_type_term') && highlights.has('term')) ||
-				(this.chat.context.get('ffzap.core.highlight_sound_type_user') && highlights.has('user')) ||
-				(this.chat.context.get('ffzap.core.highlight_sound_type_user_age') && highlights.has('user-age'))
-			) {
-				this.playHighlightSound();
-			}
+			const types = this.chat.context.get('ffzap.core.highlight_sound_types');
+			for(const type of types)
+				if ( highlights.has(type) ) {
+					this.playHighlightSound();
+					break;
+				}
 		}
 	}
 
