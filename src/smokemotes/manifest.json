@@ -2,7 +2,7 @@
 	"enabled": true,
 	"requires": [],
 	"icon": "https://i.imgur.com/WVFY4R5.png",
-	"version": "1.0.6",
+	"version": "1.1.0",
 	"short_name": "smokeys_utils",
 	"name": "Smokey's Utilities",
 	"author": "Smokey",
@@ -10,5 +10,5 @@
 	"website": "https://smokey.gg/",
 	"settings": "add_ons.smokemotes",
 	"created": "2019-12-08T01:03:54.000Z",
-	"updated": "2021-04-14T18:23:49.140Z"
+	"updated": "2021-04-29T17:31:09.467Z"
 }
