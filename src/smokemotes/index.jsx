@@ -144,8 +144,7 @@ class SmokeysUtils extends Addon {
 				sort: -1,
 				path: "Add-Ons > Smokey's Utilities >> Channel",
 				title: 'Maintain HD Quality',
-				description:
-          'Enable to keep the video player from automatically decreasing video quality when out of focus.',
+				description: 'Enable to keep the video player from automatically decreasing video quality when out of focus.',
 				component: 'setting-check-box',
 			},
 		});
@@ -213,21 +212,23 @@ class SmokeysUtils extends Addon {
 
 		this.style_link = null;
 
-		const t = this;
+		this.event_listener = false;
+
+		/*const t = this;
 
 		/**
 		 * Pinned Mentions
-		 */
+		 * /
 		const Pinned_Mentions = {
 			type: 'pinned_mentions',
-			priority: 0,
+			priority: -1000,
 
 			process(tokens, msg) {
 				if ( msg.smokey_pinned )
 					return tokens;
 
 				msg.smokey_pinned = true;
-				if ( ! msg.mentioned || msg.isHistorical || ! t.settings.get('smokemotes.pinned_mentions') )
+				if ( msg.deleted || msg.ffz_removed || ! msg.mentioned || msg.isHistorical || ! t.settings.get('smokemotes.pinned_mentions') )
 					return tokens;
 
 				try {
@@ -238,9 +239,12 @@ class SmokeysUtils extends Addon {
 
 				return tokens;
 			}
-		};
+		};*/
 
-		if ( this.settings.get('smokemotes.pinned_mentions') ) {
+		this.updateEventListener();
+		this.settings.on(':changed:smokemotes.pinned_mentions', this.updateEventListener, this);
+
+		/*if ( this.settings.get('smokemotes.pinned_mentions') ) {
 			this.pinned_registered = true;
 			this.chat.addTokenizer(Pinned_Mentions);
 		} else {
@@ -250,7 +254,7 @@ class SmokeysUtils extends Addon {
 					this.chat.addTokenizer(Pinned_Mentions);
 				}
 			});
-		}
+		}*/
 	}
 
 	onEnable() {
@@ -271,7 +275,25 @@ class SmokeysUtils extends Addon {
 	 * Handle new messages, see if they should be pinned and pin them.
 	 */
 
-	handlePin(msg) {
+	updateEventListener() {
+		const setting = this.settings.get('smokemotes.pinned_mentions');
+		if ( setting && ! this.event_listener )
+			this.on('chat:buffer-message', this.handlePin, this);
+		else if ( ! setting && this.event_listener )
+			this.off('chat:buffer-message', this.handlePin, this);
+
+		this.event_listener = setting;
+	}
+
+	handlePin(event) {
+		const msg = event.message;
+		if ( msg.smokey_pinned )
+			return;
+
+		msg.smokey_pinned = true;
+		if ( msg.deleted || msg.ffz_removed || ! msg.mentioned || msg.isHistorical || ! this.settings.get('smokemotes.pinned_mentions') )
+			return;
+
 		const highlights = msg.highlights;
 		if ( ! highlights?.size )
 			return;
