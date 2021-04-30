@@ -61,6 +61,13 @@ class FFZAP extends Addon {
 
 		this.settings.add('ffzap.core.enable_highlight_sound', {
 			default: false,
+			requires: ['ffzap.core.highlight_sound_types'],
+			process(ctx, val) {
+				const types = ctx.get('ffzap.core.highlight_sound_types');
+				if ( ! Array.isArray(types) || ! types.length )
+					return false;
+				return val;
+			},
 
 			ui: {
 				sort: -10,
@@ -220,7 +227,8 @@ class FFZAP extends Addon {
 			},
 		});*/
 
-		this.on('chat:receive-message', this.onReceiveMessage);
+		//this.on('chat:receive-message', this.onReceiveMessage);
+		//this.on('chat:buffer-message', this.onBufferMessage);
 
 		this.chat.context.on('changed:ffzap.core.highlight_sound', async url => {
 			this.highlight_sound.src = await this.getSoundURL(url);
@@ -262,6 +270,12 @@ class FFZAP extends Addon {
 			},
 		};
 
+		this.receive_event = false;
+		this.buffer_event = false;
+		this.updateEvents();
+		this.chat.context.on('changed:ffzap.core.message_deletion', this.updateEvents, this);
+		this.chat.context.on('changed:ffzap.core.enable_highlight_sound', this.updateEvents, this);
+
 		this.chat.addTokenizer(this.remove_spaces_tokenizer);
 	}
 
@@ -270,6 +284,24 @@ class FFZAP extends Addon {
 
 		this.initDeveloper();
 		this.fetchSupporters();
+	}
+
+	updateEvents() {
+		const buffer = this.chat.context.get('ffzap.core.enable_highlight_sound'),
+			receive = this.chat.context.get('ffzap.core.message_deletion');
+
+		if ( buffer && ! this.buffer_event )
+			this.on('chat:buffer-message', this.onBufferMessage, this);
+		else if ( ! buffer && this.buffer_event )
+			this.off('chat:buffer-message', this.onBufferMessage, this);
+
+		if ( receive && ! this.receive_event )
+			this.on('chat:receive-message', this.onReceiveMessage, this);
+		else if ( ! receive && this.receive_event )
+			this.off('chat:receive-message', this.onReceiveMessage, this);
+
+		this.buffer_event = buffer;
+		this.receive_event = receive;
 	}
 
 	// eslint-disable-next-line class-methods-use-this
@@ -337,9 +369,11 @@ class FFZAP extends Addon {
 		this.highlight_sound.play();
 	}
 
-	onReceiveMessage(msg) {
-		this.handleMessageDeletion(msg);
+	onReceiveMessage(event) {
+		this.handleMessageDeletion(event);
+	}
 
+	onBufferMessage(msg) {
 		if (this.chat.context.get('ffzap.core.enable_highlight_sound') && msg.message.mentioned) {
 			// Prevent in own channel
 			if (this.chat.context.get('ffzap.core.highlight_sound_prevent_own_channel')) {
