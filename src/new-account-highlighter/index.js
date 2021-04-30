@@ -23,6 +23,17 @@ class NewAccountHighlighter extends Addon {
 			}
 		});
 
+		this.settings.add('newusers.priority', {
+			default: 0,
+			ui: {
+				path: 'Add-Ons > New User Highlighter >> Highlights',
+				title: 'Highlight Priority',
+				component: 'setting-text-box',
+				type: 'number',
+				process: 'to_int'
+			}
+		});
+
 		this.settings.add('newusers.highlightcolor', {
 			default: '#FFFFFF',
 			ui: {
@@ -45,10 +56,13 @@ class NewAccountHighlighter extends Addon {
 				{
 					(msg.highlights = (msg.highlights || new Set())).add('user-age');
 					msg.mentioned = true;
+					const color = this.settings.get('newusers.highlightcolor'),
+						priority = this.settings.get('newusers.priority');
 
-					const color = this.settings.get('newusers.highlightcolor') || '#FFFFFF';
-					if(color)
-						msg.mention_color = color
+					if ( msg.color_priority == null || priority > msg.color_priority ) {
+						msg.color_priority = priority;
+						msg.mention_color = color;
+					}
 				}
 				return tokens;
 			}
