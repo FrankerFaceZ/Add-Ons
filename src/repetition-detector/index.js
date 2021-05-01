@@ -94,6 +94,13 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
+		this.settings.addUI('addon.repetition_detector.pad-bottom', {
+			path: 'Add-Ons > Chat Repetition Detector',
+			sort: 1000,
+			component: 'setting-spacer',
+			top: '30rem',
+			force_seen: true
+		});
 
 		const checkRepetitionAndCache = (username, message) => {
 			const cacheTtl = this.settings.get('repetition_detector.cache_ttl') * 60000;
