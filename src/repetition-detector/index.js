@@ -3,7 +3,7 @@ const createElement = FrankerFaceZ.utilities.dom.createElement;
 
 class RepetitionDetector extends Addon {
 
-	cache = {};
+	cache = new Map();
 
 	cacheEvictionTimer = null;
 
@@ -15,7 +15,7 @@ class RepetitionDetector extends Addon {
 
 
 		const tryAppendCounter = ctx => {
-			setTimeout(() => {
+			requestAnimationFrame(() => {
 				if(ctx.props.message.repetitionCount && !ctx.props.message.repetitionShown) {
 					const repetitionCount = ctx.props.message.repetitionCount;
 					ctx.props.message.repetitionShown = true;
@@ -94,27 +94,30 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
+
 		const checkRepetitionAndCache = (username, message) => {
 			const cacheTtl = this.settings.get('repetition_detector.cache_ttl') * 60000;
-			if(this.cache[username]) {
-				this.cache[username].expire = Date.now() + cacheTtl;
+			const simThreshold = this.settings.get('repetition_detector.similarity_threshold');
+			if(this.cache.has(username)) {
+				this.cache.get(username).expire = Date.now() + cacheTtl;
 				let n = 1;
-				this.cache[username].messages.forEach(msg => {
-					if(compareTwoStrings(message, msg.msg) > this.settings.get('repetition_detector.similarity_threshold') / 100) {
+				const messagesInCache = this.cache.get(username).messages;
+				for(let i = 0; i < messagesInCache.length; i++) {
+					if(compareTwoStrings(message, messagesInCache[i].msg) > simThreshold / 100) {
 						n++;
 					}
-				});
-				this.cache[username].messages.push({msg: message, expire: Date.now() + cacheTtl});
+				}
+				this.cache.get(username).messages.push({msg: message, expire: Date.now() + cacheTtl});
 				return n;
 			} else {
-				this.cache[username] = {
+				this.cache.set(username, {
 					messages:[
 						{
 							msg: message, expire: Date.now() + cacheTtl
 						}
 					],
 					expire: Date.now() + cacheTtl
-				};
+				});
 				return 0;
 			}
 		}
@@ -126,21 +129,21 @@ class RepetitionDetector extends Addon {
 			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
 		})
 	}
-	
+
 	onEnable() {
 		this.log.info('Enabled!');
 		this.cacheEvictionTimer = setInterval(() => {
 			this.log.debug('Running cache eviction cycle');
-			Object.keys(this.cache).forEach(user => {
-				if(this.cache[user].expire < Date.now()) {
-					delete this.cache[user];
+			for(const [username, val] of this.cache) {
+				if(val.expire < Date.now()) {
+					this.cache.delete(username);
 				} else {
-					this.cache[user].messages = this.cache[user].messages.filter(msg => msg.expire > Date.now());
-					if(this.cache[user].messages.length === 0) {
-						delete this.cache[user];
+					val.messages = val.messages.filter(msg => msg.expire > Date.now());
+					if(val.messages.length === 0) {
+						this.cache.delete(username);
 					}
 				}
-			});
+			}
 		}, 10000);
 	}
 
