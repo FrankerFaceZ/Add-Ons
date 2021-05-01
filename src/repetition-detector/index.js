@@ -16,7 +16,7 @@ class RepetitionDetector extends Addon {
 
 		const tryAppendCounter = ctx => {
 			setTimeout(() => {
-				if(ctx.props.message.repetitionChecked && !ctx.props.message.repetitionShown) {
+				if(ctx.props.message.repetitionCount && !ctx.props.message.repetitionShown) {
 					const repetitionCount = ctx.props.message.repetitionCount;
 					ctx.props.message.repetitionShown = true;
 					if(repetitionCount >= this.settings.get('repetition_detector.repetitions_threshold')) {
@@ -119,21 +119,12 @@ class RepetitionDetector extends Addon {
 			}
 		}
 
-		const RepetitionDetectorTokenizer = {
-			type: 'repetition_detector',
-			priority: -100,
-
-			process(tokens, msg) {
-				if(msg.repetitionChecked) return tokens;
-				if(this.settings.get('repetition_detector.ignore_mods') &&
-						(msg.badges.moderator || msg.badges.broadcaster)) return tokens;
-
-				msg.repetitionChecked = true;
-				msg.repetitionCount = checkRepetitionAndCache(msg.user.userLogin, msg.messageBody);
-				return tokens;
-			}
-		}
-		this.chat.addTokenizer(RepetitionDetectorTokenizer);
+		this.chat.on('chat:receive-message', event => {
+			const msg = event.message;
+			if(this.settings.get('repetition_detector.ignore_mods') &&
+					(msg.badges.moderator || msg.badges.broadcaster)) return;
+			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
+		})
 	}
 
 	async onLoad() {
