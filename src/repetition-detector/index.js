@@ -158,7 +158,7 @@ class RepetitionDetector extends Addon {
 		if(this.cacheEvictionTimer) {
 			clearInterval(this.cacheEvictionTimer);
 		}
-		this.cache = {};
+		this.cache.clear();
 	}
 
 
