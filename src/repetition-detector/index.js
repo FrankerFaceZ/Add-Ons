@@ -45,12 +45,8 @@ class RepetitionDetector extends Addon {
 				title: 'Similarity threshold in %',
 				description: 'Minimum similarity between 2 messages to count them as repetitions',
 				component: 'setting-text-box',
-				process(val) {
-					val = parseInt(val, 10);
-					if (isNaN(val) || !isFinite(val) || val < 0 || val > 100 )
-						return 80;
-					return val;
-				}
+				process: 'to_int',
+				bounds: [0, 100]
 			}
 		});
 
@@ -61,12 +57,8 @@ class RepetitionDetector extends Addon {
 				title: 'Repetition threshold',
 				description: 'Amount of repetitions before the message is marked',
 				component: 'setting-text-box',
-				process(val) {
-					val = parseInt(val, 10);
-					if (isNaN(val) || !isFinite(val) || val < 0)
-						return 2;
-					return val;
-				}
+				process: 'to_int',
+				bounds: [0]
 			}
 		});
 
@@ -87,12 +79,8 @@ class RepetitionDetector extends Addon {
 				title: 'Cache TTL',
 				description: 'Amount of minutes for messages to stay in the cache. A long TTL leads to high RAM usage, especially in bigger channels',
 				component: 'setting-text-box',
-				process(val) {
-					val = parseInt(val, 10);
-					if (isNaN(val) || !isFinite(val) || val < 0)
-						return 10;
-					return val;
-				}
+				process: 'to_int',
+				bounds: [0]
 			}
 		});
 
