@@ -126,10 +126,7 @@ class RepetitionDetector extends Addon {
 			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
 		})
 	}
-
-	async onLoad() {
-	}
-
+	
 	onEnable() {
 		this.log.info('Enabled!');
 		this.cacheEvictionTimer = setInterval(() => {
@@ -154,8 +151,6 @@ class RepetitionDetector extends Addon {
 		this.cache = {};
 	}
 
-	async onUnload() {
-	}
 
 }
 RepetitionDetector.register();
