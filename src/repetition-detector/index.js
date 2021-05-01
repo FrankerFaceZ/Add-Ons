@@ -19,13 +19,13 @@ class RepetitionDetector extends Addon {
 				if(ctx.props.message.repetitionCount && !ctx.props.message.repetitionShown) {
 					const repetitionCount = ctx.props.message.repetitionCount;
 					ctx.props.message.repetitionShown = true;
-					if(repetitionCount >= this.settings.get('repetition_detector.repetitions_threshold')) {
+					if(repetitionCount >= this.settings.get('addon.repetition_detector.repetitions_threshold')) {
 						let msgElement = this.site_fine.getChildNode(ctx);
 						if(!msgElement) return;
 						//Sometimes messages are rendered with a message container, we have to append our div inside of that to have it on the same line
 						const childContainer = msgElement.querySelector('.chat-line__message-container');
 						if(childContainer) msgElement = childContainer;
-						const textColor = this.settings.get('repetition_detector.text_color');
+						const textColor = this.settings.get('addon.repetition_detector.text_color');
 						const counterElement = createElement('span', {'style': `color: ${textColor}; margin-left: 10px`}, `x${repetitionCount}`);
 						msgElement.appendChild(counterElement);
 					}
@@ -38,7 +38,7 @@ class RepetitionDetector extends Addon {
 		this.site_chat.chat_line.ChatLine.on('update', ctx => tryAppendCounter(ctx));
 
 
-		this.settings.add('repetition_detector.similarity_threshold', {
+		this.settings.add('addon.repetition_detector.similarity_threshold', {
 			default: 80,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
@@ -50,7 +50,7 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
-		this.settings.add('repetition_detector.repetitions_threshold', {
+		this.settings.add('addon.repetition_detector.repetitions_threshold', {
 			default: 2,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
@@ -62,7 +62,7 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
-		this.settings.add('repetition_detector.ignore_mods', {
+		this.settings.add('addon.repetition_detector.ignore_mods', {
 			default: true,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
@@ -72,7 +72,7 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
-		this.settings.add('repetition_detector.cache_ttl', {
+		this.settings.add('addon.repetition_detector.cache_ttl', {
 			default: 10,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> Cache Settings',
@@ -84,7 +84,7 @@ class RepetitionDetector extends Addon {
 			}
 		});
 
-		this.settings.add('repetition_detector.text_color', {
+		this.settings.add('addon.repetition_detector.text_color', {
 			default: '#FF0000',
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> Style',
@@ -103,8 +103,8 @@ class RepetitionDetector extends Addon {
 		});
 
 		const checkRepetitionAndCache = (username, message) => {
-			const cacheTtl = this.settings.get('repetition_detector.cache_ttl') * 60000;
-			const simThreshold = this.settings.get('repetition_detector.similarity_threshold');
+			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 60000;
+			const simThreshold = this.settings.get('addon.repetition_detector.similarity_threshold');
 			if(this.cache.has(username)) {
 				this.cache.get(username).expire = Date.now() + cacheTtl;
 				let n = 1;
@@ -131,7 +131,7 @@ class RepetitionDetector extends Addon {
 
 		this.chat.on('chat:receive-message', event => {
 			const msg = event.message;
-			if(this.settings.get('repetition_detector.ignore_mods') &&
+			if(this.settings.get('addon.repetition_detector.ignore_mods') &&
 					(msg.badges.moderator || msg.badges.broadcaster)) return;
 			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
 		})
