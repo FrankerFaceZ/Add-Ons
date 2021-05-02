@@ -73,15 +73,17 @@ class RepetitionDetector extends Addon {
 		});
 
 		this.settings.add('addon.repetition_detector.cache_ttl', {
-			default: 10,
+			default: 600,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> Cache Settings',
 				title: 'Cache TTL',
-				description: 'Amount of minutes for messages to stay in the cache. A long TTL leads to high RAM usage, especially in bigger channels',
+				description: 'Amount of seconds for messages to stay in the cache. A long TTL leads to high RAM usage, especially in bigger channels',
 				component: 'setting-text-box',
 				process: 'to_int',
-				bounds: [0]
-			}
+				bounds: [1]
+			},
+			//Cache eviction will happen 10x per TTL, at least once every 10s, max once per second
+			changed: () => this.startCacheEvictionTimer(Math.min(Math.floor(this.settings.get('addon.repetition_detector.cache_ttl')/10), 10))
 		});
 
 		this.settings.add('addon.repetition_detector.text_color', {
@@ -140,7 +142,16 @@ class RepetitionDetector extends Addon {
 
 	onEnable() {
 		this.log.info('Enabled!');
+		//Cache eviction will happen 10x per TTL, at least once every 10s, max once per second
+		this.startCacheEvictionTimer(Math.min(Math.floor(this.settings.get('addon.repetition_detector.cache_ttl')/10), 10));
+	}
+
+	startCacheEvictionTimer(intervalSeconds) {
+		if(this.cacheEvictionTimer) {
+			clearInterval(this.cacheEvictionTimer);
+		}
 		this.cacheEvictionTimer = setInterval(() => {
+			console.log('Cache eviction running');
 			this.log.debug('Running cache eviction cycle');
 			for(const [username, val] of this.cache) {
 				if(val.expire < Date.now()) {
@@ -152,7 +163,7 @@ class RepetitionDetector extends Addon {
 					}
 				}
 			}
-		}, 10000);
+		}, intervalSeconds * 1000);
 	}
 
 	onDisable() {
