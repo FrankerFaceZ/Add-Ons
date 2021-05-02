@@ -131,9 +131,10 @@ class RepetitionDetector extends Addon {
 
 		this.chat.on('chat:receive-message', event => {
 			const msg = event.message;
+			if(!msg.message || msg.message === '') return;
 			if(this.settings.get('addon.repetition_detector.ignore_mods') &&
 					(msg.badges.moderator || msg.badges.broadcaster)) return;
-			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
+			msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
 		})
 	}
 
