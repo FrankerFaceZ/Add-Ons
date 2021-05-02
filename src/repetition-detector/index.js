@@ -151,7 +151,6 @@ class RepetitionDetector extends Addon {
 			clearInterval(this.cacheEvictionTimer);
 		}
 		this.cacheEvictionTimer = setInterval(() => {
-			console.log('Cache eviction running');
 			this.log.debug('Running cache eviction cycle');
 			for(const [username, val] of this.cache) {
 				if(val.expire < Date.now()) {
