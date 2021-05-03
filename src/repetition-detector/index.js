@@ -73,15 +73,17 @@ class RepetitionDetector extends Addon {
 		});
 
 		this.settings.add('addon.repetition_detector.cache_ttl', {
-			default: 10,
+			default: 600,
 			ui: {
 				path: 'Add-Ons > Chat Repetition Detector >> Cache Settings',
 				title: 'Cache TTL',
-				description: 'Amount of minutes for messages to stay in the cache. A long TTL leads to high RAM usage, especially in bigger channels',
+				description: 'Amount of seconds for messages to stay in the cache. A long TTL leads to high RAM usage, especially in bigger channels',
 				component: 'setting-text-box',
 				process: 'to_int',
-				bounds: [0]
-			}
+				bounds: [1]
+			},
+			//Cache eviction will happen 10x per TTL, at least once every 10s, max once per second
+			changed: () => this.startCacheEvictionTimer(Math.min(Math.floor(this.settings.get('addon.repetition_detector.cache_ttl')/10), 10))
 		});
 
 		this.settings.add('addon.repetition_detector.text_color', {
@@ -131,14 +133,23 @@ class RepetitionDetector extends Addon {
 
 		this.chat.on('chat:receive-message', event => {
 			const msg = event.message;
+			if(!msg.message || msg.message === '') return;
 			if(this.settings.get('addon.repetition_detector.ignore_mods') &&
 					(msg.badges.moderator || msg.badges.broadcaster)) return;
-			msg.repetitionCount = checkRepetitionAndCache(msg.user.userID, msg.message);
+			msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
 		})
 	}
 
 	onEnable() {
 		this.log.info('Enabled!');
+		//Cache eviction will happen 10x per TTL, at least once every 10s, max once per second
+		this.startCacheEvictionTimer(Math.min(Math.floor(this.settings.get('addon.repetition_detector.cache_ttl')/10), 10));
+	}
+
+	startCacheEvictionTimer(intervalSeconds) {
+		if(this.cacheEvictionTimer) {
+			clearInterval(this.cacheEvictionTimer);
+		}
 		this.cacheEvictionTimer = setInterval(() => {
 			this.log.debug('Running cache eviction cycle');
 			for(const [username, val] of this.cache) {
@@ -151,7 +162,7 @@ class RepetitionDetector extends Addon {
 					}
 				}
 			}
-		}, 10000);
+		}, intervalSeconds * 1000);
 	}
 
 	onDisable() {
