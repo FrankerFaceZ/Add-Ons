@@ -4,9 +4,8 @@ class NewAccountHighlighter extends Addon {
 
 	constructor(...args) {
 		super(...args);
-		this.inject('chat');
 
-		this.chat.addHighlightReason('user-age', 'Minimum Account Age');
+		this.inject('chat');
 
 		this.settings.add('newusers.minage', {
 			default: '7d',
@@ -20,7 +19,8 @@ class NewAccountHighlighter extends Addon {
 					arr.push({value: null, title: 'Disabled'});
 					return arr;
 				}
-			}
+			},
+			changed: () => this.emit('chat:update-lines')
 		});
 
 		this.settings.add('newusers.priority', {
@@ -31,7 +31,8 @@ class NewAccountHighlighter extends Addon {
 				component: 'setting-text-box',
 				type: 'number',
 				process: 'to_int'
-			}
+			},
+			changed: () => this.emit('chat:update-lines')
 		});
 
 		this.settings.add('newusers.highlightcolor', {
@@ -41,32 +42,33 @@ class NewAccountHighlighter extends Addon {
 				title: 'Highlight Color',
 				description: 'Set the color for your highlights',
 				component: 'setting-color-box'
-			}
+			},
+			changed: () => this.emit('chat:update-lines')
 		});
+
+		this.chat.addHighlightReason('user-age', 'Minimum Account Age');
+		const t = this;
 
 		const NewAccountHighlights = {
 			type: 'newaccount_highlight',
 			priority: 95,
 
 			process(tokens, msg) {
-				const minage = this.settings.get('newusers.minage');
+				const minage = t.settings.get('newusers.minage');
 				const minagemapping = NewAccountHighlighter.Mappings[minage];
 				const minuid = minagemapping ? minagemapping.uid : Number.MAX_VALUE;
-				if(msg.user.userID > minuid)
-				{
-					(msg.highlights = (msg.highlights || new Set())).add('user-age');
-					msg.mentioned = true;
-					const color = this.settings.get('newusers.highlightcolor'),
-						priority = this.settings.get('newusers.priority');
+				if( msg.user.userID > minuid )
+					this.applyHighlight(
+						msg,
+						t.settings.get('newusers.priority'),
+						t.settings.get('newusers.highlightcolor'),
+						'user-age'
+					);
 
-					if ( msg.color_priority == null || priority > msg.color_priority ) {
-						msg.color_priority = priority;
-						msg.mention_color = color;
-					}
-				}
 				return tokens;
 			}
 		}
+
 		this.chat.addTokenizer(NewAccountHighlights);
 	}
 
