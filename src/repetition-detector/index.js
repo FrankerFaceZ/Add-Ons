@@ -105,7 +105,7 @@ class RepetitionDetector extends Addon {
 		});
 
 		const checkRepetitionAndCache = (username, message) => {
-			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 60000;
+			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 1000;
 			const simThreshold = this.settings.get('addon.repetition_detector.similarity_threshold');
 			if(this.cache.has(username)) {
 				this.cache.get(username).expire = Date.now() + cacheTtl;
