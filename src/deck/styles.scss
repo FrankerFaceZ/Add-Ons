@@ -61,6 +61,7 @@
 	}
 }
 
+.bd--channel-selector,
 .bd--tag-selector {
 	.tw-root--theme-dark &,
 	& {
@@ -69,6 +70,7 @@
 			border-bottom-right-radius: 0 !important;
 		}
 
+		.bd--channel-selector__list,
 		.bd--tag-selector__list {
 			border-top-left-radius: 0 !important;
 			border-top-right-radius: 0 !important;

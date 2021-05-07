@@ -468,6 +468,9 @@ export default {
 		// Height Calculations
 		this._resize_listener = this.scheduleUpdateHeight.bind(this);
 		window.addEventListener('resize', this._resize_listener);
+
+		this.$emit('init', this);
+
 	},
 
 	beforeDestroy() {
@@ -686,6 +689,9 @@ export default {
 
 				if ( ! this.pending_reset ) {
 					this.items = this.items.concat(data.items);
+					if ( this.inst.shouldClientSort() )
+						this.items = this.inst.performClientSort(this.items);
+
 					this.cursor = data.cursor;
 					this.finished = data.finished;
 				}

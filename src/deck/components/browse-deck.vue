@@ -155,6 +155,7 @@
 					@collapse="collapseColumn(column.id, $event)"
 					@cache="cacheColumn(column.id, $event)"
 					@open-modal="openModal($event)"
+					@init="onColumnInit(column.id, $event)"
 				/>
 				<div v-if="! columns.length" class="tw-c-text-base">
 					<h1 class="ffz-i-up-big tw-mg-l-2 tw-c-text-alt-2" />
@@ -655,6 +656,14 @@ export default {
 
 			this.columns.push(data);
 			this.saveColumns(this.columns);
+			this._wants_settings = data.id;
+		},
+
+		onColumnInit(id, inst) {
+			if ( id === this._wants_settings ) {
+				this._wants_settings = null;
+				inst.openMenu();
+			}
 		},
 
 		switchTab(idx) {

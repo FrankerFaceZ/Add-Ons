@@ -1,6 +1,6 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
-import ColumnBase, { LiveColumnBase } from '../../column-base';
+import { LiveColumnBase } from '../../column-base';
 import { getLoader, cleanViewersCount } from '../../data';
 
 export default class Channels extends LiveColumnBase {

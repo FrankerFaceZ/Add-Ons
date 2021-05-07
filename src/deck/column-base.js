@@ -58,6 +58,14 @@ export default class ColumnBase {
 		this.sort = options && this.settings && options[this.settings.sort] || null;
 	}
 
+	shouldClientSort() {
+		return false;
+	}
+
+	performClientSort(items) { // eslint-disable-line
+		throw new Error('Not Implemented');
+	}
+
 	/**
 	 * Receive new settings for this column. Called when an existing
 	 * column has its settings edited.
@@ -344,6 +352,17 @@ export class LiveColumnBase extends ColumnBase {
 		LiveColumnBase.memorizeTags(item);
 	}
 
+	performClientSort(items) {
+		if ( ! Array.isArray(items) )
+			return [];
+
+		const fn = this.sort?.clientSort;
+		if ( ! fn )
+			return items;
+
+		return items.sort(fn)
+	}
+
 	filterItems(items) {
 		if ( ! Array.isArray(items) )
 			return [];
@@ -390,17 +409,20 @@ LiveColumnBase.SORT_OPTIONS = {
 	VIEWER_COUNT: {
 		title: 'Viewers (High to Low)', i18n: 'addon.deck.sort.live.viewers',
 		subtitle: 'Viewers', sub_i18n: 'addon.deck.sort.sub.viewers',
-		icon: 'ffz-i-sort-alt-down'
+		icon: 'ffz-i-sort-alt-down',
+		clientSort: (a,b) => (b?.stream?.viewersCount || 0) - (a?.stream?.viewersCount || 0)
 	},
 	VIEWER_COUNT_ASC: {
 		title: 'Viewers (Low to High)', i18n: 'addon.deck.sort.live.viewers-asc',
 		subtitle: 'Viewers', sub_i18n: 'addon.deck.sort.sub.viewers',
-		icon: 'ffz-i-sort-alt-up'
+		icon: 'ffz-i-sort-alt-up',
+		clientSort: (a,b) => (a?.stream?.viewersCount || 0) - (b?.stream?.viewersCount || 0)
 	},
 	RECENT: {
 		title: 'Recently Started', i18n: 'addon.deck.live.recent',
 		subtitle: 'Recent', sub_i18n: 'addon.deck.sub.recent',
-		icon: 'ffz-i-clock'
+		icon: 'ffz-i-clock',
+		clientSort: (a,b) => new Date(b?.stream?.createdAt || 0) - new Date(a?.stream?.createdAt || 0)
 	},
 	RELEVANCE: {
 		title: 'Recommended for You', i18n: 'addon.deck.live.recommended',
