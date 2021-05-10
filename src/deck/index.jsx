@@ -11,6 +11,7 @@ class BrowseDeck extends Addon {
 	constructor(...args) {
 		super(...args);
 
+		this.inject('settings');
 		this.inject('site');
 		this.inject('tooltips');
 		this.inject('site.fine');
@@ -18,6 +19,25 @@ class BrowseDeck extends Addon {
 		this.inject('site.router');
 		this.inject('site.twitch_data');
 		this.inject('site.menu_button');
+
+		this.settings.add('deck.link', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Deck >> Appearance',
+				title: 'Add a Deck link to the top of Twitch.',
+				component: 'setting-check-box'
+			},
+			changed: () => this.updateNavigation()
+		});
+
+		this.settings.add('deck.auto-settings', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Deck >> Behavior',
+				title: 'Automatically open settings when creating a new column.',
+				component: 'setting-check-box'
+			}
+		});
 
 		this.dialog = new Dialog(() => this.buildDialog());
 		this.dialog.exclusive = false;
@@ -66,6 +86,7 @@ class BrowseDeck extends Addon {
 		//this.on('settings:changed:directory.following.group-hosts', val => this.updateSetting('group_hosts', val));
 		//this.on('settings:changed:directory.following.host-menus', val => this.updateSetting('host_menus', val));
 		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
+		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
 
 		this.settings.provider.on('changed', this.onProviderChange, this);
 
@@ -161,6 +182,7 @@ class BrowseDeck extends Addon {
 
 		return {
 			settings: {
+				open_setting: this.settings.get('deck.auto-settings'),
 				show_avatars: true, // this.settings.get('directory.show-channel-avatars'),
 				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),
@@ -230,10 +252,14 @@ class BrowseDeck extends Addon {
 		if ( ! root )
 			return;
 
-		const label = this.i18n.t('addon.deck.title', 'Deck');
+		const label = this.i18n.t('addon.deck.title', 'Deck'),
+			setting = this.settings.get('deck.link');
 
-		let button = root.querySelector('.bd--browse-deck-link'), indicator;
-		if ( ! button ) {
+		let cont = root.querySelector('.bd--browse-deck-link'), button, indicator;
+		if ( ! cont ) {
+			if ( ! setting )
+				return;
+
 			let peer = root.querySelector('[data-a-target="browse-link"]');
 			if ( peer )
 				peer = peer.parentElement.parentElement;
@@ -241,7 +267,7 @@ class BrowseDeck extends Addon {
 				return;
 
 			button = (<a
-				class="bd--browse-deck-link navigation-link tw-interactive"
+				class="navigation-link tw-interactive"
 				href={this.router.getURL('addons.deck')}
 				onClick={e => { // eslint-disable-line react/jsx-no-bind
 					e.preventDefault();
@@ -263,14 +289,19 @@ class BrowseDeck extends Addon {
 				</div>
 			</a>);
 
-			peer.parentElement.insertBefore(<div class="tw-flex tw-flex-column tw-full-height tw-pd-x-1 tw-xl-pd-x-2">
+			peer.parentElement.insertBefore(cont = (<div class="bd--browse-deck-link tw-flex tw-flex-column tw-full-height tw-pd-x-1 tw-xl-pd-x-2">
 				<div class="tw-align-self-center tw-flex tw-full-height">
 					{button}
 				</div>
 				{indicator = <div class="bd--indicator navigation-link__indicator-container" />}
-			</div>, peer.nextElementSibling);
+			</div>), peer.nextElementSibling);
+
+		} else if ( ! setting ) {
+			cont.remove();
+			return;
 
 		} else {
+			button = cont.querySelector('a');
 			indicator = root.querySelector('.bd--indicator');
 			for(const element of button.querySelectorAll('p'))
 				element.innerText = label;

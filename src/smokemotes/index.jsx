@@ -267,7 +267,7 @@ class SmokeysUtils extends Addon {
 
 		this.mod_keybind_handler();
 
-		this.ViewerCard.on('update', this.updateCard, this);
+		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
 	}
 

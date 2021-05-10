@@ -1,0 +1,7 @@
+#import "../fragments/user-card.gql"
+
+query Deck_LiveUsers($ids: [ID!], $previewWidth: Int, $previewHeight: Int) {
+	users(ids: $ids) {
+		...UserCard
+	}
+}
