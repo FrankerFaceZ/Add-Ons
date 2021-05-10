@@ -43,6 +43,15 @@ class RepetitionDetector extends Addon {
 				component: 'setting-check-box'
 			}
 		});
+		this.settings.add('addon.repetition_detector.enable_only_as_mod', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
+				title: 'Only as Moderator',
+				description: 'Enable only in channels you are a moderator in',
+				component: 'setting-check-box'
+			}
+		});
 
 		this.settings.add('addon.repetition_detector.cache_ttl', {
 			default: 600,
@@ -75,6 +84,8 @@ class RepetitionDetector extends Addon {
 			top: '30rem',
 			force_seen: true
 		});
+
+		const chatContext = this.chat.context;
 
 		const checkRepetitionAndCache = (username, message) => {
 			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 1000;
@@ -118,6 +129,8 @@ class RepetitionDetector extends Addon {
 			process(tokens, msg) {
 
 				if(!msg.message || msg.message === '') return tokens;
+				if(!chatContext.get('context.moderator') &&
+						this.settings.get('addon.repetition_detector.enable_only_as_mod')) return tokens;
 				if(this.settings.get('addon.repetition_detector.ignore_mods') &&
 						(msg.badges.moderator || msg.badges.broadcaster)) return tokens;
 				if(!msg.repetitionCount && msg.repetitionCount !== 0) {
