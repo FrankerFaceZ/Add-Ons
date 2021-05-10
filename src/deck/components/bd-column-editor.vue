@@ -88,6 +88,7 @@
 					<input
 						:id="'title$' + column.id"
 						v-model="column.display.title"
+						:placeholder="titlePlaceholder"
 						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input"
 					>
 				</div>
@@ -162,6 +163,26 @@
 					{{ t('addon.deck.edit.behavior', 'Behavior') }}
 				</h5>
 
+				<div v-if="auto_refresh" class="tw-flex tw-align-items-center tw-mg-y-05">
+					<label :for="'refresh$' + column.id">
+						{{ t('addon.deck.edit.refresh', 'Auto Refresh:') }}
+					</label>
+
+					<input
+						:id="'refresh$' + column.id"
+						v-model.number="column.display.refresh"
+						type="range"
+						min="-1"
+						max="10"
+						step="1"
+						class="tw-range tw-range--unfilled tw-flex-grow-1"
+						@wheel="scrollRefresh"
+					>
+					<div class="tw-mg-l-1">
+						{{ refreshLabel }}
+					</div>
+				</div>
+
 				<div v-if="sort_options" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'sort$' + column.id">
 						{{ t('addon.deck.edit.sort', 'Sort By:') }}
@@ -214,6 +235,7 @@
 import { getLoader } from '../data';
 
 const {deep_copy, has} = FrankerFaceZ.utilities.object;
+const {print_duration} = FrankerFaceZ.utilities.time;
 
 const BAD_KEYS = [
 	'id',
@@ -227,9 +249,16 @@ export default {
 	props: ['data'],
 
 	data() {
+		const column = deep_copy(this.data.column);
+		if ( ! column.display )
+			column.display = {};
+
+		if ( column.display.refresh == null )
+			column.display.refresh = -1;
+
 		return {
 			id: last_id++,
-			column: deep_copy(this.data.column),
+			column,
 			deleting: false,
 			copying: false
 		}
@@ -245,6 +274,27 @@ export default {
 			return JSON.stringify(copy);
 		},
 
+		titlePlaceholder() {
+			const out = this.inst.getTitle?.();
+			if ( Array.isArray(out) )
+				return this.t(...out);
+			else if ( out )
+				return out;
+
+			return null;
+		},
+
+		refreshLabel() {
+			const val = this.column.display.refresh;
+			if ( val == null || val < 0 )
+				return this.t('addon.deck.refresh.disabled', 'Disabled');
+
+			const base = this.inst && this.inst.getRefreshDelay(),
+				multiplier = this.inst && this.inst.getRefreshMultiplier();
+
+			return print_duration(Math.floor((base + (val * multiplier)) / 1000));
+		},
+
 		settings() {
 			return this.data.settings;
 		},
@@ -254,7 +304,7 @@ export default {
 		},
 
 		inst_title() {
-			const out = has(this.inst, 'getEditTitle') && this.inst.getEditTitle();
+			const out = this.inst.getEditTitle?.();
 			if ( Array.isArray(out) )
 				return this.t(...out);
 
@@ -262,6 +312,10 @@ export default {
 				return out;
 
 			return this.t('addon.deck.edit.column', 'Edit Column');
+		},
+
+		auto_refresh() {
+			return true;
 		},
 
 		sort_options() {
@@ -299,6 +353,22 @@ export default {
 				new_val = 10;
 
 			this.column.display.max_tags = new_val;
+			event.preventDefault();
+		},
+
+		scrollRefresh(event) {
+			if ( event.deltaY === 0 )
+				return;
+
+			const delta = event.deltaY > 0 ? 1 : -1;
+			let new_val = this.column.display.refresh + delta;
+
+			if ( new_val < 0 )
+				new_val = 0;
+			else if ( new_val > 10 )
+				new_val = 10;
+
+			this.column.display.refresh = new_val;
 			event.preventDefault();
 		},
 

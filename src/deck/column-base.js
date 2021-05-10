@@ -318,6 +318,10 @@ export default class ColumnBase {
 		return 60000;
 	}
 
+	getRefreshMultiplier() {
+		return 30000;
+	}
+
 	getSortOptions() {
 		return null;
 	}

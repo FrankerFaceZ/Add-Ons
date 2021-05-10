@@ -81,6 +81,30 @@
 					</div>
 				</button>
 			</div>
+			<div
+				v-if="! is_collapsed && canAutoRefresh"
+				class="bd--column-progress tw-tooltip__container"
+			>
+				<div
+					class="ffz-progress-bar ffz-progress-bar-countdown ffz-progress-bar--default ffz-progress-bar--mask"
+					role="progressbar"
+					:aria-valuenow="progressWidth"
+					aria-valuemin="0"
+					aria-valuemax="100"
+				>
+					<div
+						class="tw-block ffz-progress-bar__fill"
+						data-a-target="tw-progress-bar-animation"
+						:style="{
+							width: `${progressWidth}%`,
+							'animation-duration': `${ttRefresh / 1000}s`
+						}"
+					/>
+				</div>
+				<div class="tw-tooltip tw-tooltip--up tw-tooltip--align-right">
+					{{ t('addon.deck.auto-refresh', 'Automatically refreshing in {delay}', {delay: progressTip}) }}
+				</div>
+			</div>
 		</div>
 		<div
 			v-if="! is_collapsed"
@@ -220,6 +244,7 @@
 <script>
 import { cleanTooltips } from '../data';
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
+const {print_duration} = FrankerFaceZ.utilities.time;
 const {has, get, deep_copy, shallow_object_equals, maybe_call} = FrankerFaceZ.utilities.object;
 
 export default {
@@ -258,42 +283,6 @@ export default {
 			errored: false,
 			show_error: false,
 			error: null
-		}
-	},
-
-	watch: {
-		collapsed(val) {
-			this.is_collapsed = val;
-		},
-
-		data: {
-			handler(val) {
-				if ( this.inst )
-					this.inst.updateSettings(deep_copy(this.data.settings));
-
-				this.refreshFromInst();
-			},
-
-			deep: true
-		},
-
-		activeSettings: {
-			handler(val) {
-				if ( this.inst )
-					this.inst.updateGlobalSettings(deep_copy(this.activeSettings));
-
-				this.refreshFromInst();
-			},
-
-			deep: true
-		},
-
-		icon() {
-			maybeLoad(this.icon)
-		},
-
-		canRefresh() {
-			this.$emit('can-refresh', this.canRefresh);
 		}
 	},
 
@@ -424,6 +413,64 @@ export default {
 			return this.now - this.first_load >= this.refreshDelay;
 		},
 
+		autoRefreshDelay() {
+			const value = this.data.display.refresh;
+			if ( value == null || value < 0 )
+				return null;
+
+			const base = this.inst && this.inst.getRefreshDelay(),
+				multiplier = this.inst && this.inst.getRefreshMultiplier();
+
+			return base + (value * multiplier);
+		},
+
+		ttRefresh() {
+			if ( this.is_collapsed || ! this.first_load || this.loading || ! this.canRun )
+				return null;
+
+			const value = this.autoRefreshDelay;
+			if ( ! value || value < 0 )
+				return null;
+
+			return (this.first_load + this.autoRefreshDelay) - this.now;
+		},
+
+		progressTip() {
+			let value = this.ttRefresh;
+			if ( ! value || value < 0 )
+				value = 0;
+
+			return print_duration(Math.floor(value / 1000));
+		},
+
+		progressWidth() {
+			const ttl = this.ttRefresh;
+			if ( ! ttl )
+				return null;
+
+			if ( ttl <= 0 )
+				return 0;
+
+			const value = this.autoRefreshDelay;
+			return (ttl / value) * 100;
+		},
+
+		shouldRefresh() {
+			if ( ! this.canRefresh )
+				return false;
+
+			const delay = this.autoRefreshDelay;
+			if ( ! delay )
+				return false;
+
+			return this.now - this.first_load >= this.autoRefreshDelay;
+		},
+
+		canAutoRefresh() {
+			const delay = this.autoRefreshDelay;
+			return delay != null && delay >= 0;
+		},
+
 		canScrollTop() {
 			return this.visible && ! this.at_top;
 		},
@@ -452,6 +499,46 @@ export default {
 				out.show_avatars = false;
 
 			return out;
+		}
+	},
+
+	watch: {
+		collapsed(val) {
+			this.is_collapsed = val;
+		},
+
+		data: {
+			handler() {
+				if ( this.inst )
+					this.inst.updateSettings(deep_copy(this.data.settings));
+
+				this.refreshFromInst();
+			},
+
+			deep: true
+		},
+
+		activeSettings: {
+			handler() {
+				if ( this.inst )
+					this.inst.updateGlobalSettings(deep_copy(this.activeSettings));
+
+				this.refreshFromInst();
+			},
+
+			deep: true
+		},
+
+		icon() {
+			maybeLoad(this.icon)
+		},
+
+		canRefresh() {
+			this.$emit('can-refresh', this.canRefresh);
+		},
+
+		shouldRefresh() {
+			this.refresh();
 		}
 	},
 

@@ -149,6 +149,7 @@
 
 	.bd--column-header {
 		cursor: move;
+		position: relative;
 
 		button {
 			pointer-events: all;
@@ -194,6 +195,14 @@
 		writing-mode: vertical-lr;
 
 	}
+}
+
+.bd--column-progress {
+	position: absolute;
+	bottom: -.8rem;
+	left: 0;
+	right: 0;
+	width: unset !important;
 }
 
 .bd--art-column {
