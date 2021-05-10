@@ -112,7 +112,6 @@ class RepetitionDetector extends Addon {
 					return null;
 
 				const textColor = this.settings.get('addon.repetition_detector.text_color');
-				console.log(createElement);
 				return (<span style={{'color': textColor, 'margin-left': '1.5rem'}}>{`x${token.repetitionCount}`}</span>)
 			},
 
