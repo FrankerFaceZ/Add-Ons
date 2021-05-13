@@ -6,28 +6,12 @@
 			:items="getItems"
 			:suggestOnFocus="true"
 			:clearOnSelect="true"
+			:allow-filter="false"
 			:placeholder="t('addon.deck.search-users', 'Search Users')"
 			icon="ffz-i-search"
 			@selected="addUser"
 		>
-			<div class="tw-pd-x-1 tw-pd-y-05">
-				<div class="tw-card tw-relative">
-					<div class="tw-align-items-center tw-flex tw-flex-nowrap tw-flex-row">
-						<div class="ffz-card-img ffz-card-img--size-3 tw-flex-shrink-0 tw-overflow-hidden">
-							<aspect :ratio="1">
-								<img
-									:alt="slot.item.displayName"
-									:src="slot.item.profileImageURL"
-									class="tw-image"
-								>
-							</aspect>
-						</div>
-						<div class="tw-card-body tw-overflow-hidden tw-relative">
-							<p class="tw-pd-x-1">{{ slot.item.displayName }}</p>
-						</div>
-					</div>
-				</div>
-			</div>
+			<autocomplete-user :user="slot.item" />
 		</autocomplete>
 
 		<div class="bd--channel-selector__list tw-flex tw-flex-wrap tw-c-background-base tw-pd-x-05 tw-pd-b-05 tw-border-l tw-border-b tw-border-r tw-border-radius-medium">
@@ -45,16 +29,16 @@
 			>
 				<button
 					class="tw-border-radius-rounded tw-inline-flex tw-interactive tw-semibold ffz-tag"
-					:title="user.displayName"
+					:title="isI18n(user) ? `${user.displayName} (${user.login})` : user.displayName"
 					@click="removeUser(user.id)"
 				>
 					<div class="tw-align-items-center tw-flex tw-font-size-7 ffz-tag__content">
-						<div class="ffz-card-img ffz-card-img--size-105 tw-mg-r-05 tw-flex-shrink-0 tw-overflow-hidden">
+						<div class="ffz-card-img ffz-card-img--size-105 tw-mg-r-05 tw-flex-shrink-0 tw-overflow-hidden tw-avatar">
 							<aspect :ratio="1">
 								<img
 									:alt="user.displayName"
 									:src="user.profileImageURL"
-									class="tw-image"
+									class="tw-image tw-image-avatar tw-border-radius-rounded"
 								>
 							</aspect>
 						</div>
@@ -118,6 +102,13 @@ export default {
 	},
 
 	methods: {
+		isI18n(item) {
+			if ( ! item || ! item.login || ! item.displayName )
+				return false;
+
+			return item.login.trim() !== item.displayName.trim().toLowerCase();
+		},
+
 		removeUser(id) {
 			// Make sure we weren't accidentally handed a user object.
 			if ( id && id.id )
@@ -146,7 +137,7 @@ export default {
 			if ( ! query )
 				return [];
 
-			const out = await getLoader().getMatchingUsers(query),
+			const out = await getLoader().getMatchingUsers(query, 30),
 				users = out?.items;
 
 			if ( ! users || ! users.length )
