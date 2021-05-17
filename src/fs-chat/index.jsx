@@ -471,7 +471,7 @@ class FSChat extends Addon {
 		}
 
 		if ( ! cont ) {
-			cont = (<div class="ffz--player-fschat tw-inline-flex tw-relative tw-tooltip__container">
+			cont = (<div class="ffz--player-fschat tw-inline-flex tw-relative ffz-il-tooltip__container">
 				{btn = (<button
 					class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon tw-button-icon--overlay ffz-core-button ffz-core-button--border ffz-core-button--overlay tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative"
 					type="button"
@@ -484,7 +484,7 @@ class FSChat extends Addon {
 						</div>
 					</div>
 				</button>)}
-				{tip = (<div class="tw-tooltip tw-tooltip--align-right tw-tooltip--up" role="tooltip" />)}
+				{tip = (<div class="ffz-il-tooltip ffz-il-tooltip--align-right ffz-il-tooltip--up" role="tooltip" />)}
 			</div>);
 
 			const thing = container.querySelector('button[data-a-target="player-fullscreen-button"]');
@@ -496,7 +496,7 @@ class FSChat extends Addon {
 		} else {
 			icon = cont.querySelector('figure');
 			btn = cont.querySelector('button');
-			tip = cont.querySelector('.tw-tooltip');
+			tip = cont.querySelector('.ffz-il-tooltip');
 		}
 
 		const active = this.chat != null;

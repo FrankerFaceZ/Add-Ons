@@ -3,6 +3,10 @@
 	top: 50px;
 	right: 50px;
 
+	.right-column__resize-handle-container {
+		display: none !important;
+	}
+
 	//height: 600px;
 	//width: var(--ffz-chat-width);
 
