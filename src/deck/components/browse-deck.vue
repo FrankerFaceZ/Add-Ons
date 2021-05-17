@@ -114,11 +114,11 @@
 					</button>
 				</div>
 				<button
-					class="tw-button tw-button--hollow tw-tooltip__container"
+					class="tw-button tw-button--hollow ffz-il-tooltip__container"
 					@click="openTabSettings"
 				>
 					<span class="tw-button__text ffz-i-cog" />
-					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right">
+					<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right">
 						{{ t('addon.deck.tab-settings', 'Tab Settings') }}
 					</div>
 				</button>
@@ -128,9 +128,9 @@
 					{{ t('addon.deck.filtered', 'Filtered by') }}
 				</div>
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
-				<div v-if="currentTags.length > 3" class="tw-mg-l-05 tw-tooltip__container">
+				<div v-if="currentTags.length > 3" class="tw-mg-l-05 ffz-il-tooltip__container">
 					{{ t('addon.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
-					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right ffz-balloon--lg tw-pd-x-1 tw-pd-b-1">
+					<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right ffz-balloon--lg tw-pd-x-1 tw-pd-b-1">
 						<bd-tag-list
 							:tags="currentTags"
 							class="tw-flex tw-flex-wrap"

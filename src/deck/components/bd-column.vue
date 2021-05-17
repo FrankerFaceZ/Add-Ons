@@ -72,18 +72,18 @@
 				</div>
 				<button
 					v-if="! is_collapsed"
-					class="tw-button tw-button--text tw-flex-shrink-0 tw-tooltip__container"
+					class="tw-button tw-button--text tw-flex-shrink-0 ffz-il-tooltip__container"
 					@click="openMenu"
 				>
 					<figure class="tw-button__text ffz-i-cog" />
-					<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right">
+					<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right">
 						{{ t('addon.deck.open-settings', 'Open Settings') }}
 					</div>
 				</button>
 			</div>
 			<div
 				v-if="! is_collapsed && canAutoRefresh"
-				class="bd--column-progress tw-tooltip__container"
+				class="bd--column-progress ffz-il-tooltip__container"
 			>
 				<div
 					class="ffz-progress-bar ffz-progress-bar-countdown ffz-progress-bar--default ffz-progress-bar--mask"
@@ -101,7 +101,7 @@
 						}"
 					/>
 				</div>
-				<div class="tw-tooltip tw-tooltip--up tw-tooltip--align-right">
+				<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-right">
 					{{ t('addon.deck.auto-refresh', 'Automatically refreshing in {delay}', {delay: progressTip}) }}
 				</div>
 			</div>

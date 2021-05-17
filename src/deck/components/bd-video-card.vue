@@ -28,11 +28,11 @@
 		</template>
 
 		<template #bottom-right>
-			<div v-if="published" class="tw-tooltip__container">
+			<div v-if="published" class="ffz-il-tooltip__container">
 				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
 					<p>{{ t('addon.deck.published-human', '{published,humantime,1}', {published}) }}</p>
 				</div>
-				<div class="tw-tooltip tw-tooltip--up tw-tooltip--align-right">
+				<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-right">
 					{{ t('addon.deck.published', 'Published on {published,date} at {published,time}', {published}) }}
 				</div>
 			</div>

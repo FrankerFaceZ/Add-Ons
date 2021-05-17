@@ -21,12 +21,12 @@
 		</template>
 
 		<template #top-right>
-			<div v-if="uptime" class="tw-tooltip__container">
+			<div v-if="uptime" class="ffz-il-tooltip__container">
 				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
 					<figure class="tw-c-text-live ffz-i-clock" />
 					<p>{{ upString }}</p>
 				</div>
-				<div class="tw-tooltip tw-tooltip--down tw-tooltip--align-right">
+				<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right">
 					{{ t('metadata.uptime.tooltip', 'Stream Uptime') }}
 					<div class="tw-pd-t-05">
 						{{ t(

@@ -11,7 +11,7 @@
 				<div class="tw-flex-grow-1" />
 				<template v-if="copying">
 					<button
-						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						class="tw-button tw-button--text ffz-il-tooltip__container tw-mg-r-1"
 						@click="copying = false"
 					>
 						<span class="tw-button__text ffz-i-cancel">
@@ -21,7 +21,7 @@
 				</template>
 				<template v-else-if="deleting">
 					<button
-						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						class="tw-button tw-button--text ffz-il-tooltip__container tw-mg-r-1"
 						@click="deleting = false"
 					>
 						<span class="tw-button__text ffz-i-cancel">
@@ -39,7 +39,7 @@
 				</template>
 				<template v-else>
 					<button
-						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						class="tw-button tw-button--text ffz-il-tooltip__container tw-mg-r-1"
 						@click="prepareCopy"
 					>
 						<span class="tw-button__text ffz-i-docs">
@@ -47,7 +47,7 @@
 						</span>
 					</button>
 					<button
-						class="tw-button tw-button--text tw-tooltip__container tw-mg-r-1"
+						class="tw-button tw-button--text ffz-il-tooltip__container tw-mg-r-1"
 						@click="deleting = true"
 					>
 						<span class="tw-button__text ffz-i-trash">
