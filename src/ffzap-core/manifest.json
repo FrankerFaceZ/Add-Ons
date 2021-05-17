@@ -6,7 +6,7 @@
 	],
 	"requires": [],
 	"sort": -100,
-	"version": "3.3.5",
+	"version": "3.3.6",
 	"icon": "https://ffzap.com/img/logo.png",
 	"short_name": "FFZ:AP Core",
 	"name": "The FrankerFaceZ Add-On Pack - Core",
@@ -15,5 +15,5 @@
 	"website": "https://ffzap.com/",
 	"settings": "add_ons.ffz_ap_core",
 	"created": "2019-09-12T15:31:59.000Z",
-	"updated": "2021-04-30T21:46:24.880Z"
+	"updated": "2021-05-17T22:00:26.389Z"
 }

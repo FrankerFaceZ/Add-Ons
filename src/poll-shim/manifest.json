@@ -2,12 +2,12 @@
 	"enabled": true,
 	"requires": [],
 	"unlisted": true,
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"short_name": "poll_shim",
 	"name": "Poll Shim",
 	"author": "SirStendec",
 	"description": "This module connects with software running on your computer to automatically run polls on Twitch, in lieu of an official API from Twitch.",
 	"settings": "add_ons.poll_shim",
 	"created": "2019-12-31T23:32:24.000Z",
-	"updated": "2021-04-01T16:14:05.674Z"
+	"updated": "2021-05-17T22:00:51.156Z"
 }

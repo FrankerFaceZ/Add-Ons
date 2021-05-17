@@ -1,12 +1,12 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.4.2",
+	"version": "1.4.3",
 	"short_name": "fs-chat",
 	"name": "Fullscreen Chat",
 	"author": "SirStendec",
 	"description": "Adds a button to the player for displaying chat as an overlay on the player when in fullscreen mode. Please forgive my programmer art icon.",
 	"settings": "add_ons.fs_chat",
 	"created": "2020-07-17T18:50:27.000Z",
-	"updated": "2021-04-01T16:13:32.536Z"
+	"updated": "2021-05-17T22:00:51.156Z"
 }
