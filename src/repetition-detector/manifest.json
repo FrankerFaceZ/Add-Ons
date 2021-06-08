@@ -2,7 +2,7 @@
 	"enabled": true,
 	"requires": [],
 	"unlisted": false,
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"icon": "https://i.imgur.com/dxgqdza.png",
 	"short_name": "repetition_detector",
 	"name": "Chat Repetition Detector",
@@ -10,5 +10,5 @@
 	"description": "This add-on marks repeated messages from the same user for moderation purposes.",
 	"settings": "add_ons.chat_repetition_detector",
 	"created": "2021-04-28T14:19:24.000Z",
-	"updated": "2021-05-02T13:45:07.415Z"
+	"updated": "2021-05-10T14:09:33.866Z"
 }

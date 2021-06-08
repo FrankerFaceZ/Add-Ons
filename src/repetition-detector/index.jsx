@@ -1,5 +1,4 @@
 'use strict'
-const createElement = FrankerFaceZ.utilities.dom.createElement;
 
 class RepetitionDetector extends Addon {
 
@@ -10,33 +9,6 @@ class RepetitionDetector extends Addon {
 	constructor(...args) {
 		super(...args);
 		this.inject('chat');
-		this.injectAs('site_fine', 'site.fine');
-		this.injectAs('site_chat', 'site.chat');
-
-
-		const tryAppendCounter = ctx => {
-			requestAnimationFrame(() => {
-				if(ctx.props.message.repetitionCount && !ctx.props.message.repetitionShown) {
-					const repetitionCount = ctx.props.message.repetitionCount;
-					ctx.props.message.repetitionShown = true;
-					if(repetitionCount >= this.settings.get('addon.repetition_detector.repetitions_threshold')) {
-						let msgElement = this.site_fine.getChildNode(ctx);
-						if(!msgElement) return;
-						//Sometimes messages are rendered with a message container, we have to append our div inside of that to have it on the same line
-						const childContainer = msgElement.querySelector('.chat-line__message-container');
-						if(childContainer) msgElement = childContainer;
-						const textColor = this.settings.get('addon.repetition_detector.text_color');
-						const counterElement = createElement('span', {'style': `color: ${textColor}; margin-left: 10px`}, `x${repetitionCount}`);
-						msgElement.appendChild(counterElement);
-					}
-				}
-			});
-		}
-
-		//sometimes appending the element on mount seems to not work properly
-		this.site_chat.chat_line.ChatLine.on('mount', ctx => tryAppendCounter(ctx));
-		this.site_chat.chat_line.ChatLine.on('update', ctx => tryAppendCounter(ctx));
-
 
 		this.settings.add('addon.repetition_detector.similarity_threshold', {
 			default: 80,
@@ -68,6 +40,15 @@ class RepetitionDetector extends Addon {
 				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
 				title: 'Ignore mods',
 				description: 'Do not check messages by mods or the broadcaster',
+				component: 'setting-check-box'
+			}
+		});
+		this.settings.add('addon.repetition_detector.enable_only_as_mod', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Chat Repetition Detector >> General Settings',
+				title: 'Only as Moderator',
+				description: 'Enable only in channels you are a moderator in',
 				component: 'setting-check-box'
 			}
 		});
@@ -104,8 +85,10 @@ class RepetitionDetector extends Addon {
 			force_seen: true
 		});
 
+		const chatContext = this.chat.context;
+
 		const checkRepetitionAndCache = (username, message) => {
-			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 60000;
+			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 1000;
 			const simThreshold = this.settings.get('addon.repetition_detector.similarity_threshold');
 			if(this.cache.has(username)) {
 				this.cache.get(username).expire = Date.now() + cacheTtl;
@@ -131,13 +114,42 @@ class RepetitionDetector extends Addon {
 			}
 		}
 
-		this.chat.on('chat:receive-message', event => {
-			const msg = event.message;
-			if(!msg.message || msg.message === '') return;
-			if(this.settings.get('addon.repetition_detector.ignore_mods') &&
-					(msg.badges.moderator || msg.badges.broadcaster)) return;
-			msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
-		})
+		const RepetitionCounter = {
+			type: 'repetition_counter',
+			priority: -1000,
+
+			render(token, createElement) {
+				if (!token.repetitionCount)
+					return null;
+
+				const textColor = this.settings.get('addon.repetition_detector.text_color');
+				return (<span style={{'color': textColor, 'margin-left': '1.5rem'}}>{`x${token.repetitionCount}`}</span>)
+			},
+
+			process(tokens, msg) {
+
+				if(!msg.message || msg.message === '') return tokens;
+				if(!chatContext.get('context.moderator') &&
+						this.settings.get('addon.repetition_detector.enable_only_as_mod')) return tokens;
+				if(this.settings.get('addon.repetition_detector.ignore_mods') &&
+						(msg.badges.moderator || msg.badges.broadcaster)) return tokens;
+				if(!msg.repetitionCount && msg.repetitionCount !== 0) {
+					msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
+				}
+
+				if(msg.repetitionCount >= this.settings.get('addon.repetition_detector.repetitions_threshold')) {
+					tokens.push({
+						type: 'repetition_counter',
+						repetitionCount: msg.repetitionCount
+					});
+				}
+
+				return tokens;
+			}
+		}
+
+		this.chat.addTokenizer(RepetitionCounter);
+
 	}
 
 	onEnable() {
