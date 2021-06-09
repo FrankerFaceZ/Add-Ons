@@ -324,7 +324,7 @@ class InlineTab extends Addon {
 		inst[Installed] = null;
 
 		inst.chatInputRef.removeEventListener('focus', inst[Focus]);
-		//inst.chatInputRef.removeEventListener('blur', inst[Focus]);
+		inst.chatInputRef.removeEventListener('blur', inst[Focus]);
 
 		this.clearAutocomplete(inst);
 		this.updateProviders(inst);
@@ -339,7 +339,7 @@ class InlineTab extends Addon {
 
 		const focus = inst[Focus] = this.clearAutocomplete.bind(this, inst);
 		inst.chatInputRef.addEventListener('focus', focus);
-		//inst.chatInputRef.addEventListener('blur', focus);
+		inst.chatInputRef.addEventListener('blur', focus);
 
 		inst.ffztc_position = -1;
 		inst.ffztc_parts = inst.ffztc_suggestions = null;

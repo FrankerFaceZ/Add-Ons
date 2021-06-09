@@ -1,12 +1,12 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"short_name": "Inline Tab",
 	"name": "Inline Tab-Completion",
 	"author": "SirStendec",
 	"description": "Adds support for inline tab-completion to chat. Meaning, tab-completion without a popup.\n\nCertain settings from [Chat > Input >> Tab Completion](~chat.input.tab_completion) may not function while this add-on is enabled. This add-on is designed to mimic the tab-completion behavior of BetterTTV.",
 	"settings": "add_ons.inline_tab",
 	"created": "2021-06-07T19:38:46.958Z",
-	"updated": "2021-06-09T21:11:07.349Z"
+	"updated": "2021-06-09T21:13:21.353Z"
 }
