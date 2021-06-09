@@ -6,6 +6,13 @@ const { Tooltip } = FrankerFaceZ.utilities.tooltip;
 
 import STYLE_URL from './styles.scss';
 
+const TYPES = {
+	mention: 'Mention',
+	emoji: 'Emoji',
+	emote: 'Emote',
+	command: 'Command'
+};
+
 const Installed = Symbol('KeyHandler');
 const Focus = Symbol('FocusHandler');
 
@@ -16,7 +23,8 @@ class InlineTab extends Addon {
 		this.inject('i18n');
 		this.inject('settings');
 		this.inject('site.chat.input');
-		this.inject('tooltips')
+		this.inject('tooltips');
+		this.inject('chat.emoji');
 
 		this.settings.add('addon.inlinetab.tips', {
 			default: true,
@@ -30,6 +38,15 @@ class InlineTab extends Addon {
 					this.createTooltip();
 				else
 					this.destroyTooltip();
+			}
+		});
+
+		this.settings.add('addon.inlinetab.tip-count', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Inline Tab >> Appearance',
+				title: 'Display multiple entries in the tab-completion tooltip.',
+				component: 'setting-check-box'
 			}
 		});
 
@@ -136,7 +153,7 @@ class InlineTab extends Addon {
 				tooltipClass: 'ffz-action-balloon ffz-balloon tw-block tw-border tw-elevation-1 tw-border-radius-small tw-c-background-base',
 				arrowClass: 'ffz-balloon__tail tw-overflow-hidden tw-absolute',
 				arrowInner: 'ffz-balloon__tail-symbol tw-border-t tw-border-r tw-border-b tw-border-l tw-border-radius-small tw-c-background-base tw-absolute',
-				innerClass: 'tw-pd-05',
+				innerClass: '',
 
 				popper: {
 					placement: 'top-start',
@@ -166,60 +183,105 @@ class InlineTab extends Addon {
 		if ( ! current || ! suggestions )
 			return null;
 
-		let type, text = current.text, letter;
+		const length = suggestions.length;
+		if ( ! this.settings.get('addon.inlinetab.tip-count') || length === 1 )
+			return this.renderItem(current, true, false, pos + 1, length);
 
-		if ( current.emoji ) {
-			type = this.i18n.t('addon.inlinetab.type.emoji', 'Emoji');
-			text = `:${current.emoji.names[0]}:`;
+		const out = [];
 
-		} else if ( current.emote ) {
-			type = this.i18n.t('addon.inlinetab.type.emote', 'Emote');
+		// We want to display a sliding window, centered around the
+		// current selection.
+		const extra = Math.min(4, length - 1);
+		let before = Math.min(pos, Math.ceil(extra / 2));
+		const after = Math.min(length - (pos + 1), extra - before);
+		const remaining = extra - (before + after);
+		if ( remaining > 0 )
+			before += remaining;
 
-		} else {
-			if ( current.source === 'command' ) {
-				letter = '/';
-				type = this.i18n.t('addon.inlinetab.type.command', 'Command');
-			} else if ( current.source === 'mention' ) {
-				letter = '@';
-				type = this.i18n.t('addon.inlinetab.type.mention', 'Mention');
-			} else
-				type = null;
+		for(let i=0-before; i <= after; i++) {
+			const idx = pos + i;
+			if ( idx >= 0 && idx < length ) {
+				const current = idx === pos;
 
-			const s = current.sel;
-			if ( s )
-				text = [
-					// eslint-disable-next-line react/jsx-key
-					<span class="tw-strong">{text.slice(0, s[0])}</span>,
-					// eslint-disable-next-line react/jsx-key
-					<span class="tw-c-text-alt">{text.slice(s[0], s[0] + s[1])}</span>,
-					// eslint-disable-next-line react/jsx-key
-					<span class="tw-strong">{text.slice(s[0] + s[1])}</span>
-				];
+				out.push(this.renderItem(
+					suggestions[idx],
+					current,
+					idx === 0,
+					current ? pos + 1 : null,
+					length));
+			}
 		}
 
-		return (<div class="ffztc-preview tw-flex">
+		return (<div class="tw-flex tw-flex-column">{ out }</div>);
+	}
+
+	renderItem(item, is_current, is_first, pos, total) {
+		const type = item.type;
+		let text = item.label || item.text;
+		let letter = null;
+
+		if ( type === 'command' )
+			letter = '/';
+		else if ( type === 'mention' )
+			letter = '@';
+
+		const sel = item.sel;
+		if ( sel ) {
+			const start = sel[0],
+				end = sel[0] + sel[1],
+
+				prefix = text.slice(0, start),
+				middle = text.slice(start, end),
+				trail = text.slice(end);
+
+			text = [
+				prefix ? <span class="tw-strong">{ prefix }</span> : null,
+				middle ? <span class="tw-c-text-alt">{ middle }</span> : null,
+				trail ? <span class="tw-strong">{ trail }</span> : null
+			];
+		}
+
+		let source = null;
+		// TODO: Something nice for emotes.
+		if ( type === 'emoji' && item.source ) {
+			const cat = this.emoji.categories?.[item.source];
+			if ( cat )
+				source = this.i18n.t('tooltip.emoji', 'Emoji - {category}', {
+					category: this.i18n.t(`emoji.category.${item.source.toSnakeCase()}`, cat)
+				});
+		}
+
+		if ( ! source )
+			source = this.i18n.t(`addon.inlinetab.type.${type}`, TYPES[type] || type);
+
+		return (<div class={`ffztc-preview tw-flex${is_first ? ' ffztc-preview__first' : ''}${is_current ? ' ffztc-preview__current' : ''}`}>
 			<div class="tw-relative tw-flex-shrink-0 ffztc-preview__image tw-flex tw-align-items-center tw-justify-content-center tw-mg-r-05">
-				{letter && ! current.src && <figure class="tw-c-text-alt-2 tw-strong tw-font-size-3">{letter}</figure>}
-				{current.src && <img srcSet={current.src} />}
-				{current.fav && <figure class="ffz--favorite ffz-i-star" />}
+				{item.srcSet ?
+					<img srcSet={item.srcSet} />
+					: letter ?
+						<figure class="tw-c-text-alt-2 tw-strong tw-font-size-3">{letter}</figure>
+						: null
+				}
+				{item.fav && <figure class="ffz--favorite ffz-i-star" />}
 			</div>
 			<div class="tw-flex-grow-1 tw-overflow-hidden">
 				<div class="tw-ellipsis">
 					{ Array.isArray(text) ? text : <span class="tw-strong">{text}</span> }
 				</div>
-				<div class="tw-flex tw-border-t tw-c-text-alt tw-font-size-8">
+				<div class="tw-flex tw-c-text-alt tw-font-size-8">
 					<div class="tw-flex-grow-1">
-						{ type }
+						{ source }
 					</div>
-					<div class="tw-flex-shrink-0 tw-mg-l-1">
+					{pos && total ? <div class="tw-flex-shrink-0 tw-mg-l-1">
 						{ this.i18n.t('addon.inlinetab.item', '{pos,number} of {total,number}', {
-							pos: pos + 1,
-							total: suggestions.length
+							pos,
+							total
 						})}
-					</div>
+					</div> : null}
 				</div>
 			</div>
-		</div>);
+		</div>)
+
 	}
 
 	updateProviders(inst) {
@@ -242,14 +304,14 @@ class InlineTab extends Addon {
 			}
 
 			if ( should_fix ) {
-				if ( ! provider.orig_getMatches )
-					provider.orig_getMatches = provider.getMatches;
+				if ( ! provider.ffztc_getMatches )
+					provider.ffztc_getMatches = provider.getMatches;
 
 				provider.getMatches = () => null;
 
 			} else {
-				if ( provider.orig_getMatches )
-					provider.getMatches = provider.orig_getMatches;
+				if ( provider.ffztc_getMatches )
+					provider.getMatches = provider.ffztc_getMatches;
 			}
 		}
 	}
@@ -262,7 +324,7 @@ class InlineTab extends Addon {
 		inst[Installed] = null;
 
 		inst.chatInputRef.removeEventListener('focus', inst[Focus]);
-		inst.chatInputRef.removeEventListener('blur', inst[Focus]);
+		//inst.chatInputRef.removeEventListener('blur', inst[Focus]);
 
 		this.clearAutocomplete(inst);
 		this.updateProviders(inst);
@@ -277,7 +339,7 @@ class InlineTab extends Addon {
 
 		const focus = inst[Focus] = this.clearAutocomplete.bind(this, inst);
 		inst.chatInputRef.addEventListener('focus', focus);
-		inst.chatInputRef.addEventListener('blur', focus);
+		//inst.chatInputRef.addEventListener('blur', focus);
 
 		inst.ffztc_position = -1;
 		inst.ffztc_parts = inst.ffztc_suggestions = null;
@@ -293,6 +355,74 @@ class InlineTab extends Addon {
 			this.tt._exit(inst.chatInputRef);
 
 		inst.chatInputRef._ffz_inst = null;
+	}
+
+	buildSuggestions(providers, input, start, is_command = false) {
+		const suggestions = [];
+
+		for(const provider of providers) {
+			let token = input;
+			let prefix = '';
+			let type = provider.autocompleteType;
+
+			if ( type === 'command' && this.settings.get('addon.inlinetab.no_commands') )
+				continue;
+
+			if ( type === 'mention' ) {
+				if ( this.settings.get('addon.inlinetab.no_mentions') )
+					continue;
+
+				// If we have a manual @ or if we want auto-prefixing, set
+				// the prefix to an @.
+				if ( token[0] === '@' || (! is_command && this.settings.get('addon.inlinetab.mention_prefix')) )
+					prefix = '@';
+
+				// We need to slice the @ off our input to get the mention handler
+				// to work as expected.
+				if ( token[0] === '@' )
+					token = token.slice(1);
+			}
+
+			const out = provider.ffztc_getMatches(token, true, start);
+			if ( Array.isArray(out) )
+				for(const item of out) {
+					const text = item.replacement;
+					let label, idx = -1, length = 0;
+					if ( item.selection ) {
+						idx = text.indexOf(item.selection);
+						if ( idx !== -1 )
+							length = item.selection.length;
+					}
+
+					if ( idx !== -1 )
+						idx += prefix.length;
+
+					let srcSet = item.srcSet, source, extra;
+					if ( item.emoji ) {
+						type = 'emoji';
+						source = item.emoji.category;
+						label = item.matched || `:${item.emoji.names[0]}:`;
+
+					} else if ( item.emote ) {
+						srcSet = item.emote.srcSet;
+						source = item.emote.source;
+						extra = item.emote.extra;
+					}
+
+					suggestions.push({
+						type,
+						source,
+						extra,
+						label,
+						text,
+						sel: idx === -1 ? null : [idx, length],
+						fav: item.favorite,
+						srcSet
+					});
+				}
+		}
+
+		return suggestions;
 	}
 
 	handleKey(inst, event) {
@@ -337,57 +467,12 @@ class InlineTab extends Addon {
 				if ( ! inst.ffztc_parts[1] )
 					return;
 
-				inst.ffztc_suggestions = suggestions = [];
-
-				for(const provider of inst.autocompleteInputRef.providers) {
-					let token = inst.ffztc_parts[1];
-					let prefix = '';
-
-					const type = provider.autocompleteType;
-
-					if ( type === 'command' && this.settings.get('addon.inlinetab.no_commands') )
-						continue;
-
-					if ( type === 'mention' ) {
-						if ( this.settings.get('addon.inlinetab.no_mentions') )
-							continue;
-
-						// Only include an automatic prefix if not
-						// entering a command.
-						if ( (this.settings.get('addon.inlinetab.mention_prefix') && inst.ffztc_parts[0][0] !== '/') || token[0] === '@' )
-							prefix = '@';
-
-						// The mention handler doesn't allow input to start with
-						// an @ symbol when using tab.
-						if ( token[0] === '@' )
-							token = token.slice(1);
-					}
-
-					const out = provider.orig_getMatches(token, true, start);
-					if ( Array.isArray(out) )
-						for(const item of out) {
-							const text = item.replacement;
-							let idx = -1, length = 0;
-							if ( item.selection ) {
-								idx = text.indexOf(item.selection);
-								if ( idx !== -1 )
-									length = item.selection.length;
-							}
-
-							if ( idx !== -1 )
-								idx += prefix.length;
-
-							suggestions.push({
-								source: type,
-								text: prefix + text,
-								sel: idx === -1 ? null : [idx, length],
-								fav: item.favorite,
-								emoji: item.emoji,
-								emote: item.emote,
-								src: item.emote?.srcSet || item.srcSet
-							});
-						}
-				}
+				inst.ffztc_suggestions = suggestions = this.buildSuggestions(
+					inst.autocompleteInputRef.providers,
+					inst.ffztc_parts[1],
+					start,
+					inst.ffztc_parts[0][0] === '/'
+				);
 			}
 
 			if ( suggestions.length > 0 ) {

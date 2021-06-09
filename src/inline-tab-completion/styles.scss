@@ -1,6 +1,17 @@
 .ffztc-preview {
 	width: 20rem;
+	width: #{"min(32rem, calc(var(--ffz-chat-width) - 2rem))"};
 	overflow: hidden;
+
+	padding: 0.5rem;
+
+	&:not(:first-child) {
+		border-top: var(--border-width-default) solid var(--color-border-base);
+	}
+
+	&__current {
+		background-color: var(--color-background-alt);
+	}
 
 	.ffztc-preview__image {
 		width: 2.8rem;
