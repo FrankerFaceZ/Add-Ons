@@ -414,7 +414,7 @@ class InlineTab extends Addon {
 						source,
 						extra,
 						label,
-						text,
+						text: prefix + text,
 						sel: idx === -1 ? null : [idx, length],
 						fav: item.favorite,
 						srcSet
