@@ -6,21 +6,16 @@ export default class Socket {
 		this._connected = false;
 		this._connecting = false;
 		this._connect_attempts = 1;
-		this._joined_channels = {};
+		this._joined_channels = new Set;
 		this._connection_buffer = [];
 		this._events = events;
 	}
 
 	connect() {
-		if (!this.parent.site.getUser()) {
+		if ( this._connected || this._connecting )
 			return;
-		}
 
-		if (this._connected || this._connecting) {
-			return;
-		}
 		this._connecting = true;
-
 		this.parent.log.info('Socket: Connecting to socket server...');
 
 		this.socket = new WebSocket('wss://sockets.betterttv.net/ws');
@@ -31,19 +26,16 @@ export default class Socket {
 			this._connected = true;
 			this._connect_attempts = 1;
 
-			if (this._connection_buffer.length > 0) {
-				let i = this._connection_buffer.length;
-				while (i--) {
-					const channel = this._connection_buffer[i];
-					this.joinChannel(channel);
-				}
+			if ( this._connection_buffer.length ) {
+				const buffer = this._connection_buffer;
 				this._connection_buffer = [];
+
+				for(const channel of buffer)
+					this.joinChannel(channel);
 			}
 
-			if (this.reconnecting) {
+			if ( this.reconnecting )
 				this.reconnecting = false;
-				// api.iterate_rooms();
-			}
 		};
 
 		this.socket.onerror = () => {
@@ -54,9 +46,8 @@ export default class Socket {
 		};
 
 		this.socket.onclose = () => {
-			if (!this._connected || !this.socket) {
+			if ( ! this._connected || ! this.socket )
 				return;
-			}
 
 			this.parent.log.info('Socket: Lost connection to socket server...');
 
@@ -73,12 +64,10 @@ export default class Socket {
 				this.parent.log.error('Socket: Error parsing message', e);
 			}
 
-			if (!evt || !(this._events[evt.name])) {
+			if ( ! evt || ! this._events[evt.name] )
 				return;
-			}
 
 			this.parent.log.debug('Socket: Received event', evt);
-
 			this._events[evt.name](evt.data);
 		};
 	}
@@ -86,11 +75,10 @@ export default class Socket {
 	reconnect() {
 		this.disconnect();
 
-		if (this._connecting === false) {
+		if ( this._connecting === false )
 			return;
-		}
-		this._connecting = false;
 
+		this._connecting = false;
 		this.parent.log.info('Socket: Trying to reconnect to socket server...');
 
 		setTimeout(() => {
@@ -100,7 +88,7 @@ export default class Socket {
 	}
 
 	disconnect() {
-		if (this.socket) {
+		if ( this.socket ) {
 			try {
 				this.socket.close();
 			} catch (e) {
@@ -108,8 +96,7 @@ export default class Socket {
 			}
 		}
 
-		delete this.socket;
-
+		this.socket = null;
 		this._connected = false;
 		this._connecting = false;
 	}
@@ -121,9 +108,8 @@ export default class Socket {
 	}
 
 	emit(event, data) {
-		if (!this._connected || !this.socket) {
+		if ( ! this._connected || ! this.socket )
 			return;
-		}
 
 		this.socket.send(JSON.stringify({
 			name: event,
@@ -132,56 +118,47 @@ export default class Socket {
 	}
 
 	broadcastMe(channel) {
-		if (!this._connected) {
+		if ( ! this._connected )
 			return;
-		}
-		if (!this.parent.site.getUser()) {
+
+		const user = this.parent.site.getUser();
+		if ( ! user?.login )
 			return;
-		}
 
 		this.emit('broadcast_me', {
-			name: this.parent.site.getUser().login,
-			channel,
+			name: user.login,
+			channel
 		});
 	}
 
 	joinChannel(channel) {
-		if (!this._connected) {
-			if (!this._connection_buffer.includes(channel)) {
+		if ( ! this._connected ) {
+			if ( ! this._connection_buffer.includes(channel) )
 				this._connection_buffer.push(channel);
-			}
 			return;
 		}
 
-		if (!channel || !channel.length) {
+		if ( ! channel || ! channel.length )
 			return;
-		}
 
-		if (this._joined_channels[channel]) {
-			this.partChannel(channel);
+		if ( ! this._joined_channels.has(channel) ) {
+			this._joined_channels.add(channel);
+			this.emit('join_channel', {
+				name: channel
+			});
 		}
-
-		this.emit('join_channel', {
-			name: channel,
-		});
-		this._joined_channels[channel] = true;
 
 		this.broadcastMe(channel);
 	}
 
 	partChannel(channel) {
-		if (!this._connected) {
+		if ( ! this._connected || ! channel || ! this._joined_channels.has(channel) )
 			return;
-		}
-		if (!channel.length) {
-			return;
-		}
 
-		if (this._joined_channels[channel]) {
-			this.emit('part_channel', {
-				name: channel,
-			});
-		}
-		delete this._joined_channels[channel];
+		this.emit('part_channel', {
+			name: channel
+		});
+
+		this._joined_channels.delete(channel);
 	}
 }

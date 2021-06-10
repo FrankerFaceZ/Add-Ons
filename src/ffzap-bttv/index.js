@@ -1,13 +1,9 @@
 import Socket from './socket';
-import ProUser from './pro_user';
 
-import { PREFIX, ICON, generateEmoteBlock, generateClickURL } from './shared';
-
-const { has } = FrankerFaceZ.utilities.object;
+import { PREFIX, ICON, ARBITRARY_TEST, hydrateEmote } from './shared';
 
 const API_SERVER = 'https://api.betterttv.net/3/cached',
 	BADGE_NAME = /\/badge-(\w+)\.svg/,
-	ARBITRARY_TEST = /[^A-Z0-9]/i,
 
 	OVERLAY_EMOTES = {
 		'cvMask': '3px 0 0 0',
@@ -90,20 +86,24 @@ class BetterTTV extends Addon {
 						this.socket.joinChannel(room.login);
 
 			} else {
-				for (const key in this.ProUsers) {
-					if ( has(this.ProUsers, key) )
-						this.ProUsers[key].destroy();
+				for(const name of this.pro_users)
+					this.removeProUser(name);
+
+				for(const name of this.night_subs) {
+					const user = this.chat.getUser(null, name, true);
+					if ( user )
+						user.removeSet(PREFIX, NIGHT_SET_ID);
 				}
 
-				this.ProUsers = {};
-
+				this.night_subs.clear();
+				this.pro_users.clear();
 				this.socket.disconnectInternal();
 			}
 
 		}, this);
 
-		this.pro_users = {};
-		this.night_subs = {};
+		this.pro_users = new Set;
+		this.night_subs = new Set;
 		this.socket = false;
 	}
 
@@ -131,13 +131,13 @@ class BetterTTV extends Addon {
 	roomAdd(room) {
 		this.updateChannel(room);
 
-		if ( this.chat.context.get('ffzap.betterttv.pro_emoticons') )
+		if ( room.login && this.chat.context.get('ffzap.betterttv.pro_emoticons') )
 			this.socket.joinChannel(room.login);
 	}
 
 	roomRemove(room) {
-		if ( this.chat.context.get('ffzap.betterttv.pro_emoticons') )
-			this.socket.partChannel(room.id);
+		if ( room.login && this.chat.context.get('ffzap.betterttv.pro_emoticons') )
+			this.socket.partChannel(room.login);
 	}
 
 	onReceiveMessage(msg) {
@@ -152,40 +152,64 @@ class BetterTTV extends Addon {
 
 	getSocketEvents() {
 		return {
-			lookup_user: subscription => {
-				if (!subscription.pro || !this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+			lookup_user: sub => {
+				if ( ! sub.pro || ! this.chat.context.get('ffzap.betterttv.pro_emoticons') )
 					return;
-				}
 
-				if (subscription.pro && subscription.emotes) {
-					if (this.pro_users[subscription.name]) {
-						this.pro_users[subscription.name].emotes_array = subscription.emotes;
-						this.pro_users[subscription.name].loadEmotes();
-					} else {
-						this.pro_users[subscription.name] = new ProUser(this, subscription.name, subscription.emotes);
-					}
-				}
+				const name = sub.name;
+				if ( sub.emotes )
+					this.addProUser(name, sub.emotes);
 
-				if (subscription.subscribed) { // Night's subs
-					if (!(this.night_subs[subscription.name])) {
-						this.night_subs[subscription.name] = true;
-						this.chat.getUser(undefined, subscription.name).addSet(PREFIX, NIGHT_SET_ID);
-					}
+				if ( sub.subscribed && ! this.night_subs.includes(name) ) {
+					// Night's subs
+					this.night_subs.add(name);
+					this.chat.getUser(null, name).addSet(PREFIX, NIGHT_SET_ID);
 				}
 			},
 		};
+	}
+
+	addProUser(name, data) {
+		const has_emotes = Array.isArray(data) && data.length;
+		if ( ! has_emotes )
+			return this.removeProUser(name);
+
+		const user = this.chat.getUser(null, name);
+		if ( ! user )
+			return;
+
+		const emotes = [];
+		for(const raw_emote of data)
+			emotes.push(hydrateEmote(raw_emote));
+
+		const set_id = `${PREFIX}--emotes-pro-${name}`;
+		this.emotes.loadSetData(set_id, {
+			title: 'Personal Emotes',
+			source: 'BetterTTV',
+			icon: ICON,
+			emotes
+		});
+
+		user.addSet(PREFIX, set_id);
+		this.pro_users.add(name);
+	}
+
+	removeProUser(name) {
+		const user = this.chat.getUser(null, name, true);
+		if ( user )
+			user.removeSet(PREFIX, `${PREFIX}--emotes-pro-${name}`);
+
+		this.pro_users.delete(name);
 	}
 
 	async addBadges(attempts = 0) {
 		const response = await fetch(`${API_SERVER}/badges`);
 		if (response.ok) {
 			const data = await response.json(),
-				types = [];
+				types = new Set;
 
-			let i = data.length;
-			while (i--) {
-				const _badge = data[i],
-					match = BADGE_NAME.exec(_badge.badge.svg),
+			for(const raw_badge of data) {
+				const match = BADGE_NAME.exec(raw_badge.badge.svg),
 					name = match?.[1];
 
 				if ( ! name )
@@ -193,31 +217,29 @@ class BetterTTV extends Addon {
 
 				const badge_id = `${PREFIX}--badges-bttv-${name}`;
 
-				if (!types[name]) {
-					const badgeData = {
+				if ( ! types.has(name) ) {
+					types.add(name);
+					this.badges.loadBadgeData(badge_id, {
 						id: `bttv-${name}`,
 						slot: 21,
-						image: _badge.badge.svg,
+						image: raw_badge.badge.svg,
 						svg: true,
-						title: _badge.badge.description,
-						no_invert: true,
-					};
-
-					types[name] = true;
-
-					this.badges.loadBadgeData(badge_id, badgeData);
+						title: raw_badge.badge.description,
+						no_invert: true
+					});
 				}
 
-				this.chat.getUser(_badge.providerId).addBadge(PREFIX, badge_id);
+				this.chat.getUser(raw_badge.providerId).addBadge(PREFIX, badge_id);
 			}
 
 		} else {
-			if (response.status === 404) return;
+			if ( response.status === 404 )
+				return;
 
-			const newAttempts = (attempts || 0) + 1;
-			if (newAttempts < 12) {
+			attempts = (attempts || 0) + 1;
+			if (attempts < 12) {
 				this.log.error('Failed to fetch badges. Trying again in 5 seconds.');
-				setTimeout(this.addBadges.bind(this, newAttempts), 5000);
+				setTimeout(() => this.addBadges(attempts), 5000);
 			}
 		}
 	}
@@ -230,60 +252,42 @@ class BetterTTV extends Addon {
 
 		const response = await fetch(`${API_SERVER}/emotes/global`);
 		if (response.ok) {
-			const emotes = await response.json();
+			const data = await response.json();
 			const wants_arbitrary = this.chat.context.get('ffzap.betterttv.arbitrary_emoticons');
 
-			const globalBttv = [];
-			const nightSubEmotes = [];
+			const globals = [],
+				night_subs = [];
 
-			let i = emotes.length;
-			while (i--) {
-				const dataEmote = emotes[i];
-				const id = dataEmote.id,
-					is_night = dataEmote.channel === 'night',
-					is_arbitrary = ! is_night && ARBITRARY_TEST.test(dataEmote.code),
-					is_animated = dataEmote.imageType === 'gif';
+			for(const raw_emote of data) {
+				const is_night = raw_emote.channel === 'night',
+					is_arbitrary = ! is_night && ARBITRARY_TEST.test(raw_emote.code);
 
-				if ( is_arbitrary && ! wants_arbitrary ) {
-					console.log('Skipping arbitrary', dataEmote);
+				if ( is_arbitrary && ! wants_arbitrary )
 					continue;
-				}
 
-				const emote = {
-					id: dataEmote.id,
-					urls: generateEmoteBlock(id, is_animated),
-					animated: is_animated ? generateEmoteBlock(id) : null,
-					name: dataEmote.code,
-					width: dataEmote.width,
-					height: dataEmote.height,
-					require_spaces: is_arbitrary,
-					modifier: has(OVERLAY_EMOTES, dataEmote.code),
-					modifier_offset: OVERLAY_EMOTES[dataEmote.code],
-					click_url: generateClickURL(id)
-				};
-
+				const emote = hydrateEmote(raw_emote, null, OVERLAY_EMOTES);
 				if ( is_night )
-					nightSubEmotes.push(emote);
+					night_subs.push(emote);
 				else
-					globalBttv.push(emote);
+					globals.push(emote);
 			}
 
-			if ( nightSubEmotes.length )
+			if ( night_subs.length )
 				this.emotes.loadSetData(NIGHT_SET_ID, {
 					title: 'Night (Legacy)',
 					source: 'BetterTTV',
 					icon: ICON,
 					sort: 50,
-					emotes: nightSubEmotes
+					emotes: night_subs
 				});
 
-			if ( globalBttv.length )
+			if ( globals.length )
 				this.emotes.addDefaultSet(PREFIX, GLOBAL_ID, {
 					title: 'Global Emotes',
 					source: 'BetterTTV',
 					icon: ICON,
 					_type: 1,
-					emotes: globalBttv
+					emotes: globals
 				});
 			else
 				this.emotes.removeDefaultSet(PREFIX, GLOBAL_ID);
@@ -292,10 +296,10 @@ class BetterTTV extends Addon {
 			if ( response.status === 404 )
 				return;
 
-			const newAttempts = (attempts || 0) + 1;
-			if (newAttempts < 12) {
+			attempts = (attempts || 0) + 1;
+			if (attempts < 12) {
 				this.log.error('Failed to fetch global emotes. Trying again in 5 seconds.');
-				setTimeout(this.updateGlobalEmotes.bind(this, newAttempts), 5000);
+				setTimeout(() => this.updateChannelEmotes(attempts), 5000);
 			}
 		}
 	}
@@ -310,53 +314,28 @@ class BetterTTV extends Addon {
 
 		const response = await fetch(`${API_SERVER}/users/twitch/${room.id}`);
 		if (response.ok) {
-			const channelBttv = [];
-			const { channelEmotes, sharedEmotes, bots } = await response.json();
+			const data = await response.json(),
+				emotes = [];
 
-			const emotes = channelEmotes.concat(sharedEmotes);
+			if ( Array.isArray(data.bots) )
+				for(const name of data.bots)
+					room.getUser(null, name).addBadge(PREFIX, 2);
 
-			for (const bot of bots) {
-				const botUser = room.getUser(null, bot);
-				if (botUser) {
-					botUser.addBadge(PREFIX, 2);
-				}
-			}
+			if ( Array.isArray(data.channelEmotes) )
+				for(const raw_emote of data.channelEmotes)
+					emotes.push(hydrateEmote(raw_emote, room.data));
 
-			let i = emotes.length;
-			while (i--) {
-				const data = emotes[i],
-					is_animated = data.imageType === 'gif',
-					require_spaces = ARBITRARY_TEST.test(data.code),
+			if ( Array.isArray(data.sharedEmotes) )
+				for(const raw_emote of data.sharedEmotes)
+					emotes.push(hydrateEmote(raw_emote, room.data));
 
-					id = data.id,
-					user = data.user;
-
-				channelBttv.push({
-					id,
-					name: data.code,
-					width: 28,
-					height: 28,
-					owner: user ? {
-						display_name: user.displayName || user.name,
-						name: user.name
-					} : room.data ? {
-						display_name: room.data.display_name || room.data.login,
-						name: room.data.login
-					} : null,
-					require_spaces,
-					click_url: generateClickURL(id),
-					urls: generateEmoteBlock(id, is_animated),
-					animated: is_animated ? generateEmoteBlock(id) : null
-				});
-			}
-
-			if ( channelBttv.length )
+			if ( emotes.length )
 				room.addSet(PREFIX, set_id, {
 					title: 'Channel Emotes',
 					source: 'BetterTTV',
 					icon: ICON,
 					_type: 1,
-					emotes: channelBttv
+					emotes
 				});
 			else
 				room.removeSet(PREFIX, set_id);
@@ -365,18 +344,18 @@ class BetterTTV extends Addon {
 			if (response.status === 404)
 				return;
 
-			const newAttempts = (attempts || 0) + 1;
-			if (newAttempts < 12) {
+			attempts = (attempts || 0) + 1;
+			if (attempts < 12) {
 				this.log.error('Failed to fetch channel emotes. Trying again in 5 seconds.');
-				setTimeout(this.updateChannel.bind(this, room, newAttempts), 5000);
+				setTimeout(() => this.updateChannel(room, attempts), 5000);
 			}
 		}
 	}
 
 	updateChannelEmotes() {
-		for (const room of this.chat.iterateRooms()) {
-			if (room) this.updateChannel(room);
-		}
+		for (const room of this.chat.iterateRooms())
+			if (room)
+				this.updateChannel(room);
 	}
 }
 
