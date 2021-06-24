@@ -105,8 +105,41 @@
 				</div>
 
 				<div class="tw-flex tw-align-items-center tw-mg-y-05">
+					<label :for="'color$' + column.id">
+						{{ t('addon.deck.edit.color', 'Color:') }}
+					</label>
+					<color-picker
+						:id="'color$' + column.id"
+						ref="color"
+						v-model="column.display.color"
+						:alpha="false"
+						:nullable="true"
+						class="tw-flex-grow-1"
+					/>
+				</div>
+
+				<div class="tw-flex tw-align-items-center tw-mg-y-05">
+					<label :for="'columns$' + column.id">
+						{{ t('addon.deck.edit.columns', 'Columns:') }}
+					</label>
+					<input
+						:id="'columns$' + column.id"
+						v-model.number="column.display.columns"
+						type="range"
+						min="1"
+						max="10"
+						step="1"
+						class="ffz-range ffz-range--unfilled tw-flex-grow-1"
+						@wheel="scrollColumns"
+					>
+					<div class="tw-mg-l-1">
+						{{ column.display.columns }}
+					</div>
+				</div>
+
+				<div class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'width$' + column.id">
-						{{ t('addon.deck.edit.width', 'Width:') }}
+						{{ t('addon.deck.edit.card-width', 'Card Size:') }}
 					</label>
 					<select
 						:id="'width$' + column.id"
@@ -115,13 +148,13 @@
 						class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 					>
 						<option :value="0">
-							{{ t('addon.deck.width.0', 'Narrow') }}
+							{{ t('addon.deck.width.0', 'Small') }}
 						</option>
 						<option :value="1">
 							{{ t('addon.deck.width.1', 'Normal') }}
 						</option>
 						<option :value="2">
-							{{ t('addon.deck.width.2', 'Wide') }}
+							{{ t('addon.deck.width.2', 'Large') }}
 						</option>
 					</select>
 				</div>
@@ -154,6 +187,18 @@
 					>
 					<label :for="'no_avatars$' + column.id" class="ffz-checkbox__label">
 						{{ t('addon.deck.edit.avatars', 'Do not display avatars.') }}
+					</label>
+				</div>
+
+				<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05">
+					<input
+						:id="'no_viewers$' + column.id"
+						v-model="column.display.hide_viewers"
+						type="checkbox"
+						class="ffz-checkbox__input"
+					>
+					<label :for="'no_viewers$' + column.id" class="ffz-checkbox__label">
+						{{ t('addon.deck.edit.viewers', 'Do not display views / viewers.') }}
 					</label>
 				</div>
 			</section>
@@ -340,6 +385,22 @@ export default {
 	},
 
 	methods: {
+		scrollColumns(event) {
+			if ( event.deltaY === 0 )
+				return;
+
+			const delta = event.deltaY > 0 ? 1 : -1;
+			let new_val = this.column.display.columns + delta;
+
+			if ( new_val < 0 )
+				new_val = 0;
+			else if ( new_val > 10 )
+				new_val = 10;
+
+			this.column.display.columns = new_val;
+			event.preventDefault();
+		},
+
 		scrollMaxTags(event) {
 			if ( event.deltaY === 0 )
 				return;

@@ -9,7 +9,7 @@
 		:avatar="settings.show_avatars ? item.profileImageURL : null"
 		:avatarTitle="item.displayName"
 
-		:bottomLeft="t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
+		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
 
 		:click="openMenu"
 	>
@@ -76,7 +76,7 @@
 import { reduceTags } from '../data';
 import {createMenu, makeReference} from '../host-menu.jsx';
 
-const {get, has} = FrankerFaceZ.utilities.object;
+const {get} = FrankerFaceZ.utilities.object;
 const Popper = FrankerFaceZ.utilities.popper;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 

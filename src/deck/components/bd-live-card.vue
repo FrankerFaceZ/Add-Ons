@@ -14,7 +14,7 @@
 		:boxartTitle="game && game.displayName"
 		:boxartLink="game && getReactURL('dir-game-index', game.name)"
 
-		:bottomLeft="t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
+		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
 	>
 		<template #top-left>
 			<bd-stream-indicator v-if="! settings.hide_live" :type="item.stream.type" />
@@ -55,7 +55,7 @@
 import ColumnBase from '../column-base';
 import { reduceTags } from '../data';
 
-const {get, has} = FrankerFaceZ.utilities.object;
+const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 
 export default {

@@ -4,6 +4,8 @@
 		:class="[is_collapsed ? 'collapsed' : '', widthClass, hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
 		class="bd--deck-column tw-relative tw-border tw-elevation-1 tw-flex-column tw-mg-r-1"
 		:data-column-id="data.id"
+		:data-columns="columns"
+		:style="`--columns: ${columns};${colors}`"
 	>
 		<div
 			v-if="hasArt"
@@ -31,7 +33,7 @@
 					v-if="! is_collapsed && avatar"
 					class="column-avatar tw-mg-r-05"
 				>
-					<img :src="avatar" />
+					<img :src="avatar">
 				</div>
 				<div class="tw-flex-grow-1 tw-flex tw-align-items-center tw-ellipsis">
 					<div
@@ -97,7 +99,8 @@
 						data-a-target="tw-progress-bar-animation"
 						:style="{
 							width: `${progressWidth}%`,
-							'animation-duration': `${ttRefresh / 1000}s`
+							transition: progressWidth >= 99 ? 'none' : '1s linear all'
+							//'animation-duration': `${ttRefresh / 1000}s`
 						}"
 					/>
 				</div>
@@ -139,7 +142,7 @@
 				<div
 					v-for="item in filtered"
 					:key="item.real_id || item.id"
-					class="tw-mg-1 tw-pd-b-1 tw-border-b"
+					class="tw-mg-t-1 tw-mg-l-1 tw-pd-b-1 tw-border-b"
 				>
 					<component
 						:is="getComponent(item)"
@@ -149,21 +152,23 @@
 					/>
 				</div>
 				<div v-observe-visibility="{callback: onBottomChange}" />
-				<div class="tw-align-center tw-mg-y-2 tw-c-text-alt-2">
+				<div class="tw-align-center tw-mg-l-1 tw-mg-y-2 tw-c-text-alt-2">
 					<template v-if="! canRun">
-						<h1 class="ffz-i-up-big" />
-						<div>
-							{{ t('addon.deck.need-config', 'You need to finish configuring this column.') }}
-						</div>
-						<div class="tw-mg-t-1">
-							<button
-								class="tw-button tw-button--text"
-								@click="openMenu"
-							>
-								<span class="ffz-i-cog tw-button__text">
-									{{ t('addon.deck.open-settings', 'Open Settings') }}
-								</span>
-							</button>
+						<div class="bd--width">
+							<h1 class="ffz-i-up-big" />
+							<div>
+								{{ t('addon.deck.need-config', 'You need to finish configuring this column.') }}
+							</div>
+							<div class="tw-mg-t-1">
+								<button
+									class="tw-button tw-button--text"
+									@click="openMenu"
+								>
+									<span class="ffz-i-cog tw-button__text">
+										{{ t('addon.deck.open-settings', 'Open Settings') }}
+									</span>
+								</button>
+							</div>
 						</div>
 					</template>
 					<template v-else-if="finished || errored || too_throttled">
@@ -215,7 +220,7 @@
 						</div>
 						<div v-else-if="too_throttled" class="bd--width">
 							<div class="tw-mg-b-1">
-								{{ t('addon.deck.too-much-loading', 'This column has stopped loading after client-side filtering has caused too much data to load.') }}
+								{{ t('addon.deck.too-much-loading', 'This column has stopped loading because it\'s been loading a lot, and we want to make sure nothing\'s wrong.') }}
 							</div>
 							<div class="tw-mg-b-1">
 								<button
@@ -230,10 +235,12 @@
 						</div>
 					</template>
 					<template v-else>
-						<h1 class="ffz-i-zreknarf loading" />
-						<div v-if="loading">{{ t('addon.deck.loading', 'Loading...') }}</div>
-						<div v-else-if="throttled">{{ t('addon.deck.throttled', 'Waiting a bit...') }}</div>
-						<div v-else>{{ t('addon.deck.no-state', '(what am i doing)') }}</div>
+						<div class="tw-mg-l-1 bd--width tw-align-center">
+							<h1 class="ffz-i-zreknarf loading" />
+							<div v-if="loading">{{ t('addon.deck.loading', 'Loading...') }}</div>
+							<div v-else-if="throttled">{{ t('addon.deck.throttled', 'Waiting a bit...') }}</div>
+							<div v-else>{{ t('addon.deck.no-state', '(what am i doing)') }}</div>
+						</div>
 					</template>
 				</div>
 			</simplebar>
@@ -242,10 +249,11 @@
 </template>
 
 <script>
-import { cleanTooltips } from '../data';
+import { cleanTooltips, getTheme } from '../data';
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
 const {print_duration} = FrankerFaceZ.utilities.time;
-const {has, get, deep_copy, shallow_object_equals, maybe_call} = FrankerFaceZ.utilities.object;
+const {has, deep_copy} = FrankerFaceZ.utilities.object;
+const {Color} = FrankerFaceZ.utilities.color;
 
 export default {
 	props: ['data', 'type', 'settings', 'collapsed'],
@@ -287,6 +295,30 @@ export default {
 	},
 
 	computed: {
+		colors() {
+			if ( ! this.data.display.color )
+				return '';
+
+			const color = Color.RGBA.fromCSS(this.data.display.color),
+				theme = getTheme();
+			if ( ! color || ! theme )
+				return '';
+
+			return theme.generateBackgroundTextBlob(color);
+		},
+
+		columns() {
+			if ( has(this.data.display, 'columns') )
+				return this.data.display.columns;
+
+			if ( this.inst && this.inst.getColumns ) {
+				this.loader;
+				return this.inst.getColumns();
+			}
+
+			return 1;
+		},
+
 		widthClass() {
 			if ( this.width === 0 )
 				return 'bd-narrow';
@@ -452,7 +484,8 @@ export default {
 				return 0;
 
 			const value = this.autoRefreshDelay;
-			return (ttl / value) * 100;
+			const frac = ttl / value;
+			return (frac - (1 / value) * (1 - frac)) * 100;
 		},
 
 		shouldRefresh() {
@@ -497,6 +530,9 @@ export default {
 
 			if ( this.data.display.hide_avatars )
 				out.show_avatars = false;
+
+			if ( this.data.display.hide_viewers )
+				out.hide_viewers = true;
 
 			return out;
 		}
@@ -673,6 +709,9 @@ export default {
 			if ( ! has(display, 'width') )
 				display.width = this.width;
 
+			if ( ! has(display, 'columns') )
+				display.columns = this.columns;
+
 			this.$emit('open-modal', {
 				modal: 'bd-column-editor',
 				data: {
@@ -755,7 +794,7 @@ export default {
 					this.throttle_incremented = true;
 				}
 
-				if ( this.throttle_count > 3 )
+				if ( this.throttle_count > 5 )
 					this.too_throttled = true;
 				else
 					this._maybe_timer = setTimeout(() => this.maybeLoadMore(), offset);

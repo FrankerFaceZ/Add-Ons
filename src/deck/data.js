@@ -5,6 +5,11 @@ export function getLoader() {
 	return ffz.resolve('site.twitch_data');
 }
 
+export function getTheme() {
+	const ffz = FrankerFaceZ.get();
+	return ffz.resolve('site.theme');
+}
+
 export function getLanguageCode() {
 	return getLoader().languageCode;
 }

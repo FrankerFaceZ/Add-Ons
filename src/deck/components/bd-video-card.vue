@@ -18,7 +18,7 @@
 		:topRight="duration"
 		topRightIcon="ffz-i-play"
 
-		:bottomLeft="t('addon.deck.views', '{count,number} view{count,en_plural}', item.viewCount)"
+		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count,number} view{count,en_plural}', item.viewCount)"
 
 		@mouseenter="onHover"
 		@mouseleave="onLeave"
@@ -54,7 +54,6 @@
 import ColumnBase from '../column-base';
 import { reduceTags } from '../data';
 
-const {get, has} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 
 export default {
@@ -85,11 +84,13 @@ export default {
 		avatar() {
 			if ( this.iconic_type === ColumnBase.ICONIC_TYPES.AVATAR )
 				return this.item.owner.profileImageURL;
+			return null;
 		},
 
 		boxart() {
 			if ( this.iconic_type === ColumnBase.ICONIC_TYPES.BOXART )
 				return this.game && this.game.avatarURL;
+			return null;
 		},
 
 		type() {
