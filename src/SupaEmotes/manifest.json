@@ -1,0 +1,19 @@
+{
+	"enabled": true,
+	"targets": [
+		"main",
+		"clips"
+	],
+	"requires": [
+		"ffzap-core"
+	],
+	"version": "1.0.0",
+	"icon": "https://emotes.supa.codes/public/logo.png",
+	"short_name": "SupaEmotes",
+	"name": "Supa Emotes",
+	"author": "Supa",
+	"description": "Adds dank channel emotes.",
+	"website": "https://emotes.supa.codes/",
+	"created": "2021-06-28T17:56:58.113Z",
+	"updated": "2021-06-28T18:20:04.221Z"
+}
