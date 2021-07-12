@@ -1,0 +1,12 @@
+{
+    "enabled": true,
+    "requires": [],
+    "version": "1.0.0",
+    "short_name": "7TV",
+    "name": "7TV Emotes",
+    "author": "Melonify",
+    "description": "Adds 7TV badges, channel and global emotes as well as live emote update support.",
+    "website": "https://7tv.app",
+    "settings": "add_ons.7tv_emotes",
+    "icon": "https://7tv.app/assets/icons/icon-96x96.png"
+}
