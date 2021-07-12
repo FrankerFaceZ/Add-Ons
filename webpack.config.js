@@ -1,6 +1,5 @@
 /* global module __dirname */
 
-const slash = require('slash');
 const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
