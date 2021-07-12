@@ -51,12 +51,8 @@ class SevenTVEmotes extends Addon {
     }
 
     async onEnable() {
-        try {
-            await this.setupSocket();
-        } catch (e) {}
-
         this.chat.context.on('changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
-        this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', () => this.updateChannels());
+        this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', () => this.updateChannelSets());
         this.chat.context.on('changed:addon.seventv_emotes.socket', async () => {
             try {
                 await this.setupSocket();
@@ -64,16 +60,17 @@ class SevenTVEmotes extends Addon {
             catch (e) {
                 return;
             }
-            await this.updateChannels();
         });
-
-        this.addBadges();
 
         this.on('chat:room-add', this.addChannel, this);
         this.on('chat:room-remove', this.removeChannel, this);
 
+        this.addBadges();
+
         this.updateGlobalEmotes();
-        this.updateChannels();
+        this.updateChannelSets();
+
+        this.setupSocket();
     }
 
     async addChannel(channel) {
@@ -154,18 +151,16 @@ class SevenTVEmotes extends Addon {
         return this.emotes.emote_sets[this.getChannelSetID(channel)];
     }
 
-    async updateChannels() {
-        const promises = [];
+    async updateChannelSets() {
         const enabled = this.chat.context.get('addon.seventv_emotes.channel_emotes');
         for (const channel of this.chat.iterateRooms()) {
             if (enabled) {
-                promises.push(this.addChannel(channel));
+                await this.addChannelSet(channel);
             }
             else {
                 this.removeChannelSet(channel);
             }
         }
-        return Promise.all(promises);
     }
 
     convertEmote(emote) {
@@ -240,6 +235,7 @@ class SevenTVEmotes extends Addon {
                 });
 
                 this.socket.addEventListener("open", () => {
+                    this.subscribeActiveChannels();
                     resolve();
                 });
 
@@ -282,6 +278,15 @@ class SevenTVEmotes extends Addon {
                     }
                 }
             }));
+        }
+    }
+
+    subscribeActiveChannels() {
+        const enabled = this.chat.context.get('addon.seventv_emotes.channel_emotes');
+        for (const channel of this.chat.iterateRooms()) {
+            if (enabled) {
+                this.subscribeChannel(channel);
+            }
         }
     }
 
