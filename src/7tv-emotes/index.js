@@ -293,7 +293,7 @@ class SevenTVEmotes extends Addon {
                 if (chat.props.channelLogin == data.channel) {
                     chat.addMessage({
                         type: this.siteChat.chat_types.Notice,
-                        message: `${data.actor} ${data.removed ? 'removed' : 'added'} a 7TV emote "${data.emote.name}".`
+                        message: `[7TV] ${data.actor} ${data.removed ? 'removed' : 'added'} the emote "${data.emote.name}"`
                     });
                 }
             }
