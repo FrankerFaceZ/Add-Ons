@@ -1,6 +1,10 @@
 {
     "enabled": true,
     "requires": [],
+	"targets": [
+		"main",
+		"clips"
+	],
     "version": "1.0.0",
     "short_name": "7TV",
     "name": "7TV Emotes",

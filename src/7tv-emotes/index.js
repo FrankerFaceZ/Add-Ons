@@ -223,7 +223,7 @@ class SevenTVEmotes extends Addon {
         return new Promise((resolve, reject) => {
             this.closeSocket();
 
-            if (this.chat.context.get('addon.seventv_emotes.socket')) {
+            if (this.root.flavor == "main" && this.chat.context.get('addon.seventv_emotes.socket')) {
                 this.socket = new WebSocket("wss://api.7tv.app/v2/ws");
 
                 this.socket.addEventListener("message", (event) => {
@@ -288,7 +288,7 @@ class SevenTVEmotes extends Addon {
     handleChannelEmoteUpdate(data) {
         if (!this.chat.context.get('addon.seventv_emotes.channel_emotes')) return;
 
-        if (this.chat.context.get('addon.seventv_emotes.update_messages')) {
+        if (this.chat.context.get('addon.seventv_emotes.update_messages') && this.siteChat.ChatService) {
             for (const chat of this.siteChat.ChatService.instances) {
                 if (chat.props.channelLogin == data.channel) {
                     chat.addMessage({
