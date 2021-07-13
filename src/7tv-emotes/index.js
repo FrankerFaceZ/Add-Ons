@@ -52,7 +52,10 @@ class SevenTVEmotes extends Addon {
 
 	async onEnable() {
 		this.chat.context.on('changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
-		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', () => this.updateChannelSets());
+		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', async () => {
+			await this.updateChannelSets();
+			this.subscribeActiveChannels();
+		});
 		this.chat.context.on('changed:addon.seventv_emotes.socket', async () => {
 			try {
 				await this.setupSocket();
@@ -293,17 +296,6 @@ class SevenTVEmotes extends Addon {
 	handleChannelEmoteUpdate(data) {
 		if (!this.chat.context.get('addon.seventv_emotes.channel_emotes')) return;
 
-		if (this.chat.context.get('addon.seventv_emotes.update_messages') && this.siteChat.ChatService) {
-			for (const chat of this.siteChat.ChatService.instances) {
-				if (chat.props.channelLogin == data.channel) {
-					chat.addMessage({
-						type: this.siteChat.chat_types.Notice,
-						message: `[7TV] ${data.actor} ${data.removed ? 'removed' : 'added'} the emote "${data.emote.name}"`
-					});
-				}
-			}
-		}
-
 		for (const channel of this.chat.iterateRooms()) {
 			if (channel.login == data.channel) {
 				const emoteSet = this.getChannelSet(channel);
@@ -316,6 +308,10 @@ class SevenTVEmotes extends Addon {
 						emotes[data.emote.id] = this.convertEmote(data.emote);
 					}
 					this.addChannelSet(channel, Object.values(emotes));
+				}
+
+				if (this.chat.context.get('addon.seventv_emotes.update_messages')) {
+					this.siteChat.addNotice(channel.login, `[7TV] ${data.actor} ${data.removed ? 'removed' : 'added'} the emote "${data.emote.name}"`);
 				}
 			}
 		}
