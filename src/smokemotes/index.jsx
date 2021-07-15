@@ -149,18 +149,6 @@ class SmokeysUtils extends Addon {
 			},
 		});
 
-		this.settings.add('smokemotes.auto_point_claimer', {
-			default: false,
-
-			ui: {
-				sort: 0,
-				path: "Add-Ons > Smokey's Utilities >> Channel",
-				title: 'Auto Point Claimer',
-				description: 'Enable to automatically obtain channel points. After disabling, you must refresh to completely disable.',
-				component: 'setting-check-box',
-			},
-		});
-
 		this.settings.add('smokemotes.auto_live_follow_page', {
 			default: false,
 
@@ -183,7 +171,18 @@ class SmokeysUtils extends Addon {
 				sort: 1,
 				path: "Add-Ons > Smokey's Utilities >> Mod Keybinds",
 				title: 'Toggle Mod Keybinds',
-				description: 'Enable to be able to use T/B/P for Timeout/Ban/Purge.',
+				description: 'Enable to be able to use T/B/P/D for Timeout/Ban/Purge/Delete.',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('smokemotes.auto_exit_viewercard', {
+			default: true,
+
+			ui: {
+				sort: 2,
+				path: "Add-Ons > Smokey's Utilities >> Mod Keybinds",
+				title: 'Auto Close Viewer Card After Keybind Action',
 				component: 'setting-check-box',
 			},
 		});
@@ -191,11 +190,6 @@ class SmokeysUtils extends Addon {
 		this.chat.context.on(
 			'changed:smokemotes.keep_hd_video',
 			this.keep_hd_video,
-			this
-		);
-		this.chat.context.on(
-			'changed:smokemotes.auto_point_claimer',
-			this.auto_point_claimer,
 			this
 		);
 
@@ -214,54 +208,14 @@ class SmokeysUtils extends Addon {
 
 		this.event_listener = false;
 
-		/*const t = this;
-
-		/**
-		 * Pinned Mentions
-		 * /
-		const Pinned_Mentions = {
-			type: 'pinned_mentions',
-			priority: -1000,
-
-			process(tokens, msg) {
-				if ( msg.smokey_pinned )
-					return tokens;
-
-				msg.smokey_pinned = true;
-				if ( msg.deleted || msg.ffz_removed || ! msg.mentioned || msg.isHistorical || ! t.settings.get('smokemotes.pinned_mentions') )
-					return tokens;
-
-				try {
-					t.handlePin(msg);
-				} catch(err) {
-					t.log.error('Error handling pin for message.', err);
-				}
-
-				return tokens;
-			}
-		};*/
-
 		this.updateEventListener();
 		this.settings.on(':changed:smokemotes.pinned_mentions', this.updateEventListener, this);
-
-		/*if ( this.settings.get('smokemotes.pinned_mentions') ) {
-			this.pinned_registered = true;
-			this.chat.addTokenizer(Pinned_Mentions);
-		} else {
-			this.settings.on(':changed:smokemotes.pinned_mentions', () => {
-				if ( ! this.pinned_registered && this.settings.get('smokemotes.pinned_mentions') ) {
-					this.pinned_registered = true;
-					this.chat.addTokenizer(Pinned_Mentions);
-				}
-			});
-		}*/
 	}
 
 	onEnable() {
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
 
 		this.keep_hd_video();
-		this.auto_point_claimer();
 
 		this.liveFollowing();
 
@@ -430,23 +384,6 @@ class SmokeysUtils extends Addon {
 		});
 	}
 
-
-	/**
-	 * Automatically Claim Channel Points Observer
-	 */
-
-	auto_point_claimer() {
-		if (this.chat.context.get('smokemotes.auto_point_claimer')) {
-			const observer = new MutationObserver(() => {
-				const bonus = document.querySelector('.claimable-bonus__icon');
-				if (bonus) {
-					bonus.click();
-				}
-			});
-			observer.observe(document.body, { childList: true, subtree: true });
-		}
-	}
-
 	/**
 	 * Actually does more than this now. Will keep video from falling behind as well as keep the video HD (in most cases).
 	 */
@@ -458,14 +395,14 @@ class SmokeysUtils extends Addon {
 					value: false,
 					writable: false,
 				});
-				document.addEventListener(
+				/*document.addEventListener(
 					'visibilitychange',
 					(e) => {
 						e.stopImmediatePropagation();
 					},
 					true,
 					true
-				);
+				);*/
 			} catch (err) {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
@@ -514,7 +451,7 @@ class SmokeysUtils extends Addon {
 		)
 			return;
 
-		const find_close = document.getElementsByClassName('tw-button-icon');
+		const find_close = document.getElementsByTagName('button');
 
 		let close_button;
 
@@ -522,7 +459,7 @@ class SmokeysUtils extends Addon {
 
 		while (i--) {
 			if (
-				find_close[i].getAttribute('data-test-selector') == 'close-viewer-card'
+				find_close[i].getAttribute('data-test-selector') == 'close-viewer-card-button'
 			) {
 				close_button = find_close[i];
 			}
@@ -539,7 +476,7 @@ class SmokeysUtils extends Addon {
 				);
 				this.updateLogin();
 
-				if (close_button) {
+				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
 					close_button.click();
 				}
 
@@ -553,7 +490,7 @@ class SmokeysUtils extends Addon {
 				);
 				this.updateLogin();
 
-				if (close_button) {
+				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
 					close_button.click();
 				}
 
@@ -567,7 +504,7 @@ class SmokeysUtils extends Addon {
 				);
 				this.updateLogin();
 
-				if (close_button) {
+				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
 					close_button.click();
 				}
 
@@ -581,7 +518,7 @@ class SmokeysUtils extends Addon {
 				);
 				this.updateLogin();
 
-				if (close_button) {
+				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
 					close_button.click();
 				}
 
