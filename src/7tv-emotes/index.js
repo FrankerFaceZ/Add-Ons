@@ -176,6 +176,8 @@ class SevenTVEmotes extends Addon {
 				3: emote.urls[2][1],
 				4: emote.urls[3][1]
 			},
+			modifier: (emote.visibility & 128) == 128,
+			modifier_offset: "0",
 			width: emote.width[0],
 			height: emote.height[0],
 			click_url: `https://7tv.app/emotes/${emote.id}`
@@ -222,22 +224,29 @@ class SevenTVEmotes extends Addon {
 			this.closeSocket();
 
 			if (this.root.flavor == "main" && this.chat.context.get('addon.seventv_emotes.socket')) {
-				this.socket = new WebSocket("wss://api.7tv.app/v2/ws");
+				this.socket = new WebSocket("wss://ws.7tv.app/");
 
 				this.socket.addEventListener("message", (event) => {
 					this.onSocketMessage(event.data);
 				});
 
-				this.socket.addEventListener("close", () => {
+				this.socket.addEventListener("close", (event) => {
 					this.closeSocket();
 
-					this.socketReconnectTimeout = setTimeout(() => {
-						this.socketReconnectTimeout = undefined;
-						this.setupSocket();
-					}, 500);
+					if (event.code != 1000) {
+						if (!this.socketReconnectDelay) this.socketReconnectDelay = 1000;
+
+						this.socketReconnectTimeout = setTimeout(() => {
+							this.socketReconnectTimeout = undefined;
+							this.setupSocket();
+						}, this.socketReconnectDelay);
+
+						this.socketReconnectDelay *= Math.random() * 0.2 + 1.3;
+					}
 				});
 
 				this.socket.addEventListener("open", () => {
+					this.socketReconnectDelay = undefined;
 					this.subscribeActiveChannels();
 					resolve();
 				});
