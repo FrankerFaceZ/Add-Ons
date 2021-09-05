@@ -82,6 +82,7 @@ class InlineTab extends Addon {
 
 	onEnable() {
 		this.input.ChatInput.on('mount', this.installInputHandler, this);
+		this.input.ChatInput.on('update', this.updateInputHandler, this);
 
 		this.input.ChatInput.ready((cls, instances) => {
 			for(const inst of instances)
@@ -94,6 +95,7 @@ class InlineTab extends Addon {
 
 	onDisable() {
 		this.input.ChatInput.off('mount', this.installInputHandler, this);
+		this.input.ChatInput.off('update', this.updateInputHandler, this);
 
 		for(const inst of this.input.ChatInput.instances) {
 			this.uninstallInputHandler(inst);
@@ -316,35 +318,57 @@ class InlineTab extends Addon {
 		}
 	}
 
-	uninstallInputHandler(inst) {
-		if ( ! inst[Installed] )
-			return;
+	uninstallInputHandler(inst, clear_state = true) {
+		if ( inst[Installed] ) {
+			inst.chatInputRef.removeEventListener('keydown', inst[Installed]);
+			inst[Installed] = null;
+		}
 
-		inst.chatInputRef.removeEventListener('keydown', inst[Installed]);
-		inst[Installed] = null;
+		if ( inst[Focus] ) {
+			inst.chatInputRef.removeEventListener('focus', inst[Focus]);
+			inst.chatInputRef.removeEventListener('blur', inst[Focus]);
+			inst[Focus] = null;
+		}
 
-		inst.chatInputRef.removeEventListener('focus', inst[Focus]);
-		inst.chatInputRef.removeEventListener('blur', inst[Focus]);
+		inst.chatInputRef[Installed] = false;
 
-		this.clearAutocomplete(inst);
-		this.updateProviders(inst);
+		if ( clear_state ) {
+			this.clearAutocomplete(inst);
+			this.updateProviders(inst);
+		}
 	}
 
 	installInputHandler(inst) {
-		if ( ! (this.enabled || this.enabling) || inst[Installed] )
+		if ( ! (this.enabled || this.enabling) )
 			return;
 
-		const handler = inst[Installed] = this.handleKey.bind(this, inst);
-		inst.chatInputRef.addEventListener('keydown', handler);
+		if ( ! inst[Installed] ) {
+			const handler = inst[Installed] = this.handleKey.bind(this, inst);
+			inst.chatInputRef.addEventListener('keydown', handler);
+		}
 
-		const focus = inst[Focus] = this.clearAutocomplete.bind(this, inst);
-		inst.chatInputRef.addEventListener('focus', focus);
-		inst.chatInputRef.addEventListener('blur', focus);
+		if ( ! inst[Focus] ) {
+			const focus = inst[Focus] = this.clearAutocomplete.bind(this, inst);
+			inst.chatInputRef.addEventListener('focus', focus);
+			inst.chatInputRef.addEventListener('blur', focus);
+		}
 
-		inst.ffztc_position = -1;
-		inst.ffztc_parts = inst.ffztc_suggestions = null;
+		if ( inst.ffztc_position == null ) {
+			inst.ffztc_position = -1;
+			inst.ffztc_parts = inst.ffztc_suggestions = null;
+		}
+
+		inst.chatInputRef[Installed] = true;
 
 		this.updateProviders(inst);
+	}
+
+	updateInputHandler(inst) {
+		if ( ! inst.chatInputRef[Installed] ) {
+			this.log.debug('Updating input handler.');
+			this.uninstallInputHandler(inst, false);
+			this.installInputHandler(inst);
+		}
 	}
 
 	clearAutocomplete(inst) {
