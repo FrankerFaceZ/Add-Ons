@@ -1,6 +1,7 @@
 <template>
 	<bd-card
 		:link="getReactURL('user', item.login)"
+		:state="{channelView: 'Watch'}"
 		:title="title"
 		:image="image"
 		:tags="tags"

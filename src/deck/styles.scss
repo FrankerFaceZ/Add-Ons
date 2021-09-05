@@ -201,10 +201,14 @@
 
 .bd--column-progress {
 	position: absolute;
-	bottom: -.8rem;
+	bottom: 0;
 	left: 0;
 	right: 0;
 	width: unset !important;
+
+	.ffz-progress-bar {
+		height: 0.3rem;
+	}
 }
 
 .bd--art-column {

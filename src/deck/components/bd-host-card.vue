@@ -1,6 +1,7 @@
 <template>
 	<bd-card
 		:link="`/${item.login}`"
+		:state="{channelView: 'Watch'}"
 		:title="title"
 		:image="image"
 		:tags="tags"
@@ -61,6 +62,7 @@
 						<react-link
 							class="tw-interactive ffz-link ffz-link--inherit"
 							:href="`/${item.hosts[0].login}`"
+							:state="{channelView: 'Watch'}"
 						>
 							{{ item.hosts[0].displayName }}
 						</react-link>
