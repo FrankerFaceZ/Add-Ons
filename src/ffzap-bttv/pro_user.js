@@ -38,7 +38,7 @@ export default class ProUser {
 			};
 
 			if (_emote.imageType === 'gif') {
-				emote.animted = emote.urls;
+				emote.animated = emote.urls;
 				emote.urls = {
 					1: `https://cache.ffzap.com/${emote.animated[1]}`,
 					2: `https://cache.ffzap.com/${emote.animated[2]}`,
