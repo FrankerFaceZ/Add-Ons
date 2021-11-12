@@ -43,6 +43,18 @@ class BrowseDeck extends Addon {
 		this.dialog.exclusive = false;
 		this.dialog.maximized = true;
 
+		this.sidebar = new Dialog(
+			() => this.buildSidebar(),
+			{
+				prepend: true,
+				selectors: {
+					maximized: '.side-bar-contents>div>div'
+				}
+			}
+		);
+		this.sidebar.exclusive = false;
+		this.sidebar.maximized = true;
+
 		this.vue = this.vue_promise = null;
 	}
 
@@ -74,6 +86,20 @@ class BrowseDeck extends Addon {
 
 		tip_handler.delayShow = 500;
 
+		const card_tip = this.tooltips.types['bd-sidebar-card'] = (target, tip) => {
+			const shelf = target.__vue__?.$parent;
+			if ( ! shelf )
+				return null;
+
+			return shelf.renderTooltip(target, tip);
+		};
+
+		let card_tip_open = 0;
+
+		card_tip.delayShow = () => card_tip_open > 0 ? 0 : 500;
+		card_tip.onShow = () => card_tip_open++;
+		card_tip.onHide = () => setTimeout(() => card_tip_open--, 250);
+
 		this.NavBar.ready(() => this.updateNavigation());
 		this.NavBar.on('mount', this.updateNavigation, this);
 		this.NavBar.on('update', this.updateNavigation, this);
@@ -87,6 +113,9 @@ class BrowseDeck extends Addon {
 		//this.on('settings:changed:directory.following.host-menus', val => this.updateSetting('host_menus', val));
 		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
 		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
+		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
+
+		this.on('site.subpump:pubsub-message', this.onPubSub, this);
 
 		this.settings.provider.on('changed', this.onProviderChange, this);
 
@@ -97,8 +126,11 @@ class BrowseDeck extends Addon {
 			]
 		});
 
+		this.sidebar.on('hide', this.destroySidebar, this);
 		this.dialog.on('hide', this.destroyDialog, this);
 		this.onNavigate();
+
+		this.checkSidebar();
 	}
 
 	get isActive() {
@@ -120,18 +152,60 @@ class BrowseDeck extends Addon {
 		return 0;
 	}
 
-	onProviderChange(key, value) {
-		if ( ! this._vue )
+	onPubSub(event) {
+		if ( event.prefix !== 'stream-change-v1' )
 			return;
 
-		if ( key === 'deck-tabs' )
-			this._vue.$children[0].tabs = deep_copy(value || []);
+		//if ( this._vue )
+		//	this._vue.$children[0].onStreamChange(event.message.type, event.message.channel_id);
 
-		else if ( key === 'directory.game.hidden-thumbnails')
-			this.updateSetting('hidden_thumbnails', deep_copy(value || []));
+		if ( this._side_vue )
+			this._side_vue.$children[0].onStreamChange(event.message.type, event.message.channel_id);
+	}
 
-		else if ( key === 'directory.game.blocked-games' )
-			this.updateSetting('blocked_games', deep_copy(value || []));
+	onProviderChange(key, value) {
+		if ( key === 'deck-tabs' ) {
+			this.checkSidebar();
+
+			if ( this._side_vue )
+				this._side_vue.$children[0].tabs = deep_copy(value || []);
+
+			if ( this._vue )
+				this._vue.$children[0].tabs = deep_copy(value || []);
+		}
+
+		if ( this._side_vue || this._vue ) {
+			if ( key === 'directory.game.hidden-thumbnails')
+				this.updateSetting('hidden_thumbnails', deep_copy(value || []));
+
+			else if ( key === 'directory.game.blocked-games' )
+				this.updateSetting('blocked_games', deep_copy(value || []));
+
+			else if ( key === 'directory.game.blocked-tags' )
+				this.updateSetting('blocked_tags', deep_copy(value || []));
+		}
+	}
+
+	loadSideVue() {
+		if (this.side_vue )
+			return Promise.resolve(this.side_vue);
+
+		if (this.side_vue_promise)
+			return Promise.resolve(this.side_vue_promise);
+
+		return this.side_vue_promise = (async () => {
+			const vue = await this.resolve('vue', true);
+			if ( ! vue.enabled )
+				await vue.enable();
+
+			vue.component((await import(/* webpackChunkName: "deck-side-components" */ './side-components.js')).default);
+			this.side_vue = vue;
+			this.side_vue_promise = null;
+			return vue;
+		})().catch(err => {
+			this.side_vue_promise = null;
+			throw err;
+		});
 	}
 
 	loadVue() {
@@ -146,7 +220,7 @@ class BrowseDeck extends Addon {
 			if ( ! vue.enabled )
 				await vue.enable();
 
-			vue.component((await import('./components.js')).default);
+			vue.component((await import(/* webpackChunkName: "deck-components" */ './components.js')).default);
 			this.vue = vue;
 			this.vue_promise = null;
 			return this.vue;
@@ -171,18 +245,24 @@ class BrowseDeck extends Addon {
 			this.dialog.hide();
 	}
 
+	destroySidebar() {
+		this._side_vue = null;
+		this._sidebar = null;
+	}
+
 	destroyDialog() {
 		this._vue = null;
 		this._dialog = null;
 	}
 
-	buildData() {
+	buildData(is_side_vue = false) {
 		const t = this,
 			tabs = this.settings.provider.get('deck-tabs', []);
 
 		return {
 			settings: {
 				open_setting: this.settings.get('deck.auto-settings'),
+				swap_sidebars: this.settings.get('layout.swap-sidebars'),
 				show_avatars: true, // this.settings.get('directory.show-channel-avatars'),
 				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),
@@ -190,7 +270,8 @@ class BrowseDeck extends Addon {
 				group_hosts: true, //this.settings.get('directory.following.group-hosts'),
 				host_menus: true, //this.settings.get('directory.following.host-menus'),
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
-				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', []))
+				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', [])),
+				blocked_tags: deep_copy(this.settings.provider.get('directory.game.blocked-tags', []))
 			},
 
 			tab_index: this.currentTab,
@@ -205,6 +286,17 @@ class BrowseDeck extends Addon {
 
 			saveTabs(data) {
 				t.settings.provider.set('deck-tabs', deep_copy(data));
+
+				t.log.info('save-tabs', data, is_side_vue, t._side_vue);
+
+				t.checkSidebar();
+
+				t.log.info('--', t._side_vue);
+
+				if ( ! is_side_vue && t._side_vue )
+					t._side_vue.$children[0].tabs = deep_copy(data);
+				else if ( is_side_vue && t._vue )
+					t._vue.$children[0].tabs = deep_copy(data);
 			},
 
 			types: require('./types'),
@@ -213,10 +305,54 @@ class BrowseDeck extends Addon {
 	}
 
 	updateSetting(name, val) {
-		if ( ! this._vue )
-			return;
+		if ( this._side_vue )
+			this._side_vue.$children[0].settings[name] = val;
 
-		this._vue.$children[0].settings[name] = val;
+		if ( this._vue )
+			this._vue.$children[0].settings[name] = val;
+	}
+
+	checkSidebar() {
+		const tabs = this.settings.provider.get('deck-tabs', []);
+		let sidebar_tab;
+
+		for(let i=0; i < tabs.length; i++) {
+			const tab = tabs[i];
+			if ( tab && tab.sidebar ) {
+				sidebar_tab = i;
+				break;
+			}
+		}
+
+		if ( sidebar_tab == null ) {
+			if ( this._side_vue )
+				this.sidebar.hide();
+
+		} else if ( ! this._side_vue )
+			this.sidebar.show();
+	}
+
+	buildSidebar() {
+		const sidebar = this._sidebar = (<div class="tw-full-width">
+			<div class="tw-align-center tw-c-text-alt-2 tw-mg-y-2">
+				<h1 class="ffz-i-zreknarf loading" />
+				<div>
+					{this.i18n.t('addon.deck.loading', 'Loading...')}
+				</div>
+			</div>
+		</div>);
+
+		this.loadSideVue().then(() => {
+			const vue = this.resolve('vue');
+			this._side_vue = new vue.Vue({
+				el: sidebar,
+				render: h => h('bd-sidebar', this.buildData(true))
+			})
+		});
+
+		return (<div class="maximized ffz-dialog">
+			{this._sidebar}
+		</div>);
 	}
 
 	buildDialog() {

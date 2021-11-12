@@ -44,7 +44,7 @@ export default class Users extends LiveColumnBase {
 		return {
 			icon: 'ffz-i-user',
 			i18n: 'addon.deck.sub.users',
-			text: '{count,number} User{count,en_plural}',
+			text: '{count, plural, one {# User} other {# Users}}',
 			count
 		}
 	}

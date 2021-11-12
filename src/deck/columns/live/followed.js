@@ -19,6 +19,42 @@ export default class Followed extends LiveColumnBase {
 		this.seen = null;
 	}
 
+	onStreamChange(type, id) {
+		super.onStreamChange(type, id);
+
+		if ( ! id || this.seen == null )
+			return;
+
+		if ( type === 'stream_down' )
+			this.seen.delete(id);
+
+		else if ( type === 'stream_up' ) {
+			if ( ! this.seen.has(id) )
+				this.loadOne(id);
+		}
+	}
+
+	async loadOne(id) {
+		const data = await getLoader().queryApollo({
+			query: require('./single.gql'),
+			variables: {
+				id
+			}
+		});
+
+		const item = get('data.user', data);
+		if ( this.seen == null || ! item || item.id != id || ! item.stream )
+			return;
+
+		this.seen.add(id);
+		const copy = deep_copy(item);
+		cleanViewersCount(copy.stream, item.stream);
+		this.memorizeTags(copy);
+
+		this.vue.items.push(copy);
+		this.vue.items = this.performClientSort(this.vue.items, LiveColumnBase.SORT_OPTIONS.VIEWER_COUNT);
+	}
+
 	async load(first = 10, cursor = null) {
 		const data = await getLoader().queryApollo({
 			query: require('./followed.gql'),

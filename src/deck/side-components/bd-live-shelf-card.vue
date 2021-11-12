@@ -1,82 +1,31 @@
 <template>
-	<bd-card
+	<bd-shelf-card
 		:link="getReactURL('user', item.login)"
 		:state="{channelView: 'Watch'}"
-		:title="title"
-		:image="image"
-		:tags="tags"
-		:class="klass"
-
+		:title="item.displayName"
+		:subtitle="game ? game.displayName : title"
 		:avatar="settings.show_avatars ? avatar : null"
-		:avatarTitle="item.displayName"
-		:avatarLink="getReactURL('user', item.login)"
-
-		:boxart="settings.show_avatars ? boxart : null"
-		:boxartTitle="game && game.displayName"
-		:boxartLink="game && getReactURL('dir-game-index', game.name)"
-
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
-	>
-		<template #top-left>
-			<bd-stream-indicator v-if="! settings.hide_live" :type="item.stream.type" />
-		</template>
-
-		<template #top-right>
-			<div v-if="uptime" class="ffz-il-tooltip__container">
-				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
-					<figure class="tw-c-text-live ffz-i-clock" />
-					<p>{{ upString }}</p>
-				</div>
-				<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right">
-					{{ t('metadata.uptime.tooltip', 'Stream Uptime') }}
-					<div class="tw-pd-t-05">
-						{{ t(
-							'metadata.uptime.since',
-							'(since {since,datetime})',
-							{since: startTime}
-						) }}
-					</div>
-				</div>
-			</div>
-		</template>
-
-		<template #subtitles>
-			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
-			</p>
-			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
-			</p>
-		</template>
-	</bd-card>
+		:avatar-title="item.displayName"
+		:avatar-link="getReactURL('user', item.login)"
+		:viewers="settings.hide_viewers ? null : tNumber(item.stream.viewersCount)"
+		:tooltip-side="settings.swap_sidebars ? 'left' : 'right'"
+		:substatus="upString"
+	/>
 </template>
 
 <script>
 
 import ColumnBase from '../column-base';
 import { reduceTags } from '../data';
+import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';
 
 const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 
 export default {
-	props: ['item', 'settings', 'inst'],
-
-	data() {
-		return {
-			now: Date.now()
-		}
-	},
+	props: ['item', 'settings', 'inst', 'now'],
 
 	computed: {
-		user_line() {
-			return this.inst && this.inst.showUserLine(this.item)
-		},
-
-		game_line() {
-			return this.game && this.inst && this.inst.showGameLine(this.item)
-		},
-
 		iconic_type() {
 			return this.inst && this.inst.getIconicType(this.item);
 		},
@@ -149,14 +98,57 @@ export default {
 		}
 	},
 
-	created() {
-		this.clock = setInterval(() => this.now = Date.now(), 1000);
-	},
+	methods: {
+		renderTooltip(target, tip) {
+			tip.add_class = [
+				'ffz-rich-tip',
+				'tw-align-left'
+			];
 
-	destroyed() {
-		clearInterval(this.clock);
+			let indicator;
+			if ( this.item.stream.type !== 'live' || ! this.settings.hide_live )
+				indicator = createStreamIndicator(this.iteam.stream.type);
+
+			return createCard({
+				link: this.getReactURL('user', this.item.login),
+				state: {channelView: 'Watch'},
+				title: this.title,
+				image: this.image,
+				tags: this.tags,
+
+				avatar: this.settings.show_avatars ? this.avatar : null,
+				avatarTitle: this.item.displayName,
+				avatarLink: this.getReactURL('user', this.item.login),
+
+				boxart: this.settings.show_avatars ? this.boxart : null,
+				boxartTitle: this.game && this.game.displayName,
+				boxartLink: this.game && this.getReactURL('dir-game-index', this.game.name),
+
+				topRightIcon: 'tw-c-text-live ffz-i-clock',
+				topRight: this.upString,
+
+				bottomLeft: this.settings.hide_viewers ?
+					null :
+					this.t(
+						'addon.deck.viewers',
+						'{viewers, plural, one {# viewer} other {# viewers}}',
+						{viewers: this.item.stream.viewersCount}
+					)
+			}, {
+				topLeft: indicator || null,
+				subtitles: createSubtitles([
+					{
+						content: this.item.displayName
+					},
+					this.game ? {
+						content: this.game.displayName
+					} : null
+				])
+			}, {
+				class: this.klass
+			});
+		}
 	}
-
 }
 
 </script>
