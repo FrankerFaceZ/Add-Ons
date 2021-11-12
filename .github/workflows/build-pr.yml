@@ -8,13 +8,19 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Use Node.js 12.x
-      uses: actions/setup-node@v1
+    - name: Uses PNPM
+      uses: pnpm/action-setup@v2.0.1
       with:
-        node-version: '12.x'
+        version: 6.20.4
+
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16.x'
+        cache: 'pnpm'
 
     - name: Install Dependencies
-      run: npm ci
+      run: pnpm install
 
     - name: Build
-      run: npm run build
+      run: pnpm build

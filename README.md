@@ -9,15 +9,17 @@ available here. Each mod has a unique directory within `src` that
 contains a manifest file, as well as all its scripts, styles, and
 other assets.
 
+> This package uses the [pnpm](https://pnpm.io/) package manager.
+
 ## Getting Started
 
 1.  Clone the repository.
 2.  Copy the `src/example` directory, making a new directory within `src` with
     the name of your add-on.
 3.  Edit your new `manifest.json` with details about your add-on.
-3.  Make sure you have node.js and npm set up and working.
-4.  Run `npm install` within the repository to install dependencies.
-5.  Run `npm start` to start the development server.
+3.  Make sure you have node.js and pnpm set up and working.
+4.  Run `pnpm install` within the repository to install dependencies.
+5.  Run `pnpm start` to start the development server.
 6.  In the FrankerFaceZ Control Center, under Add-ons, make sure to enable the
     setting `Use Local Development Server`.
 7.  Ensure that your browser will accept the self-signed certificate issued by

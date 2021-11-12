@@ -4,7 +4,7 @@ const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const {
 	DefinePlugin
@@ -18,6 +18,10 @@ const getFolderName = file => path.basename(path.dirname(file));
 const config = {
 	mode: 'production',
 	devtool: 'source-map',
+
+	resolve: {
+		extensions: ['.js', '.jsx']
+	},
 
 	entry: glob.sync('./src/**/index.{js,jsx}').reduce((entries, entry) => Object.assign(entries, {
 		[`${getFolderName(entry)}/script`]: entry
@@ -42,7 +46,7 @@ const config = {
 		new DefinePlugin({
 			Addon: 'FrankerFaceZ.utilities.addon.Addon',
 		}),
-		new ManifestPlugin({
+		new WebpackManifestPlugin({
 			serialize: thing => JSON.stringify(thing),
 			filter: data => ! data.name.endsWith('.map'),
 			basePath: 'addons/',
@@ -64,7 +68,7 @@ const config = {
 				test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.jpg$/
 			}
 		]),
-		new ManifestPlugin({
+		new WebpackManifestPlugin({
 			fileName: path.resolve(__dirname, 'dist', 'addons.json'),
 			serialize: thing => JSON.stringify(thing, null, '\t'),
 			generate: () => {
