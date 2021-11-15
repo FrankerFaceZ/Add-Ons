@@ -1,3 +1,9 @@
+@media screen and (min-width: 1440px) {
+	.tw-xl-hide {
+		display: none !important;
+	}
+}
+
 .bd--deck-list {
 	overflow-x: auto;
 	overflow-y: hidden;
