@@ -1,0 +1,17 @@
+{
+	"enabled": true,
+	"targets": [
+		"main",
+		"clips"
+	],
+	"requires": [],
+	"icon": "https://chatterino.com/logo.png",
+	"version": "1.0.0",
+	"short_name": "Chatterino",
+	"name": "Chatterino Badges",
+	"author": "Verotek",
+	"description": "Adds Chatterino Badges to your Chat Box.",
+	"settings": "add_ons.chatterino_badges",
+	"created": "2021-11-30T14:04:30.065Z",
+	"updated": "2021-11-30T14:04:30.065Z"
+}
