@@ -31,7 +31,7 @@ class FirstMessageHighlight extends Addon {
 
 		let outerThis = this;
 
-		const MessageHighlighter = {
+		this.messageHighlighter = {
 			type: 'message_highlighter',
 			priority: 0,
 
@@ -50,11 +50,10 @@ class FirstMessageHighlight extends Addon {
 				return tokens;
 			}
 		}
-
-		this.chat.addTokenizer(MessageHighlighter);
 	}
 
 	onEnable() {
+		this.chat.addTokenizer(this.messageHighlighter);
 	}
 
 	onDisable() {
