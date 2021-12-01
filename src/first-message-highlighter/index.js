@@ -36,7 +36,7 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				if (outerThis.known_users.has(msg.user.userID)) return tokens;
+				if (outerThis.known_users.has(msg.user.userID)) return;
 
 				outerThis.known_users.add(msg.user.userID);
 
@@ -47,7 +47,7 @@ class FirstMessageHighlight extends Addon {
 					'first-message'
 				);
 
-				return tokens;
+				return;
 			}
 		}
 	}
@@ -57,6 +57,7 @@ class FirstMessageHighlight extends Addon {
 	}
 
 	onDisable() {
+		this.chat.removeTokenizer(this.messageHighlighter);
 		this.known_users.clear();
 	}
 }
