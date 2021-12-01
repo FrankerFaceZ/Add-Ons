@@ -29,6 +29,8 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
+		this.chat.addHighlightReason('first-message', "User's first message during this session");
+
 		let outerThis = this;
 
 		this.messageHighlighter = {
