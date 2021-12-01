@@ -57,11 +57,13 @@ class FirstMessageHighlight extends Addon {
 
 	onEnable() {
 		this.chat.addTokenizer(this.messageHighlighter);
+		this.emit('chat:update-lines');
 	}
 
 	onDisable() {
 		this.chat.removeTokenizer(this.messageHighlighter);
 		this.known_users.clear();
+		this.emit('chat:update-lines');
 	}
 }
 
