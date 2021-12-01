@@ -36,7 +36,10 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				if (outerThis.known_users.has(msg.user.userID)) return;
+				if (msg.fh_known_user == null)
+					msg.fh_known_user = outerThis.known_users.has(msg.user.userID);
+
+				if (msg.fh_known_user) return;
 
 				outerThis.known_users.add(msg.user.userID);
 
