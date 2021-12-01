@@ -54,17 +54,10 @@ class FirstMessageHighlight extends Addon {
 		this.chat.addTokenizer(MessageHighlighter);
 	}
 
-	onLoad() {
-	}
-
 	onEnable() {
 	}
 
 	onDisable() {
-		this.known_users = [];
-	}
-
-	async onUnload() {
 		this.known_users = [];
 	}
 }
