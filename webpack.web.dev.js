@@ -7,7 +7,7 @@ const common = require('./webpack.config.js');
 
 const glob = require('glob');
 const getFolderName = file => path.basename(path.dirname(file));
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const jsonfile = require('jsonfile');
 
 module.exports = merge(common, {
@@ -15,7 +15,7 @@ module.exports = merge(common, {
 	devtool: 'inline-source-map',
 
 	plugins: [
-		new ManifestPlugin({
+		new WebpackManifestPlugin({
 			fileName: path.resolve(__dirname, 'dist/addons', 'addons.json'),
 			generate: () => {
 				const addons = [];
@@ -60,20 +60,31 @@ module.exports = merge(common, {
 	],
 
 	devServer: {
+		client: false,
+		webSocketServer: false,
+
+		magicHtml: false,
+		liveReload: false,
+		hot: false,
+
 		https: true,
 		port: 8001,
 		compress: true,
-		inline: false,
 
 		allowedHosts: [
 			'.twitch.tv',
 			'.frankerfacez.com'
 		],
 
-		contentBase: path.join(__dirname, 'dist'),
-		publicPath: '/script/addons/',
+		devMiddleware: {
+			publicPath: '/script/addons/',
+		},
 
-		before(app) {
+		//contentBase: path.join(__dirname, 'dist'),
+
+		onBeforeSetupMiddleware(devServer) {
+			const app = devServer.app;
+
 			app.get('/script/addons.json', (req, res) => {
 				res.setHeader('Access-Control-Allow-Origin', '*');
 				res.redirect('/script/addons/addons.json');

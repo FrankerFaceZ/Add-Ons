@@ -50,7 +50,7 @@ function renderChannel(node, navigate) {
 	return (<a
 		class="tw-block tw-full-width ffz-interactable ffz-interactable--hover-enabled ffz-interactable--default tw-interactive tw-pd-x-1"
 		href={url}
-		onClick={e => navigate(url, e)}
+		onClick={e => navigate(url, e, {channelView: 'Watch'})}
 	>
 		<div class="tw-align-items-center tw-flex tw-pd-05 tw-relative">
 			<div class="bd--host-menu--avatar tw-border-radius-small tw-overflow-hidden">

@@ -111,6 +111,11 @@
 						<span :class="tab.icon" class="tw-button__text">
 							{{ tab.i18n ? t(tab.i18n, tab.title) : tab.title }}
 						</span>
+						<span
+							v-if="tab.sidebar"
+							class="tw-button__icon tw-pd-l-0 ffz-i-pin ffz-tooltip"
+							:data-title="t('addon.deck.tab-sidebar', 'This tab is being used as your sidebar.')"
+						/>
 					</button>
 				</div>
 				<button
@@ -129,7 +134,7 @@
 				</div>
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
 				<div v-if="currentTags.length > 3" class="tw-mg-l-05 ffz-il-tooltip__container">
-					{{ t('addon.deck.filter-more', ' and {count,number} other{count,en_plural}', {count: currentTags.length - 3}) }}
+					{{ t('addon.deck.filter-more', ' and {count, plural, one {# other} other {# others} }', {count: currentTags.length - 3}) }}
 					<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right ffz-balloon--lg tw-pd-x-1 tw-pd-b-1">
 						<bd-tag-list
 							:tags="currentTags"
@@ -149,6 +154,7 @@
 					:settings="activeSettings"
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
+					:for-sidebar="tab.sidebar"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -179,10 +185,10 @@
 
 import Sortable from 'sortablejs';
 
-import {getLoader, getLocale} from '../data';
+import {getLoader} from '../data';
 
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
-const {get, has, deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
+const {deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
 
 const category_labels = {
 	live: 'Streams',
@@ -198,7 +204,7 @@ function getDefaultTab() {
 		i18n: 'addon.deck.default-tab',
 		columns: []
 	}
-};
+}
 
 export default {
 	data() {
@@ -346,6 +352,12 @@ export default {
 	},
 
 	methods: {
+		onStreamChange(type, id) {
+			for(const child of this.$children)
+				if ( child && child.onStreamChange)
+					child.onStreamChange(type, id);
+		},
+
 		dragOverTab(event) {
 			// If we aren't dragging a tab, abort.
 			if ( ! event.dataTransfer.types.includes('x-ffz/deck-column') )

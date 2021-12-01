@@ -1,9 +1,32 @@
+@media screen and (min-width: 1440px) {
+	.tw-xl-hide {
+		display: none !important;
+	}
+}
+
 .bd--deck-list {
 	overflow-x: auto;
 	overflow-y: hidden;
 
 	.preview-card .preview-card-overlay {
 		pointer-events: all;
+	}
+}
+
+
+.bd-shelf-status-indicator {
+	height: .8rem;
+	width: .8rem;
+	display: inline-block;
+	position: relative;
+	border-radius: var(--border-radius-rounded);
+	background-color: var(--color-fill-live);
+}
+
+.bd--deck, .ffz__tooltip {
+	.preview-card-stat--live {
+		background-color: var(--color-fill-live) !important;
+		color: var(--color-text-overlay) !important;
 	}
 }
 
@@ -28,6 +51,21 @@
 
 .deck-card-iconic-image__wrapper {
 	width: 4rem;
+}
+
+.side-nav:not(.side-nav--expanded) .bd--shelf-expanded,
+.side-nav--expanded .bd--shelf-collapsed {
+	display: none !important;
+}
+
+.side-nav:not(.side-nav--expanded) {
+	.loading {
+		font-size: var(--font-size-3);
+
+		& + div {
+			display: none;
+		}
+	}
 }
 
 .bd--deck-scroller {
@@ -77,6 +115,22 @@
 		}
 	}
 }
+
+
+.bd--appear-enter-active,
+.bd--appear-leave-active {
+	transition-property: transform, opacity;
+	transition-timing-function: ease;
+	transition-delay: 0;
+	transition-duration: 250ms;
+}
+
+.bd--appear-enter,
+.bd--appear-leave-to {
+	opacity: 0;
+	transform: scaleX(0)
+}
+
 
 .bd--slide-down-enter-active,
 .bd--slide-down-leave-active {
@@ -201,10 +255,14 @@
 
 .bd--column-progress {
 	position: absolute;
-	bottom: -.8rem;
+	bottom: 0;
 	left: 0;
 	right: 0;
 	width: unset !important;
+
+	.ffz-progress-bar {
+		height: 0.3rem;
+	}
 }
 
 .bd--art-column {
@@ -267,4 +325,47 @@
 	white-space: pre-wrap;
 	word-break: break-all;
 	text-align: left;
+}
+
+.bd--sidebar {
+	.side-nav--expanded & {
+		.side-nav-card__link {
+			height: unset;
+		}
+	}
+
+	.bd--shelf:first-child {
+		.side-nav-header.bd--shelf-expanded {
+			margin-right: 5rem !important;
+		}
+	}
+
+	.side-nav-header {
+		h5 {
+			font-size: var(--font-size-6) !important;
+			font-weight: var(--font-weight-semibold) !important;
+			text-transform: uppercase !important;
+		}
+	}
+
+	a:hover {
+		text-decoration: none !important;
+	}
+}
+
+.side-bar-contents .ffz-has-dialog {
+	.ffz-dialog.maximized {
+		position: relative;
+		top: unset !important;
+		left: unset !important;
+		height: unset !important;
+	}
+
+	& > .side-nav-section:not(.online-friends) {
+		display: none !important;
+	}
+
+	.online-friends {
+		visibility: unset;
+	}
 }

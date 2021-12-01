@@ -1,6 +1,7 @@
 <template>
 	<bd-card
 		:link="`/${item.login}`"
+		:state="{channelView: 'Watch'}"
 		:title="title"
 		:image="image"
 		:tags="tags"
@@ -9,7 +10,7 @@
 		:avatar="settings.show_avatars ? item.profileImageURL : null"
 		:avatarTitle="item.displayName"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers,number} viewer{viewers,en_plural}', {viewers: item.stream.viewersCount})"
+		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
 
 		:click="openMenu"
 	>
@@ -54,13 +55,14 @@
 			</p>
 			<p class="tw-c-text-alt tw-ellipsis">
 				<template v-if="item.hosts.length > 1">
-					{{ t('directory.hosted.by-many', 'Hosted by {count,number} channel{count,en_plural}', item.hosts.length) }}
+					{{ t('directory.hosted.by-many', 'Hosted by {count, plural, one {# channel} other {# channels} }', item.hosts.length) }}
 				</template>
 				<t-list v-else phrase='directory.hosted.by-one' default='Hosted by {user}'>
 					<template #user>
 						<react-link
 							class="tw-interactive ffz-link ffz-link--inherit"
 							:href="`/${item.hosts[0].login}`"
+							:state="{channelView: 'Watch'}"
 						>
 							{{ item.hosts[0].displayName }}
 						</react-link>

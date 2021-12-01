@@ -8,9 +8,17 @@
 		<h1 v-if="! editing && icon" :class="icon" class="tw-mg-r-1 tw-c-text-alt tw-align-self-center" />
 		<div class="tw-flex-grow-1">
 			<template v-if="! editing">
-				<h4>{{ title }}</h4>
+				<h4>
+					{{ title }}
+
+					<span
+						v-if="tab.sidebar"
+						class="ffz-i-pin ffz-tooltip"
+						:data-title="t('addon.deck.tab-sidebar', 'This tab is being used as your sidebar.')"
+					/>
+				</h4>
 				<div class="tw-c-text-alt">
-					{{ t('addon.deck.column-count', '{count,number} column{count,en_plural}', {count: tab.columns && tab.columns.length}) }}
+					{{ t('addon.deck.column-count', '{count, plural, one {# column} other {# columns} }', {count: tab.columns && tab.columns.length}) }}
 				</div>
 				<bd-tag-list :tags="tags" />
 			</template>
@@ -33,8 +41,20 @@
 						<input
 							:id="'title$' + id"
 							v-model="edit_data.title"
-							class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input"
+							class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-y-05 ffz-input"
 						>
+					</div>
+
+					<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05 tw-pd-x-05">
+						<input
+							:id="'sidebar$' + id"
+							v-model="edit_data.sidebar"
+							type="checkbox"
+							class="ffz-checkbox__input"
+						>
+						<label :for="'sidebar$' + id" class="ffz-checkbox__label">
+							{{ t('addon.deck.edit.sidebar', 'Use Tab as Sidebar') }}
+						</label>
 					</div>
 
 					<div class="tw-flex tw-align-items-center">
@@ -44,7 +64,7 @@
 						<icon-picker
 							:clearable="true"
 							v-model="edit_data.icon"
-							class="tw-mg-05 tw-full-width"
+							class="tw-mg-y-05 tw-full-width"
 						/>
 					</div>
 
@@ -55,7 +75,7 @@
 						<bd-tag-selector
 							:id="'tags$' + id"
 							v-model="edit_data.tags"
-							class="tw-full-width tw-mg-x-05"
+							class="tw-full-width"
 						/>
 					</div>
 				</section>

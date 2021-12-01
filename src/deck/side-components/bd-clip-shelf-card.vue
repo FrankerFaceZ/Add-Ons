@@ -1,63 +1,27 @@
 <template>
-	<bd-card
+	<bd-shelf-card
 		:link="url"
 		:title="title"
-		:image="image"
-		:class="[hideThumbnails ? 'ffz-hide-thumbnail' : '']"
-
+		:subtitle="item.broadcaster.displayName"
 		:avatar="settings.show_avatars ? avatar : null"
-		:avatarTitle="item.broadcaster.displayName"
-		:avatarLink="getReactURL('user', item.broadcaster.login)"
-
-		:boxart="settings.show_avatars ? boxart : null"
-		:boxartTitle="game && game.displayName"
-		:boxartLink="game && getReactURL('dir-game-index', game.name)"
-
-		:topLeft="duration"
-		topLeftIcon="ffz-i-clip"
-
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
-	>
-		<template #bottom-right>
-			<div v-if="published" class="ffz-il-tooltip__container">
-				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
-					<p>{{ t('addon.deck.published-human', '{published,humantime,1}', {published}) }}</p>
-				</div>
-				<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-right">
-					{{ t('addon.deck.published', 'Published on {published,date} at {published,time}', {published}) }}
-				</div>
-			</div>
-		</template>
-
-		<template #subtitles>
-			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-clips', item.broadcaster.login)">{{ item.broadcaster.displayName }}</react-link>
-			</p>
-			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
-			</p>
-			<p v-if="curator" class="tw-c-text-alt tw-ellipsis">
-				<t-list
-					phrase="addon.deck.clipped-by"
-					default="Clipped by {user}"
-				>
-					<template #user>
-						<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user', curator.login)">{{ curator.displayName }}</react-link>
-					</template>
-				</t-list>
-			</p>
-		</template>
-	</bd-card>
+		:avatar-title="item.broadcaster.displayName"
+		:avatar-link="getReactURL('user', item.broadcaster.login)"
+		:views="settings.hide_viewers ? null : tNumber(item.viewCount)"
+		:tooltip-side="settings.swap_sidebars ? 'left' : 'right'"
+	/>
 </template>
 
 <script>
 
 import ColumnBase from '../column-base';
+import { reduceTags } from '../data';
+import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';
 
+const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 
 export default {
-	props: ['item', 'settings', 'inst'],
+	props: ['item', 'settings', 'inst', 'now'],
 
 	computed: {
 		user_line() {
@@ -145,7 +109,62 @@ export default {
 				return match;
 			});
 		}
+	},
+
+	methods: {
+		renderTooltip(target, tip) {
+			tip.add_class = [
+				'ffz-rich-tip',
+				'tw-align-left'
+			];
+
+			return createCard({
+				link: this.url,
+				title: this.title,
+				image: this.image,
+
+				avatar: this.settings.show_avatars ? this.avatar : null,
+				avatarTitle: this.item.broadcaster.displayName,
+				avatarLink: this.getReactURL('user', this.item.broadcaster.login),
+				avatarState: {channelView: 'Watch'},
+
+				boxart: this.settings.show_avatars ? this.boxart : null,
+				boxartTitle: this.game ? this.game.displayName : null,
+				boxartLink: this.game ? this.getReactURL('dir-game-index', this.game.name) : null,
+
+				topLeft: this.duration,
+				topLeftIcon: 'ffz-i-clip',
+
+				bottomLeft: this.settings.hide_viewers ? null :
+					this.t('addon.deck.views', '{count, plural, one {# view} other {# views}}', this.item.viewCount),
+
+				bottomRight: this.published ? this.t(
+					'addon.deck.published-human',
+					'{published,humantime,1}', {
+						published: this.published
+					}
+				) : null
+			}, {
+				subtitles: createSubtitles([
+					this.user_line ? {
+						content: this.item.broadcaster.displayName
+					} : null,
+					this.game_line ? {
+						content: this.game.displayName
+					} : null,
+					this.curator ? {
+						content: this.t('addon.deck.clipped-by', 'Clipped by {user}', {
+							user: this.curator.displayName
+						})
+					} : null
+				])
+
+			}, {
+				class: this.hideThumbnails ? 'ffz-hide-thumbnail' : ''
+			})
+		}
 	}
+
 }
 
 </script>

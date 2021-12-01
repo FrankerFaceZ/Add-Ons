@@ -1,6 +1,7 @@
 import {getLoader, VideoTypes} from './data';
 
 const {get, make_enum, deep_equals} = FrankerFaceZ.utilities.object;
+const {createElement} = FrankerFaceZ.utilities.dom;
 
 
 export default class ColumnBase {
@@ -192,6 +193,10 @@ export default class ColumnBase {
 		return null;
 	}
 
+	getShelfComponent(item) { // eslint-disable-line no-unused-vars
+		return null;
+	}
+
 	useIcon() {
 		return true;
 	}
@@ -252,7 +257,7 @@ export default class ColumnBase {
 		return {
 			icon: 'ffz-i-tags',
 			i18n: 'addon.deck.sub.tags',
-			text: '{count,number} tag{count,en_plural}',
+			text: '{count, plural, one {# tag} other {# tags}}',
 			count: this.settings.tags.length,
 
 			tip: tip.length ? tip.join(', ') : null
@@ -330,6 +335,9 @@ export default class ColumnBase {
 		return true;
 	}
 
+	onStreamChange(type, id) { // eslint-disable-line no-unused-vars
+		/* no-op */
+	}
 }
 
 ColumnBase.ICONIC_TYPES = Object.freeze(make_enum(
@@ -348,19 +356,30 @@ export class LiveColumnBase extends ColumnBase {
 				loader.memorizeTag(tag);
 	}
 
+	onStreamChange(type, id) {
+		super.onStreamChange(type, id);
+
+		if ( type === 'stream_down' && id )
+			this.vue.items = this.vue.items.filter(item => item.id != id);
+	}
+
 	getComponent(item) { // eslint-disable-line no-unused-vars
 		return 'bd-live-card';
+	}
+
+	getShelfComponent(item) { // eslint-disable-line no-unused-vars
+		return 'bd-live-shelf-card';
 	}
 
 	memorizeTags(item) {
 		LiveColumnBase.memorizeTags(item);
 	}
 
-	performClientSort(items) {
+	performClientSort(items, sort) {
 		if ( ! Array.isArray(items) )
 			return [];
 
-		const fn = this.sort?.clientSort;
+		const fn = (sort ?? this.sort)?.clientSort;
 		if ( ! fn )
 			return items;
 
@@ -445,6 +464,10 @@ export class ClipColumnBase extends ColumnBase {
 
 	getComponent() {
 		return 'bd-clip-card';
+	}
+
+	getShelfComponent(item) { // eslint-disable-line no-unused-vars
+		return 'bd-clip-shelf-card';
 	}
 
 	getSortOptions() {
@@ -610,6 +633,10 @@ export class VideoColumnBase extends ColumnBase {
 
 	getComponent(item) { // eslint-disable-line no-unused-vars
 		return 'bd-video-card'
+	}
+
+	getShelfComponent(item) { // eslint-disable-line no-unused-vars
+		return 'bd-video-shelf-card';
 	}
 
 	memorizeTags(item) {

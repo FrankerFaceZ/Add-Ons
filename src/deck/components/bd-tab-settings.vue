@@ -10,6 +10,15 @@
 			<div class="tw-flex tw-flex-nowrap tw-align-items-center tw-mg-x-1 tw-mg-t-1">
 				<div class="tw-flex-grow-1" />
 				<button
+					v-if="! hasSidebar"
+					class="tw-button tw-button--text"
+					@click="addSidebarTab"
+				>
+					<span class="tw-button__text ffz-i-plus">
+						{{ t('addon.deck.new-sidebar', 'New Sidebar Tab') }}
+					</span>
+				</button>
+				<button
 					class="tw-button tw-button--text"
 					@click="addTab"
 				>
@@ -53,6 +62,15 @@ export default {
 		}
 	},
 
+	computed: {
+		hasSidebar() {
+			for(const tab of this.tabs)
+				if ( tab?.sidebar)
+					return true;
+			return false;
+		}
+	},
+
 	mounted() {
 		this.sortable = Sortable.create(this.$refs.list, {
 			draggable: 'section',
@@ -82,6 +100,36 @@ export default {
 			});
 		},
 
+		addSidebarTab() {
+			this.tabs.push({
+				id: generateUUID(),
+				title: this.t('addon.deck.tab-name.sidebar', 'Sidebar Tab'),
+				sidebar: true,
+				columns: [
+					{
+						type: 'live/followed',
+						id: generateUUID(),
+						display: {
+							default_count: 20,
+							max_tags: 3
+						},
+						settings: {}
+					},
+					{
+						type: 'live/recommended',
+						id: generateUUID(),
+						display: {
+							default_count: 5,
+							max_tags: 3
+						},
+						settings: {
+							count: 10
+						}
+					}
+				]
+			});
+		},
+
 		removeTab(id) {
 			for(let i=0; i < this.tabs.length; i++) {
 				if ( this.tabs[i].id === id ) {
@@ -95,9 +143,15 @@ export default {
 			for(let i=0; i < this.tabs.length; i++) {
 				if ( this.tabs[i].id === id ) {
 					this.tabs[i] = Object.assign(this.tabs[i], data);
-					return;
+					break;
 				}
 			}
+
+			if (data.sidebar)
+				for(let i = 0; i < this.tabs.length; i++) {
+					if (this.tabs[i].id !== id && this.tabs[i].sidebar)
+						this.tabs[i].sidebar = false;
+				}
 		},
 
 		save() {

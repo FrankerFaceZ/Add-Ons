@@ -118,7 +118,26 @@
 					/>
 				</div>
 
-				<div class="tw-flex tw-align-items-center tw-mg-y-05">
+				<div v-if="sidebar" class="tw-flex tw-align-items-center tw-mg-y-05">
+					<label :for="'default_count$' + column.id">
+						{{ t('addon.deck.edit.default_count', 'Default Size:') }}
+					</label>
+					<input
+						:id="'default_count$' + column.id"
+						v-model.number="column.display.default_count"
+						type="range"
+						min="1"
+						max="20"
+						step="1"
+						class="ffz-range ffz-range--unfilled tw-flex-grow-1"
+						@wheel="scrollDefaultCount"
+					>
+					<div class="tw-mg-l-1">
+						{{ column.display.default_count }}
+					</div>
+				</div>
+
+				<div v-if="!sidebar" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'columns$' + column.id">
 						{{ t('addon.deck.edit.columns', 'Columns:') }}
 					</label>
@@ -137,7 +156,7 @@
 					</div>
 				</div>
 
-				<div class="tw-flex tw-align-items-center tw-mg-y-05">
+				<div v-if="!sidebar" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'width$' + column.id">
 						{{ t('addon.deck.edit.card-width', 'Card Size:') }}
 					</label>
@@ -340,6 +359,10 @@ export default {
 			return print_duration(Math.floor((base + (val * multiplier)) / 1000));
 		},
 
+		sidebar() {
+			return this.data.sidebar;
+		},
+
 		settings() {
 			return this.data.settings;
 		},
@@ -385,6 +408,22 @@ export default {
 	},
 
 	methods: {
+		scrollDefaultCount(event) {
+			if (event.deltaY === 0 )
+				return;
+
+			const delta = event.deltaY > 0 ? 1 : -1;
+			let new_val = this.count.display.default_count + delta;
+
+			if ( new_val < 1 )
+				new_val = 1;
+			else if ( new_val > 20 )
+				new_val = 20;
+
+			this.column.display.default_count = new_val;
+			event.preventDefault();
+		},
+
 		scrollColumns(event) {
 			if ( event.deltaY === 0 )
 				return;

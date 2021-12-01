@@ -1,7 +1,7 @@
 <template>
 	<div
 		ref="root"
-		:class="[is_collapsed ? 'collapsed' : '', widthClass, hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
+		:class="[is_collapsed ? 'collapsed' : '', widthClass, colors ? 'tw-c-text-base' : '', hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
 		class="bd--deck-column tw-relative tw-border tw-elevation-1 tw-flex-column tw-mg-r-1"
 		:data-column-id="data.id"
 		:data-columns="columns"
@@ -184,7 +184,7 @@
 								v-if="filtered.length < items.length"
 								class="tw-mg-t-05"
 							>
-								{{ t('addon.deck.end-filtered', '({removed,number} of {total,number} item{total,en_plural} have been hidden by client-side filtering.)', {
+								{{ t('addon.deck.end-filtered', '({removed,number} of {total, plural, one {# item} other {# items} } have been hidden by client-side filtering.)', {
 									removed: items.length - filtered.length,
 									total: items.length
 								}) }}
@@ -256,7 +256,7 @@ const {has, deep_copy} = FrankerFaceZ.utilities.object;
 const {Color} = FrankerFaceZ.utilities.color;
 
 export default {
-	props: ['data', 'type', 'settings', 'collapsed'],
+	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar'],
 
 	data() {
 		return {
@@ -614,6 +614,11 @@ export default {
 	},
 
 	methods: {
+		onStreamChange(type, id) {
+			if ( this.inst && this.inst.onStreamChange )
+				this.inst.onStreamChange(type, id);
+		},
+
 		// Visibility
 		doubleClick(event) {
 			if ( event.target.closest('button') )
@@ -709,12 +714,16 @@ export default {
 			if ( ! has(display, 'width') )
 				display.width = this.width;
 
+			if ( ! has(display, 'default_count') )
+				display.default_count = 10;
+
 			if ( ! has(display, 'columns') )
 				display.columns = this.columns;
 
 			this.$emit('open-modal', {
 				modal: 'bd-column-editor',
 				data: {
+					sidebar: this.forSidebar,
 					column: data,
 					inst: this.inst,
 					settings: this.activeSettings,

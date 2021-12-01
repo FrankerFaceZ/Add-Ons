@@ -38,13 +38,19 @@ export default class ProUser {
 			};
 
 			if (_emote.imageType === 'gif') {
-				if (this.parent.getAnimatedEmoteMode() === this.parent.GIF_EMOTES_MODE.DISABLED) { // If the GIF setting is set to "Disabled", ignore it.
+				emote.animated = emote.urls;
+				emote.urls = {
+					1: `https://cache.ffzap.com/${emote.animated[1]}`,
+					2: `https://cache.ffzap.com/${emote.animated[2]}`,
+					4: `https://cache.ffzap.com/${emote.animated[4]}`
+				};
+				/*if (this.parent.getAnimatedEmoteMode() === this.parent.GIF_EMOTES_MODE.DISABLED) { // If the GIF setting is set to "Disabled", ignore it.
 					continue;
 				} else if (this.parent.getAnimatedEmoteMode() === this.parent.GIF_EMOTES_MODE.STATIC) { // If the GIF setting is set to "Static", route them through the cache.
 					emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
 					emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
 					emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
-				}
+				}*/
 			}
 			this.emotes.push(emote);
 		}

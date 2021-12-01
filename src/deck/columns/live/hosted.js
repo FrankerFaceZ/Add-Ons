@@ -5,6 +5,10 @@ import { cleanViewersCount, getLoader } from '../../data';
 
 export default class Hosted extends LiveColumnBase {
 
+	getShelfComponent() {
+		return 'bd-host-shelf-card';
+	}
+
 	getComponent() {
 		return 'bd-host-card'
 	}

@@ -18,7 +18,7 @@
 		:topRight="duration"
 		topRightIcon="ffz-i-play"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count,number} view{count,en_plural}', item.viewCount)"
+		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
 
 		@mouseenter="onHover"
 		@mouseleave="onLeave"

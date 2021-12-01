@@ -1,5 +1,7 @@
 // Pronouns Addon
 
+const {Mutex} = FrankerFaceZ.utilities.object;
+
 function get(endpoint) {
 	return fetch(`https://pronouns.alejo.io/api/${endpoint}`).then(resp => resp.json());
 }
@@ -14,13 +16,17 @@ class Pronouns extends Addon {
 		this.inject('i18n');
 		this.inject('settings');
 
+		this.waiting = new Mutex(4);
+
 		this.pronouns = {};
 		this.users = new Map;
 	}
 
-	async onEnable() {
+	async onLoad() {
 		await this.loadPronouns();
+	}
 
+	onEnable() {
 		this.settings.add('addon.pronouns.color', {
 			default: '',
 			ui: {
@@ -40,6 +46,8 @@ class Pronouns extends Addon {
 			},
 			changed: () => this.updateBadges()
 		});
+
+		this.buildBadges();
 
 		const process = this.onMessage.bind(this);
 
@@ -89,7 +97,9 @@ class Pronouns extends Addon {
 				promises: [[s,f]]
 			});
 
-			get(`users/${login}`).then(data => {
+			this.waiting.wait().then(done => Promise.all([
+				done, get(`users/${login}`)
+			])).then(([done, data]) => {
 				let had_user = false;
 				if ( Array.isArray(data) )
 					for(const item of data) {
@@ -126,31 +136,36 @@ class Pronouns extends Addon {
 						}
 					}
 				}
+
+				done();
 			});
 		});
 	}
 
 	async loadPronouns() {
-		const data = await get('pronouns'),
-			old_badges = new Set(Object.keys(this.pronouns));
-
+		const data = await get('pronouns');
 		this.pronouns = {};
 
-		if ( Array.isArray(data) ) {
-			for(const item of data) {
+		if ( Array.isArray(data) )
+			for(const item of data)
 				this.pronouns[item.name] = item.display;
-				if ( old_badges.has(item.name) )
-					old_badges.delete(item.name);
-				else
-					this.updateBadge(item.name, item.display);
-			}
+	}
 
-			this.log.info(`Loaded ${data.length} pronouns.`);
+	buildBadges() {
+		const old_badges = this.old_badges;
+
+		for(const [name, display] of Object.entries(this.pronouns)) {
+			if ( old_badges && old_badges.has(name) )
+				old_badges.delete(name);
+			else
+				this.updateBadge(name, display, false);
 		}
 
-		for(const item of old_badges)
-			this.badges.loadBadgeData(`addon-pn-${item}`, undefined, false);
+		if ( old_badges )
+			for(const name of old_badges)
+				this.badges.loadBadgeData(`addon-pn-${name}`, undefined, false);
 
+		this.old_badges = new Set(Object.keys(this.pronouns));
 		this.badges.buildBadgeCSS();
 	}
 
@@ -159,13 +174,35 @@ class Pronouns extends Addon {
 		if ( this.settings.get('addon.pronouns.border') )
 			css = `${css}border:0.1rem solid;border-radius:0.5rem`;
 
+		const setting = `addon.pronouns.color.${name}`;
+
+		if ( ! this.old_badges || ! this.old_badges.has(name) )
+			this.settings.add(setting, {
+				default: null,
+				requires: ['addon.pronouns.color'],
+				process(ctx, val) {
+					return val == null ? ctx.get('addon.pronouns.color') : val
+				},
+				ui: {
+					path: 'Add-Ons > Pronouns >> Per-Badge Colors',
+					title: display,
+					i18n_key: null,
+					component: 'setting-color-box',
+					force_seen: true
+				},
+				changed: () => {
+					if ( this.pronouns[name] )
+						this.updateBadge(name, display, true);
+				}
+			});
+
 		this.badges.loadBadgeData(`addon-pn-${name}`, {
 			content: display,
 			title: this.i18n.t('addon.pronouns.title', 'Pronouns: {value}', {
 				value: display
 			}),
 			click_url: 'https://pronouns.alejo.io/',
-			color: this.settings.get('addon.pronouns.color'),
+			color: this.settings.get(setting),
 			slot: 40,
 			css
 		}, update_css);

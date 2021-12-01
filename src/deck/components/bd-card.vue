@@ -1,7 +1,13 @@
 <template functional>
 	<div :id="data.attrs && data.attrs.id" class="preview-card" :class="data.class" v-on="listeners">
 		<div class="tw-relative">
-			<react-link class="tw-interactive ffz-link" :href="props.link" data-a-target="preview-card-image-link" v-on="props.clickCard || props.click ? {click: props.clickCard || props.click} : {}">
+			<react-link
+				class="tw-interactive ffz-link"
+				:href="props.link"
+				:state="props.state"
+				data-a-target="preview-card-image-link"
+				v-on="props.clickCard || props.click ? {click: props.clickCard || props.click} : {}"
+			>
 				<div class="tw-border-radius-medium tw-c-background-alt-2 tw-overflow-hidden">
 					<aspect :ratio="16/9">
 						<div class="preview-card-thumbnail__image">
