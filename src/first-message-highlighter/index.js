@@ -1,6 +1,6 @@
 class FirstMessageHighlight extends Addon {
 
-	known_users = [];
+	known_users = new Set();
 
 	constructor(...args) {
 		super(...args);
@@ -36,9 +36,9 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				if (outerThis.known_users.includes(msg.user.userID)) return tokens;
+				if (outerThis.known_users.has(msg.user.userID)) return tokens;
 
-				outerThis.known_users.push(msg.user.userID);
+				outerThis.known_users.add(msg.user.userID);
 
 				this.applyHighlight(
 					msg,
@@ -58,7 +58,7 @@ class FirstMessageHighlight extends Addon {
 	}
 
 	onDisable() {
-		this.known_users = [];
+		this.known_users.clear();
 	}
 }
 
