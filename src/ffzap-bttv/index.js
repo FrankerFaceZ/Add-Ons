@@ -145,7 +145,7 @@ class BetterTTV extends Addon {
 		if (user) {
 			const msg_user_id = msg.message.user.id;
 			if (user.id === msg_user_id) {
-				this.socket.broadcastMe(msg.channel);
+				this.socket.broadcastMe(`twitch:${msg.channelID}`);
 			}
 		}
 	}
@@ -376,7 +376,7 @@ class BetterTTV extends Addon {
 		this.emotes.unloadSet(realID);
 
 		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
-			this.socket.joinChannel(room.login);
+			this.socket.joinChannel(`twitch:${room.id}`);
 		}
 
 		if (!this.chat.context.get('ffzap.betterttv.channel_emoticons')) {
