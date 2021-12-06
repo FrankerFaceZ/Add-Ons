@@ -58,7 +58,7 @@ class FirstMessageHighlight extends Addon {
 	}
 
 	onEnable() {
-		if (ffz.site.getUser() != null)
+		if (ffz.site.getUser() !== null)
 			this.known_users.add(ffz.site.getUser().id);
 		this.chat.addTokenizer(this.messageHighlighter);
 		this.emit('chat:update-lines');
