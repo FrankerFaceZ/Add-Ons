@@ -2,7 +2,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
-		this.inject("..api");
+		this.inject('..api');
 
 		this.inject('settings');
 		this.inject('chat.badges');
@@ -19,7 +19,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 
 		this.bulkBadgeIDs = new Set();
 	}
-	
+
 	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.badges', () => this.updateBadges());
 
@@ -30,16 +30,18 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.removeBadges();
 
 		if (this.settings.get('addon.seventv_emotes.badges')) {
-			const badges = await this.api.fetchBadges();
+			const badges = await this.api.cosmetics.getBadges();
 			for (const badge of badges) {
 				const id = `addon.seventv_emotes.badge-${badge.id}`;
 				this.badges.loadBadgeData(id, {
 					id: badge.id,
 					title: badge.tooltip,
 					slot: 69,
-					image: badge.urls[1][1],
+					image: badge.urls[0][1],
 					urls: {
-						1: badge.urls[2][1]
+						1: badge.urls[0][1],
+						2: badge.urls[1][1],
+						4: badge.urls[2][1]
 					},
 					svg: false
 				});
@@ -48,11 +50,13 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 				this.bulkBadgeIDs.add(id);
 			}
 		}
+
+		this.emit('chat:update-line-badges');
 	}
 
 	removeBadges() {
 		for (let id of this.bulkBadgeIDs) {
-			this.badges.deleteBulk("addon.seventv_emotes", id);
+			this.badges.deleteBulk('addon.seventv_emotes', id);
 			delete this.badges.badges[id];
 		}
 

@@ -2,8 +2,8 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
-		this.inject("..api");
-		this.inject("..emotes");
+		this.inject('..api');
+		this.inject('..emotes');
 
 		this.inject('settings');
 		this.inject('chat');
@@ -50,11 +50,11 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 			if (channelLogins.length > 0) {
 				this.eventSource = new EventSource(this.api.getEmotesEventSourceURL(channelLogins));
 
-				this.eventSource.addEventListener("open", () => this.eventSourceReconnectDelay = undefined);
+				this.eventSource.addEventListener('open', () => this.eventSourceReconnectDelay = undefined);
 
-				this.eventSource.addEventListener("update", event => this.handleChannelEmoteUpdate(event));
+				this.eventSource.addEventListener('update', event => this.handleChannelEmoteUpdate(event));
 
-				this.eventSource.addEventListener("error", () => {
+				this.eventSource.addEventListener('error', () => {
 					if (this.eventSource.readyState == EventSource.CLOSED) {
 						this.closeEventSource();
 
@@ -93,14 +93,17 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		if (channel) {
+			const oldEmote = this.emotes.getEmoteFromChannelSet(channel, data.emote_id);
+
 			let completed = false;
 			switch (data.action) {
-				case 'ADD':
 				case 'UPDATE':
+					if (!oldEmote) break;
+				case 'ADD':
 					completed = this.emotes.addEmoteToChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
 					break;
 				case 'REMOVE':
-					completed = this.emotes.removeEmoteFromChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
+					completed = this.emotes.removeEmoteFromChannelSet(channel, data.emote_id);
 					break;
 			}
 
@@ -108,19 +111,19 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 				let message = `[7TV] ${data.actor} `;
 				switch (data.action) {
 					case 'ADD': {
-						message += `added the emote "${data.name}"`;
+						message += `added the emote '${data.name}'`;
 						break;
 					}
 					case 'REMOVE': {
-						message += `removed the emote "${data.name}"`;
+						message += `removed the emote '${data.name}'`;
 						break;
 					}
 					case 'UPDATE': {
-						if (data.emote.name != data.name) {
-							message += `renamed the emote "${data.emote.name}" to "${data.name}"`;
+						if (oldEmote && oldEmote.name != data.name) {
+							message += `renamed the emote '${oldEmote.name}' to '${data.name}'`;
 						}
 						else {
-							message += `renamed the emote "${data.name}"`;
+							message += `updated the emote '${data.name}'`;
 						}
 						break;
 					}
