@@ -6,6 +6,7 @@ const fs = require('fs');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const {
 	DefinePlugin
 } = require('webpack');
@@ -38,6 +39,18 @@ const config = {
 		path: path.resolve(__dirname, 'dist/addons'),
 		filename: '[name].[hash].js',
 		jsonpFunction: 'ffzAddonsWebpackJsonp'
+	},
+
+	optimization: {
+		minimizer: [
+			new TerserPlugin({
+				sourceMap: true,
+				terserOptions: {
+					keep_classnames: true,
+					keep_fnames: true
+				}
+			})
+		]
 	},
 
 	plugins: [
