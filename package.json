@@ -5,6 +5,7 @@
 	"private": true,
 	"scripts": {
 		"start": "webpack-dev-server --config webpack.web.dev.js",
+		"start:prod": "webpack-dev-server --config webpack.web.dev.prod.js",
 		"build": "webpack && node bin/addon_hash",
 		"clean": "rimraf dev",
 		"eslint": "eslint \"src/**/*.{js,jsx,vue}\"",

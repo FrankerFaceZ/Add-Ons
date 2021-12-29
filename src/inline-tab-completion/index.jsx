@@ -22,6 +22,7 @@ class InlineTab extends Addon {
 
 		this.inject('i18n');
 		this.inject('settings');
+		this.inject('site.fine');
 		this.inject('site.chat.input');
 		this.inject('tooltips');
 		this.inject('chat.emoji');
@@ -318,19 +319,31 @@ class InlineTab extends Addon {
 		}
 	}
 
+	getElement(inst) {
+		if (inst.chatInputRef instanceof Element)
+			return inst.chatInputRef;
+
+		const el = this.fine.getChildNode(inst);
+		return el?.querySelector('.chat-wysiwyg-input__editor');
+	}
+
 	uninstallInputHandler(inst, clear_state = true) {
+		const el = this.getElement(inst);
+		if (! el )
+			return;
+
 		if ( inst[Installed] ) {
-			inst.chatInputRef.removeEventListener('keydown', inst[Installed]);
+			el.removeEventListener('keydown', inst[Installed]);
 			inst[Installed] = null;
 		}
 
 		if ( inst[Focus] ) {
-			inst.chatInputRef.removeEventListener('focus', inst[Focus]);
-			inst.chatInputRef.removeEventListener('blur', inst[Focus]);
+			el.removeEventListener('focus', inst[Focus]);
+			el.removeEventListener('blur', inst[Focus]);
 			inst[Focus] = null;
 		}
 
-		inst.chatInputRef[Installed] = false;
+		el[Installed] = false;
 
 		if ( clear_state ) {
 			this.clearAutocomplete(inst);
@@ -342,15 +355,19 @@ class InlineTab extends Addon {
 		if ( ! (this.enabled || this.enabling) )
 			return;
 
+		const el = this.getElement(inst);
+		if ( ! el )
+			return;
+
 		if ( ! inst[Installed] ) {
 			const handler = inst[Installed] = this.handleKey.bind(this, inst);
-			inst.chatInputRef.addEventListener('keydown', handler);
+			el.addEventListener('keydown', handler);
 		}
 
 		if ( ! inst[Focus] ) {
 			const focus = inst[Focus] = this.clearAutocomplete.bind(this, inst);
-			inst.chatInputRef.addEventListener('focus', focus);
-			inst.chatInputRef.addEventListener('blur', focus);
+			el.addEventListener('focus', focus);
+			el.addEventListener('blur', focus);
 		}
 
 		if ( inst.ffztc_position == null ) {
@@ -358,13 +375,14 @@ class InlineTab extends Addon {
 			inst.ffztc_parts = inst.ffztc_suggestions = null;
 		}
 
-		inst.chatInputRef[Installed] = true;
+		el[Installed] = true;
 
 		this.updateProviders(inst);
 	}
 
 	updateInputHandler(inst) {
-		if ( ! inst.chatInputRef[Installed] ) {
+		const el = this.getElement(inst);
+		if ( el && ! el[Installed] ) {
 			this.log.debug('Updating input handler.');
 			this.uninstallInputHandler(inst, false);
 			this.installInputHandler(inst);
@@ -372,13 +390,18 @@ class InlineTab extends Addon {
 	}
 
 	clearAutocomplete(inst) {
+		const el = this.getElement(inst);
+
 		inst.ffztc_position = -1;
 		inst.ffztc_parts = inst.ffztc_suggestions = null;
 
-		if ( this.tt )
-			this.tt._exit(inst.chatInputRef);
+		if ( ! el )
+			return;
 
-		inst.chatInputRef._ffz_inst = null;
+		if ( this.tt )
+			this.tt._exit(el);
+
+		el._ffz_inst = null;
 	}
 
 	buildSuggestions(providers, input, start, is_command = false) {
@@ -450,11 +473,15 @@ class InlineTab extends Addon {
 	}
 
 	handleKey(inst, event) {
-		if ( event.ctrlKey || event.altKey || ! inst.chatInputRef )
+		if ( event.ctrlKey || event.altKey ) // || ! inst.chatInputRef )
+			return;
+
+		const el = this.getElement(inst);
+		if ( ! el )
 			return;
 
 		const code = event.charCode || event.keyCode,
-			current = inst.chatInputRef.value;
+			current = inst.ffzGetValue();
 
 		if ( code === KEYS.Tab && current?.length > 0 ) {
 			event.preventDefault();
@@ -471,8 +498,9 @@ class InlineTab extends Addon {
 				// cursor location. Scanning forward and back
 				// from the caret, find as much non-whitespace
 				// as we can.
-				const caret = inst.chatInputRef.selectionStart;
-				if ( inst.chatInputRef.selectionEnd !== caret )
+				const sel = inst.ffzGetSelection();
+				const caret = sel[0];
+				if ( caret !== sel[1] )
 					return;
 
 				// Technically we should probably check for a few
@@ -529,16 +557,16 @@ class InlineTab extends Addon {
 					}
 
 					inst.autocompleteInputRef.setValue(parts[0] + suggestion.text + (empty && ! suggestion.sel ? ' ' :  parts[2]));
-					inst.chatInputRef.setSelectionRange(caret, end);
+					inst.ffzSetSelection(caret, end);
 
 					if ( this.tt ) {
-						inst.chatInputRef._ffz_inst = inst;
-						const tip = inst.chatInputRef[this.tt._accessor];
+						el._ffz_inst = inst;
+						const tip = el[this.tt._accessor];
 						if ( tip ) {
 							setChildren(tip.element, this.renderTooltip(inst, tip));
 							tip.update();
 						} else
-							this.tt._enter(inst.chatInputRef);
+							this.tt._enter(el);
 					}
 				}
 			}
@@ -549,7 +577,7 @@ class InlineTab extends Addon {
 			// Cancel tab-completion. Restore original input.
 			// Delete our state.
 			inst.autocompleteInputRef.setValue(inst.ffztc_parts.join(''));
-			inst.chatInputRef.setSelectionRange(inst.ffztc_caret, inst.ffztc_caret);
+			inst.ffzSetSelection(inst.ffztc_caret, inst.ffztc_caret);
 			this.clearAutocomplete(inst);
 
 			event.preventDefault();

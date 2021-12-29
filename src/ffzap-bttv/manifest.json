@@ -8,7 +8,7 @@
 		"ffzap-core"
 	],
 	"icon": "https://cdn.betterttv.net/assets/logos/mascot.png",
-	"version": "3.2.8",
+	"version": "3.2.10",
 	"short_name": "FFZ:AP BTTV",
 	"name": "BetterTTV Emotes",
 	"author": "Lordmau5",
@@ -16,5 +16,5 @@
 	"website": "https://ffzap.com/",
 	"settings": "add_ons.better_ttv_emotes",
 	"created": "2019-09-12T15:31:59.000Z",
-	"updated": "2021-09-05T21:32:47.553Z"
+	"updated": "2021-12-14T19:07:28.257Z"
 }

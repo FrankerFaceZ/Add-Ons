@@ -1,79 +1,118 @@
-import { version } from '../manifest.json';
-
 export default class API extends FrankerFaceZ.utilities.module.Module {
-    constructor(...args) {
+	constructor(...args) {
 		super(...args);
 
-        this.apiBaseURI = "https://api.7tv.app/v2/";
-        this.eventsBaseURI = "https://events.7tv.app/v1/";
+		this.inject(Emotes);
+		this.inject(Cosmetics);
 
-        this.clientPlatform = "ffz";
-        this.clientVersion = version;
-    }
+		this.apiBaseURI = 'https://api.7tv.app/v2';
+		this.eventsBaseURI = 'https://events.7tv.app/v1';
+		this.appBaseURI = 'https://7tv.app';
 
-    async fetchAvatars() {
-        let response = await this.makeRequest("cosmetics/avatars?map_to=login");
-        if (response.ok) {
-            let json = await response.json();
-            if (typeof json == "object" && json != null) {
-                return json;
-            }
-        }
+		this.clientPlatform = 'ffz';
+		this.clientVersion = this.parent.manifest.version;
+	}
 
-        return {};
-    }
+	makeRequest(route, options) {
+		const headers = new Headers(options && options.headers || {});
 
-    async fetchBadges() {
-        let response = await this.makeRequest("badges?user_identifier=twitch_id");
-        if (response.ok) {
-            let json = await response.json();
-            if (typeof json == "object" && json != null && json["badges"] instanceof Array) {
-                return json["badges"];
-            }
-        }
+		headers.set('X-SevenTV-Platform', this.clientPlatform);
+		headers.set('X-SevenTV-Version', this.clientVersion);
 
-        return [];
-    }
+		return fetch(`${this.apiBaseURI}/${route}`, {...options, headers: headers})
+	}
 
-    async fetchGlobalEmotes() {
-        let response = await this.makeRequest("emotes/global");
-        if (response.ok) {
-            let json = await response.json();
-            if (json instanceof Array) {
-                return json;
-            }
-        }
+	async requestJSON(route, options) {
+		const response = await this.makeRequest(route, options);
 
-        return [];
-    }
+		if (response.ok) {
+			let json = await response.json();
+			return json;
+		}
 
-    async fetchChannelEmotes(login) {
-        let response = await this.makeRequest(`users/${login}/emotes`);
-        if (response.ok) {
-            let json = await response.json();
-            if (json instanceof Array) {
-                return json;
-            }
-        }
+		return null;
+	}
 
-        return [];
-    }
+	async requestObject(route, options) {
+		const json = await this.requestJSON(route, options);
 
-    makeRequest(route, options) {
-        const headers = new Headers(options && options.headers || {});
+		if (json != null && typeof json == 'object') return json;
 
-        headers.set("X-SevenTV-Platform", this.clientPlatform);
-        headers.set("X-SevenTV-Version", this.clientVersion);
+		return {};
+	}
 
-        return fetch(`${this.apiBaseURI}${route}`, {...options, headers: headers})
-    }
+	async requestArray(route, options) {
+		const json = await this.requestJSON(route, options);
 
-    getEmotesEventSourceURL(channelLogins) {
-        let query = new URLSearchParams();
+		if (json instanceof Array) return json;
 
-        query.set("channel", channelLogins);
-        query.set("agent", `${this.clientPlatform}:${this.clientVersion}`);
+		return [];
+	}
 
-        return `${this.eventsBaseURI}/channel-emotes?${query.toString()}`;
-    }
+	getEmotesEventSourceURL(channelLogins) {
+		let query = new URLSearchParams();
+
+		query.set('channel', channelLogins);
+		query.set('agent', `${this.clientPlatform}:${this.clientVersion}`);
+
+		return `${this.eventsBaseURI}/channel-emotes?${query.toString()}`;
+	}
+
+	getEmoteAppURL(emote) {
+		return `${this.appBaseURI}/emotes/${emote.id}`;
+	}
+}
+
+export class Emotes extends FrankerFaceZ.utilities.module.Module {
+	fetchGlobalEmotes() {
+		return this.parent.requestArray('emotes/global');
+	}
+
+	fetchChannelEmotes(login) {
+		return this.parent.requestArray(`users/${login}/emotes`);
+	}
+}
+
+export class Cosmetics extends FrankerFaceZ.utilities.module.Module {
+	constructor(...args) {
+		super(...args);
+	}
+
+	fetchAvatars() {
+		return this.parent.requestObject('cosmetics/avatars?map_to=login');
+	}
+
+	fetchCosmetics() {
+		return this.parent.requestObject('cosmetics?user_identifier=twitch_id');
+	}
+
+	updateCosmetics(force = false) {
+		if (!this.cosmetics || force) {
+			if (!this.cosmeticsUpdate) {
+				this.cosmeticsUpdate = this.fetchCosmetics().then((json) => {
+					this.cosmetics = json;
+					this.cosmeticsUpdate = undefined;
+					return true;
+				});
+			}
+
+			return this.cosmeticsUpdate;
+		}
+
+		return Promise.resolve(false);
+	}
+
+	async getCosmeticsOfType(type) {
+		await this.updateCosmetics();
+
+		return this.cosmetics && this.cosmetics[type] || [];
+	}
+
+	getBadges() {
+		return this.getCosmeticsOfType('badges');
+	}
+
+	getPaints() {
+		return this.getCosmeticsOfType('paints');
+	}
 }

@@ -11,12 +11,6 @@ class BetterTTV extends Addon {
 		this.inject('chat.badges');
 		this.inject('site');
 
-		/*this.GIF_EMOTES_MODE = {
-			DISABLED: 0,
-			STATIC: 1,
-			ANIMATED: 2,
-		};*/
-
 		this.settings.add('ffzap.betterttv.global_emoticons', {
 			default: true,
 
@@ -50,22 +44,6 @@ class BetterTTV extends Addon {
 			},
 		});
 
-		/*this.settings.add('ffzap.betterttv.gif_emoticons_mode', {
-			default: 1,
-
-			ui: {
-				path: 'Add-Ons > BetterTTV Emotes >> Emotes',
-				title: 'GIF Emotes',
-				description: 'Change the mode of how GIF emoticons are showing up.',
-				component: 'setting-select-box',
-				data: [
-					{ value: 0, title: 'Disabled' },
-					{ value: 1, title: 'Enabled (Static GIF Emotes)' },
-					{ value: 2, title: 'Enabled (Animated GIF Emotes)' },
-				],
-			},
-		});*/
-
 		this.settings.add('ffzap.betterttv.pro_emoticons', {
 			default: true,
 
@@ -80,7 +58,6 @@ class BetterTTV extends Addon {
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.channel_emoticons', this.updateEmotes, this);
-		//this.chat.context.on('changed:ffzap.betterttv.gif_emoticons_mode', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', () => {
 			if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
 				this.socket.connect();
@@ -124,8 +101,6 @@ class BetterTTV extends Addon {
 		for (const room of this.chat.iterateRooms()) {
 			if (room) this.updateChannel(room);
 		}
-
-		//this.hookBTTVSettingChange();
 	}
 
 	roomAdd(room) {
@@ -145,7 +120,7 @@ class BetterTTV extends Addon {
 		if (user) {
 			const msg_user_id = msg.message.user.id;
 			if (user.id === msg_user_id) {
-				this.socket.broadcastMe(msg.channel);
+				this.socket.broadcastMe(`twitch:${msg.channelID}`);
 			}
 		}
 	}
@@ -175,24 +150,6 @@ class BetterTTV extends Addon {
 			},
 		};
 	}
-
-	/*hookBTTVSettingChange(newAttempts = 0) {
-		if (window.BetterTTV) {
-			window.BetterTTV.settings.on('changed.bttvGIFEmotes', () => this.updateEmotes());
-		}
-		else {
-			setTimeout(this.hookBTTVSettingChange.bind(this, newAttempts), 1000);
-		}
-	}
-
-	getAnimatedEmoteMode() {
-		let emoteMode = this.chat.context.get('ffzap.betterttv.gif_emoticons_mode');
-		if (window.BetterTTV && window.BetterTTV.settings.get('bttvGIFEmotes') && emoteMode !== this.GIF_EMOTES_MODE.DISABLED) {
-			emoteMode = this.GIF_EMOTES_MODE.ANIMATED;
-		}
-
-		return emoteMode;
-	}*/
 
 	async addBadges(attempts = 0) {
 		const response = await fetch('https://api.betterttv.net/3/cached/badges');
@@ -264,9 +221,11 @@ class BetterTTV extends Addon {
 
 				// Christmas emotes
 				'SoSnowy': '2px 0 0 0',
-			    'IceCold': '2px 0 0 0',
-			    'TopHat': null,
-			    'SantaHat': null,
+				'IceCold': '2px 0 0 0',
+				'TopHat': null,
+				'SantaHat': null,
+				'ReinDeer': null,
+				'CandyCane': null,
 			};
 
 			let i = emotes.length;
@@ -302,16 +261,6 @@ class BetterTTV extends Addon {
 						2: `https://cache.ffzap.com/${emote.animated[2]}`,
 						4: `https://cache.ffzap.com/${emote.animated[4]}`
 					};
-
-					/*if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.DISABLED) {
-						// If the GIF setting is set to "Disabled", ignore it.
-						continue;
-					} else if (this.getAnimatedEmoteMode() === this.GIF_EMOTES_MODE.STATIC) {
-						// If the GIF setting is set to "Static", route them through the cache.
-						emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
-						emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
-						emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
-					}*/
 				}
 
 				if (dataEmote.channel && dataEmote.channel === 'night') {
@@ -376,7 +325,7 @@ class BetterTTV extends Addon {
 		this.emotes.unloadSet(realID);
 
 		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
-			this.socket.joinChannel(room.login);
+			this.socket.joinChannel(`twitch:${room.id}`);
 		}
 
 		if (!this.chat.context.get('ffzap.betterttv.channel_emoticons')) {
@@ -429,27 +378,6 @@ class BetterTTV extends Addon {
 						2: `https://cache.ffzap.com/${emote.animated[2]}`,
 						4: `https://cache.ffzap.com/${emote.animated[4]}`
 					};
-
-					/*switch (this.getAnimatedEmoteMode()) {
-						case this.GIF_EMOTES_MODE.DISABLED:
-							break;
-
-						case this.GIF_EMOTES_MODE.STATIC:
-							emote.urls[1] = `https://cache.ffzap.com/${emote.urls[1]}`;
-							emote.urls[2] = `https://cache.ffzap.com/${emote.urls[2]}`;
-							emote.urls[4] = `https://cache.ffzap.com/${emote.urls[4]}`;
-
-							channelBttv.push(emote);
-							break;
-
-						case this.GIF_EMOTES_MODE.ANIMATED:
-							channelBttv.push(emote);
-							break;
-
-						default:
-							channelBttv.push(emote);
-							break;
-					}*/
 				}
 
 				channelBttv.push(emote);
