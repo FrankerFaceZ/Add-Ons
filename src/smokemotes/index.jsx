@@ -414,7 +414,7 @@ class SmokeysUtils extends Addon {
 			window.location.href == 'https://www.twitch.tv/directory/following' &&
       this.chat.context.get('smokemotes.auto_live_follow_page')
 		) {
-			const find_liveChannelsButton = document.getElementsByClassName('tw-pd-x-1');
+			const find_liveChannelsButton = document.getElementsByTagName('a');
 
 			let i = find_liveChannelsButton.length;
 
