@@ -414,17 +414,8 @@ class SmokeysUtils extends Addon {
 			window.location.href == 'https://www.twitch.tv/directory/following' &&
       this.chat.context.get('smokemotes.auto_live_follow_page')
 		) {
-			const find_liveChannelsButton = document.getElementsByTagName('a');
-
-			let i = find_liveChannelsButton.length;
-
-			while (i--) {
-				if (
-					find_liveChannelsButton[i].getAttribute('data-a-target') == 'following-live-tab'
-				) {
-					find_liveChannelsButton[i].click();
-				}
-			}
+			const find_liveChannelsButton = document.querySelector('a[data-a-target="following-live-tab"]');
+			find_liveChannelsButton.click();
 		}
 	}
 
