@@ -395,14 +395,6 @@ class SmokeysUtils extends Addon {
 					value: false,
 					writable: false,
 				});
-				/*document.addEventListener(
-					'visibilitychange',
-					(e) => {
-						e.stopImmediatePropagation();
-					},
-					true,
-					true
-				);*/
 			} catch (err) {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
@@ -414,16 +406,10 @@ class SmokeysUtils extends Addon {
 			window.location.href == 'https://www.twitch.tv/directory/following' &&
       this.chat.context.get('smokemotes.auto_live_follow_page')
 		) {
-			const find_liveChannelsButton = document.getElementsByClassName('tw-pd-x-1');
-
-			let i = find_liveChannelsButton.length;
-
-			while (i--) {
-				if (
-					find_liveChannelsButton[i].getAttribute('data-a-target') == 'following-live-tab'
-				) {
-					find_liveChannelsButton[i].click();
-				}
+			try {
+				document.querySelector('a[data-a-target="following-live-tab"]').click();
+			} catch (error) {
+				this.log.warn('Failed going to Live tab from Overview.', error);
 			}
 		}
 	}
@@ -433,6 +419,12 @@ class SmokeysUtils extends Addon {
 			document.querySelector(
 				'link[rel="icon"]'
 			).href = this.notify_icon_original;
+	}
+
+	checkExitViewerCard(close_button){
+		if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
+			close_button.click();
+		}
 	}
 
 	/**
@@ -451,34 +443,19 @@ class SmokeysUtils extends Addon {
 		)
 			return;
 
-		const find_close = document.getElementsByTagName('button');
-
-		let close_button;
-
-		let i = find_close.length;
-
-		while (i--) {
-			if (
-				find_close[i].getAttribute('data-test-selector') == 'close-viewer-card-button'
-			) {
-				close_button = find_close[i];
-			}
-		}
+		const close_button = document.querySelector('button[data-test-selector="close-viewer-card-button"]');
 
 		const keyCode = e.keyCode || e.which;
 
 		switch (keyCode) {
-			// timeout
+				// timeout
 			case 84:
 
 				this.resolve('site.chat').ChatService.first.sendMessage(
 					`/timeout ${this.ModCardData.user} 600`
 				);
 				this.updateLogin();
-
-				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
-					close_button.click();
-				}
+				this.checkExitViewerCard(close_button);
 
 				break;
 
@@ -489,10 +466,7 @@ class SmokeysUtils extends Addon {
 					`/delete ${this.ModCardData.message_id}`
 				);
 				this.updateLogin();
-
-				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
-					close_button.click();
-				}
+				this.checkExitViewerCard(close_button);
 
 				break;
 
@@ -503,10 +477,7 @@ class SmokeysUtils extends Addon {
 					`/ban ${this.ModCardData.user}`
 				);
 				this.updateLogin();
-
-				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
-					close_button.click();
-				}
+				this.checkExitViewerCard(close_button);
 
 				break;
 
@@ -517,10 +488,7 @@ class SmokeysUtils extends Addon {
 					`/timeout ${this.ModCardData.user} 1`
 				);
 				this.updateLogin();
-
-				if (close_button && this.settings.get('smokemotes.auto_exit_viewercard')) {
-					close_button.click();
-				}
+				this.checkExitViewerCard(close_button);
 
 				break;
 
