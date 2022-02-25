@@ -1,11 +1,11 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"icon": "https://i.imgur.com/Db2zP1l.png",
 	"short_name": "first_msg_highlight",
 	"name": "First Message Highlight",
-	"author": "deko_ration",
+	"author": "deko_ration, patched by dilliedAlly",
 	"description": "Addon to highlight the first message of a user during the current session. Useful for community-driven chats and welcoming.",
 	"settings": "add_ons.first_message_highlight",
 	"created": "2021-12-01T14:32:46.254Z",
