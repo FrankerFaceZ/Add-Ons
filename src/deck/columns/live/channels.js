@@ -34,6 +34,9 @@ export default class Channels extends LiveColumnBase {
 	}
 
 	async load(first = 10, cursor = null) {
+		if (first < 1) first = 1;
+		if (first > 30) first = 30;
+
 		const data = await getLoader().queryApollo({
 			query: require('./channels.gql'),
 			variables: {

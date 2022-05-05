@@ -28,6 +28,10 @@ export default class Hosted extends LiveColumnBase {
 		this.seen = null;
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	async load() {
 		const data = await getLoader().queryApollo({
 			query: require('./hosted.gql'),

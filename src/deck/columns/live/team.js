@@ -34,6 +34,10 @@ export default class Team extends LiveColumnBase {
 		this.seen = null;
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	async load(first = 10, cursor = null) {
 		const data = await getLoader().queryApollo({
 			query: require('./team.gql'),

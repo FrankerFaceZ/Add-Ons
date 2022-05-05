@@ -269,6 +269,21 @@
 					</select>
 				</div>
 
+				<component
+					v-for="(component, idx) in editComponents"
+					:is="component"
+					:key="idx"
+					:value="column"
+					:inst="inst"
+					:settings="settings"
+				/>
+			</section>
+
+			<section v-if="! copying" class="tw-mg-1">
+				<h5 class="tw-border-b">
+					{{ t('addon.deck.edit.filtering', 'Filtering') }}
+				</h5>
+
 				<div v-if="useTags" class="tw-flex tw-align-items-start tw-mg-y-05">
 					<label :for="'tags$' + column.id">
 						{{ t('addon.deck.edit.required-tags', 'Required Tags:') }}
@@ -279,14 +294,39 @@
 						class="tw-full-width"
 					/>
 				</div>
-				<component
-					v-for="(component, idx) in editComponents"
-					:is="component"
-					:key="idx"
-					:value="column"
-					:inst="inst"
-					:settings="settings"
-				/>
+				<div v-if="useTags" class="tw-flex tw-align-items-start tw-mg-y-05">
+					<label :for="'blocked-tags$' + column.id">
+						{{ t('addon.deck.edit.blocked-tags', 'Blocked Tags:') }}
+					</label>
+					<bd-tag-selector
+						v-model="column.settings.blocked_tags"
+						:input-id="'blocked-tags$' + column.id"
+						class="tw-full-width"
+					/>
+				</div>
+
+				<div v-if="filterCategories" class="tw-flex tw-align-items-start tw-mg-y-05">
+					<label :for="'categories$' + column.id">
+						{{ t('addon.deck.edit.required-categories', 'Required Categories:') }}
+					</label>
+
+					<bd-category-selector
+						v-model="column.settings.filter_games"
+						:input-id="'categories$' + column.id"
+						class="tw-full-width"
+					/>
+				</div>
+				<div v-if="filterCategories" class="tw-flex tw-align-items-start tw-mg-y-05">
+					<label :for="'blocked-categories$' + column.id">
+						{{ t('addon.deck.edit.blocked-categories', 'Blocked Categories:') }}
+					</label>
+
+					<bd-category-selector
+						v-model="column.settings.filter_blocked_games"
+						:input-id="'blocked-categories$' + column.id"
+						class="tw-full-width"
+					/>
+				</div>
 			</section>
 
 			<div v-if="! copying" class="tw-pd-5" />
@@ -396,6 +436,10 @@ export default {
 
 		useTags() {
 			return this.inst && this.inst.useTags();
+		},
+
+		filterCategories() {
+			return this.inst && this.inst.allowFilterCategories();
 		},
 
 		editComponents() {

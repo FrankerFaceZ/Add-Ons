@@ -19,6 +19,10 @@ export default class Followed extends LiveColumnBase {
 		this.seen = null;
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	onStreamChange(type, id) {
 		super.onStreamChange(type, id);
 

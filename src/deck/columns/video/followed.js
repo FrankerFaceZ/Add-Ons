@@ -23,6 +23,10 @@ export default class Followed extends VideoColumnBase {
 		return ['addon.deck.video-followed', 'Followed Videos'];
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	reset() {
 		super.reset();
 		this.seen = null;

@@ -54,6 +54,10 @@ export default class Channel extends VideoColumnBase {
 		return super.canRun() && !! this.settings.id
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	reset() {
 		super.reset();
 		this.seen = null;

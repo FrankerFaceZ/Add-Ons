@@ -31,6 +31,10 @@ export default class Search extends LiveColumnBase {
 		this.seen = null;
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	async load(first = 10, cursor = null) {
 		const data = await getLoader().queryApollo({
 			query: require('./search.gql'),
@@ -48,7 +52,7 @@ export default class Search extends LiveColumnBase {
 
 		if ( Array.isArray(nodes) )
 			for(const node of nodes) {
-				if ( node && ! seen.has(node.id) ) {
+				if ( node && node.stream && ! seen.has(node.id) ) {
 					seen.add(node.id);
 					const copy = deep_copy(node);
 					cleanViewersCount(copy.stream, node.stream);

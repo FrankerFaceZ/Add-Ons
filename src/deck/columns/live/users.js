@@ -53,6 +53,10 @@ export default class Users extends LiveColumnBase {
 		return super.canRun() && this.settings.ids?.length > 0
 	}
 
+	allowFilterCategories() {
+		return true;
+	}
+
 	reset() {
 		super.reset();
 		this.remaining = null;

@@ -682,7 +682,7 @@ export default {
 				return;
 
 			const height = root.clientHeight - (header ? header.clientHeight : 0);
-			this.size = Math.max(1, Math.ceil(height / 220));
+			this.size = Math.min(50, this.columns * Math.max(1, Math.ceil(height / 220)));
 			scroller.style.height = Math.max(0, height) + 'px';
 		},
 

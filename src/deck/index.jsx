@@ -198,7 +198,7 @@ class BrowseDeck extends Addon {
 			if ( ! vue.enabled )
 				await vue.enable();
 
-			vue.component((await import(/* webpackChunkName: "deck-side-components" */ './side-components.js')).default);
+			vue.component((await import(/* webpackChunkName: "deck/side-components" */ './side-components.js')).default);
 			this.side_vue = vue;
 			this.side_vue_promise = null;
 			return vue;
@@ -220,7 +220,7 @@ class BrowseDeck extends Addon {
 			if ( ! vue.enabled )
 				await vue.enable();
 
-			vue.component((await import(/* webpackChunkName: "deck-components" */ './components.js')).default);
+			vue.component((await import(/* webpackChunkName: "deck/components" */ './components.js')).default);
 			this.vue = vue;
 			this.vue_promise = null;
 			return this.vue;

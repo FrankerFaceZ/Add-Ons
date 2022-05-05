@@ -100,6 +100,7 @@
 }
 
 .bd--channel-selector,
+.bd--category-selector,
 .bd--tag-selector {
 	.tw-root--theme-dark &,
 	& {
@@ -108,6 +109,7 @@
 			border-bottom-right-radius: 0 !important;
 		}
 
+		.bd--category-selector__list,
 		.bd--channel-selector__list,
 		.bd--tag-selector__list {
 			border-top-left-radius: 0 !important;
@@ -157,11 +159,11 @@
 	}
 
 	label {
-		min-width: 8rem;
+		min-width: 10rem;
 	}
 
 	.bd-checkbox--indent {
-		margin-left: 8rem !important;
+		margin-left: 10rem !important;
 
 		label {
 			padding-left: 2.6rem;
