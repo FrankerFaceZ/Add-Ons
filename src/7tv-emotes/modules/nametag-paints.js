@@ -59,15 +59,18 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		switch (paint.function) {
 			case 'linear-gradient':
 				bgFunc = `${paint.repeat ? 'repeating-' : ''}linear-gradient`;
-				bgFuncArgs.push(`${paint.angle}deg`);
+				if (typeof paint.angle == 'number') bgFuncArgs.push(`${paint.angle}deg`);
+				else bgFuncArgs.push('90deg');
 				break;
 			case 'radial-gradient':
 				bgFunc = `${paint.repeat ? 'repeating-' : ''}radial-gradient`;
-				bgFuncArgs.push(paint.shape || 'circle');
+				if (paint.shape == 'ellipse') bgFuncArgs.push('ellipse');
+				else bgFuncArgs.push('circle');
 				break;
 			case 'url':
 				bgFunc = 'url';
-				bgFuncArgs.push(paint.image_url || '""');
+				if (typeof paint.image_url == 'string') bgFuncArgs.push(`"${CSS.escape(paint.image_url)}"`);
+				else bgFuncArgs.push('""');
 				isGradient = false;
 				break;
 			default:
@@ -76,21 +79,33 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 
 		if (isGradient && paint.stops instanceof Array) {
 			for (let stop of paint.stops) {
-				bgFuncArgs.push(`${this.getCSSColorFromInt(stop.color)} ${stop.at * 100}%`);
+				if (typeof stop.color == 'number' &&
+					typeof stop.at == 'number') {
+					bgFuncArgs.push(`${this.getCSSColorFromInt(stop.color)} ${stop.at * 100}%`);
+				}
 			}
 		}
 
 		let background = `${bgFunc}(${bgFuncArgs.join(', ')})`;
 
 		let defaultColor;
-		if (paint.color) {
+		if (typeof paint.color == 'number') {
 			defaultColor = this.getCSSColorFromInt(paint.color);
 		}
 
 		let dropShadow;
-		if (paint.drop_shadow) {
-			let shadow = paint.drop_shadow;
-			dropShadow = `drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(shadow.color)})`;
+		if (paint.drop_shadows instanceof Array) {
+			let shadows = [];
+			for (let shadow of paint.drop_shadows) {
+				if (typeof shadow.x_offset == 'number' &&
+					typeof shadow.y_offset == 'number' &&
+					typeof shadow.radius == 'number' &&
+					typeof shadow.color == 'number') {
+					shadows.push(`drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(shadow.color)})`);
+				}
+			}
+
+			dropShadow = shadows.join(' ');
 		}
 
 		return `
