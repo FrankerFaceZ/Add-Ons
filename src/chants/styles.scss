@@ -1,0 +1,84 @@
+#chant_popup {
+  width: 320px;
+  padding: 5px 10px 0;
+  box-sizing: border-box;
+  background-color: var(--color-twitch-purple-8);
+  border-radius: 5px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-hinted-grey-14);
+  display: grid;
+  grid-template-columns: 240px 43px auto;
+  grid-template-rows: 30px 35px 30px 22px;
+  animation: fadeIn 300ms;
+}
+
+#chant_popup h4 {
+  font-weight: 800;
+  font-size: 14px;
+  align-self: center;
+}
+
+#chant_close_button {
+  fill: var(--color-hinted-grey-14);;
+  grid-column: 3 / 4;
+  height: 22px;
+  align-self: center;
+  cursor: pointer;
+}
+
+#chant_message {
+  grid-column: 1 / 2;
+  grid-row: 2 / 4;
+  height: 63px;
+  padding-right: 8px;
+  align-self: center;
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+#chant_button {
+  grid-column: 2 / 4;
+  grid-row: 3 / 4;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-hinted-grey-14);
+  border: 0;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: #000000;
+  text-align: center;
+}
+
+#chant_button:hover {
+  background-color: #FFFFFF;
+}
+
+#chant_progressbar {
+  grid-row: 4 / 5;
+  grid-column: 1 / 5;
+  height: 4px;
+  background-color: #421782;
+  border-radius: 2px;
+  display: block;
+  align-self: center;
+}
+
+#chant_progress {
+  height: 100%;
+  width: 100%;
+  display: block;
+  border-radius: 2px;
+  background-color: var(--color-hinted-grey-14);
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

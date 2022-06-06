@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "requires": [],
+
+    "version": "1.0.0",
+    "icon": "https://raw.githubusercontent.com/twitch-chants/twitch-chants.github.io/main/favicon.png",
+
+    "short_name": "Chants Addon",
+    "name": "Chants Addon",
+    "author": "twitch-chants",
+    "description": "Return of Chants",
+
+    "website": "https://twitch-chants.github.io"
+}
