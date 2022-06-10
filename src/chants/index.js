@@ -41,7 +41,7 @@ export class TwitchChants extends Addon {
 							let current_chantmessage = msg.message.split("!chant")[1].trim();
 							if(current_chantmessage == "") {
 								this.log.info("no chant message included");
-								if (user.login == msg.user.login) { Chants.sendAnonMessage("Correct usage of the command is: !chant <message>"); }
+								if (user.login == msg.user.login) { this.resolve('site.chat').addNotice(msg.roomLogin, "Correct usage of the command is: !chant <message>"); }
 							}
 							else {
 								let message_time = parseInt(msg.timestamp);
@@ -54,7 +54,7 @@ export class TwitchChants extends Addon {
 								else
 								{
 									this.log.info ("chant on cooldown");
-									if (user.login == msg.user.login) { Chants.sendAnonMessage("A chant is already running."); }
+									if (user.login == msg.user.login) { this.resolve('site.chat').addNotice(msg.roomLogin, "A chant is already running."); }
 								}
 							}
 						}

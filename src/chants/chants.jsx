@@ -82,14 +82,3 @@ export function addChantButton( callback, username, message, channel) {
 
   return container
 }
-
-export function sendAnonMessage(message) {
-	let div = document.createElement('div');
-	div.classList.add('chat-line__status');
-	
-	let span = document.createElement('span');
-	span.innerText = message;
-	div.appendChild(span);
-
-	document.getElementsByClassName('chat-scrollable-area__message-container')[0].appendChild(div);
-}
