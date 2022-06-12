@@ -5,7 +5,7 @@ import * as Chants from './Chants.jsx'
 import STYLE_URL from './styles.scss'
 const createElement = FrankerFaceZ.utilities.dom.createElement;
 let current_chantmessage = "";
-let current_chanttime = 0; 
+let current_chanttime = 0;
 let chant_delay = 25000;
 
 // Add-Ons should contain a class that extends Addon.
@@ -16,7 +16,7 @@ export class TwitchChants extends Addon {
 		this.inject('site');
 		this.injectAs('site_chat', 'site.chat');
 		let user = this.site.getUser();
-		
+
 
 		// Within the constructor, modules can inject dependencies.
 		// A module will not be enabled until all its dependencies
@@ -32,7 +32,7 @@ export class TwitchChants extends Addon {
 		// onLoad is called, you need to create a list on the
 		// Addon here with the names of the dependencies.
 		this.load_requires = ['metadata'];
-		
+
 		const ChantsProcessor = {
 			process(tokens, msg) {
 				if (!msg.isHistorical) {
@@ -89,12 +89,12 @@ export class TwitchChants extends Addon {
 						}
 					}
 				}
-				return tokens; 
+				return tokens;
 			}
 		}
 		this.chat.addTokenizer(ChantsProcessor);
 	}
-	
+
 	// onLoad is called when the module is being loaded, prior to
 	// being enabled. If this method returns a Promise, FFZ will
 	// wait for the promise to resolve before considering the
@@ -116,10 +116,13 @@ export class TwitchChants extends Addon {
 		// loggers prepend the name of the module to output.
 		this.log.info('Chants Extension Enabled');
 
-		
 		this.createStyle();
-		
+
 		this.on('chat:get-tab-commands', e => {
+			if(document.getElementById("missingParamNotice"))
+			{
+				Chants.destroyMissingParamNotice();
+			}
 			this.log.info ("permission level: " + e.permissionLevel);
 			if ( e.permissionLevel >= 2 )
 			{
@@ -133,8 +136,8 @@ export class TwitchChants extends Addon {
 					]
 				})
 			}
-        });
-		
+    });
+
 		this.on('chat:pre-send-message', e => {
 			const msg = e.message;
 			if (msg.split(" ")[0].toLowerCase() == "/chant") {
@@ -146,7 +149,8 @@ export class TwitchChants extends Addon {
 					this.log.info ("we are a mod");
 					if(message == "") {
 						this.log.info("no chant message included");
-						this.resolve('site.chat').addNotice(e.channel, "Correct usage of the command is: /chant <message>");
+
+						Chants.addMissingParamNotice();
 					}
 					else
 					{
@@ -187,7 +191,7 @@ export class TwitchChants extends Addon {
 	async onUnload() {
 		/* no-op */
 	}
-	
+
 	destroyStyle() {
 		if ( this.style ) {
 			this.style.remove();
