@@ -49,8 +49,8 @@ class Aplatypuss extends Addon {
 			return;
 		}
 		
-		const BASE_URL = "https://aplatypussemotes-bfd.pages.dev/static/"
-		const response = await fetch('https://aplatypussemotes-bfd.pages.dev/emotes.json');
+		const BASE_URL = "https://aplatypuss-emotes.pages.dev/static/"
+		const response = await fetch('https://aplatypuss-emotes.pages.dev/emotes.json');
 		if (response.ok) {
 			const platyEmotes = [];
 
@@ -87,7 +87,7 @@ class Aplatypuss extends Addon {
 				emoticons: setEmotes,
 				title: 'Channel Emotes',
 				source: 'Aplatypuss',
-				icon: 'https://aplatypussemotes-bfd.pages.dev/static/icon.png',
+				icon: 'https://aplatypuss-emotes.pages.dev/static/icon.png',
 			};
 			room.addSet('addon--aplatypusss', realID, set);
 		
