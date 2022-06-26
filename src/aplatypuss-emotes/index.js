@@ -70,9 +70,9 @@ class Aplatypuss extends Addon {
 				};
 		
 				emote.urls = {
-					1: BASE_URL + `${dataEmote.id}` + "28.webp",
-					2: BASE_URL + `${dataEmote.id}` + "56.webp",
-					4: BASE_URL + `${dataEmote.id}` + "112.webp",
+					1: BASE_URL + `${dataEmote.id}` + "_28.webp",
+					2: BASE_URL + `${dataEmote.id}` + "_56.webp",
+					4: BASE_URL + `${dataEmote.id}` + "_112.webp",
 				};
 		
 		
