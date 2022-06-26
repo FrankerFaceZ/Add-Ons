@@ -29,7 +29,18 @@ class Aplatypuss extends Addon {
 		this.on('chat:room-add', this.roomAdd);
 		this.on('chat:room-remove', this.roomRemove);
 
-		this.updateGlobalEmotes();
+		var set = {
+			emoticons: [],
+			title: 'Global Emotes',
+			source: 'Aplatypuss',
+			_type: 1,
+		};
+
+		const realID = 'addon--aplatypuss--emotes';
+
+		this.emotes.addDefaultSet('addon--aplatypuss', realID, set);
+
+		//this.updateGlobalEmotes();
 
 		for (const room of this.chat.iterateRooms()) {
 			if (room) this.updateChannel(room);
@@ -45,10 +56,10 @@ class Aplatypuss extends Addon {
 		this.updateChannel(room);
 	}
 
-	async updateGlobalEmotes(attempts = 0) {
+	async updateChannelEmotes(room, attempts = 0) {
 		const realID = 'addon--aplatypuss--emotes';
-		this.emotes.removeDefaultSet('addon--aplatypuss', realID);
-		this.emotes.unloadSet(realID);
+		room.removeSet('addon--aplatypuss', realID);
+		//this.emotes.unloadSet(realID);
 
 		if (!this.chat.context.get('aplatypuss.enable_emoticons')) {
 			return;
@@ -93,13 +104,11 @@ class Aplatypuss extends Addon {
 	
 			let set = {
 				emoticons: setEmotes,
-				title: 'Aplatypuss Emotes',
-				source: 'Aplatypuss',
+				title: 'Channel Emotes',
+				source: 'Aplatypuss'
 				//icon: 'https://cdn.betterttv.net/tags/developer.png',
-				_type: 1,
 			};
-	
-			this.emotes.addDefaultSet('addon--aplatypusss', realID, set);
+			room.addSet('addon--aplatypusss', realID, set);
 		
 		}else {
 			if (response.status === 404) return;
@@ -107,7 +116,7 @@ class Aplatypuss extends Addon {
 			const newAttempts = (attempts || 0) + 1;
 			if (newAttempts < 12) {
 				this.log.error('Failed to fetch global emotes. Trying again in 5 seconds.');
-				setTimeout(this.updateGlobalEmotes.bind(this, newAttempts), 5000);
+				setTimeout(this.updateChannelEmotes.bind(this,room, newAttempts), 5000);
 			}
 		}
 	}
@@ -115,18 +124,25 @@ class Aplatypuss extends Addon {
 	async updateChannel(room) {
 		const realID = 'addon--aplatypuss--emotes';
 
-		if(room._login != "aplatypuss"){
+		console.log(room);
+		if(room._id != 39464264){ //Platy Twitch ID
 			console.log("disabling Aplatypuss emotes")
 			this.emotes.unloadSet('addon--aplatypuss', realID);
 		}
 		else{
 			console.log("Aplatypuss emotes enabled")
+			this.updateChannelEmotes(room);
+			this.emotes.loadSet('addon--aplatypuss', realID);
+
 		}
 
 	}
 
 	updateEmotes() {
-		this.updateGlobalEmotes();
+		//this.updateGlobalEmotes();
+		for (const room of this.chat.iterateRooms()) {
+			if (room) this.updateChannel(room);
+		}
 	}
 }
 
