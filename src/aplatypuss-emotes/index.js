@@ -105,8 +105,8 @@ class Aplatypuss extends Addon {
 			let set = {
 				emoticons: setEmotes,
 				title: 'Channel Emotes',
-				source: 'Aplatypuss'
-				//icon: 'https://cdn.betterttv.net/tags/developer.png',
+				source: 'Aplatypuss',
+				icon: 'https://jdude.tv/images/emotes/icon.png',
 			};
 			room.addSet('addon--aplatypusss', realID, set);
 		
