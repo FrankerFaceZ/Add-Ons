@@ -7,7 +7,7 @@
 	"requires": [
 		"ffzap-core"
 	],
-	"icon": "https://cdn.frankerfacez.com/badge/2/4/solid",
+	"icon": "https://aplatypuss-emotes.pages.dev/static/icon.png",
 	"version": "1.0.0",
 	"short_name": "Aplatypuss Emotes",
 	"name": "Aplatypuss Emotes",
@@ -15,5 +15,5 @@
 	"description": "This is adds custom emotes to Aplatypuss chat",
 	"settings": "add_ons.aplatypuss_emotes",
 	"created": "2022-06-26T00:29:27.347Z",
-	"updated": "2022-06-26T05:21:13.321Z"
+	"updated": "2022-06-26T22:38:00.705Z"
 }

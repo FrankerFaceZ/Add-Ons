@@ -66,7 +66,9 @@ class Aplatypuss extends Addon {
 					name: dataEmote.code,
 					width: dataEmote.width,
 					height: dataEmote.width,
-					require_spaces: arbitraryEmote
+					require_spaces: arbitraryEmote,
+					modifier: dataEmote.modifier !== undefined,
+					modifier_offset:  dataEmote.modifier,
 				};
 		
 				emote.urls = {
@@ -89,7 +91,7 @@ class Aplatypuss extends Addon {
 				source: 'Aplatypuss',
 				icon: 'https://aplatypuss-emotes.pages.dev/static/icon.png',
 			};
-			room.addSet('addon--aplatypusss', realID, set);
+			room.addSet('addon--aplatypuss', realID, set);
 		
 		}else {
 			if (response.status === 404) return;
