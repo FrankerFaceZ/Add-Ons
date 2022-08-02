@@ -57,6 +57,18 @@
 						</label>
 					</div>
 
+					<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05 tw-pd-x-05">
+						<input
+							:id="'vertical$' + id"
+							v-model="edit_data.vertical"
+							type="checkbox"
+							class="ffz-checkbox__input"
+						>
+						<label :for="'vertical$' + id" class="ffz-checkbox__label">
+							{{ t('addon.deck.edit.vertical', 'Use Vertical Layout for Tab') }}
+						</label>
+					</div>
+
 					<div class="tw-flex tw-align-items-center">
 						<label :for="'icon$' + id" class="tw-mg-l-05">
 							{{ t('addon.deck.edit.icon', 'Icon:') }}

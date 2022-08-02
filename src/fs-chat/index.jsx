@@ -466,7 +466,7 @@ class FSChat extends Addon {
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst),
 			is_fs = (this.enabled || this.enabling) && document.fullscreenElement?.contains?.(outer),
-			container = outer?.querySelector?.('.video-player__default-player .player-controls__right-control-group');
+			container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group');
 
 		if ( ! container )
 			return;

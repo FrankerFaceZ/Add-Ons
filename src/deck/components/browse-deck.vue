@@ -144,13 +144,53 @@
 				</div>
 			</div>
 		</div>
-		<div class="bd--deck-list tw-flex">
-			<div ref="list" class="tw-flex tw-flex-grow-1 tw-mg-t-5 tw-mg-l-3 tw-mg-b-1">
+		<div
+			v-if="vertical"
+			class="bd--deck-list bd-vertical"
+		>
+			<div
+				ref="list"
+				class="tw-mg-t-5 tw-mg-l-3 tw-mg-b-1"
+			>
 				<component
 					v-for="column in columns"
 					:key="column.id"
 					:is="getColumnComponent(column)"
 					:data="column"
+					:vertical="vertical"
+					:settings="activeSettings"
+					:collapsed="column.collapsed"
+					:type="types[column.type]"
+					:for-sidebar="tab.sidebar"
+					@can-refresh="updateRefresh()"
+					@save="updateColumn($event)"
+					@delete="removeColumn(column.id)"
+					@collapse="collapseColumn(column.id, $event)"
+					@cache="cacheColumn(column.id, $event)"
+					@open-modal="openModal($event)"
+					@init="onColumnInit(column.id, $event)"
+				/>
+				<div v-if="! columns.length" class="tw-c-text-base">
+					<h1 class="ffz-i-up-big tw-mg-l-2 tw-c-text-alt-2" />
+					<markdown :source="t('addon.deck.intro', 'Welcome to Deck, the best way to discover content on Twitch.\n\nYou need to start by adding a column using the New button.')" />
+				</div>
+				<div class="tw-mg-r-2" />
+			</div>
+		</div>
+		<div
+			v-else
+			class="bd--deck-list tw-flex"
+		>
+			<div
+				ref="list"
+				class="tw-flex tw-flex-grow-1 tw-mg-t-5 tw-mg-l-3 tw-mg-b-1"
+			>
+				<component
+					v-for="column in columns"
+					:key="column.id"
+					:is="getColumnComponent(column)"
+					:data="column"
+					:vertical="vertical"
 					:settings="activeSettings"
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
@@ -174,6 +214,7 @@
 			<component
 				:is="modal"
 				:data="modal_data"
+				:vertical="vertical"
 				@open-modal="openModal($event)"
 				@close="closeModal"
 			/>
@@ -236,6 +277,10 @@ export default {
 	computed: {
 		tab() {
 			return this.tabs[this.tab_index];
+		},
+
+		vertical() {
+			return this.tab.vertical || false;
 		},
 
 		currentTags() {

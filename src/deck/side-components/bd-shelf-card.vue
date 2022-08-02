@@ -18,11 +18,13 @@
 					class="tw-relative ffz-avatar ffz-avatar--size-30"
 					:aria-label="props.avatarTitle"
 				>
-					<img
-						class="ffz-avatar"
-						:alt="props.avatarTitle"
-						:src="props.avatar"
-					>
+					<div class="tw-border-radius-rounded tw-overflow-hidden">
+						<img
+							class="ffz-avatar__img tw-image"
+							:alt="props.avatarTitle"
+							:src="props.avatar"
+						>
+					</div>
 				</figure>
 			</div>
 			<div class="tw-flex tw-ellipsis tw-full-width tw-justify-content-between">
