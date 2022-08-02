@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "unlisted": true,
+  "requires": [],
+
+  "version": "1.0.0",
+  "icon": "https://i.imgur.com/GzgzcF9.png",
+
+  "short_name": "hide-bits",
+  "name": "Hide Bits in Chat",
+  "author": "GabeDuarteM",
+  "description": "Hide the amount of bits in a chat message, especially useful to avoid spotting bit alerts that should be a surprise",
+
+  "website": "https://www.gabrielduarte.dev"
+}
