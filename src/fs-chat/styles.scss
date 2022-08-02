@@ -22,6 +22,11 @@
 		display: none !important;
 	}
 
+	&.hide-scroll .simplebar-track {
+		visibility: hidden !important;
+		display: none !important;
+	}
+
 	.video-chat,
 	.qa-vod-chat {
 		background-color: transparent !important;
@@ -145,6 +150,7 @@
 		border-color: rgba(255,255,255,0.3) !important;
 	}
 
+	.ffz--chat-card .tw-c-background-alt,
 	.ffz--chat-card .tw-c-background-base {
 		background-color: rgba(0,0,0,0.1) !important;
 	}
