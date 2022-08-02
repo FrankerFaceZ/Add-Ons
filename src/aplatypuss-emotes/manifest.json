@@ -1,5 +1,6 @@
 {
 	"enabled": true,
+	"unlisted": true,
 	"targets": [
 		"main",
 		"clips"
