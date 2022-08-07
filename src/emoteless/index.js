@@ -23,11 +23,13 @@ class EmoteLessChat extends Addon {
 			process(tokens, msg) {
 				if (!this.context.get('emote_less_chat.enabled')) return tokens;
 
-				let SPACES = /^\s+$/g;
 				let emoteOnly = true;
 				for(const token of tokens) {
 					if (token.type === 'emote') continue;
-					if (token.type === 'text' && SPACES.test(token.text)) continue;
+					if (token.type === 'text' && /^(\s|[^\x20-\x7E])+$/g.test(token.text)) {
+						if (!/^\s+$/g.test(token.text)) this.log.debug(token.text);
+						continue;
+					}
 					emoteOnly = false;
 					break;
 				}
