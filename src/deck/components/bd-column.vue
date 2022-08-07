@@ -1,8 +1,8 @@
 <template>
 	<div
 		ref="root"
-		:class="[is_collapsed ? 'collapsed' : '', widthClass, colors ? 'tw-c-text-base' : '', hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
-		class="bd--deck-column tw-relative tw-border tw-elevation-1 tw-flex-column tw-mg-r-1"
+		:class="[vertical ? 'tw-mg-b-1 tw-mg-r-3' : 'tw-mg-r-1', vertical ? 'vertical' : '', is_collapsed ? 'collapsed' : '', widthClass, colors ? 'tw-c-text-base' : '', hasArt ? 'bd--art-column tw-c-background-alt' : 'tw-c-background-base']"
+		class="bd--deck-column tw-relative tw-border tw-elevation-1 tw-flex-column"
 		:data-column-id="data.id"
 		:data-columns="columns"
 		:style="`--columns: ${columns};${colors}`"
@@ -26,7 +26,7 @@
 					@click="toggle"
 				>
 					<span class="tw-button-icon__icon">
-						<figure :class="`ffz-i-${is_collapsed ? 'down' : 'right'}-dir`" />
+						<figure :class="`ffz-i-${is_collapsed != vertical ? 'down' : 'right'}-dir`" />
 					</span>
 				</button>
 				<div
@@ -256,7 +256,7 @@ const {has, deep_copy} = FrankerFaceZ.utilities.object;
 const {Color} = FrankerFaceZ.utilities.color;
 
 export default {
-	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar'],
+	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar', 'vertical'],
 
 	data() {
 		return {

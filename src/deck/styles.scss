@@ -8,6 +8,12 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 
+	&.bd-vertical {
+		width: 100%;
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
 	.preview-card .preview-card-overlay {
 		pointer-events: all;
 	}
@@ -221,11 +227,19 @@
 	--column-width: calc(var(--columns) * calc(var(--width) + 1rem) + 1rem);
 
 	&:not(.collapsed) {
+		&:not(.vertical) .simplebar-content {
+			width: var(--column-width);
+		}
+
+		&.vertical {
+			width: calc(100% - 3rem);
+			height: calc(5rem + calc(var(--columns) * calc(var(--width) / 1.1)));
+		}
+
 		.simplebar-content {
 			display: flex;
 			flex-wrap: wrap;
 			align-content: flex-start;
-			width: var(--column-width);
 		}
 
 		.bd--width {
@@ -250,7 +264,7 @@
 		}
 	}
 
-	&.collapsed {
+	&.collapsed:not(.vertical) {
 		writing-mode: vertical-lr;
 	}
 }

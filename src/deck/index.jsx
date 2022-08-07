@@ -48,7 +48,7 @@ class BrowseDeck extends Addon {
 			{
 				prepend: true,
 				selectors: {
-					maximized: '.side-bar-contents>div>div'
+					maximized: '.side-bar-contents>div>div,.side-bar-contents>nav>div'
 				}
 			}
 		);

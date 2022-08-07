@@ -139,7 +139,12 @@
 
 				<div v-if="!sidebar" class="tw-flex tw-align-items-center tw-mg-y-05">
 					<label :for="'columns$' + column.id">
-						{{ t('addon.deck.edit.columns', 'Columns:') }}
+						<template v-if="vertical">
+							{{ t('addon.deck.edit.height', 'Height:') }}
+						</template>
+						<template v-else>
+							{{ t('addon.deck.edit.columns', 'Columns:') }}
+						</template>
 					</label>
 					<input
 						:id="'columns$' + column.id"
@@ -350,7 +355,7 @@ const BAD_KEYS = [
 let last_id = 0;
 
 export default {
-	props: ['data'],
+	props: ['data', 'vertical'],
 
 	data() {
 		const column = deep_copy(this.data.column);

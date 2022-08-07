@@ -83,7 +83,17 @@ class FSChat extends Addon {
 				alpha: true
 			},
 			changed: () => this.updateCSS()
-		})
+		});
+
+		this.settings.add('addon.fs-chat.hide-scroll', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > FS Chat >> Appearance',
+				title: 'Hide Chat Scroll Bar',
+				component: 'setting-check-box'
+			},
+			changed: val => this.chat && this.chat.classList.toggle('hide-scroll', val)
+		});
 
 		if ( SUPPORTS_BLUR )
 			this.settings.add('addon.fs-chat.bg.blur', {
@@ -312,7 +322,7 @@ class FSChat extends Addon {
 
 			let handle;
 
-			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base ${this.handle_right ? 'handle--right' : ''}`}>
+			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''}${this.settings.get('addon.fs-chat.hide-scroll') ? ' hide-scroll' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base ${this.handle_right ? 'handle--right' : ''}`}>
 				{handle = <div class="handle ffz-i-move" />}
 				{this.chat_pane}
 				{this.meta_pane}
@@ -456,7 +466,7 @@ class FSChat extends Addon {
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst),
 			is_fs = (this.enabled || this.enabling) && document.fullscreenElement?.contains?.(outer),
-			container = outer?.querySelector?.('.player-controls__right-control-group');
+			container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group');
 
 		if ( ! container )
 			return;
