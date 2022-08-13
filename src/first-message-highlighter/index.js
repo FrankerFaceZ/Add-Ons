@@ -7,6 +7,16 @@ class FirstMessageHighlight extends Addon {
 
 		this.inject('chat');
 
+		this.settings.add('first_message_highlight.enabled', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > First Message Highlight >> Highlights',
+				title: 'Enable highlight',
+				description: 'Enable or disable highlight globally',
+				component: 'setting-check-box'
+			}
+		});
+
 		this.settings.add('first_message_highlight.priority', {
 			default: 0,
 			ui: {
@@ -38,6 +48,8 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
+				if (!outerThis.settings.get('first_message_highlight.enabled')) return;
+				
 				if (msg.fh_known_user == null)
 					msg.fh_known_user = outerThis.known_users.has(msg.user.userID);
 
