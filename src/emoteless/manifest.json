@@ -2,7 +2,7 @@
     "enabled": true,
     "requires": [],
 
-    "version": "1.0.5",
+    "version": "1.0.6",
     "icon": "https://echtkpvl.de/EchtkPvL-logo.png",
 
     "short_name": "emote_less_chat",
@@ -13,5 +13,5 @@
     "website": "https://echtkpvl.de",
     "settings": "add_ons.emote_less_chat",
     "created": "2022-07-14T19:00:00.000Z",
-    "updated": "2022-07-19T07:35:01.337Z"
+    "updated": "2022-08-07T13:37:01.337Z"
 }
