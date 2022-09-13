@@ -1,0 +1,10 @@
+{
+    "enabled":     false,
+    "requires":    [],
+    "version":     "1.0.0",
+    "short_name":  "UnreadMentionsCounter",
+    "name":        "Unread Mentions Counter",
+    "author":      "ArgoWizbang",
+    "description": "Adds an unread mentions/pings counter in the inactive browser tab of stream chats.\n\nBe able to see if anyone has mentioned/pinged you in chat while you were viewing a different tab in your browser!",
+	"settings":    "add_ons.unread_mentions_counter"
+}
