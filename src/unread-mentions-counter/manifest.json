@@ -8,5 +8,5 @@
 	"description": "Adds an unread mentions/pings counter in the inactive browser tab of stream chats.\n\nBe able to see if anyone has mentioned/pinged you in chat while you were viewing a different tab in your browser!",
 	"settings": "add_ons.unread_mentions_counter",
 	"created": "2022-09-14T08:48:21.047Z",
-	"updated": "2022-09-14T08:48:21.047Z"
+	"updated": "2022-09-14T11:15:37.853Z"
 }

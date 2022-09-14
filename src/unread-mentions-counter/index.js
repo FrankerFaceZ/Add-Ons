@@ -95,26 +95,22 @@ class UnreadMentionsCounter extends Addon {
 			img.crossOrigin = 'anonymous';
 
 			img.onload = () => {
-				const interFont = new FontFace( 'Inter', 'url(https://static.twitchcdn.net/assets/inter-latin-variable-wghtOnly-normal-a05a0d687a088c4efed3.woff2)' );
+				context.drawImage( img, 0, 0, size, size );
 
-				interFont.load().then( () => {
-					context.drawImage( img, 0, 0, size, size );
+				// Icon Counter Background
+				context.beginPath();
+				context.arc( canvas.width - size / 3, size / 3, size / 3, 0, 2 * Math.PI );
+				context.fillStyle = this.settings.get( this.settingsNamespace + '.icon.bg-color' );
+				context.fill();
 
-					// Icon Counter Background
-					context.beginPath();
-					context.arc( canvas.width - size / 3, size / 3, size / 3, 0, 2 * Math.PI );
-					context.fillStyle = this.settings.get( this.settingsNamespace + '.icon.bg-color' );
-					context.fill();
+				// Icon Counter Text
+				context.font         = Math.ceil( size / 1.78 ) + 'px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
+				context.textAlign    = 'center';
+				context.textBaseline = 'middle';
+				context.fillStyle    = this.settings.get( this.settingsNamespace + '.icon.text-color' );
+				context.fillText( this.mentionCount, canvas.width - size / 3, size / 2.75 );
 
-					// Icon Counter Text
-					context.font         = Math.ceil( size / 1.78 ) + 'px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
-					context.textAlign    = 'center';
-					context.textBaseline = 'middle';
-					context.fillStyle    = this.settings.get( this.settingsNamespace + '.icon.text-color' );
-					context.fillText( this.mentionCount, canvas.width - size / 3, size / 2.75 );
-
-					this.favicon.element[ size ].href = canvas.toDataURL();
-				} );
+				this.favicon.element[ size ].href = canvas.toDataURL();
 			};
 
 			img.src = '/favicon.ico';
