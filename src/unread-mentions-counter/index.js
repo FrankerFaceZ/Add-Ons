@@ -117,13 +117,7 @@ class UnreadMentionsCounter extends Addon {
 				} );
 			};
 
-			/**
-			 * For some reason, Chrome throws a CORS error out when trying to grab the
-			 * 32px version of the favicon. Unsure if it's only on my end or for everyone
-			 * so for now we just fall back to the 16px version until I can get more
-			 * feedback/testing from others.
-			 */
-			img.src = this.favicon.original[16];
+			img.src = '/favicon.ico';
 		}
 	}
 
