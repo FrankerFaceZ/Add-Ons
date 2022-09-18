@@ -5,7 +5,7 @@ class UnreadMentionsCounter extends Addon {
 		this.settingsNamespace    = 'addon.unread-mentions-counter';
 		this.mentionCounterRegExp = /\(@[0-9]*\)/;
 		this.titleObserver        = new MutationObserver( this.monitorTitle );
-		this.counterLocation      = this.settings.get( this.settingsNamespace + '.counter-location' ) || 'icon';
+		this.counterLocation      = this.settings.get( `${this.settingsNamespace}.counter-location` ) || 'icon';
 		this.favicon              = {
 			element:  {
 				16: document.querySelector( 'link[rel="icon"][sizes="16x16"]' ),
@@ -22,7 +22,7 @@ class UnreadMentionsCounter extends Addon {
 
 		this.inject( 'chat' );
 
-		this.settings.add( this.settingsNamespace + '.counter-location', {
+		this.settings.add( `${this.settingsNamespace}.counter-location`, {
 			default: 'icon',
 			ui: {
 				path:        'Add-Ons > Unread Mentions Counter >> Behavior',
@@ -37,26 +37,63 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
-		this.settings.add( this.settingsNamespace + '.icon.bg-color', {
+		this.settings.add( `${this.settingsNamespace}.browser-notifications.enabled`, {
+			default: false,
+			ui:      {
+				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
+				title:       'Enable Browser Notifications',
+				description: 'Enable browser notifications for new unread mentions/pings.\n\nNOTE: This requires enabling browser notifications on Twitch as a whole so if you don\'t want to receive browser notifications from Twitch itself be sure to disable those in the Notification Settings of your Twitch account.',
+				component:  'setting-check-box',
+				onUIChange: ( val ) => val && this.requestNotificationsPermission() // For some reason this works but setting `changed:` on this setting doesn't
+			}
+		} );
+
+		this.settings.add( `${this.settingsNamespace}.browser-notifications.interact-to-close`, {
+			default: false,
+			ui:      {
+				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
+				title:       'Interact To Close',
+				description: 'If enabled, notifications will only close when you manually close them. Otherwise, notifications will automatically close after several seconds.\n\nNOTE: Firefox does not yet properly support this setting and will automatically behave as if it is disabled.',
+				component:   'setting-check-box'
+			}
+		} );
+
+		this.settings.add( `${this.settingsNamespace}.browser-notifications.icon-photo`, {
+			default: 'channel',
+			ui:      {
+				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
+				title:       'Notification Icon Photo',
+				description: 'Choose whose profile photo should be displayed in the notification.',
+				component:   'setting-select-box',
+				data:        [
+					{ value: 'channel',        title: 'Channel' },
+					{ value: 'message-author', title: 'Message Author' }
+				]
+			}
+		} );
+
+		this.settings.add( `${this.settingsNamespace}.icon.bg-color`, {
 			default: 'rgba(255, 0, 0, 1.0)',
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Icon Counter Appearance',
 				title:       'Background Color',
 				description: 'This is the color of the icon counter\'s circular background.',
 				component:   'setting-color-box',
-				alpha:       true
+				alpha:       true,
+				openUp:      true
 			},
 			changed:         () => { this.insertIconCounter(); }
 		} );
 
-		this.settings.add( this.settingsNamespace + '.icon.text-color', {
+		this.settings.add( `${this.settingsNamespace}.icon.text-color`, {
 			default: 'rgba(255, 255, 255, 1.0)',
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Icon Counter Appearance',
 				title:       'Text Color',
 				description: 'This is the color of the icon counter\'s text (i.e. the number of unread mentions/pings).',
 				component:  'setting-color-box',
-				alpha:       true
+				alpha:       true,
+				openUp:      true
 			},
 			changed:         () => { this.insertIconCounter(); }
 		} );
@@ -66,7 +103,8 @@ class UnreadMentionsCounter extends Addon {
 	 * Monitor new messages and detect user mentions/pings
 	 */
 	countMentions( event ) {
-		const msg = event.message;
+		const 	msg              = event.message,
+				notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
 
 		// Only count if the chat/browser window are inactive and the chat message is new, active, and actually contains a mention/ping of the user
 		if ( ( document.visibilityState === 'visible' && document.hasFocus() ) || msg.deleted || msg.isHistorical || msg.ffz_removed || ! msg.mentioned ) {
@@ -77,20 +115,25 @@ class UnreadMentionsCounter extends Addon {
 			this.mentionCount++;
 
 			this.insertCounters();
+
+			if ( this.settings.get( `${this.settingsNamespace}.browser-notifications.enabled` ) ) {
+				const notification = new Notification( `Mentioned by ${msg.user.displayName} in ${msg.roomLogin}'s chat`, {
+					body: `${msg.user.displayName}: ${msg.message}`,
+					icon: `https://cdn.frankerfacez.com/avatar/twitch/${notificationIcon}`,
+					requireInteraction: this.settings.get( `${this.settingsNamespace}.browser-notifications.interact-to-close` )
+				} );
+			}
 		}
 	}
 
 	createIcon() {
-		for ( let size of [ 16, 32 ] ) {
-			const 	canvas = document.createElement( 'canvas' ),
-					img   = new Image();
-
-			let context;
+		for ( const size of [ 16, 32 ] ) {
+			const 	canvas  = document.createElement( 'canvas' ),
+					context = canvas.getContext( '2d' ),
+					img     = new Image();
 
 			canvas.width  = size;
 			canvas.height = size;
-
-			context = canvas.getContext( '2d' );
 
 			img.crossOrigin = 'anonymous';
 
@@ -100,14 +143,14 @@ class UnreadMentionsCounter extends Addon {
 				// Icon Counter Background
 				context.beginPath();
 				context.arc( canvas.width - size / 3, size / 3, size / 3, 0, 2 * Math.PI );
-				context.fillStyle = this.settings.get( this.settingsNamespace + '.icon.bg-color' );
+				context.fillStyle = this.settings.get( `${this.settingsNamespace}.icon.bg-color` );
 				context.fill();
 
 				// Icon Counter Text
 				context.font         = Math.ceil( size / 1.78 ) + 'px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
 				context.textAlign    = 'center';
 				context.textBaseline = 'middle';
-				context.fillStyle    = this.settings.get( this.settingsNamespace + '.icon.text-color' );
+				context.fillStyle    = this.settings.get( `${this.settingsNamespace}.icon.text-color` );
 				context.fillText( this.mentionCount, canvas.width - size / 3, size / 2.75 );
 
 				this.favicon.element[ size ].href = canvas.toDataURL();
@@ -124,7 +167,6 @@ class UnreadMentionsCounter extends Addon {
 	}
 
 	insertIconCounter() {
-
 		if ( this.mentionCount > 0 && [ 'both', 'icon' ].includes( this.counterLocation ) ) {
 			this.createIcon();
 		} else {
@@ -140,9 +182,9 @@ class UnreadMentionsCounter extends Addon {
 		}
 
 		if ( document.title.match( this.mentionCounterRegExp ) ) {
-			document.title = document.title.replace( this.mentionCounterRegExp, '(@' + this.mentionCount + ')' );
+			document.title = document.title.replace( this.mentionCounterRegExp, `(@${this.mentionCount})` );
 		} else {
-			document.title = '(@' + this.mentionCount + ') ' + document.title;
+			document.title = `(@${this.mentionCount}) ${document.title}`;
 		}
 	}
 
@@ -170,6 +212,16 @@ class UnreadMentionsCounter extends Addon {
 		window.addEventListener( 'focus', () => { this.toggleCounting( this ); }, false );
 
 		this.log.info( 'Unread Mentions Counter add-on successfully enabled.' );
+	}
+
+	requestNotificationsPermission() {
+		Notification.requestPermission().then( ( permission ) => {
+			if ( permission === 'granted' ) {
+				this.log.info( 'Browser notification permission has been granted by the user.' );
+			} else {
+				this.log.info( 'Browser notification permission has been denied by the user.' );
+			}
+		} );
 	}
 
 	resetIcon() {
