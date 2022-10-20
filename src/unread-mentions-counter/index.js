@@ -82,7 +82,7 @@ class UnreadMentionsCounter extends Addon {
 				alpha:       true,
 				openUp:      true
 			},
-			changed:         () => { this.insertIconCounter(); }
+			changed: () => { this.insertIconCounter(); }
 		} );
 
 		this.settings.add( `${this.settingsNamespace}.icon.text-color`, {
@@ -95,7 +95,7 @@ class UnreadMentionsCounter extends Addon {
 				alpha:       true,
 				openUp:      true
 			},
-			changed:         () => { this.insertIconCounter(); }
+			changed: () => { this.insertIconCounter(); }
 		} );
 	}
 
@@ -111,7 +111,7 @@ class UnreadMentionsCounter extends Addon {
 			return;
 		}
 
-		if ( msg.mentioned ) {
+		if ( msg.mentioned && ! ( msg.highlights.has( 'first-message' ) && msg.highlights.size === 1 ) ) {
 			this.mentionCount++;
 
 			this.insertCounters();
