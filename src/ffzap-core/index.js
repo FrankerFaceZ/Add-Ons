@@ -411,6 +411,7 @@ class FFZAP extends Addon {
 				2: 'https://api.ffzap.com/v1/user/badge/26964566/2',
 				4: 'https://api.ffzap.com/v1/user/badge/26964566/3',
 			},
+			click_url: 'https://ffzap.com/',
 		};
 
 		this.badges.loadBadgeData('addon--ffzap.core--badges-developer', developerBadge);
@@ -438,6 +439,7 @@ class FFZAP extends Addon {
 				2: 'https://api.ffzap.com/v1/user/badge/default/2',
 				4: 'https://api.ffzap.com/v1/user/badge/default/3',
 			},
+			click_url: 'https://ffzap.com/',
 		};
 
 		const response = await fetch(host);
@@ -463,6 +465,7 @@ class FFZAP extends Addon {
 						2: `https://api.ffzap.com/v1/user/badge/${user.id}/2`,
 						4: `https://api.ffzap.com/v1/user/badge/${user.id}/3`,
 					},
+					click_url: 'https://ffzap.com/',
 				};
 
 				if (user.tier >= 3 && user.badge_is_colored) {
