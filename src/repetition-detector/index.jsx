@@ -128,15 +128,18 @@ class RepetitionDetector extends Addon {
 
 			process(tokens, msg) {
 
-				if(!msg.message || msg.message === '') return tokens;
+				if(!msg.message || msg.message === '') return tokens; // ignore the message if its empty
+
+				// ignore the message if is configured to it
 				if(!chatContext.get('context.moderator') &&
 						this.settings.get('addon.repetition_detector.enable_only_as_mod')) return tokens;
 				if(this.settings.get('addon.repetition_detector.ignore_mods') &&
 						(msg.badges.moderator || msg.badges.broadcaster)) return tokens;
+				// counts the message repetition
 				if(!msg.repetitionCount && msg.repetitionCount !== 0) {
 					msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
 				}
-
+				// if the message repetition count is higher than the threthold, updates the repetition count
 				if(msg.repetitionCount >= this.settings.get('addon.repetition_detector.repetitions_threshold')) {
 					tokens.push({
 						type: 'repetition_counter',
