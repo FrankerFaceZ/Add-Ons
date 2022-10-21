@@ -130,7 +130,7 @@ class Example extends Addon {
 			override_appearance(appearance, data, msg, current_room, current_user, mod_icons) {
 				if ( current_user ) {
 					appearance.type = 'text';
-					appearance.text = current_user.login.substr(0,2);
+					appearance.text = current_user.login.slice(0, 2);
 				}
 
 				return appearance;
