@@ -37,12 +37,25 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
+		this.settings.add( `${this.settingsNamespace}.ping-types`, {
+			default: [ 'mention' ],
+			type: 'basic_array_merge',
+			ui: {
+				path:        'Add-Ons > Unread Mentions Counter >> Behavior',
+				title:       'Ping Types',
+				description: 'Surprise! This add-on isn\'t *just* for mentions. Select which types of pings/highlights to count.',
+				component:   'setting-select-box',
+				multiple:    true,
+				data:        () => this.chat.getHighlightReasons()
+			}
+		} );
+
 		this.settings.add( `${this.settingsNamespace}.browser-notifications.enabled`, {
 			default: false,
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
 				title:       'Enable Browser Notifications',
-				description: 'Enable browser notifications for new unread mentions/pings.\n\nNOTE: This requires enabling browser notifications on Twitch as a whole so if you don\'t want to receive browser notifications from Twitch itself be sure to disable those in the Notification Settings of your Twitch account.',
+				description: 'Enable browser notifications for new unread mentions/pings.\n\n**NOTE:** This requires enabling browser notifications on Twitch as a whole so if you don\'t want to receive browser notifications from Twitch itself be sure to disable those in the Notification Settings of your Twitch account.',
 				component:  'setting-check-box',
 				onUIChange: ( val ) => val && this.requestNotificationsPermission() // For some reason this works but setting changed: on this setting doesn't
 			}
@@ -53,7 +66,7 @@ class UnreadMentionsCounter extends Addon {
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
 				title:       'Interact To Close',
-				description: 'If enabled, notifications will only close when you manually close them. Otherwise, notifications will automatically close after several seconds.\n\nNOTE: Firefox does not yet properly support this setting and will automatically behave as if it is disabled.',
+				description: 'If enabled, notifications will only close when you manually close them. Otherwise, notifications will automatically close after several seconds.\n\n**NOTE:** Firefox does not yet properly support this setting and will automatically behave as if it is disabled.',
 				component:   'setting-check-box'
 			}
 		} );
@@ -104,20 +117,28 @@ class UnreadMentionsCounter extends Addon {
 	 */
 	countMentions( event ) {
 		const 	msg              = event.message,
+				pingTypes        = this.settings.get( `${this.settingsNamespace}.ping-types` ),
+				matchedPings     = pingTypes.filter( ( value ) => msg.highlights.has( value ) ),
 				notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
+
+		let pingAction = 'Mention';
 
 		// Only count if the chat/browser window are inactive and the chat message is new, active, and actually contains a mention/ping of the user
 		if ( ( document.visibilityState === 'visible' && document.hasFocus() ) || msg.deleted || msg.isHistorical || msg.ffz_removed || ! msg.mentioned ) {
 			return;
 		}
 
-		if ( msg.mentioned && ! ( msg.highlights.has( 'first-message' ) && msg.highlights.size === 1 ) ) {
+		if ( msg.mentioned && matchedPings.length > 0 ) {
 			this.mentionCount++;
 
 			this.insertCounters();
 
+			if ( ! matchedPings.includes( 'mention' ) ) {
+				pingAction = 'Ping';
+			}
+
 			if ( this.settings.get( `${this.settingsNamespace}.browser-notifications.enabled` ) ) {
-				const notification = new Notification( `Mentioned by ${msg.user.displayName} in ${msg.roomLogin}'s chat`, {
+				const notification = new Notification( `${pingAction}ed by ${msg.user.displayName} in ${msg.roomLogin}'s chat`, {
 					body: `${msg.user.displayName}: ${msg.message}`,
 					icon: `https://cdn.frankerfacez.com/avatar/twitch/${notificationIcon}`,
 					requireInteraction: this.settings.get( `${this.settingsNamespace}.browser-notifications.interact-to-close` )
