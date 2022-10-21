@@ -44,7 +44,7 @@ class UnreadMentionsCounter extends Addon {
 				title:       'Enable Browser Notifications',
 				description: 'Enable browser notifications for new unread mentions/pings.\n\nNOTE: This requires enabling browser notifications on Twitch as a whole so if you don\'t want to receive browser notifications from Twitch itself be sure to disable those in the Notification Settings of your Twitch account.',
 				component:  'setting-check-box',
-				onUIChange: ( val ) => val && this.requestNotificationsPermission() // For some reason this works but setting `changed:` on this setting doesn't
+				onUIChange: ( val ) => val && this.requestNotificationsPermission() // For some reason this works but setting changed: on this setting doesn't
 			}
 		} );
 
@@ -82,7 +82,7 @@ class UnreadMentionsCounter extends Addon {
 				alpha:       true,
 				openUp:      true
 			},
-			changed:         () => { this.insertIconCounter(); }
+			changed: () => { this.insertIconCounter(); }
 		} );
 
 		this.settings.add( `${this.settingsNamespace}.icon.text-color`, {
@@ -95,7 +95,7 @@ class UnreadMentionsCounter extends Addon {
 				alpha:       true,
 				openUp:      true
 			},
-			changed:         () => { this.insertIconCounter(); }
+			changed: () => { this.insertIconCounter(); }
 		} );
 	}
 
@@ -111,7 +111,7 @@ class UnreadMentionsCounter extends Addon {
 			return;
 		}
 
-		if ( msg.mentioned ) {
+		if ( msg.mentioned && ! ( msg.highlights.has( 'first-message' ) && msg.highlights.size === 1 ) ) {
 			this.mentionCount++;
 
 			this.insertCounters();
