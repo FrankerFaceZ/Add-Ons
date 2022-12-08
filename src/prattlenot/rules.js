@@ -534,8 +534,6 @@ export const unicode = {
 			return;
 		}
 
-		console.log('regex', regex);
-
 		return ctx => {
 			const text = ctx.text;
 			if ( ! text )

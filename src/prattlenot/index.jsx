@@ -1,6 +1,6 @@
 'use strict';
 
-const {createElement} = FrankerFaceZ.utilities.dom;
+const {createElement, on, off} = FrankerFaceZ.utilities.dom;
 const {has, deep_copy} = FrankerFaceZ.utilities.object;
 const {createTester} = FrankerFaceZ.utilities.filtering;
 const {RERENDER_SETTINGS} = FrankerFaceZ.utilities.constants;
@@ -31,8 +31,6 @@ for(const script of UNICODE_SCRIPTS) {
 if ( invalid.length )
 	console.log('Invalid scripts: ', invalid.join(', '));
 
-const SCROLLBACK_LIMIT = 20;
-
 const NON_TEXT_TYPES = [
 	'cheer',
 	'emote',
@@ -59,6 +57,87 @@ class PrattleNot extends Addon {
 		this.inject('site.fine');
 
 		this.ChatScroller = this.fine.define('chat-scroller');
+
+		const positions = [
+			{value: 0, i18n_key: 'pn.position.top', title: 'Top'},
+			{value: 1, i18n_key: 'pn.position.bottom', title: 'Bottom'},
+			{value: 2, i18n_key: 'pn.position.left', title: 'Left'},
+			{value: 3, i18n_key: 'pn.position.right', title: 'Right'}
+		];
+
+		const sizes = [];
+		for(let i = 0; i <= 100; i += 5)
+			sizes.push({value: i, i18n_key: 'pn.size.entry', title: `{value,number}%`});
+
+		this.settings.add('pn.scrollback', {
+			default: 20,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Behavior',
+				title: 'Scrollback Length',
+				description: 'Keep up to this many lines in Prattle. Setting this too high will create lag.',
+				component: 'setting-text-box',
+				process: 'to_int',
+				bounds: [1]
+			}
+		});
+
+		this.settings.add('pn.position', {
+			default: 0,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Position',
+				title: 'Position',
+				component: 'setting-select-box',
+				data: positions
+			}
+		});
+
+		this.settings.add('pn.size', {
+			default: 30,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Position',
+				title: 'Size',
+				component: 'setting-select-box',
+				data:  sizes
+			}
+		});
+
+		this.settings.add('pn.portrait-position', {
+			default: 2,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Position (Portrait Mode)',
+				title: 'Position',
+				component: 'setting-select-box',
+				data: positions
+			}
+		});
+
+		this.settings.add('pn.portrait-size', {
+			default: 30,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Position (Portrait Mode)',
+				title: 'Size',
+				component: 'setting-select-box',
+				data:  sizes
+			}
+		});
+
+		this.settings.add('pn.active-size', {
+			requires: ['layout.use-portrait', 'pn.portrait-size', 'pn.size'],
+			process(ctx) {
+				if (ctx.get('layout.use-portrait'))
+					return ctx.get('pn.portrait-size');
+				return ctx.get('pn.size');
+			}
+		});
+
+		this.settings.add('pn.active-position', {
+			requires: ['layout.use-portrait', 'pn.portrait-position', 'pn.position'],
+			process(ctx) {
+				if (ctx.get('layout.use-portrait'))
+					return ctx.get('pn.portrait-position');
+				return ctx.get('pn.position');
+			}
+		});
 
 		this.settings.add('pn.show-reason', {
 			default: true,
@@ -179,9 +258,15 @@ class PrattleNot extends Addon {
 		this.prattle = [];
 		this.pending = [];
 
+		this.scrollback_limit = 20;
+		this.updating = true;
+
 		for(const key in RULES)
 			if ( has(RULES, key) )
 				this.rules[key] = RULES[key];
+
+		this.onMouseMove = this.onMouseMove.bind(this);
+		this.onMouseLeave = this.onMouseLeave.bind(this);
 
 		this.performUpdate = this.performUpdate.bind(this);
 		this.onClickUndelete = this.onClickUndelete.bind(this);
@@ -202,8 +287,18 @@ class PrattleNot extends Addon {
 		this.on('chat:mod-user', this.handleMod, this);
 		this.on('chat:clear-chat', this.handleClear, this);
 		this.on('site.router:route', this.handleClear, this);
+		this.on('i18n:update', this.updateTranslation, this);
 
 		this.rebuildTester();
+
+		this.scrollback_limit = this.chat.context.get('pn.scrollback');
+		this.chat.context.on('changed:pn.scrollback', val => this.scrollback_limit = val);
+
+		this.pause_delay = this.chat.context.get('chat.scroller.hover-delay');
+		this.chat.context.on('changed:chat.scroller.hover-delay', val => this.pause_delay = val);
+
+		this.chat.context.on(`changed:pn.active-position`, this.updateContainer, this);
+		this.chat.context.on(`changed:pn.active-size`, this.updateContainer, this);
 
 		for(const setting of RERENDER_SETTINGS)
 			this.chat.context.on(`changed:${setting}`, this.rerenderLines, this);
@@ -234,6 +329,16 @@ class PrattleNot extends Addon {
 		for(const setting of RERENDER_SETTINGS)
 			this.chat.context.off(`changed:${setting}`, this.rerenderLines, this);
 
+		this.chat.context.off(`changed:pn.active-position`, this.updateContainer, this);
+		this.chat.context.off(`changed:pn.active-size`, this.updateContainer, this);
+
+		this.removeContainer();
+
+		this.clearUnpauseTimer();
+
+		if ( this._outside_timer )
+			clearTimeout(this._outside_timer);
+
 		this.off('chat:receive-message', this.handleMessage, this);
 		this.off('chat:mod-user', this.handleMod, this);
 		this.off('chat:clear-chat', this.handleClear, this);
@@ -252,27 +357,177 @@ class PrattleNot extends Addon {
 		}
 	}
 
+	updateTranslation() {
+		if (this.pause_cont != null)
+			this.pause_cont.textContent = this.i18n.t('addon.prattlenot.mouse-pause', 'Prattle Paused Due to Mouse');
+	};
+
 	getContainer() {
-		if ( ! this.container )
+		if ( ! this.container ) {
 			this.container = (<div
 				class="ffz-pn--list chat-list--other font-scale--default"
 				data-simplebar
 			>
 				{this.cont = <div role="log" />}
+				<div class="ffz-pn--pause-notice">
+					{this.pause_cont = (<div>
+						{this.i18n.t('addon.prattlenot.mouse-pause', 'Prattle Paused Due to Mouse')}
+					</div>)}
+				</div>
 			</div>);
+
+			on(this.container, 'mousemove', this.onMouseMove);
+			on(this.container, 'mouseleave', this.onMouseLeave);
+
+			for(const msg of this.prattle) {
+				const line = this.renderLine(msg);
+				if ( line )
+					this.cont.appendChild(line);
+			}
+		}
 
 		return this.container;
 	}
 
-	checkContainer(inst) {
-		const node = this.fine.getChildNode(inst),
-			container = this.getContainer();
-
-		if ( ! node || ! container || node.contains(container) )
+	removeContainer() {
+		if (! this.container)
 			return;
 
-		node.insertBefore(container, node.firstElementChild);
+		const parent = this.container.parentElement;
+		if (parent) {
+			parent.classList.remove('ffz-pn--container');
+			parent.classList.remove('ffz-pn--horizontal');
+		}
+
+		this.container.remove();
+
+		for(const msg of this.prattle)
+			msg.prattle_line = null;
+
+		off(this.container, 'mousemove', this.onMouseMove);
+		off(this.container, 'mouseleave', this.onMouseLeave);
+
+		this.container = this.cont = this.pause_cont = null;
+	}
+
+	updateContainer() {
+		for(const inst of this.ChatScroller.instances)
+			this.checkContainer(inst);	
+	}
+
+	checkContainer(inst) {
+		let node = this.fine.getChildNode(inst);
+		if (node.parentElement && node.parentElement.matches('[class*="chat-list"]'))
+			node = node.parentElement;
+
+		if ( ! node )
+			return;
+
+		const size = this.chat.context.get('pn.active-size');
+
+		if (size <= 0) {
+			this.removeContainer();
+			return;
+		}
+
+		const container = this.getContainer();
+		if ( ! container )
+			return;
+
+		const pos = this.chat.context.get('pn.active-position');
+
+		node.classList.add('ffz-pn--container');
+		node.classList.toggle('ffz-pn--horizontal', pos === 2 || pos === 3);
+		node.classList.toggle('ffz-pn--exclusive', size >= 100);
+
+		if (size >= 100)
+			container.style = '--ffz-pn-size: 100%;';
+		else
+			container.style = `--ffz-pn-size: ${size}%;`;
+
+		container.classList.toggle('ffz-pn--top', pos === 0);
+		container.classList.toggle('ffz-pn--bottom', pos === 1);
+		container.classList.toggle('ffz-pn--left', pos === 2);
+		container.classList.toggle('ffz-pn--right', pos === 3);
+
+		if (! node.contains(container))
+			node.insertBefore(container, node.firstElementChild);
+
 		this.scroller = inst;
+	}
+
+	onMouseMove() {
+		this._last_move = Date.now();
+		this._outside = false;
+
+		if ( this._outside_timer ) {
+			clearTimeout(this._outside_timer);
+			this._outside_timer = null;
+		}
+
+		if ( this.updating && this.shouldBePaused() ) {
+			this.pauseScrolling();
+			this.setUnpauseTimer();
+		}
+	}
+
+	clearUnpauseTimer() {
+		if ( this._unpause_timer ) {
+			clearInterval(this._unpause_timer);
+			this._unpause_timer = null;
+		}
+	}
+
+	setUnpauseTimer() {
+		if ( ! this._unpause_timer )
+			this._unpause_timer = setInterval(() => {
+				if ( ! this.updating && ! this.shouldBePaused() )
+					this.unpauseScrolling();
+			}, 50);
+	}
+
+	onMouseLeave() {
+		this._outside = true;
+
+		if ( this._outside_timer )
+			clearTimeout(this._outside_timer);
+
+		this._outside_timer = setTimeout(() => this.maybeUnpause(), 64);
+	}
+
+	shouldBePaused() {
+		if ( this._outside )
+			return false;
+
+		return (Date.now() - this._last_move) < this.pause_delay;
+	}
+
+	maybeUnpause() {
+		if ( ! this.shouldBePaused() )
+			this.unpauseScrolling();
+	}
+
+	updatePauseEl() {
+		if ( ! this._pause_raf )
+			this._pause_raf = requestAnimationFrame(() => {
+				this._pause_raf = null;
+				this.container.classList.toggle('ffz-pn--paused', ! this.updating);
+			});
+	}
+
+	pauseScrolling() {
+		if (this.updating) {
+			this.updating = false;
+			this.updatePauseEl();
+		}
+	}
+
+	unpauseScrolling() {
+		if (!this.updating) {
+			this.updating = true;
+			this.updatePauseEl();
+			this.scheduleUpdate();
+		}
 	}
 
 	handleMod(action, user, msg_id) {
@@ -315,8 +570,8 @@ class PrattleNot extends Addon {
 
 	addPrattle(msg) {
 		this.pending.push(msg);
-		if ( this.pending.length > SCROLLBACK_LIMIT )
-			this.pending.splice(0, this.pending.length - SCROLLBACK_LIMIT);
+		if ( this.pending.length > this.scrollback_limit )
+			this.pending.splice(0, this.pending.length - this.scrollback_limit);
 
 		this.scheduleUpdate();
 	}
@@ -420,39 +675,42 @@ class PrattleNot extends Addon {
 	}
 
 	scheduleUpdate() {
-		if ( ! this._update_raf )
+		if ( this.updating && ! this._update_raf )
 			this._update_raf = requestAnimationFrame(this.performUpdate);
 	}
 
 	performUpdate() {
 		this._update_raf = null;
 
-		if ( ! this.log )
-			this.getContainer();
+		if (! this.updating)
+			return;
 
 		const pending = this.pending;
 		this.pending = [];
 
-		const scroller = this.cont.parentElement.parentElement;
+		const scroller = this.cont?.parentElement?.parentElement;
 
 		for(const msg of pending) {
 			if ( msg.deleted || msg.ffz_removed )
 				continue;
 
-			const line = this.renderLine(msg);
-			if ( line ) {
-				this.cont.appendChild(line);
-				this.prattle.push(msg);
+			if (this.cont) {
+				const line = this.renderLine(msg);
+				if (line)
+					this.cont.appendChild(line);
 			}
+
+			this.prattle.push(msg);
 		}
 
 		this.trimPrattle();
 
-		scroller.scrollTop = scroller.scrollHeight;
+		if (scroller)
+			scroller.scrollTop = scroller.scrollHeight;
 	}
 
 	trimPrattle() {
-		let to_remove = Math.max(0, this.prattle.length - SCROLLBACK_LIMIT);
+		let to_remove = Math.max(0, this.prattle.length - this.scrollback_limit);
 		if ( to_remove % 2 )
 			to_remove--;
 
