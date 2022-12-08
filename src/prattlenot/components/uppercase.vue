@@ -34,7 +34,7 @@
 			>
 			<label :for="'critical$' + value.id" class="ffz-checkbox__label">
 				<span class="tw-mg-l-1">
-					{{ t('addon.prattlenot.critical', 'Critical (Fail Immediately)') }}
+					{{ t('addon.prattlenot.critical', 'Critical (Stop Immediately)') }}
 				</span>
 			</label>
 		</div>

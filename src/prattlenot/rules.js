@@ -76,6 +76,22 @@ export const cheer = {
 }
 
 
+function getBadgeIDs(msg) {
+	let keys = msg.badges ? Object.keys(msg.badges) : null;
+	if ( ! msg.ffz_badges )
+		return keys;
+
+	if ( ! keys )
+		keys = [];
+
+	for(const badge of msg.ffz_badges)
+		if ( badge?.id )
+			keys.push(badge.id);
+
+	return keys;
+}
+
+
 export const badges = {
 	title: 'Badge',
 	i18n: 'addon.prattlenot.filter.badge',
@@ -88,6 +104,8 @@ export const badges = {
 		badges: []
 	}),
 
+	editor: () => import('./components/badges.vue'),
+
 	createTest(config) {
 		const score = config.score ?? -10,
 			critical = config.critical ?? false,
@@ -99,8 +117,10 @@ export const badges = {
 		return ctx => {
 			let matched = false;
 
+			const source_badges = getBadgeIDs(ctx.source);
+
 			for(const badge of badges) {
-				if ( has(ctx.source.badges, badge) ) {
+				if ( has(source_badges, badge) ) {
 					matched = true;
 					break;
 				}
