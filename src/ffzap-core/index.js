@@ -282,7 +282,6 @@ class FFZAP extends Addon {
 	onEnable() {
 		this.log.debug('FFZ:AP\'s Core module was enabled successfully.');
 
-		this.initDeveloper();
 		this.fetchSupporters();
 	}
 
@@ -397,26 +396,6 @@ class FFZAP extends Addon {
 					break;
 				}
 		}
-	}
-
-	initDeveloper() {
-		const developerBadge = {
-			id: 'developer',
-			title: 'FFZ:AP Developer',
-			color: '#E4107F',
-			slot: 6,
-			image: 'https://api.ffzap.com/v1/user/badge/26964566/1',
-			urls: {
-				1: 'https://api.ffzap.com/v1/user/badge/26964566/1',
-				2: 'https://api.ffzap.com/v1/user/badge/26964566/2',
-				4: 'https://api.ffzap.com/v1/user/badge/26964566/3',
-			},
-			click_url: 'https://ffzap.com/',
-		};
-
-		this.badges.loadBadgeData('addon--ffzap.core--badges-developer', developerBadge);
-
-		this.chat.getUser(26964566).addBadge('addon--ffzap.core', 'addon--ffzap.core--badges-developer');
 	}
 
 	// Helpful cache-busting method from FFZ
