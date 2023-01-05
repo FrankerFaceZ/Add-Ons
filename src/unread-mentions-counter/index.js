@@ -118,7 +118,7 @@ class UnreadMentionsCounter extends Addon {
 	countMentions( event ) {
 		const 	msg              = event.message,
 				pingTypes        = this.settings.get( `${this.settingsNamespace}.ping-types` ),
-				matchedPings     = pingTypes.filter( ( value ) => msg.highlights.has( value ) ),
+				matchedPings     = pingTypes.filter( ( value ) => msg.highlights?.has( value ) ),
 				notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
 
 		let pingAction = 'Mention';
