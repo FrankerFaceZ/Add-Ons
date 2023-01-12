@@ -196,6 +196,14 @@ class ClipConfirm extends Addon {
 			}
 
 			this.rightControlsObserver.observe( this.rightControls, { childList: true, subtree: true } );
+
+			/**
+			 * Twitch sometimes uses a different kind of tooltio that gets
+			 * dynamically added/removed instead of the other tooltip they
+			 * use which keeps the tooltip's HTML always present on the
+			 * page, so we need this observer to check for that and update
+			 * it if the normal tooltip is not present on the page
+			 */
 			this.videoPlayerObserver.observe( this.videoPlayerContainer, { childList: true, subtree: true } );
 
 			this.log.info( 'Clip Confirm add-on successfully enabled.' );
@@ -210,7 +218,8 @@ class ClipConfirm extends Addon {
 		/*
 		 * Canceled events can't be manually triggered so we use property
 		 * "clipConfirmed" to determine if we have or have not already
-		 * confirmed the Clip action and then reset it to false after the entire process runs
+		 * confirmed the Clip action and then reset it to false after the
+		 * entire process runs
 		 */
 		if ( ! this.clipConfirmed ) {
 			if ( this.overridePressed( e ) ) {
@@ -239,14 +248,6 @@ class ClipConfirm extends Addon {
 		}
 
 		return hotkeyPressed;
-	}
-
-	videoPlayerObserverCallback( mutations, _observer ) {
-		for ( const mutation of mutations ) {
-			if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList != null && mutation.addedNodes[0].classList.contains( 'tw-tooltip-layer' ) ) {
-				mutation.addedNodes[0].getElementsByClassName( 'tw-tooltip-wrapper' )[0].textContent = this.clipButton.getAttribute( 'aria-label' );
-			}
-		}
 	}
 
 	rightControlsObserverCallback( mutations, _observer ) {
@@ -285,6 +286,14 @@ class ClipConfirm extends Addon {
 
 		if ( this.clipButtonTooltip ) {
 			this.clipButtonTooltip.textContent = this.clipButton.getAttribute( 'aria-label' );
+		}
+	}
+
+	videoPlayerObserverCallback( mutations, _observer ) {
+		for ( const mutation of mutations ) {
+			if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList != null && mutation.addedNodes[0].classList.contains( 'tw-tooltip-layer' ) && mutation.addedNodes[0].textContent.includes( 'Clip (' ) ) {
+				mutation.addedNodes[0].getElementsByClassName( 'tw-tooltip-wrapper' )[0].textContent = this.clipButton.getAttribute( 'aria-label' );
+			}
 		}
 	}
 }
