@@ -16,15 +16,16 @@ class ClipConfirm extends Addon {
 
 		this.inject( 'site.player' );
 
-		this.settingsNamespace = 'addon.clip-confirm';
-		this.rightControls     = document.querySelector( this.player.RIGHT_CONTROLS );
-		this.clipConfirmed     = false;
-		this.keyNames          = {
+		this.settingsNamespace    = 'addon.clip-confirm';
+		this.rightControls        = document.querySelector( this.player.RIGHT_CONTROLS );
+		this.videoPlayerContainer = document.getElementsByClassName( 'video-player__container' )[0];
+		this.clipConfirmed        = false;
+		this.keyNames             = {
 			ctrl:  'Ctrl / ⌘',
 			alt:   'Alt / Option',
 			shift: 'Shift'
 		};
-		this.hotkeyName        = '';
+		this.hotkeyName           = '';
 
 		/* 
 		 * Since the following methods are called as event listeners using
@@ -79,6 +80,7 @@ class ClipConfirm extends Addon {
 		this.clipButton.dataset.ffzClipConfirmReady = 'true';
 
 		this.clipButtonTooltip     = this.clipButton.nextElementSibling;
+
 		this.clipButtonTooltipText = {
 			original: this.clipButton.getAttribute( 'aria-label' ),
 			new:      ''
@@ -152,7 +154,8 @@ class ClipConfirm extends Addon {
 	}
 
 	onDisable() {
-		this.observer.disconnect();
+		this.rightControlsObserver.disconnect();
+		this.videoPlayerObserver.disconnect();
 
 		delete this.clipButton.dataset.ffzClipConfirmReady;
 
@@ -172,7 +175,8 @@ class ClipConfirm extends Addon {
 	}
 
 	onEnable() {
-		this.observer = new MutationObserver( this.rightControlsObserver.bind( this ) );
+		this.rightControlsObserver = new MutationObserver( this.rightControlsObserverCallback.bind( this ) );
+		this.videoPlayerObserver   = new MutationObserver( this.videoPlayerObserverCallback.bind( this ) );
 
 		if ( this.rightControls ) {
 			this.buildVue().then( ( el ) => {
@@ -191,7 +195,8 @@ class ClipConfirm extends Addon {
 				this.addClipConfirmation();
 			}
 
-			this.observer.observe( this.rightControls, { childList: true, subtree: true } );
+			this.rightControlsObserver.observe( this.rightControls, { childList: true, subtree: true } );
+			this.videoPlayerObserver.observe( this.videoPlayerContainer, { childList: true, subtree: true } );
 
 			this.log.info( 'Clip Confirm add-on successfully enabled.' );
 		}
@@ -236,7 +241,15 @@ class ClipConfirm extends Addon {
 		return hotkeyPressed;
 	}
 
-	rightControlsObserver( mutations, _observer ) {
+	videoPlayerObserverCallback( mutations, _observer ) {
+		for ( const mutation of mutations ) {
+			if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList != null && mutation.addedNodes[0].classList.contains( 'tw-tooltip-layer' ) ) {
+				mutation.addedNodes[0].getElementsByClassName( 'tw-tooltip-wrapper' )[0].textContent = this.clipButton.getAttribute( 'aria-label' );
+			}
+		}
+	}
+
+	rightControlsObserverCallback( mutations, _observer ) {
 		for ( const mutation of mutations ) {
 			this.getClipButton();
 
@@ -270,7 +283,9 @@ class ClipConfirm extends Addon {
 
 		this.clipButton.setAttribute( 'aria-label', this.clipButtonTooltipText.new );
 
-		this.clipButtonTooltip.textContent = this.clipButton.getAttribute( 'aria-label' );
+		if ( this.clipButtonTooltip ) {
+			this.clipButtonTooltip.textContent = this.clipButton.getAttribute( 'aria-label' );
+		}
 	}
 }
 
