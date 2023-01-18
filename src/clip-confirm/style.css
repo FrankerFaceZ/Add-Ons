@@ -1,0 +1,124 @@
+#ffz-clip-confirm-modal {
+    position: fixed;
+    z-index: 4000;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    visibility: hidden;
+    opacity: 0;
+    background: rgba(0, 0, 0, .85);
+    pointer-events: none;
+    transition: all 0.05s;
+  }
+
+.video-player__container #ffz-clip-confirm-modal {
+    position: absolute;
+}
+
+.ffz-clip-confirm-modal-active #ffz-clip-confirm-modal {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+    #ffz-clip-confirm-modal-inner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: var(--shadow-elevation-5);
+        border-radius: 0.6rem;
+        padding: 2rem;
+        width: 100%;
+        max-width: 30rem;
+        max-height: 100%;
+        background: var(--color-background-base);
+    }
+
+        #ffz-clip-confirm-modal-title {
+            font: var(--font-weight-semibold) var(--font-size-4)/var(--line-height-heading) var(--font-display);
+        }
+
+        #ffz-clip-confirm-modal-content {
+            margin: 1rem 0;
+        }
+
+            #ffz-clip-confirm-modal-content b {
+                font-weight: bold;
+            }
+
+        #ffz-clip-confirm-modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+            .ffz-clip-confirm-modal-button:not(:nth-child(3)) {
+                display: inline-flex;
+                position: relative;
+                align-items: center;
+                justify-content: center;
+                vertical-align: middle;
+                overflow: hidden;
+                white-space: nowrap;
+                user-select: none;
+                border-radius: var(--border-radius-small);
+                padding: 0 var(--button-padding-x);
+                height: var(--button-size-small);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--button-text-small);
+                text-decoration: none;
+            }
+        
+            #ffz-clip-confirm-modal-cancel-button {
+                background-color: var(--color-background-button-secondary-default);
+                color: var(--color-text-button-secondary);
+            }
+            
+            #ffz-clip-confirm-modal-confirm-button {
+                margin: 0 0 0 1rem;
+                background-color: var(--color-background-button-primary-default);
+                color: var(--color-text-button-primary);
+            }
+        
+            #ffz-clip-confirm-modal-close-button {
+                display: inline-flex;
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                left: auto;
+                align-items: center;
+                justify-content: center;
+                user-select: none;
+                border-radius: var(--border-radius-medium);
+                width: var(--button-size-default);
+                height: var(--button-size-default);
+                background-color: var(--color-background-button-text-default);
+                color: var(--color-fill-button-icon);
+            }
+
+                #ffz-clip-confirm-modal-close-button * {
+                    pointer-events: none;
+                    width: 2rem;
+                    height: 2rem;
+                }
+
+            #ffz-clip-confirm-modal-close-button:hover {
+                background-color: var(--color-background-button-text-hover);
+                color: var(--color-fill-button-icon-hover);
+            }
+
+.ffz-clip-confirm-svg-icon {
+    fill: currentColor;
+}
+
+.persistent-player {
+    z-index: 3 !important;
+}
+
+.persistent-player,
+.persistent-player > .tw-aspect,
+.player-controls,
+.video-player__container {
+    overflow: visible !important;
+}

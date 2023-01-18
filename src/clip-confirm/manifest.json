@@ -1,0 +1,16 @@
+{
+	"enabled": true,
+	"targets": [
+		"main"
+	],
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "ClipConfirm",
+	"name": "Clip Confirm",
+	"author": "ArgoWizbang",
+	"description": "Adds a confirmation prompt (with optional manual bypass) to help prevent accidentally creating a clip when the Clip button is clicked.",
+	"website": "https://argowizbang.com/ffz-add-on/clip-confirm/",
+	"settings": "add_ons.clip_confirm",
+	"created": "2023-01-10T21:37:16.583Z",
+	"updated": "2023-01-12T13:34:01.191Z"
+}
