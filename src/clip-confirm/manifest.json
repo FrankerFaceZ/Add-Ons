@@ -4,7 +4,7 @@
 		"main"
 	],
 	"requires": [],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"short_name": "ClipConfirm",
 	"name": "Clip Confirm",
 	"author": "ArgoWizbang",
@@ -12,5 +12,5 @@
 	"website": "https://argowizbang.com/ffz-add-on/clip-confirm/",
 	"settings": "add_ons.clip_confirm",
 	"created": "2023-01-10T21:37:16.583Z",
-	"updated": "2023-01-12T13:34:01.191Z"
+	"updated": "2023-01-18T04:20:37.595Z"
 }

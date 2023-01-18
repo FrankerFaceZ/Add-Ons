@@ -1,6 +1,5 @@
 #ffz-clip-confirm-modal {
     position: fixed;
-    z-index: 4000;
     top: 0;
     right: 0;
     bottom: 0;
@@ -110,15 +109,4 @@
 
 .ffz-clip-confirm-svg-icon {
     fill: currentColor;
-}
-
-.persistent-player {
-    z-index: 3 !important;
-}
-
-.persistent-player,
-.persistent-player > .tw-aspect,
-.player-controls,
-.video-player__container {
-    overflow: visible !important;
 }

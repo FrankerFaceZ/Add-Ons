@@ -6,13 +6,11 @@ class ClipConfirm extends Addon {
 	constructor(...args ) {
 		super(...args );
 
-		const clipConfirmCSS = document.createElement( 'link' );
+		this.clipConfirmCSS = document.createElement( 'link' );
 
-		clipConfirmCSS.rel  = 'stylesheet';
-		clipConfirmCSS.id   = 'ffz-clip-confirm-css';
-		clipConfirmCSS.href = CSS_URL;
-
-		document.head.appendChild( clipConfirmCSS );
+		this.clipConfirmCSS.rel  = 'stylesheet';
+		this.clipConfirmCSS.id   = 'ffz-clip-confirm-css';
+		this.clipConfirmCSS.href = CSS_URL;
 
 		this.inject( 'site.player' );
 
@@ -172,9 +170,13 @@ class ClipConfirm extends Addon {
 		document.body.removeChild( this.clipConfirmationModal );
 
 		this.updateTooltip( true );
+
+		document.head.removeChild( this.clipConfirmCSS );
 	}
 
 	onEnable() {
+		document.head.appendChild( this.clipConfirmCSS );
+
 		this.rightControlsObserver = new MutationObserver( this.rightControlsObserverCallback.bind( this ) );
 		this.videoPlayerObserver   = new MutationObserver( this.videoPlayerObserverCallback.bind( this ) );
 
