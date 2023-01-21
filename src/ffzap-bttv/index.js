@@ -289,7 +289,7 @@ class BetterTTV extends Addon {
 					emotes: nightSubEmotes,
 					title: 'Night (Legacy)',
 					source: 'BetterTTV',
-					icon: 'https://cdn.betterttv.net/tags/developer.png',
+					icon: 'https://betterttv.com/favicon.png',
 					sort: 50,
 				};
 
@@ -311,7 +311,7 @@ class BetterTTV extends Addon {
 				emotes: setEmotes,
 				title: 'Global Emotes',
 				source: 'BetterTTV',
-				icon: 'https://cdn.betterttv.net/tags/developer.png',
+				icon: 'https://betterttv.com/favicon.png',
 				_type: 1,
 			};
 
@@ -409,7 +409,7 @@ class BetterTTV extends Addon {
 				emotes,
 				title: 'Channel Emotes',
 				source: 'BetterTTV',
-				icon: 'https://cdn.betterttv.net/tags/developer.png',
+				icon: 'https://betterttv.com/favicon.png',
 				_type: 1,
 			};
 
