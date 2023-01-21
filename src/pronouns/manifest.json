@@ -5,7 +5,7 @@
 		"clips"
 	],
 	"requires": [],
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"short_name": "pronouns",
 	"name": "Pronouns",
 	"author": "Alejo Pereyra",
@@ -13,5 +13,5 @@
 	"website": "https://pronouns.alejo.io/",
 	"settings": "add_ons.pronouns",
 	"created": "2021-02-17T17:53:38.000Z",
-	"updated": "2021-11-15T22:17:39.527Z"
+	"updated": "2023-01-21T23:15:31.109Z"
 }

@@ -71,7 +71,7 @@ class Pronouns extends Addon {
 						return;
 
 					this.chat.getUser(user.id, login).addBadge('pronouns', `addon-pn-${id}`);
-					this.emit('chat:update-lines-by-user', user.id, login);
+					this.emit('chat:update-lines-by-user', user.id, login, false, true);
 				});
 		}
 
@@ -203,7 +203,7 @@ class Pronouns extends Addon {
 			}),
 			click_url: 'https://pronouns.alejo.io/',
 			color: this.settings.get(setting),
-			slot: 40,
+			slot: 100,
 			css
 		}, update_css);
 	}
