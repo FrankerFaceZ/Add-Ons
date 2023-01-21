@@ -8,8 +8,8 @@ export default class ProUser {
 		this.setID = `addon--ffzap.betterttv--emotes-pro-${this.userID}`;
 		this.emotes = emotes || [];
 
-		this.loadBadge(badge);
-		this.loadEmotes(emotes);
+		this.loadBadge(badge, true);
+		this.loadEmotes(emotes, true);
 	}
 
 	isBadgeEqual(badge = null) {
@@ -21,8 +21,8 @@ export default class ProUser {
 			emotes.every(emote => this.emotes.includes(emote.id));
 	}
 
-	loadBadge(badge = null) {
-		if (this.isBadgeEqual(badge)) return false;
+	loadBadge(badge = null, skipCheck = false) {
+		if (!skipCheck && this.isBadgeEqual(badge)) return false;
 
 		this.badge = badge;
 
@@ -41,8 +41,8 @@ export default class ProUser {
 		return true;
 	}
 
-	loadEmotes(_emotes = []) {
-		if (this.areEmotesEqual(_emotes)) return false;
+	loadEmotes(_emotes = [], skipCheck = false) {
+		if (!skipCheck && this.areEmotesEqual(_emotes)) return false;
 
 		this.emotes = _emotes.map(emote => emote.id);
 
