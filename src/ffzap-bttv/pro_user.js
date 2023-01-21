@@ -1,14 +1,51 @@
 export default class ProUser {
-	constructor(parent, username, emotes) {
+	constructor(parent, userID, badge, emotes) {
 		this.parent = parent;
 
-		this.username = username;
-		this.setID = `addon--ffzap.betterttv--emotes-pro-${this.username}`;
+		this.userID = userID;
+		this.badge = badge;
 
+		this.setID = `addon--ffzap.betterttv--emotes-pro-${this.userID}`;
+		this.emotes = emotes || [];
+
+		this.loadBadge(badge);
 		this.loadEmotes(emotes);
 	}
 
+	isBadgeEqual(badge = null) {
+		return this.badge?.url == badge?.url && this.badge?.startedAt == badge?.startedAt;
+	}
+
+	areEmotesEqual(emotes = []) {
+		return this.emotes.length === emotes.length &&
+			emotes.every(emote => this.emotes.includes(emote.id));
+	}
+
+	loadBadge(badge = null) {
+		if (this.isBadgeEqual(badge)) return false;
+
+		this.badge = badge;
+
+		if (badge) {		
+			const extraData = {
+				image: badge.url,
+				title: `BetterTTV Pro\n(Since ${this.parent.i18n.formatDate(new Date(badge.startedAt))})`
+			};
+
+			this.parent.chat.getUser(this.userID).addBadge('addon--ffzap.betterttv', this.parent.getProBadgeID(), extraData);
+		}
+		else {
+			this.parent.chat.getUser(this.userID).removeBadge('addon--ffzap.betterttv', this.parent.getProBadgeID());
+		}
+
+		return true;
+	}
+
 	loadEmotes(_emotes = []) {
+		if (this.areEmotesEqual(_emotes)) return false;
+
+		this.emotes = _emotes.map(emote => emote.id);
+
 		const emotes = [];
 
 		for (let i = 0; i < _emotes.length; i++) {
@@ -25,11 +62,14 @@ export default class ProUser {
 		if (emotes.length) {
 			this.parent.emotes.loadSetData(this.setID, set, true);
 			this.parent.chat
-				.getUser(undefined, this.username)
+				.getUser(this.userID)
 				.addSet('addon--ffzap.betterttv', this.setID);
-		} else {
+		}
+		else {
 			this.unload();
 		}
+
+		return true;
 	}
 
 	unload() {
