@@ -56,7 +56,7 @@ export default class ProUser {
 			emotes,
 			title: 'Personal Emotes',
 			source: 'BetterTTV',
-			icon: 'https://cdn.betterttv.net/tags/developer.png',
+			icon: 'https://betterttv.com/favicon.png',
 		};
 
 		if (emotes.length) {
