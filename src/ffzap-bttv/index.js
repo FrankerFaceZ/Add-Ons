@@ -161,7 +161,6 @@ class BetterTTV extends Addon {
 					
 					// BetterTTV Pro Badge
 					if (pro_user.loadBadge(data.badge)) {
-
 						badgesChanged = true;
 					}
 				}
@@ -228,25 +227,25 @@ class BetterTTV extends Addon {
 
 			const types = [];
 
-			const reg = new RegExp(/\/badge-(\w+)\.svg/);
+			const reg = new RegExp(/\/badges\/(\w+)\.svg/);
 
 			let i = data.length;
 			while (i--) {
-				const _badge = data[i];
+				const bData = data[i];
 
-				if (!reg.test(_badge.badge.svg)) {
+				if (!reg.test(bData.badge.svg)) {
 					continue;
 				}
 
-				const name = reg.exec(_badge.badge.svg)[1];
+				const name = reg.exec(bData.badge.svg)[1];
 
 				if (!types[name]) {
 					const badgeData = {
 						id: `bttv-${name}`,
 						slot: 21,
-						image: _badge.badge.svg,
+						image: bData.badge.svg,
 						svg: true,
-						title: _badge.badge.description,
+						title: bData.badge.description,
 						no_invert: true,
 					};
 
@@ -255,7 +254,7 @@ class BetterTTV extends Addon {
 					this.badges.loadBadgeData(`addon--ffzap.betterttv--badges-bttv-${name}`, badgeData);
 				}
 
-				this.chat.getUser(_badge.providerId).addBadge('addon--ffzap.betterttv', `addon--ffzap.betterttv--badges-bttv-${name}`);
+				this.chat.getUser(bData.providerId).addBadge('addon--ffzap.betterttv', `addon--ffzap.betterttv--badges-bttv-${name}`);
 			}
 		} else {
 			if (response.status === 404) return;

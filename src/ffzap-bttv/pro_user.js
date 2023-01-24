@@ -26,7 +26,7 @@ export default class ProUser {
 
 		this.badge = badge;
 
-		if (badge) {		
+		if (badge) {
 			const extraData = {
 				image: badge.url,
 				title: `BetterTTV Pro\n(Since ${this.parent.i18n.formatDate(new Date(badge.startedAt))})`
