@@ -215,6 +215,7 @@ class BetterTTV extends Addon {
 			slot: 21,
 			title: 'BetterTTV Pro',
 			no_invert: true,
+			image: 'https://cdn.betterttv.net/badges/pro/0b58eba8-e49c-4ed7-ae7d-be0b524502e6.png'
 		};
 
 		this.badges.loadBadgeData(this.getProBadgeID(), badgeData);
