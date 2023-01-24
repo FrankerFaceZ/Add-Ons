@@ -1,44 +1,39 @@
 /* globals module */
 module.exports = {
-	'env': {
-		'browser': true,
-		'es6': true
+	env: {
+		browser: true,
+		es6: true,
 	},
-	'extends': [
-		'eslint:recommended',
-		'plugin:vue/recommended'
-	],
-	'plugins': [
-		'vue',
-		'react'
-	],
-	'parserOptions': {
-		'parser': 'babel-eslint',
-		'ecmaVersion': 8,
-		'sourceType': 'module',
-		'ecmaFeatures': {
-			'jsx': true
-		}
+	extends: ['eslint:recommended', 'plugin:vue/recommended'],
+	plugins: ['vue', 'react'],
+	parserOptions: {
+		parser: '@babel/eslint-parser',
+		ecmaVersion: 2020,
+		sourceType: 'module',
+		ecmaFeatures: {
+			jsx: true,
+		},
 	},
-	'settings': {
-		'react': {
-			'pragma': 'createElement'
-		}
+	settings: {
+		react: {
+			pragma: 'createElement',
+		},
 	},
-	'globals': {
-		'import': false,
-		'require': false,
-		'__webpack_hash__': false,
-		'__git_commit__': false,
-		'FrankerFaceZ': false,
-		'Addon': false
+	globals: {
+		import: false,
+		require: false,
+		__webpack_hash__: false,
+		__git_commit__: false,
+		FrankerFaceZ: false,
+		Addon: false,
+		ffz: false,
 	},
-	'rules': {
+	rules: {
 		'accessor-pairs': ['error'],
 		'block-scoped-var': ['error'],
 		'for-direction': ['error'],
 		'guard-for-in': ['warn'],
-		'no-alert': ['error'],
+		'no-alert': ['warn'],
 		'no-await-in-loop': ['error'],
 		'no-caller': ['error'],
 		'no-catch-shadow': ['error'],
@@ -56,25 +51,23 @@ module.exports = {
 		'no-throw-literal': ['error'],
 		'no-undef-init': ['error'],
 		'no-unmodified-loop-condition': ['error'],
-		'no-use-before-define': ['error', {
-			'functions': false,
-			'classes': false
-		}],
+		'no-use-before-define': [
+			'error',
+			{
+				functions: false,
+				classes: false,
+			},
+		],
 		'no-useless-call': ['warn'],
 		'no-useless-concat': ['warn'],
 		'no-useless-return': ['warn'],
 		'no-void': ['error'],
-		'no-warning-comments': ['warn'],
+		'no-warning-comments': 0,
 		'no-with': ['error'],
-		'radix': ['error'],
+		radix: 0,
 		'require-await': ['warn'],
-		'valid-jsdoc': [
-			'warn',
-			{
-				'requireReturn': false
-			}
-		],
-		'yoda': ['warn'],
+		'valid-jsdoc': 0,
+		yoda: ['warn'],
 
 		'arrow-body-style': ['warn', 'as-needed'],
 		'arrow-parens': ['warn', 'as-needed'],
@@ -85,40 +78,38 @@ module.exports = {
 		'no-useless-constructor': ['error'],
 		'no-useless-rename': ['error'],
 		'no-var': ['error'],
+		'no-unused-vars': [
+			'warn',
+			{ vars: 'all', args: 'none', ignoreRestSiblings: false },
+		],
 		'no-cond-assign': ['warn'],
 		'object-shorthand': ['warn'],
-		'prefer-arrow-callback': ['warn', {'allowUnboundThis': true}],
-		'prefer-const': ['warn', {'ignoreReadBeforeAssign': true}],
+		'prefer-arrow-callback': ['warn', { allowUnboundThis: true }],
+		'prefer-const': ['warn', { ignoreReadBeforeAssign: true }],
 		'prefer-rest-params': ['warn'],
 		'prefer-spread': ['error'],
 		'prefer-template': ['warn'],
 		'rest-spread-spacing': ['error', 'never'],
 		'yield-star-spacing': ['warn'],
 
-		'indent': [
+		indent: [
 			'warn',
 			'tab',
 			{
-				'SwitchCase': 1
-			}
+				SwitchCase: 1,
+			},
 		],
-		'linebreak-style': [
-			'error',
-			'unix'
-		],
-		'quotes': [
+		'linebreak-style': ['error', 'unix'],
+		quotes: [
 			'error',
 			'single',
 			{
-				'avoidEscape': true,
-				'allowTemplateLiterals': true
-			}
+				avoidEscape: true,
+				allowTemplateLiterals: true,
+			},
 		],
 
-		'vue/html-indent': [
-			'warn',
-			'tab'
-		],
+		'vue/html-indent': ['warn', 'tab'],
 		'vue/valid-template-root': 'off',
 		'vue/max-attributes-per-line': 'off',
 		'vue/require-prop-types': 'off',
@@ -126,10 +117,12 @@ module.exports = {
 		'vue/html-closing-bracket-newline': [
 			'error',
 			{
-				'singleline': 'never',
-				'multiline': 'always'
-			}
+				singleline: 'never',
+				multiline: 'always',
+			},
 		],
+		'vue/multi-word-component-names': 0,
+		'vue/no-mutating-props': ['warn'],
 
 		'jsx-quotes': ['error', 'prefer-double'],
 		'react/jsx-boolean-value': 'error',
@@ -146,15 +139,21 @@ module.exports = {
 		'react/jsx-no-duplicate-props': 'error',
 		'react/jsx-no-literals': ['warn'],
 		'react/jsx-no-target-blank': 'error',
-		'react/jsx-sort-props': ['error', {
-			'callbacksLast': true,
-			'reservedFirst': true,
-			'noSortAlphabetically': true
-		}],
-		'react/jsx-tag-spacing': ['error', {
-			'beforeClosing': 'never'
-		}],
+		'react/jsx-sort-props': [
+			'error',
+			{
+				callbacksLast: true,
+				reservedFirst: true,
+				noSortAlphabetically: true,
+			},
+		],
+		'react/jsx-tag-spacing': [
+			'error',
+			{
+				beforeClosing: 'never',
+			},
+		],
 		'react/jsx-uses-react': 'error',
-		'react/jsx-wrap-multilines': 'error'
-	}
+		'react/jsx-wrap-multilines': 'error',
+	},
 };
