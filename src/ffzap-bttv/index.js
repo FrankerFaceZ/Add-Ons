@@ -210,6 +210,8 @@ class BetterTTV extends Addon {
 	}
 
 	addProBadge() {
+		if (window.BetterTTV) return;
+
 		const badgeData = {
 			id: `bttv-pro`,
 			slot: 21,
@@ -222,6 +224,11 @@ class BetterTTV extends Addon {
 	}
 
 	async addBadges(attempts = 0) {
+		if (window.BetterTTV) {
+			this.log.info('Not adding BTTV badges because BTTV is present.');
+			return;
+		}
+
 		const response = await fetch('https://api.betterttv.net/3/cached/badges');
 		if (response.ok) {
 			const data = await response.json();

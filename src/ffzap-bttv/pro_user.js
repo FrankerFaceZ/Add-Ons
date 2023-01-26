@@ -22,6 +22,8 @@ export default class ProUser {
 	}
 
 	loadBadge(badge = null, skipCheck = false) {
+		if (window.BetterTTV) return false;
+
 		if (!skipCheck && this.isBadgeEqual(badge)) return false;
 
 		this.badge = badge;
