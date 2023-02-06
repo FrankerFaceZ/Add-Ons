@@ -387,10 +387,14 @@ class SmokeysUtils extends Addon {
 	keep_hd_video() {
 		if (this.chat.context.get('smokemotes.keep_hd_video')) {
 			try {
-				Object.defineProperty(document, 'hidden', {
-					value: false,
-					writable: false,
-				});
+				document.addEventListener(
+					'visibilitychange',
+					(e) => {
+						e.stopImmediatePropagation();
+					},
+					true,
+					true
+				);
 			} catch (err) {
 				this.log.warn('Unable to install document visibility hook.', err);
 			}
