@@ -83,6 +83,69 @@ class BetterTTV extends Addon {
 		this.socket = false;
 
 		this.room_emotes = {};
+
+		this.emote_commands_tokenizer = {
+			type: 'emote_commands',
+			priority: -100,
+			process: tokens => {
+				if (!tokens || !tokens.length) {
+					return tokens;
+				}
+
+				let output = [];
+				
+				for (let i = 0, l = tokens.length; i < l; i++) {
+					const currentToken = tokens[i];
+					
+					const lastToken = i - 1 >= 0 ? tokens[i - 1] : null;
+					const nextToken = i + 1 < l ? tokens[i + 1] : null;
+
+					// Zero-Spacing
+					if (currentToken.type === 'text' && currentToken.text === ' !z ') {
+						if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
+							continue;
+						}
+					}
+
+					if (lastToken?.type === 'text') {
+						switch(lastToken?.text) {
+							case 'w! ': {
+								// Wide-Boi
+								if (currentToken?.type === 'emote') {
+									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.GrowX;
+
+									output = output.filter(token => token != lastToken);
+								}
+								break;
+							}
+							case 'h! ': {
+								// Flip Horizontal
+								if (currentToken?.type === 'emote') {
+									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.FlipX;
+
+									output = output.filter(token => token != lastToken);
+								}
+								break;
+							}
+							case 'v! ': {
+								// Flip Vertical
+								if (currentToken?.type === 'emote') {
+									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.FlipY;
+
+									output = output.filter(token => token != lastToken);
+								}
+								break;
+							}
+						}
+					}
+						
+					output.push(currentToken);
+				}
+				return output;
+			},
+		};
+
+		this.chat.addTokenizer(this.emote_commands_tokenizer);
 	}
 
 	onEnable() {
