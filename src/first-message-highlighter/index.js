@@ -39,6 +39,16 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
+		this.settings.add('first_message_highlight.only_moderated_channels', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > First Message Highlight >> Settings',
+				title: 'Highlight only when moderating',
+				description: 'Only highlight messages in chats where you are a moderator.',
+				component: 'setting-check-box'
+			}
+		});
+
 		this.chat.addHighlightReason('first-message', "User's first message during this session");
 
 		const outerThis = this;
@@ -48,6 +58,9 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
+				if (!outerThis.chat.context.get('context.moderator') 
+					&& this.settings.get('first_message_highlight.only_moderated_channels')) return;
+
 				if (msg.fh_known_user == null)
 					msg.fh_known_user = outerThis.known_users.has(msg.user.userID);
 
