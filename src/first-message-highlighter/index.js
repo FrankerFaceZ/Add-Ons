@@ -29,9 +29,19 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
+		this.settings.add('first_message_highlight.ignore_historical', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > First Message Highlight >> Settings',
+				title: 'Ignore historical messages',
+				description: 'Do not highlight messages from before you joined the chat, but still remember the users.',
+				component: 'setting-check-box'
+			}
+		});
+
 		this.chat.addHighlightReason('first-message', "User's first message during this session");
 
-		let outerThis = this;
+		const outerThis = this;
 
 		this.messageHighlighter = {
 			type: 'message_highlighter',
@@ -44,6 +54,9 @@ class FirstMessageHighlight extends Addon {
 				if (msg.fh_known_user) return;
 
 				outerThis.known_users.add(msg.user.userID);
+
+				if (msg.isHistorical
+					&& this.settings.get('first_message_highlight.ignore_historical')) return;
 
 				this.applyHighlight(
 					msg,
