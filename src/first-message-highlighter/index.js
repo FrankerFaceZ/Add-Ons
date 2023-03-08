@@ -29,12 +29,22 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
-		this.settings.add('first_message_highlight.ignore_historical', {
-			default: false,
+		this.settings.add('first_message_highlight.remember_historical', {
+			default: true,
 			ui: {
-				path: 'Add-Ons > First Message Highlight >> Settings',
-				title: 'Ignore historical messages',
-				description: 'Do not highlight messages from before you joined the chat, but still remember the users.',
+				path: 'Add-Ons > First Message Highlight >> Historical Messages',
+				title: 'Remember historical messages',
+				description: 'Remember logged user messages from before you joined the chat.',
+				component: 'setting-check-box'
+			}
+		});
+
+		this.settings.add('first_message_highlight.highlight_historical', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > First Message Highlight >> Historical Messages',
+				title: 'Highlight logged historical messages',
+				description: 'Highlight messages from before you joined the chat.',
 				component: 'setting-check-box'
 			}
 		});
@@ -60,25 +70,18 @@ class FirstMessageHighlight extends Addon {
 			process(tokens, msg) {
 				if (!outerThis.chat.context.get('context.moderator') 
 					&& this.settings.get('first_message_highlight.only_moderated_channels')) return;
+				
+				if (msg.isHistorical) {
+					if (this.settings.get('first_message_highlight.remember_historical')
+						&& outerThis.remembersUser(msg)) return;
 
-				if (msg.fh_known_user == null)
-					msg.fh_known_user = outerThis.known_users.has(msg.user.userID);
+					if (this.settings.get('first_message_highlight.highlight_historical'))
+						outerThis.highlightMessage(this, msg);
+					return;
+				}
 
-				if (msg.fh_known_user) return;
-
-				outerThis.known_users.add(msg.user.userID);
-
-				if (msg.isHistorical
-					&& this.settings.get('first_message_highlight.ignore_historical')) return;
-
-				this.applyHighlight(
-					msg,
-					this.settings.get('first_message_highlight.priority'),
-					this.settings.get('first_message_highlight.highlight_color'),
-					'first-message'
-				);
-
-				return;
+				if(!outerThis.remembersUser(msg))
+					outerThis.highlightMessage(this, msg);
 			}
 		}
 	}
@@ -94,6 +97,25 @@ class FirstMessageHighlight extends Addon {
 		this.chat.removeTokenizer(this.messageHighlighter);
 		this.known_users.clear();
 		this.emit('chat:update-lines');
+	}
+
+	remembersUser(msg) {
+		if (msg.fh_known_user == null)
+			msg.fh_known_user = this.known_users.has(msg.user.userID);
+
+		if (msg.fh_known_user) return true;
+
+		this.known_users.add(msg.user.userID);
+		return false;
+	}
+
+	highlightMessage(ctx, msg) {
+		ctx.applyHighlight(
+			msg,
+			this.settings.get('first_message_highlight.priority'),
+			this.settings.get('first_message_highlight.highlight_color'),
+			'first-message'
+		);
 	}
 }
 
