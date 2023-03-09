@@ -172,64 +172,6 @@ class FFZAP extends Addon {
 			}
 		});
 
-		/*this.settings.add('ffzap.core.highlight_sound_type_mention', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
-				title: 'Play When Mentioned',
-				description: 'Play a highlight sound when you are being mentioned in chat by your username.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('ffzap.core.highlight_sound_type_badge', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
-				title: 'Play When Badge Highlighted',
-				description: 'Play a highlight sound when a badge from the "Highlight Badges" list is being highlighted.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('ffzap.core.highlight_sound_type_term', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
-				title: 'Play When Term Highlighted',
-				description: 'Play a highlight sound when a term from the "Highlight Terms" list is being highlighted.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('ffzap.core.highlight_sound_type_user', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
-				title: 'Play When User Highlighted',
-				description: 'Play a highlight sound when a user from the "Highlight Users" list is being highlighted.',
-				component: 'setting-check-box',
-			},
-		});
-
-		this.settings.add('ffzap.core.highlight_sound_type_user_age', {
-			default: false,
-
-			ui: {
-				path: 'Add-Ons > FFZ:AP Core >> Highlight Sounds >> Sound Trigger Settings',
-				title: 'Play When New Account Highlighted',
-				description: 'Play a highlight sound when a new account is being highlighted. (Requires "New Account Highlighter" add-on)',
-				component: 'setting-check-box',
-			},
-		});*/
-
-		//this.on('chat:receive-message', this.onReceiveMessage);
-		//this.on('chat:buffer-message', this.onBufferMessage);
-
 		this.chat.context.on('changed:ffzap.core.highlight_sound', async url => {
 			this.highlight_sound.src = await this.getSoundURL(url);
 		}, this);
@@ -253,18 +195,25 @@ class FFZAP extends Addon {
 				}
 
 				const output = [];
-				let lastType;
 
 				for (let i = 0, l = tokens.length; i < l; i++) {
-					const token = tokens[i];
-					// We don't worry about setting last_type because we know the next type is emoticon so it doesn't matter.
-					if (token.type === 'text' && token.text === ' ' && lastType === 'emote' && i + 1 < l && tokens[i + 1].type === 'emote') {
-						if (i - 1 >= 0) tokens[i - 1].text += ' ';
+					const currentToken = tokens[i];
+					
+					if (i + 1 === l) {
+						output.push(currentToken);
 						continue;
 					}
-
-					lastType = token.type;
-					output.push(token);
+					
+					const lastToken = i - 1 >= 0 ? tokens[i - 1] : null;
+					const nextToken = i + 1 < l ? tokens[i + 1] : null;
+					
+					if (currentToken.type === 'text' && currentToken.text === ' ') {
+						if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
+							continue;
+						}
+					}
+						
+					output.push(currentToken);
 				}
 				return output;
 			},
