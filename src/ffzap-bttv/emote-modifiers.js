@@ -13,13 +13,16 @@ function process(ffz, tokens) {
 	for (let i = 0, l = tokens.length; i < l; i++) {
 		const currentToken = tokens[i];
 		
+		const lastLastToken = i - 2 >= 0 ? tokens[i - 2] : null;
 		const lastToken = i - 1 >= 0 ? tokens[i - 1] : null;
 		const nextToken = i + 1 < l ? tokens[i + 1] : null;
 
 		// Zero-Spacing
 		if (currentToken.type === 'text' && currentToken.text === ' z! ') {
-			if (!enabled || (lastToken?.type === 'emote' && nextToken?.type === 'emote')) {
-				continue;
+			if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
+				if (enabled) continue;
+
+				currentToken.text = ' ';
 			}
 		}
 
@@ -28,7 +31,7 @@ function process(ffz, tokens) {
 			const split = trimmed.split(' ');
 
 			let invalid = false;
-			let remove = false;
+			let setToSpace = false;
 
 			for (const t of split) {
 				const t_trimmed = t.trim();
@@ -64,10 +67,10 @@ function process(ffz, tokens) {
 					if (enabled) currentToken.modifier_flags |= flags;
 
 					flags = 0;
-					remove = true;
+					setToSpace = true;
 				}
 	
-				if (remove) removeTokens.push(lastToken);
+				if (setToSpace) lastToken.text = ' ';
 			}
 		}
 
