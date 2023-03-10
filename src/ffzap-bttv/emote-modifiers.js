@@ -1,3 +1,17 @@
+function addModifier(token, flag, name) {
+	if (!token || token.type !== 'emote') return;
+
+	token.modifier_flags |= flag;
+	
+	token.modifiers.push({
+		set: 'info',
+		id: {
+			// icon: 'https://betterttv.com/favicon.png',
+			label: name,
+		}
+	});
+}
+
 function process(ffz, tokens) {
 	if (!tokens || !tokens.length) {
 		return tokens;
@@ -5,51 +19,60 @@ function process(ffz, tokens) {
 
 	const enabled = ffz.chat.context.get('ffzap.betterttv.emote_modifiers');
 
-	let output = [];
-	const removeTokens = [];
+	const output = [];
 
-	let flags = 0;
-	
-	for (let i = 0, l = tokens.length; i < l; i++) {
-		const currentToken = tokens[i];
-		
-		const lastLastToken = i - 2 >= 0 ? tokens[i - 2] : null;
-		const lastToken = i - 1 >= 0 ? tokens[i - 1] : null;
-		const nextToken = i + 1 < l ? tokens[i + 1] : null;
+	let i = 0;
 
-		// Zero-Spacing
-		if (currentToken.type === 'text' && currentToken.text === ' z! ') {
-			if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
-				if (enabled) continue;
+	let lastToken = false;
+	let currentToken = false;
+	let nextToken = tokens[i];
 
-				currentToken.text = ' ';
+	while (nextToken) {
+		lastToken = currentToken;
+		currentToken = nextToken;
+		nextToken = tokens[++i];
+
+		if (currentToken?.type === 'text' && currentToken.text) {
+			// Zero-Spacing
+			if (currentToken.text === ' z! ' && lastToken?.type === 'emote' && nextToken?.type === 'emote') {
+				if (!enabled) {
+					currentToken.text = ' ';
+					output.push(currentToken);
+				}
+
+				lastToken.text += ' ';
+				continue;
 			}
-		}
 
-		if (lastToken?.type === 'text') {
-			const trimmed = lastToken?.text?.trim();
+			// Other modifiers
+			const trimmed = currentToken.text.trim();
 			const split = trimmed.split(' ');
 
-			let invalid = false;
-			let setToSpace = false;
+			for (let w = split.length - 1; w >= 0; w--) {
+				const t_trimmed = split[w].trim();
 
-			for (const t of split) {
-				const t_trimmed = t.trim();
+				let invalid = false;
 
 				switch(t_trimmed) {
 					case 'w!': {
 						// Wide-Boi
-						flags |= ffz.chat.emotes.ModifierFlags.GrowX;
+						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.GrowX, 'w! (BTTV Wide)');
+
+						split.splice(w, 1);
 						break;
 					}
 					case 'h!': {
 						// Flip Horizontal
-						flags |= ffz.chat.emotes.ModifierFlags.FlipX;
+						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.FlipX, 'h! (BTTV Horizontal Flip)');
+
+						split.splice(w, 1);
 						break;
 					}
 					case 'v!': {
 						// Flip Vertical
-						flags |= ffz.chat.emotes.ModifierFlags.FlipY;
+						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.FlipY, 'v! (BTTV Vertical Flip)');
+
+						split.splice(w, 1);
 						break;
 					}
 					default: {
@@ -57,27 +80,15 @@ function process(ffz, tokens) {
 						break;
 					}
 				}
+
+				if (invalid) break;
 			}
 
-			if (invalid) {
-				flags = 0;
-			}
-			else {
-				if (currentToken?.type === 'emote') {
-					if (enabled) currentToken.modifier_flags |= flags;
-
-					flags = 0;
-					setToSpace = true;
-				}
-	
-				if (setToSpace) lastToken.text = ' ';
-			}
+			currentToken.text = currentToken.text.replace(trimmed, split.join(' '));
 		}
 
 		output.push(currentToken);
 	}
-
-	output = output.filter(token => !removeTokens.includes(token));
 
 	return output;
 }
