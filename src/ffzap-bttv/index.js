@@ -1,5 +1,6 @@
 import Socket from './socket';
 import ProUser from './pro_user';
+import EmoteModifiers from './emote-modifiers';
 
 class BetterTTV extends Addon {
 	constructor(...args) {
@@ -49,34 +50,30 @@ class BetterTTV extends Addon {
 			default: true,
 
 			ui: {
-				path: 'Add-Ons > BetterTTV Emotes >> Emotes',
-				title: 'Pro Emotes',
-				description: 'Enable to show BetterTTV Pro emoticons.',
+				path: 'Add-Ons > BetterTTV Emotes >> Pro',
+				title: 'Pro Functionality',
+				description: 'Enable to show BetterTTV Pro emoticons and badges.',
 				component: 'setting-check-box',
 			},
 		});
 
+		this.settings.add('ffzap.betterttv.emote_modifiers', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > BetterTTV Emotes >> Emotes',
+				title: 'Emote Modifiers',
+				description: 'Enable to show BetterTTV emote modifiers. (If this is disabled it will hide the modifiers from chat)',
+				component: 'setting-check-box',
+			},
+		});
+		
+		
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.channel_emoticons', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', () => {
-			if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
-				this.socket.connect();
-
-				for (const room of this.chat.iterateRooms()) {
-					if (room) this.updateChannel(room);
-				}
-			} else {
-				for (const key in this.ProUsers) {
-					if ({}.hasOwnProperty.call(this.ProUsers, key)) {
-						this.ProUsers[key].unload();
-					}
-				}
-				this.ProUsers = {};
-
-				this.socket.disconnectInternal();
-			}
-		}, this);
+		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProEmotes, this);
+		this.chat.context.on('changed:ffzap.betterttv.emote_modifiers', () => this.emit('chat:update-lines'), this);
 
 		this.pro_users = {};
 		this.night_subs = {};
@@ -87,62 +84,7 @@ class BetterTTV extends Addon {
 		this.emote_commands_tokenizer = {
 			type: 'emote_commands',
 			priority: -100,
-			process: tokens => {
-				if (!tokens || !tokens.length) {
-					return tokens;
-				}
-
-				let output = [];
-				
-				for (let i = 0, l = tokens.length; i < l; i++) {
-					const currentToken = tokens[i];
-					
-					const lastToken = i - 1 >= 0 ? tokens[i - 1] : null;
-					const nextToken = i + 1 < l ? tokens[i + 1] : null;
-
-					// Zero-Spacing
-					if (currentToken.type === 'text' && currentToken.text === ' !z ') {
-						if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
-							continue;
-						}
-					}
-
-					if (lastToken?.type === 'text') {
-						switch(lastToken?.text) {
-							case 'w! ': {
-								// Wide-Boi
-								if (currentToken?.type === 'emote') {
-									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.GrowX;
-
-									output = output.filter(token => token != lastToken);
-								}
-								break;
-							}
-							case 'h! ': {
-								// Flip Horizontal
-								if (currentToken?.type === 'emote') {
-									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.FlipX;
-
-									output = output.filter(token => token != lastToken);
-								}
-								break;
-							}
-							case 'v! ': {
-								// Flip Vertical
-								if (currentToken?.type === 'emote') {
-									currentToken.modifier_flags |= this.chat.emotes.ModifierFlags.FlipY;
-
-									output = output.filter(token => token != lastToken);
-								}
-								break;
-							}
-						}
-					}
-						
-					output.push(currentToken);
-				}
-				return output;
-			},
+			process: tokens => EmoteModifiers.process(this, tokens),
 		};
 
 		this.chat.addTokenizer(this.emote_commands_tokenizer);
@@ -542,6 +484,25 @@ class BetterTTV extends Addon {
 
 		for (const room of this.chat.iterateRooms()) {
 			if (room) this.updateChannel(room);
+		}
+	}
+
+	updateProEmotes() {
+		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+			this.socket.connect();
+			
+			for (const room of this.chat.iterateRooms()) {
+				if (room) this.updateChannel(room);
+			}
+		} else {
+			for (const key in this.ProUsers) {
+				if ({}.hasOwnProperty.call(this.ProUsers, key)) {
+					this.ProUsers[key].unload();
+				}
+			}
+			this.ProUsers = {};
+			
+			this.socket.disconnectInternal();
 		}
 	}
 }
