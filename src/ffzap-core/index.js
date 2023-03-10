@@ -209,6 +209,7 @@ class FFZAP extends Addon {
 					
 					if (currentToken.type === 'text' && currentToken.text === ' ') {
 						if (lastToken?.type === 'emote' && nextToken?.type === 'emote') {
+							lastToken.text += ' ';
 							continue;
 						}
 					}
