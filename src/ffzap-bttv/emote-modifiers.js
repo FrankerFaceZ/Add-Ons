@@ -32,21 +32,10 @@ function process(ffz, tokens) {
 		currentToken = nextToken;
 		nextToken = tokens[++i];
 
-		if (currentToken?.type === 'text' && currentToken.text) {
-			// Zero-Spacing
-			if (currentToken.text === ' z! ' && lastToken?.type === 'emote' && nextToken?.type === 'emote') {
-				if (!enabled) {
-					currentToken.text = ' ';
-					output.push(currentToken);
-				}
-
-				lastToken.text += ' ';
-				continue;
-			}
-
-			// Other modifiers
+		if (currentToken?.type === 'text' && currentToken.text && nextToken?.type === 'emote') {
 			const trimmed = currentToken.text.trim();
 			const split = trimmed.split(' ');
+			let zeroWidth = false;
 
 			for (let w = split.length - 1; w >= 0; w--) {
 				const t_trimmed = split[w].trim();
@@ -54,6 +43,13 @@ function process(ffz, tokens) {
 				let invalid = false;
 
 				switch(t_trimmed) {
+					// Zero-Spacing
+					case 'z!': {
+						zeroWidth = true;
+
+						split.splice(w, 1);
+						break;
+					}
 					case 'w!': {
 						// Wide-Boi
 						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.GrowX, 'w! (BTTV Wide)');
@@ -85,6 +81,11 @@ function process(ffz, tokens) {
 			}
 
 			currentToken.text = currentToken.text.replace(trimmed, split.join(' '));
+
+			if (enabled && zeroWidth && lastToken) {
+				lastToken.text += ' ';
+				continue;
+			}
 		}
 
 		output.push(currentToken);
