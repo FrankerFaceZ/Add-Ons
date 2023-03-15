@@ -47,13 +47,24 @@ class BetterTTV extends Addon {
 			},
 		});
 
+		this.settings.add('ffzap.betterttv.pro_badges', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > BetterTTV Emotes >> Pro',
+				title: 'Pro Badges',
+				description: 'Enable to show BetterTTV Pro badges.',
+				component: 'setting-check-box',
+			},
+		});
+
 		this.settings.add('ffzap.betterttv.pro_emoticons', {
 			default: true,
 
 			ui: {
 				path: 'Add-Ons > BetterTTV Emotes >> Pro',
-				title: 'Pro Functionality',
-				description: 'Enable to show BetterTTV Pro emoticons and badges.',
+				title: 'Pro Emoticons',
+				description: 'Enable to show BetterTTV Pro emoticons.',
 				component: 'setting-check-box',
 			},
 		});
@@ -73,7 +84,12 @@ class BetterTTV extends Addon {
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.channel_emoticons', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProEmotes, this);
+		this.chat.context.on('changed:ffzap.betterttv.pro_badges', () => {
+			this.addProBadge();
+			this.updateProStatus();
+			this.emit('chat:update-lines');
+		}, this);
+		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProStatus, this);
 		this.chat.context.on('changed:ffzap.betterttv.emote_modifiers', () => this.emit('chat:update-lines'), this);
 
 		this.pro_users = {};
@@ -103,7 +119,7 @@ class BetterTTV extends Addon {
 		this.socket = new Socket(this, this.getSocketEvents());
 		this.updateGlobalEmotes();
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.connect();
 		}
 
@@ -121,7 +137,7 @@ class BetterTTV extends Addon {
 	roomRemove(room) {
 		this.updateChannel(room);
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.partChannel(room.id);
 		}
 	}
@@ -216,6 +232,10 @@ class BetterTTV extends Addon {
 	}
 
 	addProBadge() {
+		this.removeProBadge();
+
+		if (!this.chat.context.get('ffzap.betterttv.pro_badges')) return;
+
 		if (window.BetterTTV) return;
 
 		const badgeData = {
@@ -227,6 +247,11 @@ class BetterTTV extends Addon {
 		};
 
 		this.badges.loadBadgeData(this.getProBadgeID(), badgeData);
+	}
+
+	removeProBadge() {
+		this.badges.deleteBulk('addon.ffzap-bttv', this.getProBadgeID());
+		delete this.badges.badges[this.getProBadgeID()];
 	}
 
 	async addBadges(attempts = 0) {
@@ -431,7 +456,7 @@ class BetterTTV extends Addon {
 
 		const bttvRoomID = this.getBTTVRoomID(room.id);
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.joinChannel(bttvRoomID);
 		}
 
@@ -500,8 +525,13 @@ class BetterTTV extends Addon {
 		}
 	}
 
-	updateProEmotes() {
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+	shouldSocketBeConnected() {
+		return this.chat.context.get('ffzap.betterttv.pro_badges')
+			|| this.chat.context.get('ffzap.betterttv.pro_emoticons');
+	}
+
+	updateProStatus() {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.connect();
 			
 			for (const room of this.chat.iterateRooms()) {
