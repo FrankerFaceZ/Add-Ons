@@ -481,7 +481,7 @@ class BetterTTV extends Addon {
 
 			let i = _emotes.length;
 			while (i--) {
-				_emotes[i].user = room && { displayName: room.login, name: room.login };
+				_emotes[i].user = _emotes[i].user || room && { displayName: room.login, name: room.login };
 
 				emotes.push(this.convertBTTVEmote(_emotes[i]));
 			}
