@@ -509,12 +509,20 @@ class BetterTTV extends Addon {
 
 			this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, true);
 		} else {
-			if (response.status === 404) return;
+			if (response.status === 404) {
+				this.log.error('No channel emotes available.');
+				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
+				return;
+			}
 
 			const newAttempts = (attempts || 0) + 1;
 			if (newAttempts < 12) {
 				this.log.error('Failed to fetch channel emotes. Trying again in 5 seconds.');
 				setTimeout(this.updateChannel.bind(this, room, newAttempts), 5000);
+			}
+			else {
+				this.log.error('Failed to fetch channel emotes.');
+				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
 			}
 		}
 	}
