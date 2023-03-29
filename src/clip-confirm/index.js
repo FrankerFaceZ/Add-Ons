@@ -16,7 +16,6 @@ class ClipConfirm extends Addon {
 
 		this.settingsNamespace    = 'addon.clip-confirm';
 		this.rightControls        = document.querySelector( this.player.RIGHT_CONTROLS );
-		this.videoPlayerContainer = document.getElementsByClassName( 'video-player__container' )[0];
 		this.clipConfirmed        = false;
 		this.keyNames             = {
 			ctrl:  'Ctrl / ⌘',
