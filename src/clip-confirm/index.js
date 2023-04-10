@@ -37,6 +37,32 @@ class ClipConfirm extends Addon {
 			confirmClip:            this.confirmClip.bind( this )
 		};
 
+		this.addSettings();
+
+		this.skipHotkey     = this.settings.get( `${this.settingsNamespace}.skip-hotkey` );
+		this.skipOnShortcut = this.settings.get( `${this.settingsNamespace}.skip-on-shortcut` );
+	}
+
+	addClipConfirmation() {
+		if ( ! this.clipButton ) {
+			this.getClipButton();
+		}
+
+		this.clipButton.dataset.ffzClipConfirmReady = 'true';
+
+		this.clipButtonTooltipText = {
+			original: this.clipButton.getAttribute( 'aria-label' ),
+			new:      ''
+		};
+
+		this.updateHotkey( this.skipHotkey );
+
+		this.clipButton.addEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
+
+		document.documentElement.addEventListener( 'keydown', this.eventListenerCallbacks.onClipHotkey );
+	}
+
+	addSettings() {
 		this.settings.add( `${this.settingsNamespace}.skip-hotkey`, {
 			default: '',
 			ui:      {
@@ -64,28 +90,6 @@ class ClipConfirm extends Addon {
 			},
 			changed: ( val ) => { this.skipOnShortcut = val; }
 		} );
-
-		this.skipHotkey     = this.settings.get( `${this.settingsNamespace}.skip-hotkey` );
-		this.skipOnShortcut = this.settings.get( `${this.settingsNamespace}.skip-on-shortcut` );
-	}
-
-	addClipConfirmation() {
-		if ( ! this.clipButton ) {
-			this.getClipButton();
-		}
-
-		this.clipButton.dataset.ffzClipConfirmReady = 'true';
-
-		this.clipButtonTooltipText = {
-			original: this.clipButton.getAttribute( 'aria-label' ),
-			new:      ''
-		};
-
-		this.updateHotkey( this.skipHotkey );
-
-		this.clipButton.addEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
-
-		document.documentElement.addEventListener( 'keydown', this.eventListenerCallbacks.onClipHotkey );
 	}
 
 	async buildVue() {
@@ -288,13 +292,15 @@ class ClipConfirm extends Addon {
 	tooltipObserverCallback( mutations, _observer ) {
 		for ( const mutation of mutations ) {
 			if ( mutation.addedNodes.length > 0 ) {
-				const addedTooltipWrapper = mutation.addedNodes[0].nextElementSibling;
+				for ( const addedNode of mutation.addedNodes ) {
+					if ( addedNode.classList.contains( 'tw-tooltip-layer' ) ) {
+						const addedTooltipWrapper = addedNode;
+				
+						this.clipButtonTooltip = addedTooltipWrapper.getElementsByClassName( 'tw-tooltip-wrapper' )[0];
 
-				if ( addedTooltipWrapper.classList.contains( 'tw-tooltip-layer' ) ) {
-					this.clipButtonTooltip = addedTooltipWrapper.getElementsByClassName( 'tw-tooltip-wrapper' )[0];
-
-					if ( this.clipButtonTooltip.textContent.includes( 'Clip (' ) ) {
-						this.updateTooltip();
+						if ( this.clipButtonTooltip.textContent.includes( 'Clip (' ) ) {
+							this.updateTooltip();
+						}
 					}
 				}
 			}
