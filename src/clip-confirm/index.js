@@ -185,7 +185,7 @@ class ClipConfirm extends Addon {
 			document.body.removeChild( this.clipConfirmationModal );
 		}
 
-		if ( document.body.contains( this.clipConfirmCSS ) ) {
+		if ( document.head.contains( this.clipConfirmCSS ) ) {
 			document.head.removeChild( this.clipConfirmCSS );
 		}
 	}
