@@ -13,6 +13,10 @@
 		height: 100%;
 		width: 100%;
 	}
+
+	& > div[tabindex="0"]:last-child {
+		height: auto;
+	}
 }
 
 .ffz-pn--list {
