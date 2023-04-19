@@ -119,12 +119,13 @@ export const badges = {
 
 			const source_badges = getBadgeIDs(ctx.source);
 
-			for(const badge of badges) {
-				if ( has(source_badges, badge) ) {
-					matched = true;
-					break;
+			if ( source_badges !== null )
+				for(const badge of badges) {
+					if ( source_badges.includes(badge) ) {
+						matched = true;
+						break;
+					}
 				}
-			}
 
 			if ( matched ) {
 				ctx.score += score;
