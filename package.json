@@ -4,7 +4,7 @@
 	"description": "Addons for FrankerFaceZ",
 	"private": true,
 	"scripts": {
-		"start": "webpack-dev-server --config webpack.web.dev.js",
+		"start": "cross-env NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --config webpack.web.dev.js",
 		"start:prod": "webpack-dev-server --config webpack.web.dev.prod.js",
 		"build": "webpack && node bin/addon_hash",
 		"clean": "rimraf dev",
@@ -24,6 +24,7 @@
 		"babel-loader": "^8.2.3",
 		"clean-webpack-plugin": "^3.0.0",
 		"copy-webpack-plugin": "^5.1.2",
+		"cross-env": "^7.0.3",
 		"css-loader": "^2.1.1",
 		"eslint": "^7.32.0",
 		"eslint-plugin-import": "^2.24.2",
@@ -47,6 +48,7 @@
 		"webpack-merge": "^4.2.2"
 	},
 	"dependencies": {
+		"@wizulus/code": "^1.0.2",
 		"displacejs": "^1.4.1",
 		"graphql": "^16.0.1",
 		"graphql-tag": "^2.12.6",
