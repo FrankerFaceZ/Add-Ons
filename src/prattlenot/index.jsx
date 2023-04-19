@@ -292,6 +292,8 @@ class PrattleNot extends Addon {
 
 		this.ChatInput.on('mount', this.updateButton, this);
 		this.ChatInput.on('update', this.updateButton, this);
+
+		this.updateButtons();
 	}
 
 	async onDisable() {
@@ -319,9 +321,11 @@ class PrattleNot extends Addon {
 	}
 
 	updateButtons() {
-		if ( this.enabling || this.enabled ) {
-			for(const inst of this.ChatInput.instances)
-				this.updateButton(inst);
+		if ( this.ChatInput ) {
+			if ( this.enabling || this.enabled ) {
+				for(const inst of this.ChatInput.instances)
+					this.updateButton(inst);
+			}
 		}
 	}
 
