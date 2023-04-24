@@ -105,6 +105,20 @@ class BetterTTV extends Addon {
 		};
 
 		this.chat.addTokenizer(this.emote_commands_tokenizer);
+
+		this.on('chat:reload-data', flags => {
+			if (!flags || flags.badges) {
+				this.addBadges();
+			}
+
+			if (!flags || flags.emotes) {
+				this.updateGlobalEmotes();
+
+				for (const room of this.chat.iterateRooms()) {
+					if (room) this.updateChannel(room);
+				}
+			}
+		});
 	}
 
 	onEnable() {
@@ -510,7 +524,6 @@ class BetterTTV extends Addon {
 			this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, true);
 		} else {
 			if (response.status === 404) {
-				this.log.error('No channel emotes available.');
 				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
 				return;
 			}
