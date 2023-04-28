@@ -13,10 +13,10 @@ class ClipConfirm extends Addon {
 		this.clipConfirmCSS.href = CSS_URL;
 
 		this.inject( 'site.player' );
+		this.inject( 'site.router' );
 
 		this.settingsNamespace    = 'addon.clip-confirm';
 		this.rightControls        = document.querySelector( this.player.RIGHT_CONTROLS );
-		this.videoPlayerContainer = document.getElementsByClassName( 'video-player__container' )[0];
 		this.clipConfirmed        = false;
 		this.keyNames             = {
 			ctrl:  'Ctrl / ⌘',
@@ -38,6 +38,34 @@ class ClipConfirm extends Addon {
 			confirmClip:            this.confirmClip.bind( this )
 		};
 
+		this.addSettings();
+
+		this.skipHotkey     = this.settings.get( `${this.settingsNamespace}.skip-hotkey` );
+		this.skipOnShortcut = this.settings.get( `${this.settingsNamespace}.skip-on-shortcut` );
+
+		this.router.on( ':route', this.detectRoute.bind( this ) );
+	}
+
+	addClipConfirmation() {
+		if ( ! this.clipButton ) {
+			this.getClipButton();
+		}
+
+		this.clipButton.dataset.ffzClipConfirmReady = 'true';
+
+		this.clipButtonTooltipText = {
+			original: this.clipButton.getAttribute( 'aria-label' ),
+			new:      ''
+		};
+
+		this.updateHotkey( this.skipHotkey );
+
+		this.clipButton.addEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
+
+		document.documentElement.addEventListener( 'keydown', this.eventListenerCallbacks.onClipHotkey );
+	}
+
+	addSettings() {
 		this.settings.add( `${this.settingsNamespace}.skip-hotkey`, {
 			default: '',
 			ui:      {
@@ -65,30 +93,6 @@ class ClipConfirm extends Addon {
 			},
 			changed: ( val ) => { this.skipOnShortcut = val; }
 		} );
-
-		this.skipHotkey     = this.settings.get( `${this.settingsNamespace}.skip-hotkey` );
-		this.skipOnShortcut = this.settings.get( `${this.settingsNamespace}.skip-on-shortcut` );
-	}
-
-	addClipConfirmation() {
-		if ( ! this.clipButton ) {
-			this.getClipButton();
-		}
-
-		this.clipButton.dataset.ffzClipConfirmReady = 'true';
-
-		this.clipButtonTooltip     = this.clipButton.nextElementSibling;
-
-		this.clipButtonTooltipText = {
-			original: this.clipButton.getAttribute( 'aria-label' ),
-			new:      ''
-		};
-
-		this.updateHotkey( this.skipHotkey );
-
-		this.clipButton.addEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
-
-		document.documentElement.addEventListener( 'keydown', this.eventListenerCallbacks.onClipHotkey );
 	}
 
 	async buildVue() {
@@ -117,6 +121,14 @@ class ClipConfirm extends Addon {
 		this.clipConfirmed = false;
 
 		return;
+	}
+
+	detectRoute( _route, _match ) {
+		this.onDisable();
+
+		this.rightControls = document.querySelector( this.player.RIGHT_CONTROLS );
+
+		this.onEnable();
 	}
 
 	fullscreenConfirmation() {
@@ -153,11 +165,13 @@ class ClipConfirm extends Addon {
 
 	onDisable() {
 		this.rightControlsObserver.disconnect();
-		this.videoPlayerObserver.disconnect();
+		this.tooltipObserver.disconnect();
 
-		delete this.clipButton.dataset.ffzClipConfirmReady;
+		if( this.clipButton ) {
+			delete this.clipButton.dataset.ffzClipConfirmReady;
 
-		this.clipButton.removeEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
+			this.clipButton.removeEventListener( 'click', this.eventListenerCallbacks.openConfirmationModal );
+		}
 
 		document.documentElement.removeEventListener( 'keydown', this.eventListenerCallbacks.onClipHotkey );
 
@@ -165,20 +179,22 @@ class ClipConfirm extends Addon {
 
 		document.removeEventListener( 'fullscreenchange', this.eventListenerCallbacks.fullscreenConfirmation );
 
-		document.getElementById( 'ffz-clip-confirm-modal-confirm-button' ).removeEventListener( 'click', this.eventListenerCallbacks.confirmClip );
+		document.getElementById( 'ffz-clip-confirm-modal-confirm-button' )?.removeEventListener( 'click', this.eventListenerCallbacks.confirmClip );
 
-		document.body.removeChild( this.clipConfirmationModal );
+		if ( document.body.contains( this.clipConfirmationModal ) ) {
+			document.body.removeChild( this.clipConfirmationModal );
+		}
 
-		this.updateTooltip( true );
-
-		document.head.removeChild( this.clipConfirmCSS );
+		if ( document.head.contains( this.clipConfirmCSS ) ) {
+			document.head.removeChild( this.clipConfirmCSS );
+		}
 	}
 
 	onEnable() {
 		document.head.appendChild( this.clipConfirmCSS );
 
 		this.rightControlsObserver = new MutationObserver( this.rightControlsObserverCallback.bind( this ) );
-		this.videoPlayerObserver   = new MutationObserver( this.videoPlayerObserverCallback.bind( this ) );
+		this.tooltipObserver       = new MutationObserver( this.tooltipObserverCallback.bind( this ) );
 
 		if ( this.rightControls ) {
 			this.buildVue().then( ( el ) => {
@@ -206,11 +222,10 @@ class ClipConfirm extends Addon {
 			 * page, so we need this observer to check for that and update
 			 * it if the normal tooltip is not present on the page
 			 */
-			this.videoPlayerObserver.observe( this.videoPlayerContainer, { childList: true, subtree: true } );
-
-			this.log.info( 'Clip Confirm add-on successfully enabled.' );
+			this.tooltipObserver.observe( document.body, { childList: true } );
 		}
 
+		this.log.info( 'Clip Confirm add-on successfully enabled.' );
 
 		// Move modal into video player when fullscreen so that it can be displayed properly
 		document.addEventListener( 'fullscreenchange', this.eventListenerCallbacks.fullscreenConfirmation );
@@ -273,14 +288,13 @@ class ClipConfirm extends Addon {
 
 			this.hotkeyName += this.keyNames[ hotkey ];
 		}
-		
-		this.updateTooltip();
 	}
 
-	updateTooltip( disablingAddon ) {
+	updateTooltip() {
+		this.clipButtonTooltip         = document.getElementsByClassName( 'tw-tooltip-wrapper' )[0];
 		this.clipButtonTooltipText.new = this.clipButtonTooltipText.original;
 
-		if ( this.skipHotkey && ! disablingAddon ) {
+		if ( this.skipHotkey ) {
 			this.clipButtonTooltipText.new += ' | Hold ' + this.hotkeyName + ' to skip confirmation';
 		}
 
@@ -291,10 +305,20 @@ class ClipConfirm extends Addon {
 		}
 	}
 
-	videoPlayerObserverCallback( mutations, _observer ) {
+	tooltipObserverCallback( mutations, _observer ) {
 		for ( const mutation of mutations ) {
-			if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList != null && mutation.addedNodes[0].classList.contains( 'tw-tooltip-layer' ) && mutation.addedNodes[0].textContent.includes( 'Clip (' ) ) {
-				mutation.addedNodes[0].getElementsByClassName( 'tw-tooltip-wrapper' )[0].textContent = this.clipButton.getAttribute( 'aria-label' );
+			if ( mutation.addedNodes.length > 0 ) {
+				for ( const addedNode of mutation.addedNodes ) {
+					if ( addedNode.classList.contains( 'tw-tooltip-layer' ) ) {
+						const addedTooltipWrapper = addedNode;
+				
+						this.clipButtonTooltip = addedTooltipWrapper.getElementsByClassName( 'tw-tooltip-wrapper' )[0];
+
+						if ( this.clipButtonTooltip.textContent.includes( 'Clip (' ) ) {
+							this.updateTooltip();
+						}
+					}
+				}
 			}
 		}
 	}

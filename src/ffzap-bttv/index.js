@@ -12,6 +12,7 @@ class BetterTTV extends Addon {
 		this.inject('chat.badges');
 		this.inject('site');
 		this.inject('i18n');
+		this.inject('load_tracker');
 
 		this.settings.add('ffzap.betterttv.global_emoticons', {
 			default: true,
@@ -46,13 +47,24 @@ class BetterTTV extends Addon {
 			},
 		});
 
+		this.settings.add('ffzap.betterttv.pro_badges', {
+			default: true,
+
+			ui: {
+				path: 'Add-Ons > BetterTTV Emotes >> Pro',
+				title: 'Pro Badges',
+				description: 'Enable to show BetterTTV Pro badges.',
+				component: 'setting-check-box',
+			},
+		});
+
 		this.settings.add('ffzap.betterttv.pro_emoticons', {
 			default: true,
 
 			ui: {
 				path: 'Add-Ons > BetterTTV Emotes >> Pro',
-				title: 'Pro Functionality',
-				description: 'Enable to show BetterTTV Pro emoticons and badges.',
+				title: 'Pro Emoticons',
+				description: 'Enable to show BetterTTV Pro emoticons.',
 				component: 'setting-check-box',
 			},
 		});
@@ -72,7 +84,12 @@ class BetterTTV extends Addon {
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.channel_emoticons', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProEmotes, this);
+		this.chat.context.on('changed:ffzap.betterttv.pro_badges', () => {
+			this.addProBadge();
+			this.updateProStatus();
+			this.emit('chat:update-lines');
+		}, this);
+		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProStatus, this);
 		this.chat.context.on('changed:ffzap.betterttv.emote_modifiers', () => this.emit('chat:update-lines'), this);
 
 		this.pro_users = {};
@@ -88,6 +105,20 @@ class BetterTTV extends Addon {
 		};
 
 		this.chat.addTokenizer(this.emote_commands_tokenizer);
+
+		this.on('chat:reload-data', flags => {
+			if (!flags || flags.badges) {
+				this.addBadges();
+			}
+
+			if (!flags || flags.emotes) {
+				this.updateGlobalEmotes();
+
+				for (const room of this.chat.iterateRooms()) {
+					if (room) this.updateChannel(room);
+				}
+			}
+		});
 	}
 
 	onEnable() {
@@ -102,7 +133,7 @@ class BetterTTV extends Addon {
 		this.socket = new Socket(this, this.getSocketEvents());
 		this.updateGlobalEmotes();
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.connect();
 		}
 
@@ -120,7 +151,7 @@ class BetterTTV extends Addon {
 	roomRemove(room) {
 		this.updateChannel(room);
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.partChannel(room.id);
 		}
 	}
@@ -215,6 +246,10 @@ class BetterTTV extends Addon {
 	}
 
 	addProBadge() {
+		this.removeProBadge();
+
+		if (!this.chat.context.get('ffzap.betterttv.pro_badges')) return;
+
 		if (window.BetterTTV) return;
 
 		const badgeData = {
@@ -226,6 +261,11 @@ class BetterTTV extends Addon {
 		};
 
 		this.badges.loadBadgeData(this.getProBadgeID(), badgeData);
+	}
+
+	removeProBadge() {
+		this.badges.deleteBulk('addon.ffzap-bttv', this.getProBadgeID());
+		delete this.badges.badges[this.getProBadgeID()];
 	}
 
 	async addBadges(attempts = 0) {
@@ -281,11 +321,14 @@ class BetterTTV extends Addon {
 	}
 
 	async updateGlobalEmotes(attempts = 0) {
+		this.load_tracker.schedule('chat-data', 'ffzap-bttv-global');
+
 		const realID = 'addon--ffzap.betterttv--emotes-global';
 		this.emotes.removeDefaultSet('addon--ffzap.betterttv', realID);
 		this.emotes.unloadSet(realID);
 
 		if (!this.chat.context.get('ffzap.betterttv.global_emoticons')) {
+			this.load_tracker.notify('chat-data', 'ffzap-bttv-global', false);
 			return;
 		}
 
@@ -352,6 +395,7 @@ class BetterTTV extends Addon {
 			}
 
 			if (setEmotes.length === 0) {
+				this.load_tracker.notify('chat-data', 'ffzap-bttv-global', false);
 				return;
 			}
 
@@ -364,6 +408,8 @@ class BetterTTV extends Addon {
 			};
 
 			this.emotes.addDefaultSet('addon--ffzap.betterttv', realID, set);
+
+			this.load_tracker.notify('chat-data', 'ffzap-bttv-global', true);
 		} else {
 			if (response.status === 404) return;
 
@@ -383,7 +429,7 @@ class BetterTTV extends Addon {
 		return `twitch:${roomID}`;
 	}
 
-	convertBTTVEmote({id, code, user, animated}) {
+	convertBTTVEmote({id, code, user, animated, width, height}) {
 		const require_spaces = /[^A-Za-z0-9]/.test(code);
 
 		const emote = {
@@ -394,8 +440,8 @@ class BetterTTV extends Addon {
 			},
 			id,
 			name: code,
-			width: 28,
-			height: 28,
+			width: width || 28,
+			height: height || 28,
 			owner: {
 				display_name: (user && user.displayName),
 				name: (user && user.name),
@@ -417,16 +463,19 @@ class BetterTTV extends Addon {
 	}
 
 	async updateChannel(room, attempts = 0) {
+		this.load_tracker.schedule('chat-data', `ffzap-bttv-channel-${room.id}`);
+
 		const realID = this.getChannelSetID(room.id);
 		room.removeSet('addon--ffzap.betterttv', realID);
 
 		const bttvRoomID = this.getBTTVRoomID(room.id);
 
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.joinChannel(bttvRoomID);
 		}
 
 		if (!this.chat.context.get('ffzap.betterttv.channel_emoticons')) {
+			this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
 			return;
 		}
 
@@ -446,10 +495,13 @@ class BetterTTV extends Addon {
 
 			let i = _emotes.length;
 			while (i--) {
+				_emotes[i].user = _emotes[i].user || room && { displayName: room.login, name: room.login };
+
 				emotes.push(this.convertBTTVEmote(_emotes[i]));
 			}
 
 			if (!emotes.length) {
+				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
 				return;
 			}
 			
@@ -468,13 +520,22 @@ class BetterTTV extends Addon {
 			else {
 				room.removeSet('addon--ffzap.betterttv', realID);
 			}
+
+			this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, true);
 		} else {
-			if (response.status === 404) return;
+			if (response.status === 404) {
+				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
+				return;
+			}
 
 			const newAttempts = (attempts || 0) + 1;
 			if (newAttempts < 12) {
 				this.log.error('Failed to fetch channel emotes. Trying again in 5 seconds.');
 				setTimeout(this.updateChannel.bind(this, room, newAttempts), 5000);
+			}
+			else {
+				this.log.error('Failed to fetch channel emotes.');
+				this.load_tracker.notify('chat-data', `ffzap-bttv-channel-${room.id}`, false);
 			}
 		}
 	}
@@ -487,8 +548,13 @@ class BetterTTV extends Addon {
 		}
 	}
 
-	updateProEmotes() {
-		if (this.chat.context.get('ffzap.betterttv.pro_emoticons')) {
+	shouldSocketBeConnected() {
+		return this.chat.context.get('ffzap.betterttv.pro_badges')
+			|| this.chat.context.get('ffzap.betterttv.pro_emoticons');
+	}
+
+	updateProStatus() {
+		if (this.shouldSocketBeConnected()) {
 			this.socket.connect();
 			
 			for (const room of this.chat.iterateRooms()) {

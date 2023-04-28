@@ -13,6 +13,11 @@
 		height: 100%;
 		width: 100%;
 	}
+
+	& > div[tabindex="0"]:last-child {
+		height: auto;
+		width: auto;
+	}
 }
 
 .ffz-pn--list {
@@ -62,7 +67,7 @@
 
 	& > div {
 		padding: 0.25rem 0.5rem;
-		background-color: var(--color-background-overlay);
+		background-color: var(--color-background-overlay-alt);
 		color: var(--color-text-overlay);
 		border-radius: var(--border-radius-medium);
 	}

@@ -138,14 +138,24 @@ class PrattleNot extends Addon {
 			}
 		});
 
+		this.settings.add('pn.background', {
+			default: null,
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Appearance',
+				title: 'Background Color',
+				description: 'An optional, simple background color to use for the prattle log to better differentiate it from normal chat.',
+				component: 'setting-color-box'
+			}
+		});
+
 		this.settings.add('pn.show-reason', {
-			default: true,
+			default: false,
 			ui: {
 				path: 'Add-Ons > PrattleNot >> Appearance',
 				title: 'Show Matching Filters',
+				description: 'When this is enabled, the rules that match a given chat message are logged and displayed to help you tweak your rules.',
 				component: 'setting-check-box'
-			},
-			changed: () => this.rerenderLines()
+			}
 		});
 
 		this.settings.add('pn.show-badges', {
@@ -154,8 +164,7 @@ class PrattleNot extends Addon {
 				path: 'Add-Ons > PrattleNot >> Appearance',
 				title: 'Show Badges',
 				component: 'setting-check-box'
-			},
-			changed: () => this.rerenderLines()
+			}
 		});
 
 		this.settings.add('pn.timestamps', {
@@ -170,12 +179,11 @@ class PrattleNot extends Addon {
 				path: 'Add-Ons > PrattleNot >> Appearance',
 				title: 'Show Timestamps',
 				component: 'setting-check-box'
-			},
-			changed: () => this.rerenderLines()
+			}
 		});
 
 		this.settings.add('pn.threshold', {
-			default: 0,
+			default: 1,
 			ui: {
 				path: 'Add-Ons > PrattleNot >> Behavior',
 				title: 'Threshold',
@@ -292,6 +300,8 @@ class PrattleNot extends Addon {
 
 		this.ChatInput.on('mount', this.updateButton, this);
 		this.ChatInput.on('update', this.updateButton, this);
+
+		this.updateButtons();
 	}
 
 	async onDisable() {
@@ -319,9 +329,11 @@ class PrattleNot extends Addon {
 	}
 
 	updateButtons() {
-		if ( this.enabling || this.enabled ) {
-			for(const inst of this.ChatInput.instances)
-				this.updateButton(inst);
+		if ( this.ChatInput ) {
+			if ( this.enabling || this.enabled ) {
+				for(const inst of this.ChatInput.instances)
+					this.updateButton(inst);
+			}
 		}
 	}
 

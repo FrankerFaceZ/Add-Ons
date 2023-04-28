@@ -176,14 +176,18 @@ export default {
 			return new Promise(resolve => {
 				const timeout = setTimeout(() => {
 					resolve(false);
-				}, 100);
+				}, 200);
 
-				const audio = new Audio(URL.createObjectURL(blob));
+				const audio = new Audio();
 				audio.oncanplay = () => {
 					clearTimeout(timeout);
 					resolve(audio);
-					return;
 				};
+				audio.oncanplaythrough = () => {
+					clearTimeout(timeout);
+					resolve(audio);
+				};
+				audio.src = URL.createObjectURL(blob);
 			});
 		},
 		async openFileSelector() {

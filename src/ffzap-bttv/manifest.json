@@ -7,7 +7,10 @@
 	"requires": [
 		"ffzap-core"
 	],
-	"version": "3.3.8",
+	"load_events": [
+		"chat-data"
+	],
+	"version": "3.3.15",
 	"short_name": "FFZ:AP BTTV",
 	"name": "BetterTTV Emotes",
 	"author": "Lordmau5",
@@ -15,5 +18,5 @@
 	"website": "https://ffzap.com/",
 	"settings": "add_ons.better_ttv_emotes",
 	"created": "2019-09-12T15:31:59.000Z",
-	"updated": "2023-03-10T22:50:08.992Z"
+	"updated": "2023-04-24T19:22:35.300Z"
 }

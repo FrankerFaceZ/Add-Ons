@@ -16,6 +16,12 @@ const BAD_TYPES = [
 	'sub_mystery'
 ];
 
+const MORE_RERENDER_SETTINGS = [
+	'pn.show-reason',
+	'pn.show-badges',
+	'pn.timestamps'
+];
+
 export default class Logic extends Addon {
 
     constructor(...args) {
@@ -75,8 +81,12 @@ export default class Logic extends Addon {
 		this.chat.context.on('changed:pn.scrollback', this.updateConstants, this);
 		this.chat.context.on('changed:chat.scroller.hover-delay', this.updateConstants, this);
 
+		this.chat.context.on(`changed:pn.background`, this.updateContainer, this);
 		this.chat.context.on(`changed:pn.active-position`, this.updateContainer, this);
 		this.chat.context.on(`changed:pn.active-size`, this.updateContainer, this);
+
+		for(const setting of MORE_RERENDER_SETTINGS)
+			this.chat.context.on(`changed:${setting}`, this.rerenderLines, this);
 
 		for(const setting of RERENDER_SETTINGS)
 			this.chat.context.on(`changed:${setting}`, this.rerenderLines, this);
@@ -101,6 +111,9 @@ export default class Logic extends Addon {
 		for(const setting of RERENDER_SETTINGS)
 			this.chat.context.off(`changed:${setting}`, this.rerenderLines, this);
 
+		for(const setting of MORE_RERENDER_SETTINGS)
+			this.chat.context.off(`changed:${setting}`, this.rerenderLines, this);
+
         this.chat.context.off('changed:pn.rules', this.rebuildTester, this);
 
         this.chat.context.off('changed:pn.scrollback', this.updateConstants, this);
@@ -108,6 +121,7 @@ export default class Logic extends Addon {
 
 		this.chat.context.off('changed:pn.active-position', this.updateContainer, this);
 		this.chat.context.off('changed:pn.active-size', this.updateContainer, this);
+		this.chat.context.off(`changed:pn.background`, this.updateContainer, this);
 
 		this.removeContainer();
 
@@ -215,7 +229,8 @@ export default class Logic extends Addon {
 		if ( ! container )
 			return;
 
-		const pos = this.chat.context.get('pn.active-position');
+		const pos = this.chat.context.get('pn.active-position'),
+			raw_color = this.chat.context.get('pn.background');
 
 		node.classList.add('ffz-pn--container');
 		node.classList.toggle('ffz-pn--horizontal', pos === 2 || pos === 3);
@@ -225,6 +240,9 @@ export default class Logic extends Addon {
 			container.style = '--ffz-pn-size: 100%;';
 		else
 			container.style = `--ffz-pn-size: ${size}%;`;
+
+		if ( raw_color )
+			container.style.backgroundColor = raw_color;
 
 		container.classList.toggle('ffz-pn--top', pos === 0);
 		container.classList.toggle('ffz-pn--bottom', pos === 1);
@@ -317,7 +335,7 @@ export default class Logic extends Addon {
 		let i = this.prattle.length;
 		while(i--) {
 			const msg = this.prattle[i];
-			if ( msg.user.login !== user || msg.deleted || (is_delete && msg.id !== msg_id) )
+			if ( ! msg.user || msg.user.login !== user || msg.deleted || (is_delete && msg.id !== msg_id) )
 				continue;
 
 			msg.deleted = true;
@@ -409,7 +427,7 @@ export default class Logic extends Addon {
             const user_block = this.chat.formatUser(msg.user, createElement);
             //const override_name = this.overrides.getName(msg.user.id);
 
-            const show_reasons = this.settings.get('pn.show-reason');
+            const show_reasons = this.chat.context.get('pn.show-reason');
 
             let reasons = null;
             if ( show_reasons && msg.prattle_reasons )
@@ -426,10 +444,10 @@ export default class Logic extends Addon {
                 data-user={msg.user.login}
                 data-user-id={msg.user.id}
             >
-                {this.settings.get('pn.timestamps') ? (<span class="chat-line__timestamp">
+                {this.chat.context.get('pn.timestamps') ? (<span class="chat-line__timestamp">
                     { this.chat.formatTime(msg.timestamp) }
                 </span>) : null}
-                {this.settings.get('pn.show-badges') ? (<span class="chat-line__message--badges">
+                {this.chat.context.get('pn.show-badges') ? (<span class="chat-line__message--badges">
                     { this.chat.badges.render(msg, createElement) }
                 </span>) : null}
                 <span
@@ -545,7 +563,7 @@ export default class Logic extends Addon {
 			return;
 
 		const threshold = this.settings.get('pn.threshold') ?? 0,
-			debugging = true;
+			debugging = this.settings.get('pn.show-reason');
 
 		const ctx = {
 			source: msg,
@@ -557,7 +575,7 @@ export default class Logic extends Addon {
 
 		if ( debugging ) {
 			ctx.reasons = [];
-			ctx.threshold = Infinity;
+			//ctx.threshold = Infinity;
 		}
 
 		Object.defineProperty(ctx, 'text', {
@@ -568,7 +586,7 @@ export default class Logic extends Addon {
 				const out = [],
 					t = ctx.tokens,
 					l = t.length;
-				for(let i=0; i < l; i++) {
+				for(let i = 0; i < l; i++) {
 					const token = t[i];
 					if ( token.text && ! NON_TEXT_TYPES.includes(token.type) )
 						out.push(token.text);
