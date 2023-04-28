@@ -215,7 +215,9 @@ class SmokeysUtils extends Addon {
 	onEnable() {
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
 
-		this.keep_hd_video();
+		window.addEventListener("load", () => {
+			this.keep_hd_video();
+		  });
 
 		this.liveFollowing();
 
