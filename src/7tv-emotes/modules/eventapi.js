@@ -134,7 +134,7 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 							break;
 						}
 						case 'REMOVE': {
-							message += `removed the emote '${emote.old_value.name}'`;
+							message += `removed the emote '${oldEmote.name}'`;
 							break;
 						}
 						case 'UPDATE': {
