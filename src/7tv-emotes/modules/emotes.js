@@ -79,7 +79,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	getChannelSet(channel) {
-		return this.emotes.emote_sets[this.getChannelSetID(channel)];
+		return this.emotes.emote_sets[this.getChannelSetID(channel)] || {};
 	}
 
 	setChannelSet(channel, ffzEmotes) {
@@ -123,6 +123,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		if (emoteSet) {
 			const emotes = emoteSet.emotes || {};
 
+			if (!emotes[emoteID]) return false;
+
 			delete emotes[emoteID];
 
 			this.setChannelSet(channel, Object.values(emotes));
@@ -151,10 +153,12 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
-			let ffzEmotes = [];
-			for (let emote of channelEmotes.emote_set.emotes) {
-				if (showUnlisted || !this.isEmoteUnlisted(emote)) {
-					ffzEmotes.push(this.convertEmote(emote));
+			const ffzEmotes = [];
+			if (channelEmotes.emote_set.emotes) {
+				for (const emote of channelEmotes.emote_set.emotes) {
+					if (showUnlisted || !this.isEmoteUnlisted(emote)) {
+						ffzEmotes.push(this.convertEmote(emote));
+					}
 				}
 			}
 
@@ -167,9 +171,9 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		}
 	}
 
-	async updateChannelSets() {
+	updateChannelSets() {
 		for (const channel of this.chat.iterateRooms()) {
-			await this.updateChannelSet(channel);
+			this.updateChannelSet(channel);
 		}
 	}
 
@@ -207,6 +211,6 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	isEmoteUnlisted(emote) {
-		return emote.data.listed === false
+		return !emote.data.listed;
 	}
 }

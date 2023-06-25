@@ -13,13 +13,19 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		this.clientVersion = this.parent.manifest.version;
 	}
 
+	// Helpful cache-busting method from FFZ
+	getBuster(resolution = 5) {
+		const now = Math.floor(Date.now() / 1000);
+		return now - (now % resolution);
+	}
+
 	makeRequest(route, options) {
 		const headers = new Headers(options && options.headers || {});
 
 		headers.set('X-SevenTV-Platform', this.clientPlatform);
 		headers.set('X-SevenTV-Version', this.clientVersion);
 
-		return fetch(`${this.apiBaseURI}/${route}`, {...options, headers: headers})
+		return fetch(`${this.apiBaseURI}/${route}?_=${this.getBuster(30)}`, {...options, headers})
 	}
 
 	async requestJSON(route, options) {
