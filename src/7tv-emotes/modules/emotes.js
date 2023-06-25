@@ -148,12 +148,11 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 	async updateChannelSet(channel) {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			let emotes = await this.api.emotes.fetchChannelEmotes(channel.id);
-
+			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
 			let ffzEmotes = [];
-			for (let emote of emotes) {
+			for (let emote of channelEmotes.emote_set.emotes) {
 				if (showUnlisted || !this.isEmoteUnlisted(emote)) {
 					ffzEmotes.push(this.convertEmote(emote));
 				}
@@ -179,23 +178,27 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	convertEmote(emote) {
+		const emoteHostUrl = emote.data.host.url;
+
+		const emoteUrls = emote.data.host.files.filter(((value) => {
+			return value.format === 'WEBP';
+		})).reduce((acc, value, key) => {
+			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
+			return acc;
+		}, {});
+
 		const ffzEmote = {
 			id: emote.id,
 			name: emote.name,
 			owner: {
-				display_name: emote.owner.display_name,
-				name: emote.owner.login
+				display_name: emote.data.owner.display_name,
+				name: emote.data.owner.username
 			},
-			urls: {
-				1: emote.urls[0][1],
-				2: emote.urls[1][1],
-				3: emote.urls[2][1],
-				4: emote.urls[3][1]
-			},
-			modifier: this.getBitFlag(emote.visibility, 1 << 7),
+			urls: emoteUrls,
+			modifier: this.getBitFlag(emote.data.flags, 1 << 7),
 			modifier_offset: '0',
-			width: emote.width[0],
-			height: emote.height[0],
+			width: emote.data.host.files[0]?.width,
+			height: emote.data.host.files[0]?.height,
 			click_url: this.api.getEmoteAppURL(emote),
 			SEVENTV_emote: emote
 		};
@@ -204,9 +207,6 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	isEmoteUnlisted(emote) {
-		const Unlisted = this.getBitFlag(emote.visibility, 1 << 2);
-		const PermanentlyUnlisted = this.getBitFlag(emote.visibility, 1 << 8);
-
-		return Unlisted || PermanentlyUnlisted;
+		return emote.data.listed === false
 	}
 }

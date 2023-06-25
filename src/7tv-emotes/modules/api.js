@@ -5,8 +5,8 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		this.inject(Emotes);
 		this.inject(Cosmetics);
 
-		this.apiBaseURI = 'https://api.7tv.app/v2';
-		this.eventsBaseURI = 'https://events.7tv.app/v1';
+		this.apiBaseURI = 'https://7tv.io/v3';
+		this.eventsBaseURI = 'https://events.7tv.io/v3';
 		this.appBaseURI = 'https://7tv.app';
 
 		this.clientPlatform = 'ffz';
@@ -49,13 +49,11 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		return [];
 	}
 
-	getEmotesEventSourceURL(channelLogins) {
+	async getEmotesEventSourceURL(channelId) {
 		let query = new URLSearchParams();
-
-		query.set('channel', channelLogins);
 		query.set('agent', `${this.clientPlatform}:${this.clientVersion}`);
-
-		return `${this.eventsBaseURI}/channel-emotes?${query.toString()}`;
+		const channelsEmotes = await this.emotes.fetchChannelEmotes(channelId);
+		return `${this.eventsBaseURI}@emote_set.update<object_id=${channelsEmotes.emote_set.id}>?${query.toString()}`;
 	}
 
 	getEmoteAppURL(emote) {
@@ -65,11 +63,11 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 
 export class Emotes extends FrankerFaceZ.utilities.module.Module {
 	fetchGlobalEmotes() {
-		return this.parent.requestArray('emotes/global');
+		return this.parent.requestArray('emote-sets/global');
 	}
 
-	fetchChannelEmotes(login) {
-		return this.parent.requestArray(`users/${login}/emotes`);
+	fetchChannelEmotes(channelId) {
+		return this.parent.requestObject(`users/twitch/${channelId}`);
 	}
 }
 

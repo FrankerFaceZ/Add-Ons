@@ -40,19 +40,20 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 		this.updateEventSource();
 	}
 
-	updateEventSource() {
+	async updateEventSource() {
 		this.closeEventSource();
 
 		if (this.settings.get('addon.seventv_emotes.emote_updates') && this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			const channelLogins = [];
-			for (let channel of this.chat.iterateRooms()) channelLogins.push(channel.login);
+			const channelIds = [];
+			for (let channel of this.chat.iterateRooms()) channelIds.push(channel.id);
 
-			if (channelLogins.length > 0) {
-				this.eventSource = new EventSource(this.api.getEmotesEventSourceURL(channelLogins));
+			if (channelIds.length > 0) {
+				const eventSourceUrl = await this.api.getEmotesEventSourceURL(channelIds);
+				this.eventSource = new EventSource(eventSourceUrl);
 
 				this.eventSource.addEventListener('open', () => this.eventSourceReconnectDelay = undefined);
 
-				this.eventSource.addEventListener('update', event => this.handleChannelEmoteUpdate(event));
+				this.eventSource.addEventListener('dispatch', event => this.handleChannelEmoteUpdate(event));
 
 				this.eventSource.addEventListener('error', () => {
 					if (this.eventSource.readyState == EventSource.CLOSED) {
@@ -86,49 +87,67 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 
 		let channel;
 		for (const room of this.chat.iterateRooms()) {
-			if (room.login == data.channel) {
+			if (room) {
 				channel = room;
 				break;
 			}
 		}
 
 		if (channel) {
-			const oldEmote = this.emotes.getEmoteFromChannelSet(channel, data.emote_id);
-
+			let action;
+			let dataType;
 			let completed = false;
-			switch (data.action) {
-				case 'UPDATE':
-					if (!oldEmote) break;
-				case 'ADD':
-					completed = this.emotes.addEmoteToChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
-					break;
-				case 'REMOVE':
-					completed = this.emotes.removeEmoteFromChannelSet(channel, data.emote_id);
-					break;
+
+			if (data.body.pushed) {
+				dataType = 'pushed';
+				action = 'ADD';
+			} else if (data.body.pulled) {
+				dataType = 'pulled';
+				action = 'REMOVE';
+			} else if (data.body.updated) {
+				dataType = 'updated';
+				action = 'UPDATE';
 			}
 
-			if (completed && this.settings.get('addon.seventv_emotes.update_messages')) {
-				let message = `[7TV] ${data.actor} `;
-				switch (data.action) {
-					case 'ADD': {
-						message += `added the emote '${data.name}'`;
+			for (const emote of data.body[dataType]) {
+				if (emote.key !== 'emotes') continue;
+
+				const emoteId = emote.value?.id ?? emote.old_value.id;
+				const oldEmote = this.emotes.getEmoteFromChannelSet(channel, emoteId);
+
+				switch (action) {
+					case 'UPDATE':
+						if (!oldEmote) break;
+					case 'ADD':
+						completed = this.emotes.addEmoteToChannelSet(channel, emote.value);
 						break;
-					}
-					case 'REMOVE': {
-						message += `removed the emote '${data.name}'`;
+					case 'REMOVE':
+						completed = this.emotes.removeEmoteFromChannelSet(channel, emoteId);
 						break;
-					}
-					case 'UPDATE': {
-						if (oldEmote && oldEmote.name != data.name) {
-							message += `renamed the emote '${oldEmote.name}' to '${data.name}'`;
-						}
-						else {
-							message += `updated the emote '${data.name}'`;
-						}
-						break;
-					}
 				}
-				this.siteChat.addNotice(channel.login, message);
+
+				if (completed && this.settings.get('addon.seventv_emotes.update_messages')) {
+					let message = `[7TV] ${data.body.actor.display_name} `;
+					switch (action) {
+						case 'ADD': {
+							message += `added the emote '${emote.value.name}'`;
+							break;
+						}
+						case 'REMOVE': {
+							message += `removed the emote '${emote.old_value.name}'`;
+							break;
+						}
+						case 'UPDATE': {
+							if (oldEmote?.name !== emote.value.name) {
+								message += `renamed the emote '${oldEmote.name}' to '${emote.value.name}'`;
+							} else {
+								message += `updated the emote '${emote.value.name}'`;
+							}
+							break;
+						}
+					}
+					this.siteChat.addNotice(channel.login, message);
+				}
 			}
 		}
 	}
