@@ -183,6 +183,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return (byte & mask) == mask;
 	}
 
+	isZeroWidthEmote(flags) {
+		return flags === (1 << 0);
+	}
+
 	convertEmote(emote) {
 		const emoteHostUrl = emote.data.host.url;
 
@@ -199,7 +203,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				name: emote.data?.owner?.username
 			},
 			urls: emoteUrls,
-			modifier: this.getBitFlag(emote.data.flags, 1 << 7),
+			modifier: this.isZeroWidthEmote(emote.flags),
 			modifier_offset: '0',
 			width: emote.data.host.files[0]?.width,
 			height: emote.data.host.files[0]?.height,
