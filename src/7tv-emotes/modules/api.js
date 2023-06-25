@@ -77,7 +77,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 
 export class Emotes extends FrankerFaceZ.utilities.module.Module {
 	fetchGlobalEmotes() {
-		return this.parent.requestArray('emote-sets/global');
+		return this.parent.requestObject('emote-sets/global');
 	}
 
 	fetchChannelEmotes(channelId) {

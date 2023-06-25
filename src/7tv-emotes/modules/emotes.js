@@ -59,15 +59,15 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		if (!this.settings.get('addon.seventv_emotes.global_emotes')) return;
 
-		const emotes = await this.api.emotes.fetchGlobalEmotes();
+		const globalSet = await this.api.emotes.fetchGlobalEmotes();
 
 		const ffzEmotes = [];
-		for (const emote of emotes) {
+		for (const emote of globalSet.emotes) {
 			ffzEmotes.push(this.convertEmote(emote));
 		}
 
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
-			title: 'Global Emotes',
+			title: globalSet.name,
 			source: '7TV',
 			icon: this.setIcon,
 			emotes: ffzEmotes
