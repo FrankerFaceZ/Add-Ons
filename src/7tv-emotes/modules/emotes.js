@@ -104,7 +104,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
 		if (emoteSet) {
-			if (showUnlisted || force || this.isEmoteUnlisted(emote)) {
+			if (showUnlisted || force || !this.isEmoteUnlisted(emote)) {
 				const emotes = emoteSet.emotes || {};
 
 				emotes[emote.id] = this.convertEmote(emote);
@@ -153,7 +153,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 			let ffzEmotes = [];
 			for (let emote of channelEmotes.emote_set.emotes) {
-				if (showUnlisted || this.isEmoteUnlisted(emote)) {
+				if (showUnlisted || !this.isEmoteUnlisted(emote)) {
 					ffzEmotes.push(this.convertEmote(emote));
 				}
 			}
@@ -183,7 +183,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const emoteUrls = emote.data.host.files.filter(((value) => {
 			return value.format === 'WEBP';
 		})).reduce((acc, value, key) => {
-			acc[key + 1] = `https:${emoteHostUrl}/${value.name}`;
+			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
 			return acc;
 		}, {});
 
@@ -197,8 +197,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			urls: emoteUrls,
 			modifier: this.getBitFlag(emote.data.flags, 1 << 7),
 			modifier_offset: '0',
-			width: emote.data.host.files[0].width,
-			height: emote.data.host.files[0].height,
+			width: emote.data.host.files[0]?.width,
+			height: emote.data.host.files[0]?.height,
 			click_url: this.api.getEmoteAppURL(emote),
 			SEVENTV_emote: emote
 		};
@@ -207,6 +207,6 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	isEmoteUnlisted(emote) {
-		return !emote.listed;
+		return emote.data.listed === false
 	}
 }
