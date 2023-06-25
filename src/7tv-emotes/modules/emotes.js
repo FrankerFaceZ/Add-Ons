@@ -138,7 +138,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const emoteSet = this.getChannelSet(channel);
 
 		if (emoteSet && emoteSet.emotes) {
-			let ffzEmote = emoteSet.emotes[emoteID];
+			const ffzEmote = emoteSet.emotes[emoteID];
 
 			if (ffzEmote && ffzEmote.SEVENTV_emote){
 				return ffzEmote.SEVENTV_emote;
@@ -184,9 +184,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	convertEmote(emote) {
 		const emoteHostUrl = emote.data.host.url;
 
-		const emoteUrls = emote.data.host.files.filter(((value) => {
-			return value.format === 'WEBP';
-		})).reduce((acc, value, key) => {
+		const emoteUrls = emote.data.host.files.filter((value => value.format === 'WEBP')).reduce((acc, value, key) => {
 			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
 			return acc;
 		}, {});
@@ -195,8 +193,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			id: emote.id,
 			name: emote.name,
 			owner: {
-				display_name: emote.data.owner.display_name,
-				name: emote.data.owner.username
+				display_name: emote.data?.owner?.display_name,
+				name: emote.data?.owner?.username
 			},
 			urls: emoteUrls,
 			modifier: this.getBitFlag(emote.data.flags, 1 << 7),
