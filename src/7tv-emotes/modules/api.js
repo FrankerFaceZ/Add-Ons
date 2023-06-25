@@ -6,6 +6,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		this.inject(Cosmetics);
 
 		this.apiBaseURI = 'https://7tv.io/v3';
+		this.apiv2BaseURI = 'https://api.7tv.app/v2';
 		this.eventsBaseURI = 'https://events.7tv.io/v3';
 		this.appBaseURI = 'https://7tv.app';
 
@@ -19,47 +20,54 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		return now - (now % resolution);
 	}
 
-	makeRequest(route, options) {
+	makeRequest(route, use_v2 = false, options = {}) {
 		const headers = new Headers(options && options.headers || {});
 
 		headers.set('X-SevenTV-Platform', this.clientPlatform);
 		headers.set('X-SevenTV-Version', this.clientVersion);
 
-		return fetch(`${this.apiBaseURI}/${route}?_=${this.getBuster(30)}`, {...options, headers})
+		return fetch(`${use_v2 ? this.apiv2BaseURI : this.apiBaseURI}/${route}`, {...options, headers})
 	}
 
-	async requestJSON(route, options) {
-		const response = await this.makeRequest(route, options);
+	async requestJSON(route, use_v2 = false, options = {}) {
+		const response = await this.makeRequest(route, use_v2, options);
 
 		if (response.ok) {
-			let json = await response.json();
+			const json = await response.json();
 			return json;
 		}
 
 		return null;
 	}
 
-	async requestObject(route, options) {
-		const json = await this.requestJSON(route, options);
+	async requestObject(route, use_v2 = false, options = {}) {
+		const json = await this.requestJSON(route, use_v2, options);
 
 		if (json != null && typeof json == 'object') return json;
 
 		return {};
 	}
 
-	async requestArray(route, options) {
-		const json = await this.requestJSON(route, options);
+	async requestArray(route, use_v2 = false, options = {}) {
+		const json = await this.requestJSON(route, use_v2, options);
 
 		if (json instanceof Array) return json;
 
 		return [];
 	}
 
+	// async getEventSourceURL(channelId) {
+	// 	const events = [
+	// 		'emote_set.update',
+
+	// 	]
+	// }
+
 	async getEmotesEventSourceURL(channelId) {
-		let query = new URLSearchParams();
+		const query = new URLSearchParams();
 		query.set('agent', `${this.clientPlatform}:${this.clientVersion}`);
 		const channelsEmotes = await this.emotes.fetchChannelEmotes(channelId);
-		return `${this.eventsBaseURI}@emote_set.update<object_id=${channelsEmotes.emote_set.id}>?${query.toString()}`;
+		return `${this.eventsBaseURI}@emote_set.update<object_id=${channelsEmotes.emote_set?.id}>?${query.toString()}`;
 	}
 
 	getEmoteAppURL(emote) {
@@ -78,22 +86,18 @@ export class Emotes extends FrankerFaceZ.utilities.module.Module {
 }
 
 export class Cosmetics extends FrankerFaceZ.utilities.module.Module {
-	constructor(...args) {
-		super(...args);
-	}
-
 	fetchAvatars() {
-		return this.parent.requestObject('cosmetics/avatars?map_to=login');
+		return this.parent.requestObject('cosmetics/avatars?map_to=login', true);
 	}
 
 	fetchCosmetics() {
-		return this.parent.requestObject('cosmetics?user_identifier=twitch_id');
+		return this.parent.requestObject('cosmetics?user_identifier=twitch_id', true);
 	}
 
 	updateCosmetics(force = false) {
 		if (!this.cosmetics || force) {
 			if (!this.cosmeticsUpdate) {
-				this.cosmeticsUpdate = this.fetchCosmetics().then((json) => {
+				this.cosmeticsUpdate = this.fetchCosmetics().then(json => {
 					this.cosmetics = json;
 					this.cosmeticsUpdate = undefined;
 					return true;

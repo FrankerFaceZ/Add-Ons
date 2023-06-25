@@ -153,6 +153,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
+			if (!channelEmotes.emote_set) return false;
+
 			const ffzEmotes = [];
 			if (channelEmotes.emote_set.emotes) {
 				for (const emote of channelEmotes.emote_set.emotes) {
