@@ -16,6 +16,12 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
 const getFolderName = file => path.basename(path.dirname(file));
 
+const FOR_EXTENSION = !! process.env.FFZ_EXTENSION;
+
+const FILE_PATH = FOR_EXTENSION
+	? process.env.FFZ_EXTENSION
+	: '//cdn.frankerfacez.com/static/addons/';
+
 const config = {
 	mode: 'production',
 	devtool: 'source-map',
@@ -35,9 +41,11 @@ const config = {
 		}
 	],
 	output: {
-		publicPath: '//cdn.frankerfacez.com/static/addons/',
+		publicPath: FILE_PATH, // '//cdn.frankerfacez.com/static/addons/',
 		path: path.resolve(__dirname, 'dist/addons'),
-		filename: '[name].[hash].js',
+		filename: FOR_EXTENSION
+			? '[name].js'
+			: '[name].[hash].js',
 		jsonpFunction: 'ffzAddonsWebpackJsonp'
 	},
 
@@ -95,10 +103,10 @@ const config = {
 					json.id = getFolderName(manifest);
 
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.png')) )
-						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.png`;
+						json.icon = `${FILE_PATH}${json.id}/logo.png`;
 
 					if ( ! json.icon && fs.existsSync(path.join(path.dirname(manifest), 'logo.jpg')) )
-						json.icon = `//cdn.frankerfacez.com/static/addons/${json.id}/logo.jpg`;
+						json.icon = `${FILE_PATH}${json.id}/logo.jpg`;
 
 					addons.push(json);
 				}
@@ -164,7 +172,9 @@ const config = {
 			use: [{
 				loader: 'file-loader',
 				options: {
-					name: '[folder]/[name].[hash].css'
+					name: FOR_EXTENSION
+						? '[folder]/[name].css'
+						: '[folder]/[name].[hash].css'
 				}
 			}, {
 				loader: 'extract-loader'

@@ -59,15 +59,15 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		if (!this.settings.get('addon.seventv_emotes.global_emotes')) return;
 
-		const emotes = await this.api.emotes.fetchGlobalEmotes();
+		const globalSet = await this.api.emotes.fetchGlobalEmotes();
 
 		const ffzEmotes = [];
-		for (const emote of emotes) {
+		for (const emote of globalSet.emotes) {
 			ffzEmotes.push(this.convertEmote(emote));
 		}
 
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
-			title: 'Global Emotes',
+			title: globalSet.name,
 			source: '7TV',
 			icon: this.setIcon,
 			emotes: ffzEmotes
@@ -79,7 +79,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	getChannelSet(channel) {
-		return this.emotes.emote_sets[this.getChannelSetID(channel)];
+		return this.emotes.emote_sets[this.getChannelSetID(channel)] || {};
 	}
 
 	setChannelSet(channel, ffzEmotes) {
@@ -123,6 +123,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		if (emoteSet) {
 			const emotes = emoteSet.emotes || {};
 
+			if (!emotes[emoteID]) return false;
+
 			delete emotes[emoteID];
 
 			this.setChannelSet(channel, Object.values(emotes));
@@ -136,7 +138,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const emoteSet = this.getChannelSet(channel);
 
 		if (emoteSet && emoteSet.emotes) {
-			let ffzEmote = emoteSet.emotes[emoteID];
+			const ffzEmote = emoteSet.emotes[emoteID];
 
 			if (ffzEmote && ffzEmote.SEVENTV_emote){
 				return ffzEmote.SEVENTV_emote;
@@ -148,14 +150,17 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 	async updateChannelSet(channel) {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			let emotes = await this.api.emotes.fetchChannelEmotes(channel.id);
-
+			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
-			let ffzEmotes = [];
-			for (let emote of emotes) {
-				if (showUnlisted || !this.isEmoteUnlisted(emote)) {
-					ffzEmotes.push(this.convertEmote(emote));
+			if (!channelEmotes.emote_set) return false;
+
+			const ffzEmotes = [];
+			if (channelEmotes.emote_set.emotes) {
+				for (const emote of channelEmotes.emote_set.emotes) {
+					if (showUnlisted || !this.isEmoteUnlisted(emote)) {
+						ffzEmotes.push(this.convertEmote(emote));
+					}
 				}
 			}
 
@@ -168,9 +173,9 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		}
 	}
 
-	async updateChannelSets() {
+	updateChannelSets() {
 		for (const channel of this.chat.iterateRooms()) {
-			await this.updateChannelSet(channel);
+			this.updateChannelSet(channel);
 		}
 	}
 
@@ -178,24 +183,30 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return (byte & mask) == mask;
 	}
 
+	isZeroWidthEmote(flags) {
+		return flags === (1 << 0);
+	}
+
 	convertEmote(emote) {
+		const emoteHostUrl = emote.data.host.url;
+
+		const emoteUrls = emote.data.host.files.filter((value => value.format === 'WEBP')).reduce((acc, value, key) => {
+			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
+			return acc;
+		}, {});
+
 		const ffzEmote = {
 			id: emote.id,
 			name: emote.name,
 			owner: {
-				display_name: emote.owner.display_name,
-				name: emote.owner.login
+				display_name: emote.data?.owner?.display_name,
+				name: emote.data?.owner?.username
 			},
-			urls: {
-				1: emote.urls[0][1],
-				2: emote.urls[1][1],
-				3: emote.urls[2][1],
-				4: emote.urls[3][1]
-			},
-			modifier: this.getBitFlag(emote.visibility, 1 << 7),
+			urls: emoteUrls,
+			modifier: this.isZeroWidthEmote(emote.flags),
 			modifier_offset: '0',
-			width: emote.width[0],
-			height: emote.height[0],
+			width: emote.data.host.files[0]?.width,
+			height: emote.data.host.files[0]?.height,
 			click_url: this.api.getEmoteAppURL(emote),
 			SEVENTV_emote: emote
 		};
@@ -204,9 +215,6 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	isEmoteUnlisted(emote) {
-		const Unlisted = this.getBitFlag(emote.visibility, 1 << 2);
-		const PermanentlyUnlisted = this.getBitFlag(emote.visibility, 1 << 8);
-
-		return Unlisted || PermanentlyUnlisted;
+		return !emote.data.listed;
 	}
 }
