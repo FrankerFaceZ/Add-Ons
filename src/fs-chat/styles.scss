@@ -2,6 +2,7 @@
 	position: fixed;
 	top: 50px;
 	right: 50px;
+	z-index: 3000;
 
 	.right-column__resize-handle-container {
 		display: none !important;
