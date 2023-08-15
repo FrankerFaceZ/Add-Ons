@@ -32,7 +32,12 @@ function process(ffz, tokens) {
 		currentToken = nextToken;
 		nextToken = tokens[++i];
 
-		if (currentToken?.type === 'text' && currentToken.text && nextToken?.type === 'emote') {
+		if (currentToken?.type !== 'text' && currentToken?.type !== 'emote') {
+			output.push(currentToken);
+			continue;
+		}
+
+		if (currentToken.text && nextToken?.type === 'emote') {
 			const trimmed = currentToken.text.trim();
 			const split = trimmed.split(' ');
 			let zeroWidth = false;
@@ -71,6 +76,29 @@ function process(ffz, tokens) {
 						split.splice(w, 1);
 						break;
 					}
+					case 'c!': {
+						// Cursed
+						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'c! (BTTV Cursed)');
+
+						split.splice(w, 1);
+						break;
+					}
+					case 'l!': {
+						// Rotate -90° (Left)
+						// TODO: FFZ support needed
+						// if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'l! (BTTV Rotate Left)');
+
+						split.splice(w, 1);
+						break;
+					}
+					case 'r!': {
+						// Rotate 90° (Right)
+						// TODO: FFZ support needed
+						// if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'r! (BTTV Rotate Right)');
+
+						split.splice(w, 1);
+						break;
+					}
 					default: {
 						invalid = true;
 						break;
@@ -84,6 +112,10 @@ function process(ffz, tokens) {
 
 			if (enabled && zeroWidth && lastToken) {
 				lastToken.text += ' ';
+				continue;
+			}
+
+			if (currentToken.type === 'emote') {
 				continue;
 			}
 		}
