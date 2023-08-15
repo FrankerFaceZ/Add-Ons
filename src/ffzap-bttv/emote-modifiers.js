@@ -42,6 +42,8 @@ function process(ffz, tokens) {
 			const split = trimmed.split(' ');
 			let zeroWidth = false;
 
+			let wasModified = false;
+
 			for (let w = split.length - 1; w >= 0; w--) {
 				const t_trimmed = split[w].trim();
 
@@ -51,6 +53,7 @@ function process(ffz, tokens) {
 					// Zero-Spacing
 					case 'z!': {
 						zeroWidth = true;
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -58,6 +61,7 @@ function process(ffz, tokens) {
 					case 'w!': {
 						// Wide-Boi
 						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.GrowX, 'w! (BTTV Wide)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -65,6 +69,7 @@ function process(ffz, tokens) {
 					case 'h!': {
 						// Flip Horizontal
 						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.FlipX, 'h! (BTTV Horizontal Flip)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -72,6 +77,7 @@ function process(ffz, tokens) {
 					case 'v!': {
 						// Flip Vertical
 						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.FlipY, 'v! (BTTV Vertical Flip)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -79,6 +85,7 @@ function process(ffz, tokens) {
 					case 'c!': {
 						// Cursed
 						if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'c! (BTTV Cursed)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -87,6 +94,7 @@ function process(ffz, tokens) {
 						// Rotate -90° (Left)
 						// TODO: FFZ support needed
 						// if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'l! (BTTV Rotate Left)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -95,6 +103,7 @@ function process(ffz, tokens) {
 						// Rotate 90° (Right)
 						// TODO: FFZ support needed
 						// if (enabled) addModifier(nextToken, ffz.chat.emotes.ModifierFlags.Cursed, 'r! (BTTV Rotate Right)');
+						wasModified = true;
 
 						split.splice(w, 1);
 						break;
@@ -115,7 +124,7 @@ function process(ffz, tokens) {
 				continue;
 			}
 
-			if (currentToken.type === 'emote') {
+			if (currentToken.type === 'emote' && wasModified) {
 				continue;
 			}
 		}
