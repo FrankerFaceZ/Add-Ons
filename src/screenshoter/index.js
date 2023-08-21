@@ -1,4 +1,5 @@
 const {createElement} = FrankerFaceZ.utilities.dom
+const {isValidShortcut} = FrankerFaceZ.utilities.object
 
 const BAD_SHORTCUTS = [
 	'f',
@@ -13,14 +14,6 @@ const BAD_SHORTCUTS = [
 	'alt+x'
 ]
 
-function isValidShortcut(key) {
-	if (!key)
-		return false
-
-	key = key.toLowerCase().trim()
-	return !BAD_SHORTCUTS.includes(key)
-}
-
 class Screenshoter extends Addon {
 	constructor(...args) {
 		super(...args)
@@ -31,20 +24,8 @@ class Screenshoter extends Addon {
 
 		this.onShortcut = this.onShortcut.bind(this)
 
-		this.settings.addFilter('screenshoter', {
-			createTest(config) {
-				return ctx => ctx.screenshoter === config
-			},
-
-			title: 'Using Screenshoter',
-			i18n: 'addon.screenshoter.using',
-
-			default: true,
-			editor: this.settings.getFilterBasicEditor()
-		})
-
 		this.settings.add('addon.screenshoter.shortcut', {
-			default: 'ctrl+shift+q',
+			default: 'ctrl+alt+shift+q',
 			ui: {
 				path: 'Add-Ons > Screenshoter >> Behavior',
 				title: 'Shortcut Key',
@@ -59,7 +40,7 @@ class Screenshoter extends Addon {
 	}
 
 	onEnable() {
-		this.on('site.player:update-gui', this.updateButton, this);
+		this.on('site.player:update-gui', this.updateButton, this)
 
 		this.updateButtons()
 		this.updateShortcut()
@@ -67,16 +48,16 @@ class Screenshoter extends Addon {
 
 	updateShortcut() {
 		const Mousetrap = this.Mousetrap = this.Mousetrap || this.web_munch.getModule('mousetrap') || window.Mousetrap
-		if ( ! Mousetrap || ! Mousetrap.bind )
+		if (! Mousetrap || ! Mousetrap.bind)
 			return
 
-		if ( this._shortcut_bound ) {
+		if (this._shortcut_bound ) {
 			Mousetrap.unbind(this._shortcut_bound)
 			this._shortcut_bound = null
 		}
 
 		const key = this.settings.get('addon.screenshoter.shortcut')
-		if ( key && isValidShortcut(key) ) {
+		if (key && isValidShortcut(key)) {
 			Mousetrap.bind(key, this.onShortcut)
 			this._shortcut_bound = key
 		}
@@ -87,13 +68,22 @@ class Screenshoter extends Addon {
 			this.updateButton(inst)
 		}
 	}
+
+	// TODO: more robust check for clips vs streams
+	isClip(video) {
+		return video.src?.length
+	}
 	
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst)
 		const container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group')
 		const added = container?.querySelector('.ffz--player-screenshoter')
 
-		if (!container) return
+		// We don't work with clips
+		const video = outer?.querySelector('video')
+		if (video && this.isClip(video)) return
+
+		if (!video && !container) return
 		if (added) added.remove()
 
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
@@ -122,9 +112,9 @@ class Screenshoter extends Addon {
 			
 		let label = this.i18n.t('addon.screenshoter.button', 'Take screenshot')
 
-		const key = this.settings.get('addon.screenshoter.shortcut');
+		const key = this.settings.get('addon.screenshoter.shortcut')
 		if ( key && isValidShortcut(key) )
-			label = `${label} (${key})`;
+			label = `${label} (${key})`
 
 		btn.setAttribute('aria-label', label)
 		tip.textContent = label
@@ -159,15 +149,22 @@ class Screenshoter extends Addon {
 		canvas.width = video.videoWidth
 		canvas.height = video.videoHeight
 
-		context.drawImage(video, 0, 0, canvas.width, canvas.height)
+		if (video.src?.length) {
+			// a clip, no workaround for now
+			// TODO: find a workaround, prefereably with using a proxy, maybe a fullscreen capture.
+			return
+		} else {
+			// a stream, basic approach
+			context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-		canvas.toBlob((blob) => {
-			const link = document.createElement('a')
-			link.href = URL.createObjectURL(blob)
-			link.download = `${nickname.textContent ?? 'stream'}_${currentTime}.png`.replaceAll(' ', '-')
-			link.click()
-			URL.revokeObjectURL(u.href)
-		})
+			canvas.toBlob((blob) => {
+				const link = document.createElement('a')
+				link.href = URL.createObjectURL(blob)
+				link.download = `${nickname.textContent ?? 'stream'}_${currentTime}.png`.replaceAll(' ', '-')
+				link.click()
+				URL.revokeObjectURL(link.href)
+			})
+		}		
 	}
 }
 
