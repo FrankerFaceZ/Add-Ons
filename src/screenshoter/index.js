@@ -24,7 +24,19 @@ class Screenshoter extends Addon {
 
 		this.onShortcut = this.onShortcut.bind(this)
 
-		this.settings.add('addon.screenshoter.shortcut', {
+		this.settingsNamespace = 'addon.screenshoter'
+
+		this.settings.add(`${this.settingsNamespace}.clipboard`, {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Screenshoter >> Behavior',
+				title: 'Copy to clipboard',
+				description: 'By default, screenshots are saved as a file. Enable this to use clipboard instead (if supported by your browser).',
+				component: 'setting-check-box'
+			}
+		});
+
+		this.settings.add(`${this.settingsNamespace}.shortcut`, {
 			default: 'ctrl+alt+shift+q',
 			ui: {
 				path: 'Add-Ons > Screenshoter >> Behavior',
@@ -44,6 +56,62 @@ class Screenshoter extends Addon {
 
 		this.updateButtons()
 		this.updateShortcut()
+		this.createTooltip()
+	}
+
+	onDisable() {
+		this.destroyButtons()
+		this.destroyTooltip()
+	}
+
+	createTooltip() {
+		if (this.tooltip) this.destroyTooltip()
+		
+		this.tooltip = document.createElement('span')
+		this.tooltip.id = 'ffz-screenshoter-tooltip'
+		this.tooltip.style = `
+			color: var(--color-text-pill);
+			background-color: var(--color-background-pill-subtle);
+			display: inline-block;
+			position: absolute;
+			right: 15px;
+			bottom: 45px;
+			line-height: initial;
+			text-align: center;
+			white-space: nowrap;
+			border-radius: 1000px;
+			padding: 0.3rem 0.8em;
+			font-weight: bold;
+			opacity: 0;
+
+			transition: opacity .1s;
+		`
+		this.tooltip.textContent = 'Copied to clipboard!'
+		
+		const parent = document.querySelector('div.video-player')
+		parent.appendChild(this.tooltip)
+	}
+
+	showTooltip() {
+		this.tooltip.style.opacity = 1
+		setTimeout(() => {
+			this.tooltip.style.opacity = 0
+		}, 2000)
+	}
+
+	destroyTooltip() {
+		this.tooltip?.remove()
+	}
+
+	destroyButtons() {
+		for (const inst of this.player.Player.instances) {
+			this.destroyButton(inst)
+		}
+	}
+
+	destroyButton(inst) {
+		const button = document.querySelector('.ffz--player-screenshoter')
+		button?.remove()
 	}
 
 	updateShortcut() {
@@ -56,7 +124,7 @@ class Screenshoter extends Addon {
 			this._shortcut_bound = null
 		}
 
-		const key = this.settings.get('addon.screenshoter.shortcut')
+		const key = this.settings.get(`${this.settingsNamespace}.shortcut`)
 		if (key && isValidShortcut(key)) {
 			Mousetrap.bind(key, this.onShortcut)
 			this._shortcut_bound = key
@@ -71,20 +139,25 @@ class Screenshoter extends Addon {
 
 	// TODO: more robust check for clips vs streams
 	isClip(video) {
-		return video.src?.length
+		if (video.src?.length) {
+			this.log.info('This page contains a clip, skipping...')
+			return true
+		}
+
+		return false
 	}
 	
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst)
 		const container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group')
-		const added = container?.querySelector('.ffz--player-screenshoter')
+		const button = container?.querySelector('.ffz--player-screenshoter')
 
 		// We don't work with clips
 		const video = outer?.querySelector('video')
 		if (video && this.isClip(video)) return
 
 		if (!video && !container) return
-		if (added) added.remove()
+		if (button) button.remove()
 
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
 
@@ -110,9 +183,9 @@ class Screenshoter extends Addon {
 		} else
 			container.appendChild(cont)
 			
-		let label = this.i18n.t('addon.screenshoter.button', 'Take screenshot')
+		let label = 'Take screenshot'
 
-		const key = this.settings.get('addon.screenshoter.shortcut')
+		const key = this.settings.get(`${this.settingsNamespace}.shortcut`)
 		if ( key && isValidShortcut(key) )
 			label = `${label} (${key})`
 
@@ -128,20 +201,41 @@ class Screenshoter extends Addon {
 		this.takeScreenshot()
 	}
 
-	onEnable() {
-		this.on('site.player:update-gui', this.updateButton, this)
+	saveToClipboard(blob) {
+		try {
+			navigator.clipboard.write([
+				new ClipboardItem({
+					'image/png': blob
+				})
+			])
 
-		this.updateButtons()
+			this.showTooltip()
+		} catch (err) {
+			this.log.error('Clipboard is not accessible, saving to file instead', err)
+			this.saveToFile(blob)
+		}
+	}
+
+	saveToFile(blob) {
+		try {
+			const nickname = document.querySelector('h1.tw-title')
+
+			const now = new Date()
+			const currentTime = `${now.toDateString()}_${now.toLocaleTimeString()}`
+
+			const link = document.createElement('a')
+			link.href = URL.createObjectURL(blob)
+			link.download = `${nickname.textContent ?? 'stream'}_${currentTime}.png`.replaceAll(' ', '-')
+			link.click()
+			URL.revokeObjectURL(link.href)
+		} catch (err) {
+			this.log.error('Save to file was unsuccessful', err)
+		}
 	}
 
 	takeScreenshot() {
 		const video = document.querySelector('video')
-		if (!video) return
-
-		const nickname = document.querySelector('h1.tw-title')
-
-		const now = new Date()
-		const currentTime = `${now.toDateString()}_${now.toLocaleTimeString()}`
+		if (!video || this.isClip(video)) return
 
 		const canvas = document.createElement('canvas')
 		const context = canvas.getContext('2d')
@@ -149,22 +243,12 @@ class Screenshoter extends Addon {
 		canvas.width = video.videoWidth
 		canvas.height = video.videoHeight
 
-		if (video.src?.length) {
-			// a clip, no workaround for now
-			// TODO: find a workaround, prefereably with using a proxy, maybe a fullscreen capture.
-			return
-		} else {
-			// a stream, basic approach
-			context.drawImage(video, 0, 0, canvas.width, canvas.height)
+		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-			canvas.toBlob((blob) => {
-				const link = document.createElement('a')
-				link.href = URL.createObjectURL(blob)
-				link.download = `${nickname.textContent ?? 'stream'}_${currentTime}.png`.replaceAll(' ', '-')
-				link.click()
-				URL.revokeObjectURL(link.href)
-			})
-		}		
+		canvas.toBlob((blob) => {
+			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
+			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
+		})
 	}
 }
 
