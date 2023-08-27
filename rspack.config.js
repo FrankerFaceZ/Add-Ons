@@ -14,7 +14,7 @@ function getFolderName(file) {
 }
 
 // Are we in development?
-const DEV_SERVER = process.env.WEBPACK_SERVE == 'true';
+const DEV_SERVER = process.env.SERVING == 'true';
 const DEV_BUILD = process.env.NODE_ENV !== 'production';
 
 // Is this for an extension?
@@ -32,6 +32,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('FOR_EXTENSION:', FOR_EXTENSION, FOR_EXTENSION ? ` (${process.env.FFZ_EXTENSION})` : '');
 console.log('IS SERVE:', DEV_SERVER);
 console.log('FILE PATH:', FILE_PATH);
+//console.log(process.env);
 
 // First, identify every add-on.
 

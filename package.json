@@ -4,8 +4,8 @@
 	"description": "Addons for FrankerFaceZ",
 	"private": true,
 	"scripts": {
-		"start": "rspack serve",
-		"start:prod": "cross-env NODE_ENV=production rspack serve",
+		"start": "cross-env SERVING=true rspack serve",
+		"start:prod": "cross-env SERVING=true NODE_ENV=production rspack serve",
 		"build": "rspack build && node bin/addon_hash",
 		"clean": "rimraf dist",
 		"eslint": "eslint \"src/**/*.{js,jsx,vue}\"",
