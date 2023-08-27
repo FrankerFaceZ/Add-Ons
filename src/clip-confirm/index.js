@@ -1,6 +1,6 @@
 'use strict';
 
-import CSS_URL from './style.css';
+import CSS_URL from './style.scss';
 
 class ClipConfirm extends Addon {
 	constructor(...args ) {
