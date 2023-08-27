@@ -24,3 +24,10 @@ jobs:
 
     - name: Build
       run: pnpm build
+
+    - name: Archive Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: |
+          dist
