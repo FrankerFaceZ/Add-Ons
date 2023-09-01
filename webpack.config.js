@@ -15,7 +15,7 @@ function getFolderName(file) {
 }
 
 if ( process.env.NODE_ENV == null )
-process.env.NODE_ENV = 'production';
+	process.env.NODE_ENV = 'production';
 
 // Are we in development?
 const DEV_SERVER = process.env.WEBPACK_SERVE == 'true';
@@ -26,10 +26,10 @@ const FOR_EXTENSION = !! process.env.FFZ_EXTENSION;
 
 // Get the public path.
 const FILE_PATH = DEV_SERVER
-? 'https://localhost:8001/script/addons/'
-: FOR_EXTENSION
-? ''
-: 'https://cdn.frankerfacez.com/static/addons/';
+	? 'https://localhost:8001/script/addons/'
+	: FOR_EXTENSION
+		? ''
+		: 'https://cdn.frankerfacez.com/static/addons/';
 
 
 console.log('NODE_ENV:', process.env.NODE_ENV);
@@ -41,7 +41,7 @@ console.log('FILE PATH:', FILE_PATH);
 // First, identify every add-on.
 
 const ENTRIES = {},
-MANIFESTS = {};
+	MANIFESTS = {};
 
 const NON_LOCAL_ICONS = [];
 
@@ -78,7 +78,7 @@ for(const entry of glob.sync('./src/**/index.{js,jsx}')) {
 }
 
 if ( NON_LOCAL_ICONS.length )
-console.warn('The following add-ons use non-local logos:', NON_LOCAL_ICONS.join(', '));
+	console.warn('The following add-ons use non-local logos:', NON_LOCAL_ICONS.join(', '));
 
 
 // The Config
@@ -261,43 +261,43 @@ const config = {
 };
 
 if ( DEV_SERVER )
-config.devServer = {
-	client: false,
-	webSocketServer: false,
-	magicHtml: false,
-	liveReload: false,
-	hot: false,
-	
-	server: 'https',
-	port: 8001,
-	compress: true,
-	
-	allowedHosts: [
-		'.twitch.tv',
-		'.frankerfacez.com'
-	],
-	
-	devMiddleware: {
-		publicPath: '/script/addons/',
-	},
-	
-	setupMiddlewares: (middlewares, devServer) => {
+	config.devServer = {
+		client: false,
+		webSocketServer: false,
+		magicHtml: false,
+		liveReload: false,
+		hot: false,
 		
-		devServer.app.get('/script/addons.json', (req, res) => {
-			res.setHeader('Access-Control-Allow-Origin', '*');
-			res.setHeader('Access-Control-Allow-Private-Network', 'true');
-			res.redirect('/script/addons/addons.json');
-		});
+		server: 'https',
+		port: 8001,
+		compress: true,
 		
-		middlewares.unshift((req, res, next) => {
-			res.setHeader('Access-Control-Allow-Origin', '*');
-			res.setHeader('Access-Control-Allow-Private-Network', 'true');
-			next();
-		});
+		allowedHosts: [
+			'.twitch.tv',
+			'.frankerfacez.com'
+		],
 		
-		return middlewares;
-	}
-};
+		devMiddleware: {
+			publicPath: '/script/addons/',
+		},
+		
+		setupMiddlewares: (middlewares, devServer) => {
+			
+			devServer.app.get('/script/addons.json', (req, res) => {
+				res.setHeader('Access-Control-Allow-Origin', '*');
+				res.setHeader('Access-Control-Allow-Private-Network', 'true');
+				res.redirect('/script/addons/addons.json');
+			});
+			
+			middlewares.unshift((req, res, next) => {
+				res.setHeader('Access-Control-Allow-Origin', '*');
+				res.setHeader('Access-Control-Allow-Private-Network', 'true');
+				next();
+			});
+			
+			return middlewares;
+		}
+	};
 
 
 module.exports = config;
