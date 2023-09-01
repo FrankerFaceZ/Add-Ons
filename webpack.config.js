@@ -4,17 +4,21 @@ const path = require('path');
 const glob = require('glob');
 const fs = require('fs');
 
+//const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { VueLoaderPlugin } = require('vue-loader');
-const { WebpackManifestPlugin } = require('rspack-manifest-plugin');
-
-const minifyPlugin = require('@rspack/plugin-minify');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+const { EsbuildPlugin } = require('esbuild-loader');
+const CopyPlugin = require('copy-webpack-plugin');
 
 function getFolderName(file) {
     return path.basename(path.dirname(file));
 }
 
+if ( process.env.NODE_ENV == null )
+    process.env.NODE_ENV = 'production';
+
 // Are we in development?
-const DEV_SERVER = process.env.SERVING == 'true';
+const DEV_SERVER = process.env.WEBPACK_SERVE == 'true';
 const DEV_BUILD = process.env.NODE_ENV !== 'production';
 
 // Is this for an extension?
@@ -30,14 +34,16 @@ const FILE_PATH = DEV_SERVER
 
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('FOR_EXTENSION:', FOR_EXTENSION, FOR_EXTENSION ? ` (${process.env.FFZ_EXTENSION})` : '');
+console.log('IS_DEV_BUILD:', DEV_BUILD);
 console.log('IS SERVE:', DEV_SERVER);
 console.log('FILE PATH:', FILE_PATH);
-//console.log(process.env);
 
 // First, identify every add-on.
 
 const ENTRIES = {},
     MANIFESTS = {};
+
+const NON_LOCAL_ICONS = [];
 
 for(const entry of glob.sync('./src/**/index.{js,jsx}')) {
     const folder = getFolderName(entry);
@@ -61,17 +67,25 @@ for(const entry of glob.sync('./src/**/index.{js,jsx}')) {
     if ( ! json.icon && fs.existsSync(path.join(path.dirname(entry), 'logo.png')) )
         json.icon = `${FILE_PATH}${json.id}/logo.png`;
 
-    if ( ! json.icon && fs.existsSync(path.join(path.dirname(entry), 'logo.jpg')) )
+    else if ( ! json.icon && fs.existsSync(path.join(path.dirname(entry), 'logo.jpg')) )
         json.icon = `${FILE_PATH}${json.id}/logo.jpg`;
+
+    else if ( json.icon )
+        NON_LOCAL_ICONS.push(folder);
 
     ENTRIES[`${folder}/script`] = `./${entry}`;
     MANIFESTS[folder] = json;
 }
 
+if ( NON_LOCAL_ICONS.length )
+    console.warn('The following add-ons use non-local logos:', NON_LOCAL_ICONS.join(', '));
+
 
 // The Config
 
-/** @type {import('@rspack/cli').Configuration} */
+const TARGET = 'es2020';
+
+/** @type {import('webpack').Configuration} */
 const config = {
     mode: DEV_BUILD
         ? 'development'
@@ -80,80 +94,21 @@ const config = {
         ? 'inline-source-map'
         : 'source-map',
 
-    target: 'browserslist',
-
     resolve: {
 		extensions: ['.js', '.jsx']
 	},
 
+    target: ['web', TARGET],
+
     entry: ENTRIES,
 
-    externalsType: 'window',
-    externals: {
-        vue: 'ffzVue'
-    },
-
-    builtins: {
-        copy: {
-            patterns: [
-                {
-                    from: '**/logo.png',
-                    context: 'src',
-                    to: '[path]logo.png',
-                    toType: 'template',
-                    test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.png$/
-                },
-                {
-                    from: '**/logo.jpg',
-                    context: 'src',
-                    to: '[path]logo.jpg',
-                    toType: 'template',
-                    test: /src(?:\\|\/)([^\\\/]+)(?:\\|\/)logo\.jpg$/
-                }
-            ]
-        },
-
-        define: {
-            Addon: 'FrankerFaceZ.utilities.addon.Addon'
+    externals: [
+        ({request}, callback) => {
+            if ( request === 'vue' )
+                return callback(null, 'root ffzVue');
+            return callback();
         }
-    },
-
-    devServer: {
-        client: false,
-        webSocketServer: false,
-        magicHtml: false,
-        liveReload: false,
-        hot: false,
-
-        https: true,
-        port: 8001,
-        compress: true,
-
-        allowedHosts: [
-            '.twitch.tv',
-            '.frankerfacez.com'
-        ],
-
-        devMiddleware: {
-            publicPath: '/script/addons/',
-        },
-
-        onBeforeSetupMiddleware(devServer) {
-            const app = devServer.app;
-
-            app.get('/script/addons.json', (req, res) => {
-                res.setHeader('Access-Control-Allow-Origin', '*');
-                res.setHeader('Access-Control-Allow-Private-Network', 'true');
-                res.redirect('/script/addons/addons.json');
-            });
-
-            app.use((req, res, next) => {
-                res.setHeader('Access-Control-Allow-Origin', '*');
-                res.setHeader('Access-Control-Allow-Private-Network', 'true');
-                next();
-            });
-        }
-    },
+    ],
 
     output: {
         chunkFormat: 'array-push',
@@ -164,23 +119,47 @@ const config = {
         path: path.resolve(__dirname, 'dist/addons'),
         filename: (FOR_EXTENSION || DEV_SERVER)
             ? '[name].js'
-            : '[name].[hash].js',
+            : '[name].[contenthash].js',
         chunkLoadingGlobal: 'ffzAddonsWebpackJsonp',
         crossOriginLoading: 'anonymous'
     },
 
     optimization: {
         minimizer: [
-            new minifyPlugin({
-                minifier: 'terser',
-                keep_classnames: true,
-                keep_fnames: true
+            new EsbuildPlugin({
+                target: TARGET,
+                keepNames: true
             })
         ]
     },
 
     plugins: [
         new VueLoaderPlugin(),
+        new EsbuildPlugin({
+            define: {
+                'Addon': 'FrankerFaceZ.utilities.addon.Addon'
+            }
+        }),
+        new CopyPlugin({
+            patterns: [
+				{
+					context: path.resolve(__dirname, 'src'),
+					noErrorOnMissing: true,
+					from: '**/logo.png',
+					to: '[path]/logo.png',
+					toType: 'template',
+					filter: path => /src(?:\\|\/)([^\\/]+)(?:\\|\/)logo\.png$/.test(path),
+				},
+				{
+					context: path.resolve(__dirname, 'src'),
+					noErrorOnMissing: true,
+					from: '**/logo.jpg',
+					to: '[path]/logo.jpg',
+					toType: 'template',
+					filter: path => /src(?:\\|\/)([^\\/]+)(?:\\|\/)logo\.jpg$/.test(path),
+				},
+            ]
+        }),
         new WebpackManifestPlugin({
             filter: data => ! data.name.endsWith('.map'),
             basePath: 'addons/',
@@ -213,46 +192,37 @@ const config = {
             {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
-                type: 'javascript/auto',
-                use: [
-                    {
-                        loader: 'string-replace-loader',
-                        options: {
-                            search: /import\("\.\/(.*)\.(.*)"\)/ig,
-                            replace(match, filename, extension) {
-                                let folder = path.relative(this.rootContext, path.dirname(this.resource));
-                                if ( folder.startsWith('src\\') || folder.startsWith('src/') )
-                                    folder = folder.substring(4);
+                loader: 'string-replace-loader',
+                options: {
+                    search: /import\("\.\/(.*)\.(.*)"\)/ig,
+                    replace(match, filename, extension) {
+                        let folder = path.relative(this.rootContext, path.dirname(this.resource));
+                        if ( folder.startsWith('src\\') || folder.startsWith('src/') )
+                            folder = folder.substring(4);
 
-                                //console.log(`Replacing import: "${match}"`);
-                                return `import(/* webpackChunkName: "${folder}/${extension}" */ './${filename}.${extension}')`;
-                            }
-                        }
-                    },
-                    {
-                        loader: 'builtin:swc-loader',
-                        options: {
-                            sourceMap: true,
-                            jsc: {
-                                parser: {
-                                    syntax: 'ecmascript',
-                                    jsx: true
-                                },
-                                transform: {
-                                    react: {
-                                        pragma: 'createElement',
-                                        development: false
-                                    }
-                                }
-                            }
-                        }
+                        const out = `import(/* webpackChunkName: "${folder}/${extension}" */ "./${filename}.${extension}")`;
+                        //console.log(`Replacing import: "${match}" with "${out}"`);
+                        return out;
                     }
-                ]
+                }
+            },
+            {
+                test: /\.jsx?$/,
+                exclude: /node_modules/,
+                loader: 'esbuild-loader',
+                options: {
+                    loader: 'jsx',
+                    jsxFactory: 'createElement',
+                    target: TARGET
+                }
             },
             {
                 test: /\.(graphql|gql)$/,
                 exclude: /node_modules/,
-                loader: 'graphql-tag/loader'
+                use: [
+                    'graphql-tag/loader',
+                    'minify-graphql-loader'
+                ]
             },
             {
                 test: /\.vue$/,
@@ -266,7 +236,7 @@ const config = {
                         options: {
                             name: (FOR_EXTENSION || DEV_BUILD)
                                 ? '[folder]/[name].css'
-                                : '[folder]/[name].[hash].css'
+                                : '[folder]/[name].[contenthash].css'
                         }
                     },
                     {
@@ -275,7 +245,7 @@ const config = {
                     {
                         loader: 'css-loader',
                         options: {
-                            sourceMap: true
+                            sourceMap: DEV_BUILD ? true : false
                         }
                     },
                     {
@@ -289,5 +259,45 @@ const config = {
         ]
     }
 };
+
+if ( DEV_SERVER )
+    config.devServer = {
+        client: false,
+        webSocketServer: false,
+        magicHtml: false,
+        liveReload: false,
+        hot: false,
+
+        server: 'https',
+        port: 8001,
+        compress: true,
+
+        allowedHosts: [
+            '.twitch.tv',
+            '.frankerfacez.com'
+        ],
+
+        devMiddleware: {
+            publicPath: '/script/addons/',
+        },
+
+        setupMiddlewares: (middlewares, devServer) => {
+
+            devServer.app.get('/script/addons.json', (req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Private-Network', 'true');
+                res.redirect('/script/addons/addons.json');
+            });
+
+            middlewares.unshift((req, res, next) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Private-Network', 'true');
+                next();
+            });
+
+            return middlewares;
+        }
+    };
+
 
 module.exports = config;
