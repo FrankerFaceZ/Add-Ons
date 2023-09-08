@@ -140,12 +140,7 @@ class Screenshoter extends Addon {
 
 	// TODO: more robust check for clips vs streams
 	isClip(video) {
-		if (video.src?.length) {
-			this.log.info('This page contains a clip, skipping...')
-			return true
-		}
-
-		return false
+		return video.src?.includes('.clips.twitchcdn')
 	}
 
 	updateButton(inst) {
@@ -153,12 +148,11 @@ class Screenshoter extends Addon {
 		const container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group')
 		const button = container?.querySelector('.ffz--player-screenshoter')
 
-		// We don't work with clips
 		const video = outer?.querySelector('video')
-		if (video && this.isClip(video)) return
+		if (!video || !container) return
 
-		if (!video && !container) return
 		if (button) button.remove()
+		if (this.isClip(video)) return // We don't work with clips
 
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
 
@@ -181,8 +175,9 @@ class Screenshoter extends Addon {
 		const thing = container.querySelector('button[data-a-target="player-fullscreen-button"]')
 		if (thing) {
 			container.insertBefore(cont, thing.parentElement)
-		} else
+		} else {
 			container.appendChild(cont)
+		}
 
 		let label = 'Take screenshot'
 
@@ -250,6 +245,8 @@ class Screenshoter extends Addon {
 			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
 			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
 		})
+
+		canvas.remove()
 	}
 }
 
