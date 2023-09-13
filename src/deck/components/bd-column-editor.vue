@@ -274,6 +274,10 @@
 					</select>
 				</div>
 
+				<bd-edit-languages
+					v-model="column.settings.lang"
+				/>
+
 				<component
 					v-for="(component, idx) in editComponents"
 					:is="component"
@@ -551,9 +555,6 @@ export default {
 
 			if ( this.column.display.title )
 				delete this.column.display.i18n;
-
-			const languages = getLoader().getLanguagesFromTags(this.column.settings.tags);
-			this.column.settings.lang = languages.length ? languages : null;
 
 			this.data.save(this.column);
 			this.$emit('close');

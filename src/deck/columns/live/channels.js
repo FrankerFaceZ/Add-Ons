@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags } from '../../data';
 
 export default class Channels extends LiveColumnBase {
 
@@ -19,11 +19,8 @@ export default class Channels extends LiveColumnBase {
 
 	getTitle() {
 		const tags = this.settings?.tags;
-		if ( tags?.length === 1 ) {
-			const tag = getLoader().getTagImmediate(tags[0], () => this.vue.refreshFromInst());
-			if ( tag )
-				return ['addon.deck.live-tag', '{name} Streams', {name: tag.label}];
-		}
+		if ( tags?.[0] )
+			return ['addon.deck.live-tag', '{name} Streams', {name: tags[0]}];
 
 		return ['addon.deck.live-channels', 'Live Channels']
 	}
@@ -44,7 +41,8 @@ export default class Channels extends LiveColumnBase {
 				after: cursor,
 				options: {
 					sort: this.settings.sort || 'VIEWER_COUNT',
-					tags: this.required_tags
+					broadcasterLanguages: this.languages,
+					freeformTags: this.required_tags
 				}
 			},
 			fetchPolicy: 'network-only'
@@ -65,7 +63,7 @@ export default class Channels extends LiveColumnBase {
 					cleanViewersCount(node, edge.node);
 
 					node.broadcaster.stream = node;
-					this.memorizeTags(node.broadcaster);
+					cleanTags(node);
 					items.push(node.broadcaster);
 					node.broadcaster = undefined;
 				}

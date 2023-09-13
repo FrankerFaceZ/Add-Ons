@@ -56,7 +56,8 @@ export default class Followed extends VideoColumnBase {
 				cursor = edge.cursor;
 				if ( edge.node && ! seen.has(edge.node.id) ) {
 					seen.add(edge.node.id);
-					this.memorizeTags(edge.node);
+					// TODO: Clean tags
+					//this.memorizeTags(edge.node);
 					items.push(deep_copy(edge.node));
 				}
 			}

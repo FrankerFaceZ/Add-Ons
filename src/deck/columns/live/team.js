@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags } from '../../data';
 
 export default class Team extends LiveColumnBase {
 
@@ -68,7 +68,7 @@ export default class Team extends LiveColumnBase {
 					seen.add(edge.node.id);
 					const copy = deep_copy(edge.node);
 					cleanViewersCount(copy.stream, edge.node.stream);
-					this.memorizeTags(copy);
+					cleanTags(copy.stream);
 					items.push(copy);
 				}
 			}

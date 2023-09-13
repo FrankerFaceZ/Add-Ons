@@ -40,6 +40,21 @@ export function cleanViewersCount(copy, original) {
 }
 
 
+export function cleanTags(item) {
+	if ( Array.isArray(item.freeformTags) )
+		item.freeformTags = item.freeformTags.map(tag => {
+			if ( typeof tag === 'string' )
+				return tag;
+			else if ( tag?.name )
+				return tag.name;
+			return undefined;
+		}).filter(tag => tag);
+
+	else if ( item.freeformTags )
+		item.freeformTags = [];
+}
+
+
 export function reduceTags(tags, count, required) {
 	if ( ! Array.isArray(tags) || ! count )
 		return null;
@@ -49,8 +64,10 @@ export function reduceTags(tags, count, required) {
 
 	let i = 0;
 
+	const req_lower = required && required.map(x => x.toLowerCase());
+
 	for(const tag of tags) {
-		if ( ! tag || ! tag.id || (required && required.includes(tag.id)) ) {
+		if ( ! tag || (req_lower && req_lower.includes(tag.toLowerCase())) ) {
 			skipped.push(tag);
 			continue;
 		}
@@ -77,3 +94,43 @@ export const VideoTypes = {
 };
 
 Object.freeze(VideoTypes);
+
+// TODO: Determine how to populate languages at runtime.
+export const Languages = {
+	en: "English",
+	id: "Bahasa Indonesia",
+	ca: "Català",
+	da: "Dansk",
+	de: "Deutsch",
+	es: "Español",
+	fr: "Français",
+	it: "Italiano",
+	hu: "Magyar",
+	nl: "Nederlands",
+	no: "Norsk",
+	pl: "Polski",
+	pt: "Português",
+	ro: "Română",
+	sk: "Slovenčina",
+	fi: "Suomi",
+	sv: "Svenska",
+	tl: "Tagalog",
+	vi: "Tiếng Việt",
+	tr: "Türkçe",
+	cs: "Čeština",
+	el: "Ελληνικά",
+	bg: "Български",
+	ru: "Русский",
+	uk: "Українська",
+	ar: "العربية",
+	ms: "بهاس ملايو",
+	hi: "मानक हिन्दी",
+	th: "ภาษาไทย",
+	zh: "中文",
+	ja: "日本語",
+	ko: "한국어",
+	asl: "American Sign Language",
+	other: "Other",
+};
+
+Object.freeze(Languages);

@@ -4,12 +4,8 @@ fragment StreamInfo on Stream {
 	viewersCount
 	createdAt
 	previewImageURL(width: $previewWidth, height: $previewHeight)
-	tags {
+	freeformTags {
 		id
-		isAutomated
-		isLanguageTag
-		localizedName
-		tagName
-		scope
+		name
 	}
 }

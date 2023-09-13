@@ -3,8 +3,8 @@
 #import "../fragments/broadcast-game.gql"
 #import "../fragments/stream-info.gql"
 
-query Deck_LiveFeatured($first: Int, $language: String, $previewWidth: Int, $previewHeight: Int) {
-	featuredStreams(first: $first, language: $language) {
+query Deck_LiveFeatured($first: Int, $language: String, $previewWidth: Int, $previewHeight: Int, $acceptedMature: Boolean) {
+	featuredStreams(first: $first, language: $language, acceptedMature: $acceptedMature) {
 		priorityLevel
 		broadcaster {
 			...UserInfo
