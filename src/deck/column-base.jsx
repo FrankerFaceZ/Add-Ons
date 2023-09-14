@@ -396,6 +396,10 @@ export default class ColumnBase {
 		return false;
 	}
 
+	allowHideUnlisted() {
+		return false;
+	}
+
 	useTags() {
 		return true;
 	}
@@ -437,6 +441,10 @@ export class LiveColumnBase extends ColumnBase {
 			this.vue.items = this.vue.items.filter(item => item.id != id);
 	}
 
+	allowHideUnlisted() {
+		return true;
+	}
+
 	getComponent(item) { // eslint-disable-line no-unused-vars
 		return 'bd-live-card';
 	}
@@ -463,10 +471,10 @@ export class LiveColumnBase extends ColumnBase {
 		const hide_reruns = this.global_settings.hide_reruns,
 			blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games, this.languages));
+		return items.filter(item => LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games, this.languages, this.allowHideUnlisted() ? this.settings.hide_unlisted : false));
 	}
 
-	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages) {
+	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted) {
 		if ( ! item.stream )
 			return false;
 
@@ -475,6 +483,9 @@ export class LiveColumnBase extends ColumnBase {
 
 		const game = item.broadcastSettings && item.broadcastSettings.game;
 		if ( blocked_games && game && blocked_games.includes(game.name) )
+			return false;
+
+		if ( ! game?.name && hide_unlisted )
 			return false;
 
 		if ( filter_games && game && ! filter_games.includes(game.id) )

@@ -333,6 +333,8 @@ export default {
 				if ( this.inst )
 					this.inst.updateSettings(deep_copy(this.data.settings));
 
+				this.size = this.data.display?.default_count || 5;
+
 				this.refreshFromInst();
 			}
 		},

@@ -274,10 +274,6 @@
 					</select>
 				</div>
 
-				<bd-edit-languages
-					v-model="column.settings.lang"
-				/>
-
 				<component
 					v-for="(component, idx) in editComponents"
 					:is="component"
@@ -292,6 +288,25 @@
 				<h5 class="tw-border-b">
 					{{ t('addon.deck.edit.filtering', 'Filtering') }}
 				</h5>
+
+				<div
+					v-if="useHideUnlisted" 
+					class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05"
+				>
+					<input
+						:id="'hide_unlisted$' + column.id"
+						v-model="column.settings.hide_unlisted"
+						type="checkbox"
+						class="ffz-checkbox__input"
+					>
+					<label :for="'hide_unlisted$' + column.id" class="ffz-checkbox__label">
+						{{ t('addon.deck.edit.hide_unlisted', 'Do not display items with no category set.') }}
+					</label>
+				</div>
+
+				<bd-edit-languages
+					v-model="column.settings.lang"
+				/>
 
 				<div v-if="useTags" class="tw-flex tw-align-items-start tw-mg-y-05">
 					<label :for="'tags$' + column.id">
@@ -445,6 +460,10 @@ export default {
 
 		useTags() {
 			return this.inst && this.inst.useTags();
+		},
+
+		useHideUnlisted() {
+			return this.inst && this.inst.allowHideUnlisted();
 		},
 
 		filterCategories() {
