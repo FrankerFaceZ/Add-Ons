@@ -1,5 +1,5 @@
-const {createElement} = FrankerFaceZ.utilities.dom
-const {isValidShortcut} = FrankerFaceZ.utilities.object
+const { createElement } = FrankerFaceZ.utilities.dom
+const { isValidShortcut } = FrankerFaceZ.utilities.object
 
 const BAD_SHORTCUTS = [
 	'f',
@@ -66,7 +66,7 @@ class Screenshoter extends Addon {
 
 	createTooltip() {
 		if (this.tooltip) this.destroyTooltip()
-		
+
 		this.tooltip = document.createElement('span')
 		this.tooltip.id = 'ffz-screenshoter-tooltip'
 		this.tooltip.style = `
@@ -83,11 +83,12 @@ class Screenshoter extends Addon {
 			padding: 0.3rem 0.8em;
 			font-weight: bold;
 			opacity: 0;
+			pointer-events: none;
 
 			transition: opacity .1s;
 		`
 		this.tooltip.textContent = 'Copied to clipboard!'
-		
+
 		const parent = document.querySelector('div.video-player')
 		parent.appendChild(this.tooltip)
 	}
@@ -116,10 +117,10 @@ class Screenshoter extends Addon {
 
 	updateShortcut() {
 		const Mousetrap = this.Mousetrap = this.Mousetrap || this.web_munch.getModule('mousetrap') || window.Mousetrap
-		if (! Mousetrap || ! Mousetrap.bind)
+		if (!Mousetrap || !Mousetrap.bind)
 			return
 
-		if (this._shortcut_bound ) {
+		if (this._shortcut_bound) {
 			Mousetrap.unbind(this._shortcut_bound)
 			this._shortcut_bound = null
 		}
@@ -139,25 +140,19 @@ class Screenshoter extends Addon {
 
 	// TODO: more robust check for clips vs streams
 	isClip(video) {
-		if (video.src?.length) {
-			this.log.info('This page contains a clip, skipping...')
-			return true
-		}
-
-		return false
+		return video.src?.includes('.clips.twitchcdn')
 	}
-	
+
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst)
 		const container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group')
 		const button = container?.querySelector('.ffz--player-screenshoter')
 
-		// We don't work with clips
 		const video = outer?.querySelector('video')
-		if (video && this.isClip(video)) return
+		if (!video || !container) return
 
-		if (!video && !container) return
 		if (button) button.remove()
+		if (this.isClip(video)) return // We don't work with clips
 
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
 
@@ -178,15 +173,16 @@ class Screenshoter extends Addon {
 		</div>)
 
 		const thing = container.querySelector('button[data-a-target="player-fullscreen-button"]')
-		if ( thing ) {
+		if (thing) {
 			container.insertBefore(cont, thing.parentElement)
-		} else
+		} else {
 			container.appendChild(cont)
-			
+		}
+
 		let label = 'Take screenshot'
 
 		const key = this.settings.get(`${this.settingsNamespace}.shortcut`)
-		if ( key && isValidShortcut(key) )
+		if (key && isValidShortcut(key))
 			label = `${label} (${key})`
 
 		btn.setAttribute('aria-label', label)
@@ -249,6 +245,8 @@ class Screenshoter extends Addon {
 			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
 			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
 		})
+
+		canvas.remove()
 	}
 }
 
