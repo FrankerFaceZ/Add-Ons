@@ -1,4 +1,4 @@
-const SUB_BADGE_REGEX = /sub\d+/;
+const SUB_BADGE_REGEX = /sub(?:\d+|founder)/;
 
 export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
