@@ -228,7 +228,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 			else if (type === 'entitlement.delete') {
 				const object = body.object;
 				if (object?.kind === 'PAINT') {
-					this.nametag_paints.setUserPaint(object, true);
+					this.nametag_paints.deleteUserPaint(object);
 				}
 				else if (object?.kind === 'BADGE') {
 					this.badges.removeUserBadge(object);

@@ -48,7 +48,11 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	addUserBadgeByID(user_id, badge_id) {
-		this.chat.getUser(user_id).addBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
+		const user = this.chat.getUser(user_id);
+		const has_badge = user.getBadge(this.getBadgeID(badge_id));
+		if (has_badge) return;
+
+		user.addBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
 
 		this.emit('chat:update-lines-by-user', user_id);
 	}
@@ -63,7 +67,11 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	removeUserBadgeByID(user_id, badge_id) {
-		this.chat.getUser(user_id).removeBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
+		const user = this.chat.getUser(user_id);
+		const has_badge = user.getBadge(this.getBadgeID(badge_id));
+		if (!has_badge) return;
+
+		user.removeBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
 
 		this.emit('chat:update-lines-by-user', user_id);
 	}

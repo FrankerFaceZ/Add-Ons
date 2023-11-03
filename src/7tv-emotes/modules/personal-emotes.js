@@ -70,6 +70,8 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 
 		this.userToSetMap.set(user.id, setID);
 		this.setToUserMap.set(setID, user.id);
+
+		this.reloadSet(setID);
 	}
 
 	updateSet(body) {		
