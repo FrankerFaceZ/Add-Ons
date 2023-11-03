@@ -39,6 +39,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
+
+		this.setToChannelMap = new Map();
 	}
 
 	onEnable() {
@@ -148,9 +150,26 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return null;
 	}
 
-	async updateChannelSet(channel) {
+	getChannelBySetID(oldSetID, newSetID) {
+		let channelID = this.setToChannelMap.get(oldSetID);
+		if (!channelID) {
+			channelID = this.setToChannelMap.get(newSetID);
+			if (!channelID) return null;
+		}
+
+		return this.chat.getRoom(channelID, null, true);
+	}
+
+	async updateChannelSet(channel, setID = false) {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
+			let channelEmotes = {};
+			if (setID) {
+				channelEmotes.emote_set = await this.api.emotes.fetchEmoteSet(setID);
+			}
+			else {
+				channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
+			}
+
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
 			if (!channelEmotes.emote_set) return false;
@@ -164,12 +183,92 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				}
 			}
 
+			this.setToChannelMap.set(channelEmotes.emote_set.id, channel.id);
+
 			this.setChannelSet(channel, ffzEmotes);
 			return true;
 		}
 		else {
 			this.setChannelSet(channel, null);
 			return false;
+		}
+	}
+
+	handleChannelEmoteUpdate(body) {
+		if (!this.settings.get('addon.seventv_emotes.channel_emotes')) return;
+
+		let channel;
+		for (const room of this.chat.iterateRooms()) {
+			if (room) {
+				channel = room;
+				break;
+			}
+		}
+
+		if (channel) {
+			let action;
+			let dataType;
+			let completed = false;
+
+			if (body.pushed) {
+				dataType = 'pushed';
+				action = 'ADD';
+			} else if (body.pulled) {
+				dataType = 'pulled';
+				action = 'REMOVE';
+			} else if (body.updated) {
+				dataType = 'updated';
+				action = 'UPDATE';
+			} else {
+				// No data, ignore
+				return;
+			}
+
+			for (const emote of body[dataType]) {
+				if (emote.key !== 'emotes') continue;
+
+				const emoteId = emote.value?.id ?? emote.old_value.id;
+				const oldEmote = this.getEmoteFromChannelSet(channel, emoteId);
+
+				switch (action) {
+					case 'UPDATE':
+						if (!oldEmote) break;
+
+						completed = this.addEmoteToChannelSet(channel, emote.value);
+						break;
+					case 'ADD':
+						completed = this.addEmoteToChannelSet(channel, emote.value);
+						break;
+					case 'REMOVE':
+						completed = this.removeEmoteFromChannelSet(channel, emoteId);
+						break;
+				}
+
+				if (completed) {
+					let message = `[7TV] ${body.actor.display_name} `;
+					switch (action) {
+						case 'ADD': {
+							message += `added the emote '${emote.value.name}'`;
+							break;
+						}
+						case 'REMOVE': {
+							message += `removed the emote '${emote.old_value.name}'`;
+							break;
+						}
+						case 'UPDATE': {
+							if (oldEmote?.name !== emote.value.name) {
+								message += `renamed the emote '${oldEmote.name}' to '${emote.value.name}'`;
+							} else {
+								message += `updated the emote '${emote.value.name}'`;
+							}
+							break;
+						}
+					}
+
+					const socket = this.resolve('..socket');
+					socket.addChatNotice(channel, message);
+				}
+			}
 		}
 	}
 
