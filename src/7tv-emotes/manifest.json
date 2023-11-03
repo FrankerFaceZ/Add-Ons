@@ -5,14 +5,14 @@
 		"main",
 		"clips"
 	],
-	"version": "1.4.0",
+	"version": "1.4.1",
 	"short_name": "7TV",
 	"name": "7TV Emotes",
 	"author": "Melonify",
-	"maintainer": "Melonify, Lordmau5",
+	"maintainer": "Lordmau5",
 	"description": "Adds 7TV Channel & Global Emotes, Badges, and User Cosmetics.",
 	"website": "https://7tv.app",
 	"settings": "add_ons.7tv_emotes",
 	"created": "2021-07-12T23:18:04.000Z",
-	"updated": "2023-11-03T20:23:26.738Z"
+	"updated": "2023-11-03T20:24:20.414Z"
 }
