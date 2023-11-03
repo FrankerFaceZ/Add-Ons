@@ -249,26 +249,27 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			const user = message.user;
 			if (user_id !== undefined && user.userID !== user_id) continue;
 
-			message.ffz_user_class = (message.ffz_user_class || '')
-				.replace('seventv-paint', '')
-				.replace('seventv-painted-content', '');
+			const paintID = enabled ? this.getUserPaint(user.userID) : null;
 
-			if (message.ffz_user_props?.['data-seventv-paint-id']) {
-				delete message.ffz_user_props['data-seventv-paint-id'];
-				delete message.ffz_user_props['data-seventv-painted-text'];
+			if (paintID) {
+				message.ffz_user_class = (message.ffz_user_class || new Set());
+				message.ffz_user_class.add('seventv-paint');
+				message.ffz_user_class.add('seventv-painted-content');
+				message.ffz_user_props = {
+					...message.ffz_user_props,
+					'data-seventv-paint-id': paintID,
+					'data-seventv-painted-text': true,
+				}
 			}
+			else {
+				message.ffz_user_class = (message.ffz_user_class || new Set());
+				message.ffz_user_class.delete('seventv-paint');
+				message.ffz_user_class.delete('seventv-painted-content');
 
-			update();
-
-			if (!enabled) continue;
-
-			const paintID = this.getUserPaint(user.userID);
-			if (!paintID) continue;
-
-			message.ffz_user_class = 'seventv-paint seventv-painted-content';
-			message.ffz_user_props = {
-				'data-seventv-paint-id': paintID,
-				'data-seventv-painted-text': true,
+				if (message.ffz_user_props?.['data-seventv-paint-id']) {
+					delete message.ffz_user_props['data-seventv-paint-id'];
+					delete message.ffz_user_props['data-seventv-painted-text'];
+				}
 			}
 
 			update();
