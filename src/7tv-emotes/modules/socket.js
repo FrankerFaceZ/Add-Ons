@@ -415,12 +415,9 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		return subs.find(c => Object.entries(condition).every(([key, value]) => c.condition[key] === value)) ?? null;
 	}	
 
-	subscribe(type, condition, channelID) {
+	subscribe(type, condition) {
 		const sub = this.findSubscription(type, condition);
-		if (sub) {
-			sub.channels.add(channelID);
-			return;
-		} 
+		if (sub) return; 
 
 		this.emit({
 			op: OPCODES.SUBSCRIBE,
@@ -435,8 +432,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		this._subscriptions[type].push({
-			condition,
-			channels: new Set([channelID])
+			condition
 		});
 	}
 
