@@ -76,20 +76,21 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		return this.userPaints.get(id);
 	}
 
-	deleteUserPaintByID(user_id) {
+	deleteUserPaintByID(user_id, paint_id) {
 		const currentUserPaint = this.userPaints.get(user_id);
-		if (!currentUserPaint) return;
+		if (!currentUserPaint || currentUserPaint !== paint_id) return;
 
 		this.userPaints.delete(user_id);
 		this.updateChatLines(user_id);
 	}
 
 	deleteUserPaint(data) {
+		const paint_id = data.ref_id || data.id;
 		const user = data.user?.connections?.find(c => c.platform === 'TWITCH');
 
 		if (!user?.id) return;
 
-		this.deleteUserPaintByID(user.id);
+		this.deleteUserPaintByID(user.id, paint_id);
 	}
 
 	setUserPaintByID(user_id, paint_id) {

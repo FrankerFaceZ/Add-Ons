@@ -196,7 +196,6 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 					this.emotes.handleChannelEmoteUpdate(body);
 				}
 				else {
-					// Personal Emotes
 					this.personal_emotes.updateSet(body);
 				}
 			}
@@ -460,17 +459,6 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		}
 		else {
 			this._subscriptions[type] = this._subscriptions[type].filter(c => c !== sub);
-		}
-	}
-
-	unsubscribeChannel(channel_id) {
-		for (const [type, records] of Object.entries(this.subscriptions)) {
-			for (const rec of records.filter(rec => rec.channels.has(channel_id))) {
-				rec.channels.delete(channel_id);
-				if (rec.channels.size) continue;
-
-				this.unsubscribe(type, rec.condition);
-			}
 		}
 	}
 }

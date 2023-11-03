@@ -1,3 +1,5 @@
+const SUB_BADGE_REGEX = /sub\d+/;
+
 export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
@@ -31,9 +33,25 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 
 		if (this.loadedBadges.has(id)) return;
 
+		let title = badge.tooltip;
+		let subtext;
+		if (title.includes('Subscriber')) {
+			const split = title.split(' (');
+			title = split[0];
+			subtext = `(${split[1]}`;
+		}
+
 		this.chat_badges.loadBadgeData(id, {
 			id: badge.id,
-			title: badge.tooltip,
+			base_id: SUB_BADGE_REGEX.test(badge.tag)
+				? 'addon.seventv_emotes.subscriber_badge'
+				: undefined,
+			title,
+			tooltipExtra: () => {
+				if (!subtext) return;
+
+				return `\n${subtext}`;
+			},
 			slot: 69,
 			image: `${host}/1x`,
 			urls: {
