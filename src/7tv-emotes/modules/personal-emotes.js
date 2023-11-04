@@ -20,14 +20,14 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 			}
 		});
 
-		// 7TV Set ID -> Emotes
-		this.emoteMap = new Map();
+		// 7TV Set ID -> Emote Set
+		this.emoteSets = new Map();
 
-		// Twitch User ID -> 7TV Set ID
-		this.userToSetMap = new Map();
+		// Twitch User ID -> Set(7TV Set ID)
+		this.userToSetsMap = new Map();
 		
-		// 7TV Set ID -> Twitch User ID
-		this.setToUserMap = new Map();
+		// 7TV Set ID -> Set(Twitch User ID)
+		this.setToUsersMap = new Map();
 	}
 
 	onEnable() {
@@ -35,7 +35,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 	}
 
 	updatePersonalSets() {
-		for (const setID of this.emoteMap.keys()) {
+		for (const setID of this.emoteSets.keys()) {
 			this.reloadSet(setID);
 		}
 	}
@@ -44,32 +44,54 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		return `addon.seventv_emotes.personal-${setID}`;
 	}
 
-	createPersonalSet(set_id) {
-		this.emoteMap.set(set_id, {});
+	createPersonalSet(set_id, set_name) {
+		// In case the set was created before this method
+		const _emoteSet = this.emoteSets.get(set_id);
+
+		this.emoteSets.set(set_id, {
+			id: _emoteSet?.id || set_id,
+			name: _emoteSet?.name || set_name,
+			emotes: _emoteSet?.emotes || {}
+		});
+
+		if (_emoteSet?.id) {
+			this.reloadSet(set_id);
+		}
 	}
 
-	getPersonalEmotesForSet(set_id) {
-		if (!this.emoteMap.has(set_id)) {
-			this.emoteMap.set(set_id, {});
+	getPersonalSet(set_id) {
+		if (!this.emoteSets.has(set_id)) {
+			this.emoteSets.set(set_id, {
+				emotes: {}
+			});
 		}
 
-		return this.emoteMap.get(set_id);
+		return this.emoteSets.get(set_id);
 	}
 
 	hasSetID(set_id) {
-		for (const set of this.emoteMap.keys()) {
+		for (const set of this.emoteSets.keys()) {
 			if (set === set_id) return true;
 		}
 
 		return false;
 	}
 
+	addUserToSets(user_id, set_id) {
+		const userToSets = this.userToSetsMap.get(user_id) || new Set();
+		userToSets.add(set_id);
+		this.userToSetsMap.set(user_id, userToSets);
+		
+		const setToUsers = this.setToUsersMap.get(set_id) || new Set();
+		setToUsers.add(user_id);
+		this.setToUsersMap.set(set_id, setToUsers);
+	}
+
 	grantSetToUser(data) {
 		const setID = data.ref_id;
 		const user = data.user.connections.find(c => c.platform === 'TWITCH');
 
-		this.userToSetMap.set(user.id, setID);
-		this.setToUserMap.set(setID, user.id);
+		this.addUserToSets(user.id, setID);
 
 		this.reloadSet(setID);
 	}
@@ -121,11 +143,13 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 	}
 
 	reloadSet(setID) {
-		const userID = this.setToUserMap.get(setID);
-		if (userID) {
-			this.chat
-				.getUser(userID)
-				.removeSet('addon.seventv_emotes', this.getSetID(setID));
+		const userIDs = this.setToUsersMap.get(setID);
+		if (userIDs?.size) {
+			for (const userID of userIDs) {
+				this.chat
+					.getUser(userID)
+					.removeSet('addon.seventv_emotes', this.getSetID(setID));
+			}
 		}
 
 		if(!this.settings.get('addon.seventv_emotes.personal_emotes')) {
@@ -135,30 +159,36 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 
 		const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
-		const rawEmotes = this.getPersonalEmotesForSet(setID);
+		const set = this.getPersonalSet(setID);
 
 		const emotes = [];
 
-		for (const [, emote] of Object.entries(rawEmotes)) {
+		for (const [, emote] of Object.entries(set.emotes)) {
 			if (showUnlisted || !this.seventv_emotes.isEmoteUnlisted(emote)) {
-				emotes.push(this.seventv_emotes.convertEmote(emote));
+				const convertedEmote = this.seventv_emotes.convertEmote(emote);
+				if (!convertedEmote) continue;
+
+				emotes.push(convertedEmote);
 			}
 		}
 
-		const set = {
-			title: 'Personal Emotes',
+		const ffzSet = {
+			title: set.name,
 			source: '7TV',
 			icon: this.setIcon,
+			sort: 50,
 			emotes
 		};
 
 		if (emotes.length) {
-			this.emotes.loadSetData(this.getSetID(setID), set, true);
+			this.emotes.loadSetData(this.getSetID(setID), ffzSet, true);
 
-			if (userID) {
-				this.chat
-					.getUser(userID)
-					.addSet('addon.seventv_emotes', this.getSetID(setID));
+			if (userIDs?.size) {
+				for (const userID of userIDs) {
+					this.chat
+						.getUser(userID)
+						.addSet('addon.seventv_emotes', this.getSetID(setID));
+				}
 			}
 		}
 
@@ -166,28 +196,28 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 	}
 
 	getEmoteFromSet(setID, emoteID) {
-		const emotes = this.getPersonalEmotesForSet(setID);
+		const set = this.getPersonalSet(setID);
 
-		if (!emotes) return null;
+		if (!set?.emotes) return null;
 		
-		return emotes[emoteID];
+		return set.emotes[emoteID];
 	}
 
 	addEmoteToSet(setID, emote) {
 		const isPersonal = emote?.data?.state?.includes('PERSONAL');
 		if (!isPersonal) return false;
 
-		const emotes = this.getPersonalEmotesForSet(setID);
-		emotes[emote.id] = emote;
+		const set = this.getPersonalSet(setID);
+		set.emotes[emote.id] = emote;
 
 		return true;
 	}
 
 	removeEmoteFromSet(setID, emoteID) {
-		const emotes = this.emoteMap.get(setID);
-		if (!emotes[emoteID]) return false;
+		const set = this.getPersonalSet(setID);
+		if (!set.emotes[emoteID]) return false;
 
-		delete emotes[emoteID];
+		delete set.emotes[emoteID];
 		
 		return true;
 	}

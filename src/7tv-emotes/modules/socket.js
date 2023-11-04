@@ -13,7 +13,8 @@ const OPCODES = {
 	RESUME: 34,
 	SUBSCRIBE: 35,
 	UNSUBSCRIBE: 36,
-	SIGNAL: 37
+	SIGNAL: 37,
+	BRIDGE: 38
 }
 
 export default class Socket extends FrankerFaceZ.utilities.module.Module {
@@ -29,6 +30,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this.injectAs('personal_emotes', '..personal-emotes');
 		this.injectAs('nametag_paints', '..nametag-paints');
 		this.injectAs('badges', '..badges');
+		this.injectAs('avatars', '..avatars');
 
 		this.settings.add('addon.seventv_emotes.update_messages', {
 			default: true,
@@ -39,6 +41,8 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
+
+		this.OPCODES = OPCODES;
 
 		this.socket = false;
 		this._connected = false;
@@ -87,7 +91,22 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		const msg_user_id = msg.message.user.id;
 		if (user.id !== msg_user_id) return;
 
-		this.stv_api.user.updateUserPresences(this._user_id, msg.message.roomID);
+		this.sendPresences(false, msg.message.roomID);
+	}
+
+	sendPresences(self = false, room_id = undefined) {
+		if (!this._user_id) return;
+
+		if (room_id) {
+			this.stv_api.user.updateUserPresences(this._user_id, room_id, self, this._session_id);
+			return;
+		}
+
+		for (const room of this.chat.iterateRooms()) {
+			if (room) {
+				this.stv_api.user.updateUserPresences(this._user_id, room.id, self, this._session_id);
+			}
+		}
 	}
 
 	async roomAdd(room) {
@@ -130,7 +149,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		if (this._user_id) {
-			this.stv_api.user.updateUserPresences(this._user_id, room.id, true, this._session_id);
+			this.sendPresences(true, room.id);
 		}
 	}
 
@@ -200,8 +219,8 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				}
 			}
 			else if (type === 'emote_set.create') {
-				const { id } = body.object;
-				this.personal_emotes.createPersonalSet(id);
+				const { id, name } = body.object;
+				this.personal_emotes.createPersonalSet(id, name);
 			}
 			else if (type === 'cosmetic.create') {
 				const { kind, data } = body.object;
@@ -210,6 +229,9 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				}
 				else if (kind === 'BADGE') {
 					this.badges.addBadge(data);
+				}
+				else if (kind === 'AVATAR') {
+					this.avatars.receiveAvatarData(data);
 				}
 			}
 			else if (type === 'entitlement.create') {
@@ -329,6 +351,10 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 
 			this.log.info('Socket: Lost connection to socket server...', evt);
 
+			if (evt.code !== 4012) {
+				this._connect_attempts++;
+			}
+
 			this._subscriptions = {};
 			this._rooms = {};
 
@@ -343,8 +369,6 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 			} catch (e) {
 				this.log.error('Socket: Error parsing message', e);
 			}
-
-			this.log.debug('Socket: Received event', evt);
 
 			this.onMessage(evt);
 		};

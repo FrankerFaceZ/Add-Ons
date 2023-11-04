@@ -1,3 +1,5 @@
+const { createElement } = FrankerFaceZ.utilities.dom;
+
 export default class NametagPaints extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
@@ -26,10 +28,16 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 				const paintID = this.getUserPaint(msg.user.userID);
 				if (!paintID) return;
 
-				msg.ffz_user_class = 'seventv-paint seventv-painted-content';
+				msg.ffz_user_class = (msg.ffz_user_class || new Set());
+				msg.ffz_user_class.add('seventv-paint');
+				msg.ffz_user_class.add('seventv-painted-content');
+				msg.ffz_user_class.add('ffz-tooltip');
+				msg.ffz_user_class.add('ffz-tooltip--no-mouse');
+
 				msg.ffz_user_props = {
 					'data-seventv-paint-id': paintID,
 					'data-seventv-painted-text': true,
+					'data-tooltip-type': 'seventv-paint'
 				}
 
 				return tokens;
@@ -38,7 +46,17 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 
 		this.chat.addTokenizer(this.namepaintsApplyer);
 
+		this.resolve('tooltips').define('seventv-paint', target => {
+			const paint_id = target?.dataset?.seventvPaintId;
+			const paint_name = this.paintNames.get(paint_id);
+
+			if (!paint_name) return FrankerFaceZ.utilities.tooltip.NoContent;
+
+			return createElement('span', { className: 'seventv-paint-tooltip' }, paint_name);
+		});
+
 		this.paintSheet = false;
+		this.paintNames = new Map();
 		this.userPaints = new Map();
 	}
 
@@ -68,7 +86,10 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			-webkit-background-clip: text !important;
 			font-weight: 700;
 		}`);
-	
+		s.sheet.insertRule(`.seventv-paint-tooltip {
+			font-weight: 700;
+		}`);
+		
 		return (this.paintSheet = s.sheet ?? null);
 	}
 
@@ -112,6 +133,8 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 	}
 
 	updatePaintStyle(paint, remove = false) {
+		this.paintNames.set(paint.id, paint.name);
+
 		const sheet = this.getPaintStylesheet();
 		if (!sheet) {
 			this.log.error('<Cosmetics>', 'Could not find paint stylesheet');
@@ -255,20 +278,27 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 				message.ffz_user_class = (message.ffz_user_class || new Set());
 				message.ffz_user_class.add('seventv-paint');
 				message.ffz_user_class.add('seventv-painted-content');
+				message.ffz_user_class.add('ffz-tooltip');
+				message.ffz_user_class.add('ffz-tooltip--no-mouse');
+
 				message.ffz_user_props = {
 					...message.ffz_user_props,
 					'data-seventv-paint-id': paintID,
 					'data-seventv-painted-text': true,
+					'data-tooltip-type': 'seventv-paint'
 				}
 			}
 			else {
 				message.ffz_user_class = (message.ffz_user_class || new Set());
 				message.ffz_user_class.delete('seventv-paint');
 				message.ffz_user_class.delete('seventv-painted-content');
+				message.ffz_user_class.delete('ffz-tooltip');
+				message.ffz_user_class.delete('ffz-tooltip--no-mouse');
 
 				if (message.ffz_user_props?.['data-seventv-paint-id']) {
 					delete message.ffz_user_props['data-seventv-paint-id'];
 					delete message.ffz_user_props['data-seventv-painted-text'];
+					delete message.ffz_user_props['data-tooltip-type'];
 				}
 			}
 

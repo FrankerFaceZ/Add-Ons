@@ -8,18 +8,19 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.inject('chat');
 		this.inject('i18n');
 		this.injectAs('chat_badges', 'chat.badges');
-	
-		this.settings.addUI('addon.seventv_emotes.badges', {
-			path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
-			component: 'setting-text',
-			force_seen: true,
-			content: () => this.i18n.t(
-				'addon.seventv_emotes.badges.info',
-				'**Badge visibilty has moved.**\n\nYou can set it in [Chat >> Badges > Visibilty > Add-Ons](~chat.badges.tabs.visibility)'
-			)
+
+		this.settings.add('addon.seventv_emotes.badges', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
+				title: 'Badges',
+				description: 'Show 7TV user badges.\n\n(Per-badge visibilty can be set in [Chat >> Badges > Visibilty > Add-Ons](~chat.badges.tabs.visibility))',
+				component: 'setting-check-box',
+			}
 		});
 
-		this.loadedBadges = new Set();
+		this.badges = new Map();
+		this.badgeToUsers = new Map();
 
 		// Load the "1 Month" subscriber badge so it can be hidden in FFZ without having to be seen first
 		this.addBadge({
@@ -33,6 +34,34 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		});
 	}
 
+	onEnable() {
+		this.settings.getChanges('addon.seventv_emotes.badges', enabled => this.updateBadges(enabled));
+	}
+
+	getUsersForBadge(badge_id) {
+		const set = this.badgeToUsers.get(badge_id);
+		return set || new Set();
+	}
+
+	updateBadges(enabled) {
+		if (!enabled) {
+			for(const user of this.chat.iterateUsers()) {
+				user.removeAllBadges('addon.seventv-emotes');
+			}
+		}
+		else {
+			for (const badge_id of this.badgeToUsers.keys()) {
+				const userSet = this.getUsersForBadge(badge_id);
+				for (const user_id of userSet) {
+					const user = this.chat.getUser(user_id);
+					user.addBadge('addon.seventv-emotes', badge_id);
+				}
+			}
+		}
+
+		this.emit('chat:update-lines');
+	}
+
 	getBadgeID(badge_id) {
 		return `addon.seventv_emotes.badge-${badge_id}`;
 	}
@@ -40,9 +69,9 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	addBadge(badge) {
 		const host = badge.host.url;
 
-		const id = `addon.seventv_emotes.badge-${badge.id}`;
+		const id = this.getBadgeID(badge.id);
 
-		if (this.loadedBadges.has(id)) return;
+		if (this.badges.has(id)) return;
 
 		let title = badge.tooltip;
 		let subtext;
@@ -52,7 +81,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 			subtext = `(${split[1]}`;
 		}
 
-		this.chat_badges.loadBadgeData(id, {
+		const badgeData = {
 			id: badge.id,
 			base_id: SUB_BADGE_REGEX.test(badge.tag)
 				? 'addon.seventv_emotes.subscriber_badge'
@@ -71,17 +100,26 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 				4: `${host}/3x`
 			},
 			svg: false
-		});
+		};
 
-		this.loadedBadges.add(id);
+		this.chat_badges.loadBadgeData(id, badgeData);
+
+		this.badges.set(id, badgeData);
+		this.badgeToUsers.set(id, new Set());
 	}
 
 	addUserBadgeByID(user_id, badge_id) {
+		badge_id = this.getBadgeID(badge_id);
+
 		const user = this.chat.getUser(user_id);
-		const has_badge = user.getBadge(this.getBadgeID(badge_id));
+		const has_badge = user.getBadge(badge_id);
 		if (has_badge) return;
 
-		user.addBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
+		this.badgeToUsers.get(badge_id).add(user_id);
+
+		if (!this.settings.get('addon.seventv_emotes.badges')) return;
+
+		user.addBadge('addon.seventv-emotes', badge_id);
 
 		this.emit('chat:update-lines-by-user', user_id);
 	}
@@ -96,11 +134,15 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	removeUserBadgeByID(user_id, badge_id) {
+		badge_id = this.getBadgeID(badge_id);
+
 		const user = this.chat.getUser(user_id);
-		const has_badge = user.getBadge(this.getBadgeID(badge_id));
+		const has_badge = user.getBadge(badge_id);
 		if (!has_badge) return;
 
-		user.removeBadge('addon.seventv-emotes', this.getBadgeID(badge_id));
+		this.badgeToUsers.get(badge_id).delete(user_id);
+
+		user.removeBadge('addon.seventv-emotes', badge_id);
 
 		this.emit('chat:update-lines-by-user', user_id);
 	}
