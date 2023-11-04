@@ -13,7 +13,8 @@ const OPCODES = {
 	RESUME: 34,
 	SUBSCRIBE: 35,
 	UNSUBSCRIBE: 36,
-	SIGNAL: 37
+	SIGNAL: 37,
+	BRIDGE: 38
 }
 
 export default class Socket extends FrankerFaceZ.utilities.module.Module {
@@ -29,6 +30,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this.injectAs('personal_emotes', '..personal-emotes');
 		this.injectAs('nametag_paints', '..nametag-paints');
 		this.injectAs('badges', '..badges');
+		this.injectAs('avatars', '..avatars');
 
 		this.settings.add('addon.seventv_emotes.update_messages', {
 			default: true,
@@ -39,6 +41,8 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
+
+		this.OPCODES = OPCODES;
 
 		this.socket = false;
 		this._connected = false;
@@ -210,6 +214,9 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				}
 				else if (kind === 'BADGE') {
 					this.badges.addBadge(data);
+				}
+				else if (kind === 'AVATAR') {
+					this.avatars.receiveAvatarData(data);
 				}
 			}
 			else if (type === 'entitlement.create') {
