@@ -65,7 +65,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		const ffzEmotes = [];
 		for (const emote of globalSet.emotes) {
-			ffzEmotes.push(this.convertEmote(emote));
+			const convertedEmote = this.convertEmote(emote);
+			if (!convertedEmote) continue;
+			
+			ffzEmotes.push(convertedEmote);
 		}
 
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
@@ -109,7 +112,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			if (showUnlisted || force || !this.isEmoteUnlisted(emote)) {
 				const emotes = emoteSet.emotes || {};
 
-				emotes[emote.id] = this.convertEmote(emote);
+				const convertedEmote = this.convertEmote(emote);
+				if (!convertedEmote) return false;
+
+				emotes[emote.id] = convertedEmote;
 
 				this.setChannelSet(channel, Object.values(emotes));
 				return true;
@@ -178,7 +184,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			if (channelEmotes.emote_set.emotes) {
 				for (const emote of channelEmotes.emote_set.emotes) {
 					if (showUnlisted || !this.isEmoteUnlisted(emote)) {
-						ffzEmotes.push(this.convertEmote(emote));
+						const convertedEmote = this.convertEmote(emote);
+						if (!convertedEmote) continue;
+
+						ffzEmotes.push(convertedEmote);
 					}
 				}
 			}
@@ -287,12 +296,24 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	convertEmote(emote) {
-		const emoteHostUrl = emote.data.host.url;
+		const emoteHostUrl = emote?.data?.host?.url;
+		if (!emoteHostUrl) return null;
 
-		const emoteUrls = emote.data.host.files.filter((value => value.format === 'WEBP')).reduce((acc, value, key) => {
+		const webpEmoteVersions = emote.data.host.files.filter((value => value.format === 'WEBP'));
+		if (!webpEmoteVersions.length) return null;
+		
+		const emoteUrls = webpEmoteVersions.reduce((acc, value, key) => {
 			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
 			return acc;
 		}, {});
+
+		let staticEmoteUrls;
+		if (emote.data.animated) {
+			staticEmoteUrls = webpEmoteVersions.reduce((acc, value, key) => {
+				acc[key + 1] = `${emoteHostUrl}/${value.static_name}`;
+				return acc;
+			}, {});
+		}
 
 		const ffzEmote = {
 			id: emote.id,
@@ -304,11 +325,16 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			urls: emoteUrls,
 			modifier: this.isZeroWidthEmote(emote.flags),
 			modifier_offset: '0',
-			width: emote.data.host.files[0]?.width,
-			height: emote.data.host.files[0]?.height,
+			width: webpEmoteVersions[0]?.width,
+			height: webpEmoteVersions[0]?.height,
 			click_url: this.api.getEmoteAppURL(emote),
 			SEVENTV_emote: emote
 		};
+
+		if (staticEmoteUrls) {
+			ffzEmote.animated = ffzEmote.urls;
+			ffzEmote.urls = staticEmoteUrls;
+		}
 
 		return ffzEmote;
 	}
