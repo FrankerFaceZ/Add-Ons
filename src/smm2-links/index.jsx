@@ -38,7 +38,12 @@ class SMM2Links extends Addon {
                 path: 'Add-Ons > SMM2 Links >> General',
                 title: 'Allow rich embeds for Mario Maker 2 IDs.',
                 description: '**Note:** This only works when the IDs are clickable.',
-                component: 'setting-check-box'
+                component: 'setting-check-box',
+                extra: {
+                    component: 'chat-rich-example',
+                    getChat: () => this.chat,
+                    url: `https://smm2.wizul.us/smm2/course/SYG-7FR-QLG`
+                }
             }
         });
 
