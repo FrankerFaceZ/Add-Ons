@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { cleanTags, cleanViewersCount, getLoader } from '../../data';
+import { checkCosmetics, cleanTags, cleanViewersCount, getLoader } from '../../data';
 
 export default class Hosted extends LiveColumnBase {
 
@@ -56,6 +56,7 @@ export default class Hosted extends LiveColumnBase {
 						channel = deep_copy(node.hosting);
 						channel.hosts = [];
 						cleanViewersCount(channel.stream, node.hosting.stream);
+						checkCosmetics(channel);
 						if ( group_hosts )
 							channels[channel.id] = channel;
 						else

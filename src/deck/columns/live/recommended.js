@@ -1,7 +1,7 @@
 const {get, deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount, cleanTags } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags, checkCosmetics } from '../../data';
 
 export default class Recommended extends LiveColumnBase {
 
@@ -44,6 +44,7 @@ export default class Recommended extends LiveColumnBase {
 				if ( edge.node && edge.node.broadcaster ) {
 					const node = deep_copy(edge.node);
 					cleanViewersCount(node, edge.node);
+					checkCosmetics(node.broadcaster);
 
 					node.broadcaster.stream = node;
 					cleanTags(node);

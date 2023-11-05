@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { VideoColumnBase } from '../../column-base';
-import { getLoader } from '../../data';
+import { checkCosmetics, getLoader } from '../../data';
 
 export default class Followed extends VideoColumnBase {
 
@@ -58,7 +58,9 @@ export default class Followed extends VideoColumnBase {
 					seen.add(edge.node.id);
 					// TODO: Clean tags
 					//this.memorizeTags(edge.node);
-					items.push(deep_copy(edge.node));
+					const copy = deep_copy(edge.node);
+					checkCosmetics(copy.owner);
+					items.push(copy);
 				}
 			}
 

@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import ColumnBase, {ClipColumnBase} from '../../column-base';
-import { getLoader } from '../../data';
+import { checkCosmetics, getLoader } from '../../data';
 
 export default class Category extends ClipColumnBase {
 	getEditComponent() {
@@ -82,7 +82,9 @@ export default class Category extends ClipColumnBase {
 				cursor = edge.cursor;
 				if ( edge.node && ! seen.has(edge.node.id) ) {
 					seen.add(edge.node.id);
-					items.push(deep_copy(edge.node));
+					const copy = deep_copy(edge.node);
+					checkCosmetics(copy.broadcaster);
+					items.push(copy);
 				}
 			}
 

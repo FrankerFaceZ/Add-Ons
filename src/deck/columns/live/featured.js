@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { cleanTags, cleanViewersCount, getLoader } from '../../data';
+import { checkCosmetics, cleanTags, cleanViewersCount, getLoader } from '../../data';
 
 export default class Featured extends LiveColumnBase {
 
@@ -40,6 +40,7 @@ export default class Featured extends LiveColumnBase {
 					copy.stream = deep_copy(edge.stream);
 					copy.priority = edge.priorityLevel || 0;
 					cleanViewersCount(copy.stream, edge.stream);
+					checkCosmetics(copy);
 					cleanTags(copy.stream);
 					items.push(copy);
 				}

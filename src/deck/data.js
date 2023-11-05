@@ -1,5 +1,7 @@
 'use strict';
 
+const { FFZWaitableEvent } = FrankerFaceZ.utilities.events;
+
 export function getLoader() {
 	const ffz = FrankerFaceZ.get();
 	return ffz.resolve('site.twitch_data');
@@ -37,6 +39,32 @@ export function cleanTooltips() {
 export function cleanViewersCount(copy, original) {
 	if( copy.viewersCount !== original.viewersCount )
 		copy.viewersCount = Number(original.viewersCount);
+}
+
+
+export function checkCosmetics(user, callback) {
+	const ffz = FrankerFaceZ.get(),
+		event = new FFZWaitableEvent({
+			user,
+			url: user.profileImageURL
+		});
+
+	ffz.emit('common:update-avatar', event);
+
+	user.profileImageURL = event.url;
+
+	const result = event._wait();
+	if ( result )
+		result.then(() => {
+			user.profileImageURL = event.url;
+			if ( callback )
+				callback(event.url, user);
+		});
+
+	else if ( callback )
+		callback(event.url, user);
+	
+	return event.url;
 }
 
 

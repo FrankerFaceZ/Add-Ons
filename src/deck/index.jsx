@@ -61,8 +61,6 @@ class BrowseDeck extends Addon {
 	async onEnable() {
 		this.NavBar = this.fine.define('nav-bar');
 
-		console.log('DECK STYLE URL', STYLE_URL);
-
 		document.head.appendChild(createElement('link', {
 			href: STYLE_URL,
 			rel: 'stylesheet',
@@ -73,13 +71,15 @@ class BrowseDeck extends Addon {
 		this.router.route('addons.deck', '/_deck/:tab?');
 		this.router.routeName('addons.deck', 'Deck');
 
-		const card_tip = this.tooltips.types['bd-sidebar-card'] = (target, tip) => {
+		const card_tip = (target, tip) => {
 			const shelf = target.__vue__?.$parent;
 			if ( ! shelf )
 				return null;
 
 			return shelf.renderTooltip(target, tip);
 		};
+
+		this.tooltips.define('bd-sidebar-card', card_tip);
 
 		let card_tip_open = 0;
 
@@ -261,6 +261,8 @@ class BrowseDeck extends Addon {
 				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags', []))
 			},
 
+			getFFZ: () => this,
+
 			tab_index: this.currentTab,
 
 			navigateToTab(index) {
@@ -274,11 +276,11 @@ class BrowseDeck extends Addon {
 			saveTabs(data) {
 				t.settings.provider.set('deck-tabs', deep_copy(data));
 
-				t.log.info('save-tabs', data, is_side_vue, t._side_vue);
+				//t.log.info('save-tabs', data, is_side_vue, t._side_vue);
 
 				t.checkSidebar();
 
-				t.log.info('--', t._side_vue);
+				//t.log.info('--', t._side_vue);
 
 				if ( ! is_side_vue && t._side_vue )
 					t._side_vue.$children[0].tabs = deep_copy(data);

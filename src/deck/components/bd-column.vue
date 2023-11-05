@@ -275,7 +275,7 @@ const {has, deep_copy} = FrankerFaceZ.utilities.object;
 const {Color} = FrankerFaceZ.utilities.color;
 
 export default {
-	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar', 'vertical'],
+	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar', 'vertical', 'getFFZ'],
 
 	data() {
 		return {

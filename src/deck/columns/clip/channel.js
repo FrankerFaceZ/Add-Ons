@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import ColumnBase, { ClipColumnBase, LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount, cleanTags } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags, checkCosmetics } from '../../data';
 
 export default class Channel extends ClipColumnBase {
 	getComponent(item) {
@@ -126,10 +126,22 @@ export default class Channel extends ClipColumnBase {
 			fetchPolicy: 'network-only'
 		});
 
-		this.updateCache({
+		const broadcaster = {
+			id: get('data.user.id', data),
+			login: get('data.user.login', data),
 			displayName: get('data.user.displayName', data),
-			avatar: get('data.user.profileImageURL', data),
-			cover: get('data.user.bannerImageURL', data)
+			profileImageURL: get('data.user.profileImageURL', data),
+			bannerImageURL: get('data.user.bannerImageURL', data)
+		};
+
+		broadcaster.profileImageURL = checkCosmetics(broadcaster, () => this.updateCache({
+			avatar: broadcaster.profileImageURL
+		}));
+
+		this.updateCache({
+			displayName: broadcaster.displayName,
+			avatar: broadcaster.profileImageURL,
+			cover: broadcaster.bannerImageURL
 		});
 
 		const edges = get('data.user.clips.edges', data),
@@ -151,13 +163,6 @@ export default class Channel extends ClipColumnBase {
 				items.push(item);
 			}
 		}
-
-		const broadcaster = {
-			id: get('data.user.id', data),
-			login: get('data.user.login', data),
-			displayName: get('data.user.displayName', data),
-			profileImageURL: get('data.user.profileImageURL', data)
-		};
 
 		let had_items = false;
 		if ( Array.isArray(edges) )

@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount, cleanTags } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags, checkCosmetics } from '../../data';
 
 export default class Channels extends LiveColumnBase {
 
@@ -61,6 +61,7 @@ export default class Channels extends LiveColumnBase {
 					seen.add(edge.node.id);
 					const node = deep_copy(edge.node);
 					cleanViewersCount(node, edge.node);
+					checkCosmetics(node.broadcaster);
 
 					node.broadcaster.stream = node;
 					cleanTags(node);

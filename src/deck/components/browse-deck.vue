@@ -173,6 +173,7 @@
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
+					:getFFZ="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -206,6 +207,7 @@
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
+					:getFFZ="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -226,6 +228,7 @@
 				:is="modal"
 				:data="modal_data"
 				:vertical="vertical"
+				:getFFZ="getFFZ"
 				@open-modal="openModal($event)"
 				@close="closeModal"
 			/>
