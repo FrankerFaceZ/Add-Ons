@@ -26,17 +26,37 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		this.requestedAvatars = [];
 	}
 
-	async onEnable() {
-		await this.findAvatarClass();
+	onEnable() {
+		this.settings.getChanges('addon.seventv_emotes.animated_avatars', () => this.onSettingChange());
 
-		this.on('settings:changed:addon.seventv_emotes.animated_avatars', () => this.updateAvatarRenderer());
+		this.onSettingChange();
+	}
 
-		if (this.updateInterval) clearInterval(this.updateInterval);
-		this.updateInterval = setInterval(() => {
-			this.findAvatarImages();
-		}, 1000 * 3);
+	onSettingChange() {
+		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
 
-		this.updateAvatarRenderer();
+		if (enabled) {
+			if (!this.updateInterval) {
+				this.updateInterval = setInterval(() => {
+					this.updateAvatars();
+				}, 1000);
+			}
+
+			if (!this.requestInterval) {
+				this.requestInterval = setInterval(() => {
+					this.postAvatarRequests();
+				}, 1000 * 3);
+			}
+		}
+		else {
+			clearInterval(this.updateInterval);
+			this.updateInterval = false;
+			
+			clearInterval(this.requestInterval);
+			this.requestInterval = false;
+		}
+
+		this.updateAvatars();
 	}
 	
 	receiveAvatarData(data) {		
@@ -48,8 +68,62 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		const highestQuality = webpEmoteVersions[webpEmoteVersions.length - 1];
 		
 		this.userAvatars.set(data.user.username, `${data.host.url}/${highestQuality.name}`);
+	}
 
-		this.updateAvatarRenderer();
+	getVisibleAvatars() {
+		return document.querySelectorAll('.tw-image-avatar');
+	}
+
+	updateAvatars() {
+		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
+
+		const avatars = this.getVisibleAvatars();
+		for (const avatar of avatars) {
+			if (!enabled) {
+				// Check if the avatar has an seventv-original-avatar attribute and set it
+				if (avatar.hasAttribute('seventv-original-avatar')) {
+					avatar.setAttribute('src', avatar.getAttribute('seventv-original-avatar'));
+					avatar.removeAttribute('seventv-original-avatar');
+				}
+
+				continue;
+			}
+
+			// Get the react instance for the avatar element
+			const avatarComponent = this.fine.getOwner(avatar);
+			if (!avatarComponent) continue;
+
+			// Find the nearets parent that has information about the user login
+			const parentWithLogin = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
+					|| e.props?.userLogin
+					|| e.props?.channelLogin,
+			50);
+			if (!parentWithLogin) continue;
+
+			const login = parentWithLogin.props?.user?.login
+				|| parentWithLogin.props?.userLogin
+				|| parentWithLogin.props?.channelLogin;
+			
+			// Get the animated avatar URL for this login
+			const animatedAvatarURL = this.getUserAvatar(login);
+			if (animatedAvatarURL === undefined) {
+				if (this.bufferedAvatars.includes(login)) continue;
+
+				// The user has not been requested yet, buffer them
+				this.bufferedAvatars.push(login);
+			}
+			else if (animatedAvatarURL) {
+				// If this avatar has the seventv-original-avatar attribute already, skip it
+				if (avatar.hasAttribute('seventv-original-avatar')) continue;
+				// Otherwise set it to the current src attribute
+				else {
+					avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
+				}
+	
+				// Set the src attribute to the animated avatar
+				avatar.setAttribute('src', animatedAvatarURL);
+			}
+		}
 	}
 
 	postAvatarRequests() {
@@ -79,118 +153,9 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		this.bufferedAvatars = [];
 	}
 
-	findAvatarImages() {
-		this.postAvatarRequests();
-	}
-
-	async findAvatarClass() {
-		if (this.root.flavor != 'main') return;
-
-		const avatarElement = await this.site.awaitElement('.tw-avatar');
-		
-		if (avatarElement) {
-			const avatarComponent = this.fine.getOwner(avatarElement);
-
-			if (avatarComponent?.type?.styledComponentId?.includes('ScAvatar')) {
-				this.AvatarClass = avatarComponent.type;
-			}
-		}
-	}
-
 	getUserAvatar(_login) {
 		const login = _login.toLowerCase();
 
-		if (!this.userAvatars.has(login)) {
-			return undefined;
-		}
-
 		return this.userAvatars.get(login);
-	}
-
-	updateAvatarRenderer() {
-		if (!this.AvatarClass) return;
-
-		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
-			const oldRenderer = this.AvatarClass.SEVENTV_oldRenderer || this.AvatarClass.render;
-
-			this.AvatarClass.render = (component, ...args) => {
-				for (const child of component.children) {
-					if (child?.type?.displayName == 'ImageAvatar') this.patchImageAvatar(child);
-				}
-				return oldRenderer(component, ...args);
-			}
-
-			this.AvatarClass.SEVENTV_oldRenderer = oldRenderer;
-
-			this.rerenderAvatars();
-		}
-		else if (this.AvatarClass.SEVENTV_oldRenderer) {
-			this.rerenderAvatars();
-
-			this.AvatarClass.render = this.AvatarClass.SEVENTV_oldRenderer;
-			delete this.AvatarClass['SEVENTV_oldRenderer'];
-		}
-	}
-
-	patchImageAvatar(component) {
-		const props = component.props;
-		if (props.userLogin && props['data-a-target'] != 'profile-image') {
-			const login = props.userLogin.toLowerCase();
-
-			const animatedAvatarURL = this.getUserAvatar(login);
-			if (animatedAvatarURL === undefined) {
-				if (this.bufferedAvatars.includes(login)) return;
-
-				this.bufferedAvatars.push(login);
-			}
-			else if (animatedAvatarURL) {
-				props.SEVENTV_oldSrc = props.SEVENTV_oldSrc || props.src;
-				props.src = animatedAvatarURL;
-			}
-			else if (props.SEVENTV_oldSrc) {
-				props.src = props.SEVENTV_oldSrc;
-				delete props['SEVENTV_oldSrc'];
-			}
-		}
-	}
-
-	rerenderAvatars() {
-		const avatarElements = document.querySelectorAll('.tw-avatar');
-
-		const componentsToForceUpdate = new Set();
-		const oldKeys = new Map();
-
-		for (const avatarElement of avatarElements) {
-			const avatarComponent = this.fine.getOwner(avatarElement);
-
-			//Walk component tree upwards from until we find a full component we can run forceUpdate on
-			let component = avatarComponent;
-			while (component) {
-				//Updating key on every parent is necissary to force entire tree to update
-				if (!oldKeys.has(component)) {
-					oldKeys.set(component, component.key);
-					component.key = 'SEVENTV_rerender';
-				}
-
-				if (component.stateNode) {
-					if (component.stateNode.forceUpdate) {
-						componentsToForceUpdate.add(component.stateNode);
-						break;
-					}
-				}
-
-				component = component.return;
-			}
-		}
-
-		for (const component of componentsToForceUpdate) {
-			//Force updating twice is necissary for some reason. (Something to do with the way react diffs the key changes?)
-			component.forceUpdate();
-			component.forceUpdate();
-		}
-
-		for (const [component, oldKey] of oldKeys) {
-			component.key = oldKey;
-		}
 	}
 }
