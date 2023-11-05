@@ -80,7 +80,6 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	findAvatarImages() {
-		this.rerenderAvatars();
 		this.postAvatarRequests();
 	}
 
