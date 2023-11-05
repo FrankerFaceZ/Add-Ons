@@ -1,11 +1,11 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "0.8.1",
+	"version": "0.9.0",
 	"short_name": "PrattleNot",
 	"name": "PrattleNot",
 	"author": "SirStendec",
 	"description": "**Note**: This extension is currently hard to configure, has several limitations in configuration, and may be buggy. However, the basic concept works and people have been asking for it again.\n\nPrattleNot adds additional chat filters that can be configured to remove spammy messages in chat. This is more useful for larger, spammier chats than small chats.",
 	"created": "2022-08-02T20:57:06.123Z",
-	"updated": "2023-04-27T21:33:34.274Z"
+	"updated": "2023-11-05T19:55:24.306Z"
 }

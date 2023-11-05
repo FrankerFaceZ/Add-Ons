@@ -40,7 +40,6 @@ class PrattleNot extends Addon {
 		this.toggleEnabled = this.toggleEnabled.bind(this);
 
 		this.inject('chat');
-		this.inject('chat.actions');
 		this.inject('settings');
 		this.inject('i18n');
 		this.inject('site.fine');
