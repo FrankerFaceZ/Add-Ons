@@ -2,7 +2,7 @@
   "enabled": true,
   "requires": [],
   "unlisted": false,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "short_name": "declutter",
   "name": "Declutterer",
   "author": "ae9is",
