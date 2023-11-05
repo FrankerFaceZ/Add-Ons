@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags } from '../../data';
 
 export default class Followed extends LiveColumnBase {
 
@@ -53,7 +53,7 @@ export default class Followed extends LiveColumnBase {
 		this.seen.add(id);
 		const copy = deep_copy(item);
 		cleanViewersCount(copy.stream, item.stream);
-		this.memorizeTags(copy);
+		cleanTags(copy.stream);
 
 		this.vue.items.push(copy);
 		this.vue.items = this.performClientSort(this.vue.items, LiveColumnBase.SORT_OPTIONS.VIEWER_COUNT);
@@ -83,7 +83,7 @@ export default class Followed extends LiveColumnBase {
 					seen.add(edge.node.id);
 					const copy = deep_copy(edge.node);
 					cleanViewersCount(copy.stream, edge.node.stream);
-					this.memorizeTags(copy);
+					cleanTags(copy.stream);
 					items.push(copy);
 				}
 			}

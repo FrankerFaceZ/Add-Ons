@@ -61,6 +61,8 @@ class BrowseDeck extends Addon {
 	async onEnable() {
 		this.NavBar = this.fine.define('nav-bar');
 
+		console.log('DECK STYLE URL', STYLE_URL);
+
 		document.head.appendChild(createElement('link', {
 			href: STYLE_URL,
 			rel: 'stylesheet',
@@ -70,21 +72,6 @@ class BrowseDeck extends Addon {
 
 		this.router.route('addons.deck', '/_deck/:tab?');
 		this.router.routeName('addons.deck', 'Deck');
-
-		await this.site.awaitElement(Dialog.EXCLUSIVE);
-
-		const tip_handler = this.tooltips.types['twitch-tag'] = target => {
-			const tag_id = target.dataset.tagId,
-				loader = getLoader(),
-				data = loader.getTagImmediate(tag_id);
-
-			if ( data && data.description )
-				return data.description;
-
-			return loader.getTag(tag_id, true).then(tag => tag.description);
-		}
-
-		tip_handler.delayShow = 500;
 
 		const card_tip = this.tooltips.types['bd-sidebar-card'] = (target, tip) => {
 			const shelf = target.__vue__?.$parent;
@@ -114,6 +101,7 @@ class BrowseDeck extends Addon {
 		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
 		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
 		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
+		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
 
 		this.on('site.subpump:pubsub-message', this.onPubSub, this);
 
@@ -128,8 +116,10 @@ class BrowseDeck extends Addon {
 
 		this.sidebar.on('hide', this.destroySidebar, this);
 		this.dialog.on('hide', this.destroyDialog, this);
-		this.onNavigate();
 
+		await this.site.awaitElement(Dialog.EXCLUSIVE);
+
+		this.onNavigate();
 		this.checkSidebar();
 	}
 
@@ -180,9 +170,6 @@ class BrowseDeck extends Addon {
 
 			else if ( key === 'directory.game.blocked-games' )
 				this.updateSetting('blocked_games', deep_copy(value || []));
-
-			else if ( key === 'directory.game.blocked-tags' )
-				this.updateSetting('blocked_tags', deep_copy(value || []));
 		}
 	}
 
@@ -271,7 +258,7 @@ class BrowseDeck extends Addon {
 				host_menus: true, //this.settings.get('directory.following.host-menus'),
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
 				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', [])),
-				blocked_tags: deep_copy(this.settings.provider.get('directory.game.blocked-tags', []))
+				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags', []))
 			},
 
 			tab_index: this.currentTab,

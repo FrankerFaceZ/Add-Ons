@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.1.1",
+	"short_name": "screenshoter",
+	"name": "Screenshoter",
+	"author": "CJMAXiK",
+	"description": "This add-on allow to take a screenshot of a stream using a player button or a shortcut.",
+	"settings": "add_ons.screenshoter",
+	"created": "2023-08-21T05:00:35.637Z",
+	"updated": "2023-09-08T21:36:38.618Z"
+}

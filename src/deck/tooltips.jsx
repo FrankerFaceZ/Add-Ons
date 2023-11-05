@@ -216,8 +216,8 @@ export function createTagList(tags, data = {}, navigate) {
 	const out = [];
 
 	for(const tag of tags) {
-		const lang = tag.isLanguageTag || tag.is_language,
-			url = `/directory/all/tags/${tag.id}`;
+		const lang = false,
+			url = `/directory/all/tags/${tag}`;
 
 		out.push(<div class={`tw-border-radius-rounded tw-semibold tw-inline-block ffz-tag tw-mg-r-05 ${data.noMargin ? '' : 'tw-mg-t-05'}`}>
 			<a
@@ -226,11 +226,9 @@ export function createTagList(tags, data = {}, navigate) {
 				onClick={e => navigate(url, e)}
 			>
 				<div
-					class={`ffz-tooltip ffz-tag__content ${lang ? 'ffz-i-language' : ''}`}
-					data-tooltip-type="twitch-tag"
-					data-tag-id={tag.id}
+					class={`ffz-tag__content ${lang ? 'ffz-i-language' : ''}`}
 				>
-					{ tag.localizedName || tag.label || tag.name }
+					{ tag }
 				</div>
 			</a>
 		</div>)

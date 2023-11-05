@@ -36,7 +36,8 @@ export default class Featured extends VideoColumnBase {
 					copy.previewThumbnailURL = node.imageURL || copy.previewThumbnailURL;
 					copy.title = node.title || copy.title;
 					copy.priority = node.priorityLevel;
-					this.memorizeTags(copy);
+					// TODO: Clean tags
+					//this.memorizeTags(copy);
 					items.push(copy);
 				}
 			}

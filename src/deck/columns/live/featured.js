@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { cleanViewersCount, getLoader } from '../../data';
+import { cleanTags, cleanViewersCount, getLoader } from '../../data';
 
 export default class Featured extends LiveColumnBase {
 
@@ -24,7 +24,8 @@ export default class Featured extends LiveColumnBase {
 			query: require('./featured.gql'),
 			variables: {
 				first: this.settings.count || first,
-				language: this.languages && this.languages[0] || '',
+				language: this.languages && this.languages[0]?.toLowerCase?.() || '',
+				acceptedMature: true
 			},
 			fetchPolicy: 'network-only'
 		});
@@ -39,7 +40,7 @@ export default class Featured extends LiveColumnBase {
 					copy.stream = deep_copy(edge.stream);
 					copy.priority = edge.priorityLevel || 0;
 					cleanViewersCount(copy.stream, edge.stream);
-					this.memorizeTags(copy);
+					cleanTags(copy.stream);
 					items.push(copy);
 				}
 			}

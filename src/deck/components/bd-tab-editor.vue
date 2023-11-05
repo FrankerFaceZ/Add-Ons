@@ -80,6 +80,10 @@
 						/>
 					</div>
 
+					<bd-edit-languages
+						v-model="edit_data.lang"
+					/>
+
 					<div class="tw-flex tw-align-items-start">
 						<label :for="'tags$' + id" class="tw-mg-l-05">
 							{{ t('addon.deck.edit.tags', 'Tags:') }}
@@ -212,14 +216,7 @@ export default {
 			if ( ! this.display.tags )
 				return null;
 
-			this.loader;
-			return this.display.tags.map(id => {
-				const tag = getLoader().getTagImmediate(id, this.load, true);
-				return tag ? deep_copy(tag) : {
-					id,
-					name: '(...)'
-				};
-			});
+			return this.display.tags;
 		},
 
 		icon() {
@@ -256,8 +253,9 @@ export default {
 
 		save() {
 			if ( this.edit_data ) {
-				const languages = getLoader().getLanguagesFromTags(this.edit_data.tags);
-				this.edit_data.lang = languages.length ? languages : null;
+				// TODO: Languages
+				//const languages = getLoader().getLanguagesFromTags(this.edit_data.tags);
+				//this.edit_data.lang = null; // languages.length ? languages : null;
 			}
 
 			this.$emit('save', this.edit_data);

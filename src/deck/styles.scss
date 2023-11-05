@@ -140,6 +140,15 @@
 }
 
 
+.bd--hidden-item {
+	opacity: 0.5;
+	transition: opacity 250ms ease;
+	&:hover, &:focus {
+		opacity: 1;
+	}
+}
+
+
 .bd--slide-down-enter-active,
 .bd--slide-down-leave-active {
 	transition: top .25s;

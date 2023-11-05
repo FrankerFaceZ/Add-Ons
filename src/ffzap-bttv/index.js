@@ -1,6 +1,5 @@
 import Socket from './socket';
 import ProUser from './pro_user';
-import EmoteModifiers from './emote-modifiers';
 
 class BetterTTV extends Addon {
 	constructor(...args) {
@@ -67,19 +66,7 @@ class BetterTTV extends Addon {
 				description: 'Enable to show BetterTTV Pro emoticons.',
 				component: 'setting-check-box',
 			},
-		});
-
-		this.settings.add('ffzap.betterttv.emote_modifiers', {
-			default: true,
-
-			ui: {
-				path: 'Add-Ons > BetterTTV Emotes >> Emotes',
-				title: 'Emote Modifiers',
-				description: 'Enable to show BetterTTV emote modifiers. (If this is disabled it will hide the modifiers from chat)',
-				component: 'setting-check-box',
-			},
-		});
-		
+		});		
 		
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
@@ -90,21 +77,12 @@ class BetterTTV extends Addon {
 			this.emit('chat:update-lines');
 		}, this);
 		this.chat.context.on('changed:ffzap.betterttv.pro_emoticons', this.updateProStatus, this);
-		this.chat.context.on('changed:ffzap.betterttv.emote_modifiers', () => this.emit('chat:update-lines'), this);
 
 		this.pro_users = {};
 		this.night_subs = {};
 		this.socket = false;
 
 		this.room_emotes = {};
-
-		this.emote_commands_tokenizer = {
-			type: 'emote_commands',
-			priority: -100,
-			process: tokens => EmoteModifiers.process(this, tokens),
-		};
-
-		this.chat.addTokenizer(this.emote_commands_tokenizer);
 
 		this.on('chat:reload-data', flags => {
 			if (!flags || flags.badges) {
@@ -327,6 +305,10 @@ class BetterTTV extends Addon {
 		this.emotes.removeDefaultSet('addon--ffzap.betterttv', realID);
 		this.emotes.unloadSet(realID);
 
+		const effectsID = 'addon--ffzap.betterttv--global-effects';
+		this.emotes.removeDefaultSet('addon--ffzap.betterttv', effectsID);
+		this.emotes.unloadSet(effectsID);
+
 		if (!this.chat.context.get('ffzap.betterttv.global_emoticons')) {
 			this.load_tracker.notify('chat-data', 'ffzap-bttv-global', false);
 			return;
@@ -339,6 +321,22 @@ class BetterTTV extends Addon {
 			const globalBttv = [];
 			const arbitraryEmotes = [];
 			const nightSubEmotes = [];
+			const effectEmotes = [];
+
+			let knownEffects = {};
+
+			if ( this.emotes?.ModifierFlags?.Hidden ) {
+				const Flags = this.emotes.ModifierFlags;
+				knownEffects = {
+					'c!': Flags.Hidden | Flags.Cursed,
+					'w!': Flags.Hidden | Flags.GrowX,
+					'z!': Flags.Hidden | Flags.NoSpace,
+					'v!': Flags.Hidden | Flags.FlipY,
+					'h!': Flags.Hidden | Flags.FlipX,
+					'l!': Flags.Hidden | (Flags.Rotate90 ?? 0),
+					'r!': Flags.Hidden | (Flags.Rotate270 ?? 0)
+				};
+			}
 
 			const overlayEmotes = {
 				'cvMask': '3px 0 0 0',
@@ -355,9 +353,17 @@ class BetterTTV extends Addon {
 
 			let i = emotes.length;
 			while (i--) {
-				const emote = this.convertBTTVEmote(emotes[i]);
+				let emote = emotes[i];
 
-				emote.modifier = Object.prototype.hasOwnProperty.call(overlayEmotes, emote.name);
+				if ( knownEffects[emote.code] ) {
+					emote.modifier = true;
+					emote.modifier_flags = knownEffects[emote.code];
+					emote.modifier_prefix = true;
+				}
+
+				emote = this.convertBTTVEmote(emote);
+
+				emote.modifier |= Object.prototype.hasOwnProperty.call(overlayEmotes, emote.name);
 				emote.modifier_offset = overlayEmotes[emote.name];
 
 				const arbitraryEmote = /[^A-Za-z0-9]/.test(emote.name);
@@ -365,7 +371,10 @@ class BetterTTV extends Addon {
 				if (emote.channel && emote.channel === 'night') {
 					nightSubEmotes.push(emote);
 				} else {
-					if (arbitraryEmote) {
+					if (emote.modifier_flags) {
+						effectEmotes.push(emote);
+					}
+					else if (arbitraryEmote) {
 						arbitraryEmotes.push(emote);
 					}
 					else {
@@ -394,7 +403,7 @@ class BetterTTV extends Addon {
 				setEmotes = setEmotes.concat(arbitraryEmotes);
 			}
 
-			if (setEmotes.length === 0) {
+			if (setEmotes.length === 0 && effectEmotes.length === 0) {
 				this.load_tracker.notify('chat-data', 'ffzap-bttv-global', false);
 				return;
 			}
@@ -408,6 +417,16 @@ class BetterTTV extends Addon {
 			};
 
 			this.emotes.addDefaultSet('addon--ffzap.betterttv', realID, set);
+
+			set = {
+				emotes: effectEmotes,
+				title: 'Global Effects',
+				source: 'BetterTTV',
+				icon: 'https://betterttv.com/favicon.png',
+				_type: 1,
+			};
+
+			this.emotes.addDefaultSet('addon--ffzap.betterttv', effectsID, set);
 
 			this.load_tracker.notify('chat-data', 'ffzap-bttv-global', true);
 		} else {
@@ -429,7 +448,7 @@ class BetterTTV extends Addon {
 		return `twitch:${roomID}`;
 	}
 
-	convertBTTVEmote({id, code, user, animated, width, height}) {
+	convertBTTVEmote({id, code, user, animated, width, height, modifier, modifier_flags, modifier_prefix}) {
 		const require_spaces = /[^A-Za-z0-9]/.test(code);
 
 		const emote = {
@@ -442,6 +461,9 @@ class BetterTTV extends Addon {
 			name: code,
 			width: width || 28,
 			height: height || 28,
+			modifier,
+			modifier_flags,
+			modifier_prefix,
 			owner: {
 				display_name: (user && user.displayName),
 				name: (user && user.name),

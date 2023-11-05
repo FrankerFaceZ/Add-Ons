@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import ColumnBase, { ClipColumnBase, LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags } from '../../data';
 
 export default class Channel extends ClipColumnBase {
 	getComponent(item) {
@@ -147,7 +147,7 @@ export default class Channel extends ClipColumnBase {
 				}));
 
 				cleanViewersCount(item.stream, data.data.user.stream);
-				LiveColumnBase.memorizeTags(item);
+				cleanTags(item.stream);
 				items.push(item);
 			}
 		}

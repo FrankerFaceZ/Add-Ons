@@ -44,7 +44,7 @@ export default {
 		},
 
 		tags() {
-			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
+			return reduceTags(this.item.stream.freeformTags, this.settings.max_tags, this.inst.required_tags);
 		},
 
 		klass() {

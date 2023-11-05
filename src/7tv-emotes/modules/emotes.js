@@ -39,6 +39,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
+
+		this.setToChannelMap = new Map();
 	}
 
 	onEnable() {
@@ -63,7 +65,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		const ffzEmotes = [];
 		for (const emote of globalSet.emotes) {
-			ffzEmotes.push(this.convertEmote(emote));
+			const convertedEmote = this.convertEmote(emote);
+			if (!convertedEmote) continue;
+			
+			ffzEmotes.push(convertedEmote);
 		}
 
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
@@ -107,7 +112,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			if (showUnlisted || force || !this.isEmoteUnlisted(emote)) {
 				const emotes = emoteSet.emotes || {};
 
-				emotes[emote.id] = this.convertEmote(emote);
+				const convertedEmote = this.convertEmote(emote);
+				if (!convertedEmote) return false;
+
+				emotes[emote.id] = convertedEmote;
 
 				this.setChannelSet(channel, Object.values(emotes));
 				return true;
@@ -148,9 +156,26 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return null;
 	}
 
-	async updateChannelSet(channel) {
+	getChannelBySetID(oldSetID, newSetID) {
+		let channelID = this.setToChannelMap.get(oldSetID);
+		if (!channelID) {
+			channelID = this.setToChannelMap.get(newSetID);
+			if (!channelID) return null;
+		}
+
+		return this.chat.getRoom(channelID, null, true);
+	}
+
+	async updateChannelSet(channel, setID = false) {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			const channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
+			let channelEmotes = {};
+			if (setID) {
+				channelEmotes.emote_set = await this.api.emotes.fetchEmoteSet(setID);
+			}
+			else {
+				channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
+			}
+
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
 			if (!channelEmotes.emote_set) return false;
@@ -159,10 +184,15 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			if (channelEmotes.emote_set.emotes) {
 				for (const emote of channelEmotes.emote_set.emotes) {
 					if (showUnlisted || !this.isEmoteUnlisted(emote)) {
-						ffzEmotes.push(this.convertEmote(emote));
+						const convertedEmote = this.convertEmote(emote);
+						if (!convertedEmote) continue;
+
+						ffzEmotes.push(convertedEmote);
 					}
 				}
 			}
+
+			this.setToChannelMap.set(channelEmotes.emote_set.id, channel.id);
 
 			this.setChannelSet(channel, ffzEmotes);
 			return true;
@@ -170,6 +200,84 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		else {
 			this.setChannelSet(channel, null);
 			return false;
+		}
+	}
+
+	handleChannelEmoteUpdate(body) {
+		if (!this.settings.get('addon.seventv_emotes.channel_emotes')) return;
+
+		let channel;
+		for (const room of this.chat.iterateRooms()) {
+			if (room) {
+				channel = room;
+				break;
+			}
+		}
+
+		if (channel) {
+			let action;
+			let dataType;
+			let completed = false;
+
+			if (body.pushed) {
+				dataType = 'pushed';
+				action = 'ADD';
+			} else if (body.pulled) {
+				dataType = 'pulled';
+				action = 'REMOVE';
+			} else if (body.updated) {
+				dataType = 'updated';
+				action = 'UPDATE';
+			} else {
+				// No data, ignore
+				return;
+			}
+
+			for (const emote of body[dataType]) {
+				if (emote.key !== 'emotes') continue;
+
+				const emoteId = emote.value?.id ?? emote.old_value.id;
+				const oldEmote = this.getEmoteFromChannelSet(channel, emoteId);
+
+				switch (action) {
+					case 'UPDATE':
+						if (!oldEmote) break;
+
+						completed = this.addEmoteToChannelSet(channel, emote.value);
+						break;
+					case 'ADD':
+						completed = this.addEmoteToChannelSet(channel, emote.value);
+						break;
+					case 'REMOVE':
+						completed = this.removeEmoteFromChannelSet(channel, emoteId);
+						break;
+				}
+
+				if (completed) {
+					let message = `[7TV] ${body.actor.display_name} `;
+					switch (action) {
+						case 'ADD': {
+							message += `added the emote '${emote.value.name}'`;
+							break;
+						}
+						case 'REMOVE': {
+							message += `removed the emote '${emote.old_value.name}'`;
+							break;
+						}
+						case 'UPDATE': {
+							if (oldEmote?.name !== emote.value.name) {
+								message += `renamed the emote '${oldEmote.name}' to '${emote.value.name}'`;
+							} else {
+								message += `updated the emote '${emote.value.name}'`;
+							}
+							break;
+						}
+					}
+
+					const socket = this.resolve('..socket');
+					socket.addChatNotice(channel, message);
+				}
+			}
 		}
 	}
 
@@ -188,12 +296,24 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	convertEmote(emote) {
-		const emoteHostUrl = emote.data.host.url;
+		const emoteHostUrl = emote?.data?.host?.url;
+		if (!emoteHostUrl) return null;
 
-		const emoteUrls = emote.data.host.files.filter((value => value.format === 'WEBP')).reduce((acc, value, key) => {
+		const webpEmoteVersions = emote.data.host.files.filter((value => value.format === 'WEBP'));
+		if (!webpEmoteVersions.length) return null;
+		
+		const emoteUrls = webpEmoteVersions.reduce((acc, value, key) => {
 			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
 			return acc;
 		}, {});
+
+		let staticEmoteUrls;
+		if (emote.data.animated) {
+			staticEmoteUrls = webpEmoteVersions.reduce((acc, value, key) => {
+				acc[key + 1] = `${emoteHostUrl}/${value.static_name}`;
+				return acc;
+			}, {});
+		}
 
 		const ffzEmote = {
 			id: emote.id,
@@ -205,11 +325,16 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			urls: emoteUrls,
 			modifier: this.isZeroWidthEmote(emote.flags),
 			modifier_offset: '0',
-			width: emote.data.host.files[0]?.width,
-			height: emote.data.host.files[0]?.height,
+			width: webpEmoteVersions[0]?.width,
+			height: webpEmoteVersions[0]?.height,
 			click_url: this.api.getEmoteAppURL(emote),
 			SEVENTV_emote: emote
 		};
+
+		if (staticEmoteUrls) {
+			ffzEmote.animated = ffzEmote.urls;
+			ffzEmote.urls = staticEmoteUrls;
+		}
 
 		return ffzEmote;
 	}

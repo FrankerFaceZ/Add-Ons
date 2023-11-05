@@ -1,7 +1,7 @@
 const {get, deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags } from '../../data';
 
 export default class Recommended extends LiveColumnBase {
 
@@ -30,7 +30,7 @@ export default class Recommended extends LiveColumnBase {
 			variables: {
 				first: this.settings.count || 10,
 				id: this.request_id,
-				language: this.languages && this.languages[0] || '',
+				language: this.languages && this.languages[0]?.toLowerCase?.() || '',
 				location: 'FOLLOWING_PAGE'
 			},
 			fetchPolicy: 'network-only'
@@ -46,7 +46,7 @@ export default class Recommended extends LiveColumnBase {
 					cleanViewersCount(node, edge.node);
 
 					node.broadcaster.stream = node;
-					this.memorizeTags(node.broadcaster);
+					cleanTags(node);
 					items.push(node.broadcaster);
 					node.broadcaster = undefined;
 				}
