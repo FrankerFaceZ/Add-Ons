@@ -69,14 +69,6 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		return this.emoteSets.get(set_id);
 	}
 
-	hasSetID(set_id) {
-		for (const set of this.emoteSets.keys()) {
-			if (set === set_id) return true;
-		}
-
-		return false;
-	}
-
 	addUserToSets(user_id, set_id) {
 		const userToSets = this.userToSetsMap.get(user_id) || new Set();
 		userToSets.add(set_id);

@@ -89,20 +89,33 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 				continue;
 			}
 
+			// If this avatar has the seventv-original-avatar attribute already, skip it
+			if (avatar.hasAttribute('seventv-original-avatar')) continue;
+
 			// Get the react instance for the avatar element
 			const avatarComponent = this.fine.getOwner(avatar);
 			if (!avatarComponent) continue;
 
 			// Find the nearets parent that has information about the user login
 			const parentWithLogin = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
-					|| e.props?.userLogin
-					|| e.props?.channelLogin,
+				|| e.props?.targetLogin
+				|| e.props?.userLogin
+				|| e.props?.channelLogin,
 			50);
-			if (!parentWithLogin) continue;
 
-			const login = parentWithLogin.props?.user?.login
-				|| parentWithLogin.props?.userLogin
-				|| parentWithLogin.props?.channelLogin;
+			// props.user.login is for our own avatar in the top right
+			// props.targetLogin is for viewer cards
+			// props.userLogin appears to be for channels in the sidebar
+			// props.channelLogin is for the
+			// The 'alt' attribute is a fallback 
+			const login = parentWithLogin?.props?.user?.login
+				|| parentWithLogin?.props?.targetLogin
+				|| parentWithLogin?.props?.userLogin
+				|| parentWithLogin?.props?.channelLogin
+				|| avatar.getAttribute('alt');
+
+			//
+			if (!login) continue;
 			
 			// Get the animated avatar URL for this login
 			const animatedAvatarURL = this.getUserAvatar(login);
@@ -113,12 +126,8 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 				this.bufferedAvatars.push(login);
 			}
 			else if (animatedAvatarURL) {
-				// If this avatar has the seventv-original-avatar attribute already, skip it
-				if (avatar.hasAttribute('seventv-original-avatar')) continue;
-				// Otherwise set it to the current src attribute
-				else {
-					avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
-				}
+				// Set the seventv-original-avatar attribute to the current src attribute
+				avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
 	
 				// Set the src attribute to the animated avatar
 				avatar.setAttribute('src', animatedAvatarURL);
@@ -138,7 +147,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		}
 		
 		const socket = this.resolve('..socket');
-		socket.emit({
+		socket.emitSocket({
 			op: socket.OPCODES.BRIDGE,
 			d: {
 				command: 'userstate',

@@ -45,6 +45,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this.OPCODES = OPCODES;
 
 		this.socket = false;
+		this._socket_buffer = [];
 		this._connected = false;
 		this._connecting = false;
 		this._connect_attempts = 0;
@@ -205,6 +206,14 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 	onMessage({ op: opcode, d: _data }) {
 		if (opcode === OPCODES.HELLO) {
 			this._session_id = _data.session_id;
+
+			if (this._socket_buffer.length) {
+				for (const data of this._socket_buffer) {
+					this._emitSocket(data);
+				}
+
+				this._socket_buffer = [];
+			}
 
 			this.iterateRooms();
 		}
@@ -413,12 +422,17 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this.log.info('Socket: Disconnected from socket server.');
 	}
 
-	emit(data) {
+	emitSocket(data) {
 		if (!this._connected || !this.socket) {
+			this._socket_buffer.push(data);
 			return;
 		}
 
-		this.socket.send(JSON.stringify(data));
+		this._emitSocket(data);
+	}
+
+	_emitSocket(data) {
+		this.socket?.send(JSON.stringify(data));
 	}
 
 	isSubscribed(type, condition) {
@@ -443,7 +457,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		const sub = this.findSubscription(type, condition);
 		if (sub) return; 
 
-		this.emit({
+		this.emitSocket({
 			op: OPCODES.SUBSCRIBE,
 			d: {
 				type,
@@ -469,7 +483,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 			condition
 		};
 
-		this.emit({
+		this.emitSocket({
 			op: OPCODES.UNSUBSCRIBE,
 			d: data
 		});

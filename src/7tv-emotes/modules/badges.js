@@ -99,13 +99,13 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 				2: `${host}/2x`,
 				4: `${host}/3x`
 			},
-			svg: false
+			svg: false,
+			click_url: 'https://7tv.app/',
 		};
 
 		this.chat_badges.loadBadgeData(id, badgeData);
 
 		this.badges.set(id, badgeData);
-		this.badgeToUsers.set(id, new Set());
 	}
 
 	addUserBadgeByID(user_id, badge_id) {
@@ -115,7 +115,9 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		const has_badge = user.getBadge(badge_id);
 		if (has_badge) return;
 
-		this.badgeToUsers.get(badge_id).add(user_id);
+		const userBadges = this.getUsersForBadge(badge_id);
+		userBadges.add(user_id);
+		this.badgeToUsers.set(badge_id, userBadges);
 
 		if (!this.settings.get('addon.seventv_emotes.badges')) return;
 
@@ -140,7 +142,9 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		const has_badge = user.getBadge(badge_id);
 		if (!has_badge) return;
 
-		this.badgeToUsers.get(badge_id).delete(user_id);
+		const userBadges = this.getUsersForBadge(badge_id);
+		userBadges.delete(user_id);
+		this.badgeToUsers.set(badge_id, userBadges);
 
 		user.removeBadge('addon.seventv-emotes', badge_id);
 
