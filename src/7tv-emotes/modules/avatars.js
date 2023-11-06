@@ -19,11 +19,11 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		this.updateInterval = false;
+		this.requestInterval = false;
 
 		this.userAvatars = new Map();
 
 		this.bufferedAvatars = [];
-		this.requestedAvatars = [];
 	}
 
 	onEnable() {
@@ -45,7 +45,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			if (!this.requestInterval) {
 				this.requestInterval = setInterval(() => {
 					this.postAvatarRequests();
-				}, 1000 * 3);
+				}, 500);
 			}
 		}
 		else {
@@ -68,13 +68,15 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		const highestQuality = webpEmoteVersions[webpEmoteVersions.length - 1];
 		
 		this.userAvatars.set(data.user.username, `${data.host.url}/${highestQuality.name}`);
+
+		this.updateAvatars(data.user.username);
 	}
 
 	getVisibleAvatars() {
 		return document.querySelectorAll('.tw-image-avatar');
 	}
 
-	updateAvatars() {
+	updateAvatars(username = undefined) {
 		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
 
 		const avatars = this.getVisibleAvatars();
@@ -96,7 +98,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			const avatarComponent = this.fine.getOwner(avatar);
 			if (!avatarComponent) continue;
 
-			// Find the nearets parent that has information about the user login
+			// Find the nearest parent that has information about the user login
 			const parentWithLogin = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
 				|| e.props?.targetLogin
 				|| e.props?.userLogin
@@ -114,8 +116,8 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 				|| parentWithLogin?.props?.channelLogin
 				|| avatar.getAttribute('alt');
 
-			//
-			if (!login) continue;
+			// No login? No avatar.
+			if (!login || username && login !== username) continue;
 			
 			// Get the animated avatar URL for this login
 			const animatedAvatarURL = this.getUserAvatar(login);
