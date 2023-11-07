@@ -18,18 +18,100 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			}
 		});
 
+		this.avatarCache = new Map();
+		this.socketWaiters = new Map();
+
 		this.updateInterval = false;
-		this.requestInterval = false;
-
-		this.userAvatars = new Map();
-
-		this.bufferedAvatars = [];
 	}
 
 	onEnable() {
 		this.settings.getChanges('addon.seventv_emotes.animated_avatars', () => this.onSettingChange());
 
+		this.on('common:update-avatar', async event => {
+			const url = await this.getAvatar(event.user.login);
+			if (url)
+				event.url = url;
+		});
+
 		this.onSettingChange();
+	}
+
+	receiveAvatarData(data) {
+		if (!data.user?.username || !data.host?.files) return;
+		const login = data.user.username.toLowerCase();
+
+		const waiter = this.socketWaiters.get(login);
+		if (!waiter)
+			return;
+
+		this.socketWaiters.delete(login);
+
+		const webpEmoteVersions = data.host.files.filter((value => value.format === 'WEBP'));
+		if (!webpEmoteVersions.length) return;
+
+		const highestQuality = webpEmoteVersions[webpEmoteVersions.length - 1];
+		waiter(`${data.host.url}/${highestQuality.name}`);
+	}
+
+	getAvatar(login) {
+		login = login.toLowerCase();
+
+		const entry = this.avatarCache.get(login);
+		if ( entry?.done && Date.now() < entry.expires_at )
+			return entry.value;
+
+		if ( entry && ! entry.done )
+			return entry.promise;
+
+		const promise = new Promise(resolve => {
+			let timer;
+			const onDone = value => {
+				clearTimeout(timer);
+				if ( ! value )
+					value = null;
+
+				this.avatarCache.set(login, {
+					done: true,
+					value,
+					expires_at: Date.now() + 1000 * 60 * 3 // 3 minutes
+				});
+
+				resolve(value);
+			};
+
+			this.socketWaiters.set(login, onDone);
+			timer = setTimeout(onDone, 3000);
+
+			this.waitingAvatars = this.waitingAvatars || [];
+			this.waitingAvatars.push(login);
+
+			if ( ! this.requestTimer )
+				this.requestTimer = setTimeout(() => {
+					this.requestTimer = null;
+					const waiting = this.waitingAvatars;
+					this.waitingAvatars = null;
+
+					const socket = this.resolve('..socket');
+					socket.emitSocket({
+						op: socket.OPCODES.BRIDGE,
+						d: {
+							command: 'userstate',
+							body: {
+								identifiers: waiting.map(login => `username:${login}`),
+								platform: 'TWITCH',
+								kinds: ['AVATAR']
+							}
+						}
+					});
+				}, 1000); // request them all after 1000ms
+		});
+
+		this.avatarCache.set(login, {
+			done: false,
+			promise
+		});
+
+		return promise;
 	}
 
 	onSettingChange() {
@@ -41,46 +123,24 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 					this.updateAvatars();
 				}, 1000);
 			}
-
-			if (!this.requestInterval) {
-				this.requestInterval = setInterval(() => {
-					this.postAvatarRequests();
-				}, 500);
-			}
 		}
 		else {
 			clearInterval(this.updateInterval);
 			this.updateInterval = false;
-			
-			clearInterval(this.requestInterval);
-			this.requestInterval = false;
 		}
 
 		this.updateAvatars();
-	}
-	
-	receiveAvatarData(data) {		
-		if (!data.user?.username || !data.host?.files) return;
-		
-		const webpEmoteVersions = data.host.files.filter((value => value.format === 'WEBP'));
-		if (!webpEmoteVersions.length) return;
-		
-		const highestQuality = webpEmoteVersions[webpEmoteVersions.length - 1];
-		
-		this.userAvatars.set(data.user.username, `${data.host.url}/${highestQuality.name}`);
-
-		this.updateAvatars(data.user.username);
 	}
 
 	getVisibleAvatars() {
 		return document.querySelectorAll('.tw-image-avatar');
 	}
 
-	updateAvatars(username = undefined) {
+	updateAvatars() {
 		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
 
 		const avatars = this.getVisibleAvatars();
-		for (const avatar of avatars) {
+		avatars.forEach(async avatar => {
 			if (!enabled) {
 				// Check if the avatar has an seventv-original-avatar attribute and set it
 				if (avatar.hasAttribute('seventv-original-avatar')) {
@@ -88,85 +148,50 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 					avatar.removeAttribute('seventv-original-avatar');
 				}
 
-				continue;
+				return;
 			}
-
-			// If this avatar has the seventv-original-avatar attribute already, skip it
-			if (avatar.hasAttribute('seventv-original-avatar')) continue;
 
 			// Get the react instance for the avatar element
 			const avatarComponent = this.fine.getOwner(avatar);
-			if (!avatarComponent) continue;
+			if (!avatarComponent) return;
 
 			// Find the nearest parent that has information about the user login
-			const parentWithLogin = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
+			const parent = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
 				|| e.props?.targetLogin
 				|| e.props?.userLogin
-				|| e.props?.channelLogin,
+				|| e.props?.channelLogin
+				|| e.props?.video?.owner?.login,
 			50);
 
 			// props.user.login is for our own avatar in the top right
 			// props.targetLogin is for viewer cards
 			// props.userLogin appears to be for channels in the sidebar
-			// props.channelLogin is for the
-			// The 'alt' attribute is a fallback 
-			const login = parentWithLogin?.props?.user?.login
-				|| parentWithLogin?.props?.targetLogin
-				|| parentWithLogin?.props?.userLogin
-				|| parentWithLogin?.props?.channelLogin
+			// props.channelLogin is for the main channel you're watching
+			// The 'alt' attribute is a fallback
+			const login = parent?.props?.user?.login
+				|| parent?.props?.targetLogin
+				|| parent?.props?.userLogin
+				|| parent?.props?.channelLogin
+				|| parent?.props?.video?.owner?.login
 				|| avatar.getAttribute('alt');
 
 			// No login? No avatar.
-			if (!login || username && login !== username) continue;
-			
+			if (!login) return;
+
+			// Get the current image src URL
+			const current_url = avatar.getAttribute('src');
+
 			// Get the animated avatar URL for this login
-			const animatedAvatarURL = this.getUserAvatar(login);
-			if (animatedAvatarURL === undefined) {
-				if (this.bufferedAvatars.includes(login)) continue;
-
-				// The user has not been requested yet, buffer them
-				this.bufferedAvatars.push(login);
-			}
-			else if (animatedAvatarURL) {
-				// Set the seventv-original-avatar attribute to the current src attribute
-				avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
-	
-				// Set the src attribute to the animated avatar
-				avatar.setAttribute('src', animatedAvatarURL);
-			}
-		}
-	}
-
-	postAvatarRequests() {
-		if (!this.bufferedAvatars.length) return;
-		
-		const requestArray = [];
-		for (const login of this.bufferedAvatars) {
-			requestArray.push(`username:${login}`);
-
-			// Set their avatar to false already so it won't get requested again
-			this.userAvatars.set(login, false);
-		}
-		
-		const socket = this.resolve('..socket');
-		socket.emitSocket({
-			op: socket.OPCODES.BRIDGE,
-			d: {
-				command: 'userstate',
-				body: {
-					identifiers: requestArray,
-					platform: 'TWITCH',
-					kinds: ['AVATAR']
+			const url = await this.getAvatar(login);
+			if (url && url !== current_url) {
+				if (!avatar.hasAttribute('seventv-original-avatar')) {
+					// Set the seventv-original-avatar attribute to the current src attribute
+					avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
 				}
+
+				// Set the src attribute to the animated avatar
+				avatar.setAttribute('src', url);
 			}
 		});
-
-		this.bufferedAvatars = [];
-	}
-
-	getUserAvatar(_login) {
-		const login = _login.toLowerCase();
-
-		return this.userAvatars.get(login);
 	}
 }
