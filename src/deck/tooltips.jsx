@@ -59,17 +59,29 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 	let preview_children;
 
 	if ( props.image ) {
+		let tag;
+		if ( props.embed )
+			tag = (<iframe
+				class="tw-image tw-full-width"
+				src={props.embed}
+				allowFullScreen={false}
+				allow="accelerometer; autoplay; encrypted-media; gyroscope"
+				frameBorder={0}
+			/>);
+		else
+			tag = (<img
+				class="tw-image tw-full-width"
+				alt={props.cardTitle || props.title}
+				src={props.image}
+			/>);
+
 		preview_children = [
 			// eslint-disable-next-line react/jsx-key
 			<div class="tw-border-radius-medium tw-c-background-alt-2 tw-overflow-hidden">
 				<div class="ffz-aspect ffz-aspect--align-top">
 					<div class="ffz-aspect__spacer" style="padding-top: 56.25%" />
 					<div class="preview-card-thumbnail__image">
-						<img
-							class="tw-image tw-full-width"
-							alt={props.cardTitle || props.title}
-							src={props.image}
-						/>
+						{tag}
 					</div>
 				</div>
 			</div>

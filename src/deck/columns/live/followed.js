@@ -60,6 +60,9 @@ export default class Followed extends LiveColumnBase {
 	}
 
 	async load(first = 10, cursor = null) {
+		if ( first > 100 )
+			first = 100;
+
 		const data = await getLoader().queryApollo({
 			query: require('./followed.gql'),
 			variables: {

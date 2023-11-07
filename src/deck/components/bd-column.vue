@@ -715,9 +715,36 @@ export default {
 			if ( ! root || ! scroller )
 				return;
 
-			const height = root.clientHeight - (header ? header.clientHeight : 0);
-			this.size = Math.min(50, this.columns * Math.max(1, Math.ceil(height / 220)));
+			const height = root.clientHeight - (header ? header.clientHeight : 0),
+				width = root.clientWidth;
+
+			if ( height === this.old_height && width === this.old_width )
+				return;
+
+			this.old_height = height;
+			this.old_width = width;
+
 			scroller.style.height = Math.max(0, height) + 'px';
+
+			if ( this.vertical ) {
+				let item_width = 320;
+				if ( this.width === 2 )
+					item_width = 400;
+				else if ( this.width === 0 )
+					item_width = 200;
+
+				item_width += 10;
+
+				this.size = this.columns * Math.max(1, Math.floor(width / item_width));
+
+			} else
+				this.size = this.columns * Math.max(1, Math.ceil(height / 220));
+
+			// Sanity limits.
+			if ( this.size < 50 )
+				this.size = 50;
+			else if ( this.size > 200 )
+				this.size = 200;
 		},
 
 

@@ -63,6 +63,9 @@ export default class Users extends LiveColumnBase {
 	}
 
 	async load(first = 10) {
+		if ( first > 100 )
+			first = 100;
+
 		if ( this.remaining == null )
 			this.remaining = Array.from(this.settings.ids);
 

@@ -16,7 +16,7 @@
 <script>
 
 import ColumnBase from '../column-base';
-import { reduceTags } from '../data';
+import { reduceTags, getVideoPreviewURL } from '../data';
 import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';
 
 const {get} = FrankerFaceZ.utilities.object;
@@ -109,11 +109,18 @@ export default {
 			if ( this.item.stream.type !== 'live' || ! this.settings.hide_live )
 				indicator = createStreamIndicator(this.iteam.stream.type);
 
+			let embed = null;
+			if ( this.settings.video_preview )
+				embed = getVideoPreviewURL(this.item.login);
+
 			return createCard({
 				link: this.getReactURL('user', this.item.login),
 				state: {channelView: 'Watch'},
 				title: this.title,
 				image: this.image,
+
+				embed,
+
 				tags: this.tags,
 
 				avatar: this.settings.show_avatars ? this.avatar : null,

@@ -11,11 +11,25 @@
 				<div class="tw-border-radius-medium tw-c-background-alt-2 tw-overflow-hidden">
 					<aspect :ratio="16/9">
 						<div class="preview-card-thumbnail__image">
-							<img class="tw-image tw-full-width" :alt="props.cardTitle || props.title" :src="props.image">
+							<iframe
+								v-if="props.embed"
+								class="tw-full-width"
+								:src="props.embed"
+								allowfullscreen="false"
+								allow="accelerometer; autoplay; encrypted-media; gyroscope"
+								frameborder="0"
+							/>
+							<img
+								v-else
+								class="tw-image tw-full-width"
+								:alt="props.cardTitle || props.title"
+								:src="props.image"
+							/>
 						</div>
 					</aspect>
 				</div>
 				<div class="preview-card-overlay tw-absolute tw-full-height tw-full-width tw-left-0 tw-top-0">
+					<slot name="preview-extra" />
 					<div data-test-selector="top-left-selector" class="tw-absolute tw-left-0 tw-mg-1 tw-top-0">
 						<slot name="top-left" />
 						<div v-if="props.topLeft" class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">

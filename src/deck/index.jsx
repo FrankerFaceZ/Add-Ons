@@ -39,6 +39,16 @@ class BrowseDeck extends Addon {
 			}
 		});
 
+		this.settings.add('deck.video-preview', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Deck >> Behavior',
+				title: 'Display video previews of live content.',
+				component: 'setting-check-box',
+				description: 'When this is enabled, the embedded player will be used in some situations to display previews of live channels. This is used primarily in tool-tips for the custom sidebar, but also works when hovering the mouse over a stream thumbnail.'
+			}
+		});
+
 		this.dialog = new Dialog(() => this.buildDialog());
 		this.dialog.exclusive = false;
 		this.dialog.maximized = true;
@@ -102,6 +112,7 @@ class BrowseDeck extends Addon {
 		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
 		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
 		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
+		this.on('settings:changed:deck.video-preview', val => this.updateSetting('video_preview', val));
 
 		this.on('site.subpump:pubsub-message', this.onPubSub, this);
 
@@ -250,6 +261,7 @@ class BrowseDeck extends Addon {
 			settings: {
 				open_setting: this.settings.get('deck.auto-settings'),
 				swap_sidebars: this.settings.get('layout.swap-sidebars'),
+				video_preview: this.settings.get('deck.video-preview'),
 				show_avatars: true, // this.settings.get('directory.show-channel-avatars'),
 				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),

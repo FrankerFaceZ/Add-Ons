@@ -20,6 +20,9 @@ export default class Featured extends LiveColumnBase {
 	}
 
 	async load(first = 10) {
+		if ( first > 100 )
+			first = 100;
+
 		const data = await getLoader().queryApollo({
 			query: require('./featured.gql'),
 			variables: {

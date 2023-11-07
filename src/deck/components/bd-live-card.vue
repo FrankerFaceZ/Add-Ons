@@ -4,6 +4,7 @@
 		:state="{channelView: 'Watch'}"
 		:title="title"
 		:image="image"
+		:embed="embed"
 		:tags="tags"
 		:class="klass"
 
@@ -16,9 +17,34 @@
 		:boxartLink="game && getReactURL('dir-game-index', game.name)"
 
 		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
+
+		@mouseover="startHover"
+		@mouseleave="stopHover"
 	>
 		<template #top-left>
 			<bd-stream-indicator v-if="! settings.hide_live" :type="item.stream.type" />
+		</template>
+
+		<template #preview-extra>
+			<transition name="bd--hover-progress">
+				<div
+					v-if="hovering" 
+					class="bd--hover-progress"
+				>
+					<div
+						v-if="hovering"
+						class="ffz-progress-bar ffz-progress-bar-countdown ffz-progress-bar--default ffz-progress-bar--mask"
+					>
+						<div
+							class="tw-block ffz-progress-bar__fill"
+							data-a-target="tw-progress-bar-animation"
+							:style="{
+								transition: '0.5s linear all'
+							}"
+						/>
+					</div>
+				</div>
+			</transition>
 		</template>
 
 		<template #top-right>
@@ -54,7 +80,7 @@
 <script>
 
 import ColumnBase from '../column-base';
-import { reduceTags } from '../data';
+import { reduceTags, getVideoPreviewURL } from '../data';
 
 const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
@@ -64,7 +90,9 @@ export default {
 
 	data() {
 		return {
-			now: Date.now()
+			now: Date.now(),
+			hover: false,
+			hovering: false
 		}
 	},
 
@@ -104,6 +132,11 @@ export default {
 				return 'ffz-hide-thumbnail';
 
 			return '';
+		},
+
+		embed() {
+			if ( this.hover && this.settings.video_preview )
+				return getVideoPreviewURL(this.item.login);
 		},
 
 		image() {
@@ -154,7 +187,29 @@ export default {
 	},
 
 	destroyed() {
+		clearTimeout(this.hover_timer);
 		clearInterval(this.clock);
+	},
+
+	methods: {
+		startHover() {
+			if ( ! this.settings.video_preview )
+				return;
+
+			this.hovering = true;
+			if ( ! this.hover_timer )
+				this.hover_timer = setTimeout(() => {
+					this.hover = true;
+					this.hovering = false;
+				}, 500);
+		},
+
+		stopHover() {
+			this.hovering = false;
+			this.hover = false;
+			clearTimeout(this.hover_timer);
+			this.hover_timer = null;
+		}
 	}
 
 }

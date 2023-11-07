@@ -21,6 +21,22 @@ export function getLocale() {
 }
 
 
+export function getVideoPreviewURL(login) {
+	const stuff = new URLSearchParams({
+		channel: login,
+		enableExtensions: false,
+		parent: 'twitch.tv',
+		player: 'popout',
+		quality: '160p30',
+		muted: true,
+		controls: false,
+		disable_frankerfacez: true
+	});
+
+	return `https://player.twitch.tv/?${stuff}`;
+}
+
+
 const thing = {};
 
 export function cleanTooltips() {
