@@ -80,7 +80,7 @@ module.exports = {
 		'no-useless-concat': ['warn'],
 		'no-useless-return': ['warn'],
 		'no-void': ['error'],
-		'no-warning-comments': 'off',
+		'no-warning-comments': ['warn'],
 		'no-with': ['error'],
 		'radix': ['error'],
 		'require-await': ['warn'],
