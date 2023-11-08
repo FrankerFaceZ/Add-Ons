@@ -389,7 +389,7 @@ class SmokeysUtils extends Addon {
 			try {
 				document.addEventListener(
 					'visibilitychange',
-					(e) => {
+					e => {
 						e.stopImmediatePropagation();
 					},
 					true,
@@ -448,7 +448,7 @@ class SmokeysUtils extends Addon {
 		const keyCode = e.keyCode || e.which;
 
 		switch (keyCode) {
-				// timeout
+			// timeout
 			case 84:
 
 				this.resolve('site.chat').ChatService.first.sendMessage(

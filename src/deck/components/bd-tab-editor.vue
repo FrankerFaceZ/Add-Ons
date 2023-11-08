@@ -74,8 +74,8 @@
 							{{ t('addon.deck.edit.icon', 'Icon:') }}
 						</label>
 						<icon-picker
-							:clearable="true"
 							v-model="edit_data.icon"
+							:clearable="true"
 							class="tw-mg-y-05 tw-full-width"
 						/>
 					</div>
@@ -154,6 +154,7 @@
 	</section>
 </template>
 
+<!-- eslint-disable no-unused-vars -->
 <script>
 
 import {getLoader} from '../data';

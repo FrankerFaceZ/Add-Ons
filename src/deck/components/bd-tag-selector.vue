@@ -1,11 +1,11 @@
 <template>
 	<div class="bd--tag-selector tw-flex-column tw-flex-no-wrap" data-a-target="tags-filter-dropdown">
 		<autocomplete
-			:inputId="inputId"
+			:input-id="inputId"
 			:items="getItems"
-			:suggestOnFocus="true"
-			:suggestWhenEmpty="true"
-			:clearOnSelect="true"
+			:suggest-on-focus="true"
+			:suggest-when-empty="true"
+			:clear-on-select="true"
 			:placeholder="t('addon.deck.search-tags', 'Search Tags')"
 			icon="ffz-i-search"
 			@selected="addTag"
@@ -37,6 +37,7 @@
 	</div>
 </template>
 
+<!-- eslint-disable no-unused-vars -->
 <script>
 
 import {getLoader, cleanTooltips} from '../data';
@@ -57,15 +58,15 @@ export default {
 		}
 	},
 
-	computed: {
-		lowerTags() {
-			return this.tags.map(tag => tag.toLowerCase())
-		}
-	},
-
 	data() {
 		return {
 			tags: Array.isArray(this.value) ? this.value.slice(0) : []
+		}
+	},
+
+	computed: {
+		lowerTags() {
+			return this.tags.map(tag => tag.toLowerCase())
 		}
 	},
 

@@ -5,7 +5,7 @@ export class ConfigPath {
 	 * @type {string[]}
 	 */
 	#segmentList = [];
-	
+
 	/**
 	 * @param {string} pathSegment
 	 * @param {number} [sort]
@@ -16,11 +16,11 @@ export class ConfigPath {
 		const ops = {};
 		if (sort) ops.sort = sort;
 		if (description) ops.description = description;
-		
+
 		this.#segmentList.push(`${pathSegment}@${JSON.stringify(ops)}`);
 		return this;
 	}
-	
+
 	/**
 	 * @returns {ConfigPath}
 	 */
@@ -29,7 +29,7 @@ export class ConfigPath {
 		this.#segmentList.forEach(segment => copy.#segmentList.push(segment));
 		return copy;
 	}
-	
+
 	/**
 	 * @returns {string}
 	 */
@@ -42,19 +42,20 @@ export class ConfigPath {
 				return `${starter} >> ${this.#segmentList[0]}`;
 			case 2:
 				return `${starter} > ${this.#segmentList[0]} >> ${this.#segmentList[1]}`;
-			default:
+			default: {
 				const end = this.#segmentList.pop();
 				return `${starter} > ${this.#segmentList.join(' > ')} >> ${end}`;
+			}
 		}
 	}
 }
 
 export class Config {
 	/**
-	 * @typedef {Object} ConfigObject
+	 * @typedef {object} ConfigObject
 	 * @template {*} T
 	 * @property {T} default
-	 * @property {Object} ui
+	 * @property {object} ui
 	 * @property {function(): void} [changed]
 	 * @property {function(*, *): any} [process]
 	 * @property {T} [ui.default]
@@ -66,17 +67,17 @@ export class Config {
 	 * @property {('setting-check-box'|'setting-select-box'|'setting-color-box'|'setting-text-box')} [ui.component]
 	 * @property {function(T): *} [ui.process]
 	 */
-	
+
 	/**
 	 * @type {ConfigObject}
 	 */
 	config;
-	
+
 	/**
 	 * @type {string}
 	 */
 	key;
-	
+
 	/**
 	 * @param {string} key
 	 * @param {ConfigPath} [path]
@@ -91,10 +92,10 @@ export class Config {
 				title: title || capitalize(key)
 			}
 		};
-		
+
 		if (description) this.config.ui.description = description;
 	}
-	
+
 	/**
 	 * @param {string} title
 	 * @returns {Config}
@@ -103,7 +104,7 @@ export class Config {
 		this.title = title;
 		return this;
 	}
-	
+
 	/**
 	 * @param {string} description
 	 * @returns {Config}
@@ -112,46 +113,48 @@ export class Config {
 		this.config.ui.description = description;
 		return this;
 	}
-	
+
 	/**
 	 * @param {function(): void} func
-	 * @returns Config
+	 * @returns {Config}
 	 */
 	setOnChangeEvent(func) {
 		this.config.changed = func;
 		return this;
 	}
-	
+
 	/**
 	 * @param {number} sort
-	 * @returns Config
+	 * @returns {Config}
 	 */
 	setSort(sort) {
 		this.config.ui.sort = sort;
 		return this;
 	}
-	
+
 	/**
 	 * @param {ConfigPath|string} path
-	 * @returns Config
+	 * @returns {Config}
 	 */
 	setPath(path) {
 		//Wrap in template string to call toString()
 		this.config.ui.path = `${path}`;
 		return this;
 	}
-	
+
 	/**
 	 * @param {function(*, *): *} process
+	 * @returns {Config}
 	 */
 	setProcess(process) {
 		this.config.process = process;
 		return this;
 	}
-	
+
 	/**
 	 * @template {*} T
 	 * @param {function(T): T} process
+	 * @returns {Config}
 	 */
 	setUIProcess(process) {
 		this.config.ui.process = process;
@@ -195,8 +198,8 @@ export class SelectBoxConfig extends Config {
 	 * @param {string} key
 	 * @param {T} defaultValue
 	 * @param {{value: T, title: string}[]} data
-	 * @param {string} [title]
 	 * @param {ConfigPath} [path]
+	 * @param {string} [title]
 	 * @param {string} [description]
 	 */
 	constructor(key, defaultValue, data, path, title, description) {
@@ -214,7 +217,7 @@ export class IntSelectBoxConfig extends Config {
 	 * @param {number} defaultValue
 	 * @param {number} min
 	 * @param {number} max
-	 * @param {number} [step = 1]
+	 * @param {number} [step]
 	 * @param {ConfigPath} [path]
 	 * @param {string} [title]
 	 * @param {string} [description]
@@ -252,14 +255,14 @@ export class IntTextBoxConfig extends Config {
 	 * @param {number} defaultValue
 	 * @param {number} min
 	 * @param {number} max
-	 * @param {string} [title]
 	 * @param {ConfigPath} [path]
+	 * @param {string} [title]
 	 * @param {string} [description]
 	 */
 	constructor(key, defaultValue, min, max, path, title, description) {
 		super(key, path, title, description);
 		this.config.default      = defaultValue;
-		this.config.ui.process   = (val) => {
+		this.config.ui.process   = val => {
 			val = parseInt(val, 10);
 			if (!max) max = Number.MAX_SAFE_INTEGER;
 			if (!min) min = Number.MIN_SAFE_INTEGER;

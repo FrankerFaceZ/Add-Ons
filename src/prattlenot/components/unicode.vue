@@ -26,7 +26,7 @@
 						type="checkbox"
 						class="ffz-checkbox__input"
 						@input="onChange('cat', i.label, $event)"
-					/>
+					>
 
 					<label :for="'cat$' + i.value + '$' + value.id" class="ffz-checkbox__label">
 						{{ t('addon.prattlenot.unicode.cat.' + i.value, i.label) }}
@@ -53,7 +53,7 @@
 						type="checkbox"
 						class="ffz-checkbox__input"
 						@input="onChange('script', i, $event)"
-					/>
+					>
 
 					<label :for="'script$' + i + '$' + value.id" class="ffz-checkbox__label">
 						{{ t('addon.prattlenot.unicode.script.' + i, i) }}

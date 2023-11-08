@@ -44,7 +44,9 @@
 						<figure :class="icon" />
 					</div>
 					<div class="tw-font-size-5 tw-align-left tw-flex-grow-1 tw-ellipsis">
-						<p :title="title" class="bd--header-text tw-ellipsis">{{ title }}</p>
+						<p :title="title" class="bd--header-text tw-ellipsis">
+							{{ title }}
+						</p>
 						<div
 							v-if="! is_collapsed && hasSubtitles"
 							data-tooltip-type="child"
@@ -65,8 +67,12 @@
 									:class="[subtitle.tip_icon || subtitle.icon, (subtitle.tip_icon || subtitle.icon) ? 'ffz-i-pd-1' : '']"
 									class="tw-mg-y-05"
 								>
-									<template v-if="subtitle.tip">{{ subtitle.tip_i18n ? t(subtitle.tip_i18n, subtitle.tip, subtitle) : subtitle.tip }}</template>
-									<template v-else>{{ subtitle.i18n ? t(subtitle.i18n, subtitle.text, subtitle) : subtitle.text }}</template>
+									<template v-if="subtitle.tip">
+										{{ subtitle.tip_i18n ? t(subtitle.tip_i18n, subtitle.tip, subtitle) : subtitle.tip }}
+									</template>
+									<template v-else>
+										{{ subtitle.i18n ? t(subtitle.i18n, subtitle.text, subtitle) : subtitle.text }}
+									</template>
 								</div>
 							</div>
 						</div>
@@ -235,7 +241,9 @@
 							<div
 								v-else
 								class="bd--error-log tw-mg-x-05 tw-pd-05 tw-border-radius-medium tw-c-background-alt-2 tw-border"
-							>{{ error && error.stack }}</div>
+							>
+								{{ error && error.stack }}
+							</div>
 						</div>
 						<div v-else-if="too_throttled" class="bd--width">
 							<div class="tw-mg-b-1">
@@ -256,9 +264,15 @@
 					<template v-else>
 						<div class="tw-mg-l-1 bd--width tw-align-center">
 							<h1 class="ffz-i-zreknarf loading" />
-							<div v-if="loading">{{ t('addon.deck.loading', 'Loading...') }}</div>
-							<div v-else-if="throttled">{{ t('addon.deck.throttled', 'Waiting a bit...') }}</div>
-							<div v-else>{{ t('addon.deck.no-state', '(what am i doing)') }}</div>
+							<div v-if="loading">
+								{{ t('addon.deck.loading', 'Loading...') }}
+							</div>
+							<div v-else-if="throttled">
+								{{ t('addon.deck.throttled', 'Waiting a bit...') }}
+							</div>
+							<div v-else>
+								{{ t('addon.deck.no-state', '(what am i doing)') }}
+							</div>
 						</div>
 					</template>
 				</div>
@@ -724,7 +738,7 @@ export default {
 			this.old_height = height;
 			this.old_width = width;
 
-			scroller.style.height = Math.max(0, height) + 'px';
+			scroller.style.height = `${Math.max(0, height)  }px`;
 
 			if ( this.vertical ) {
 				let item_width = 320;

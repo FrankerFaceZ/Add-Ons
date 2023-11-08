@@ -6,17 +6,17 @@
 		:class="[hideThumbnails ? 'ffz-hide-thumbnail' : '']"
 
 		:avatar="settings.show_avatars ? avatar : null"
-		:avatarTitle="item.broadcaster.displayName"
-		:avatarLink="getReactURL('user', item.broadcaster.login)"
+		:avatar-title="item.broadcaster.displayName"
+		:avatar-link="getReactURL('user', item.broadcaster.login)"
 
 		:boxart="settings.show_avatars ? boxart : null"
-		:boxartTitle="game && game.displayName"
-		:boxartLink="game && getReactURL('dir-game-index', game.name)"
+		:boxart-title="game && game.displayName"
+		:boxart-link="game && getReactURL('dir-game-index', game.name)"
 
-		:topLeft="duration"
-		topLeftIcon="ffz-i-clip"
+		:top-left="duration"
+		top-left-icon="ffz-i-clip"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
+		:bottom-left="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
 	>
 		<template #bottom-right>
 			<div v-if="published" class="ffz-il-tooltip__container">
@@ -31,10 +31,14 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-clips', item.broadcaster.login)">{{ item.broadcaster.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-clips', item.broadcaster.login)">
+					{{ item.broadcaster.displayName }}
+				</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">
+					{{ game.displayName }}
+				</react-link>
 			</p>
 			<p v-if="curator" class="tw-c-text-alt tw-ellipsis">
 				<t-list
@@ -42,7 +46,9 @@
 					default="Clipped by {user}"
 				>
 					<template #user>
-						<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user', curator.login)">{{ curator.displayName }}</react-link>
+						<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user', curator.login)">
+							{{ curator.displayName }}
+						</react-link>
 					</template>
 				</t-list>
 			</p>

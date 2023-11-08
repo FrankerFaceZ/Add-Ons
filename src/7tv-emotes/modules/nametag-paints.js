@@ -66,14 +66,14 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 
 	getPaintStylesheet() {
 		if (this.paintSheet) return this.paintSheet;
-	
+
 		const link = document.createElement('link');
 		link.type = 'text/css';
 		link.rel = 'stylesheet';
-	
+
 		const s = document.createElement('style');
 		s.id = 'seventv-paint-styles';
-	
+
 		document.head.appendChild(s);
 
 		s.sheet.insertRule(`.seventv-painted-content {
@@ -89,7 +89,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		s.sheet.insertRule(`.seventv-paint-tooltip {
 			font-weight: 700;
 		}`);
-		
+
 		return (this.paintSheet = s.sheet ?? null);
 	}
 
@@ -140,7 +140,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			this.log.error('<Cosmetics>', 'Could not find paint stylesheet');
 			return;
 		}
-		
+
 		if (!paint.gradients?.length && paint.function) {
 			// add base gradient if using v2 format
 			if (!paint.gradients) paint.gradients = new Array(1);
@@ -155,16 +155,16 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 				angle: paint.angle,
 			};
 		}
-		
+
 		const gradients = paint.gradients.map(g => this.createGradientFromPaint(g));
 		const filter = (() => {
 			if (!paint.shadows) {
 				return '';
 			}
-		
+
 			return paint.shadows.map(v => this.createFilterDropshadow(v)).join(' ');
 		})();
-		
+
 		const selector = `.seventv-paint[data-seventv-paint-id="${paint.id}"]`;
 		const text = `${selector} {
 			color: ${paint.color ? this.getCSSColorFromInt(paint.color) : 'inherit'};
@@ -190,13 +190,13 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 }
 		}
 		`;
-		
+
 		let currentIndex = -1;
 		for (let i = 0; i < sheet.cssRules.length; i++) {
 			const r = sheet.cssRules[i];
 			if (!(r instanceof CSSStyleRule)) continue;
 			if (r.selectorText !== selector) continue;
-		
+
 			currentIndex = i;
 			break;
 		}
@@ -207,7 +207,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			}
 			return;
 		}
-		
+
 		if (currentIndex >= 0) {
 			sheet.deleteRule(currentIndex);
 			sheet.insertRule(text, currentIndex);
@@ -218,7 +218,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 
 	createGradientFromPaint(gradient) {
 		const result = ['', '', '', ''];
-	
+
 		const args = [];
 		switch (gradient.function) {
 			case 'LINEAR_GRADIENT': // paint is linear gradient
@@ -234,22 +234,22 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		let funcPrefix = '';
 		if (gradient.function !== 'URL') {
 			funcPrefix = gradient.repeat ? 'repeating-' : '';
-	
+
 			for (const stop of gradient.stops) {
 				const color = this.getCSSColorFromInt(stop.color);
 				args.push(`${color} ${stop.at * 100}%`);
 			}
 		}
-	
+
 		result[0] = `${funcPrefix}${gradient.function.toLowerCase().replace('_', '-')}(${args.join(', ')})`;
 		result[1] = gradient.at && gradient.at.length === 2 ? `${gradient.at[0] * 100}% ${gradient.at[1] * 100}%` : '';
 		result[2] =
 			gradient.size && gradient.size.length === 2 ? `${gradient.size[0] * 100}% ${gradient.size[1] * 100}%` : '';
 		result[3] = gradient.canvas_repeat ?? 'unset';
-	
+
 		return result;
 	}
-	
+
 	createFilterDropshadow(shadow) {
 		return `drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(
 			shadow.color,

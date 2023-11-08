@@ -275,8 +275,8 @@
 				</div>
 
 				<component
-					v-for="(component, idx) in editComponents"
 					:is="component"
+					v-for="(component, idx) in editComponents"
 					:key="idx"
 					:value="column"
 					:inst="inst"
@@ -290,7 +290,7 @@
 				</h5>
 
 				<div
-					v-if="useHideUnlisted" 
+					v-if="useHideUnlisted"
 					class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05"
 				>
 					<input
@@ -360,6 +360,7 @@
 </template>
 
 <script>
+// eslint-disable-next-line no-unused-vars
 import { getLoader } from '../data';
 
 const {deep_copy, has} = FrankerFaceZ.utilities.object;

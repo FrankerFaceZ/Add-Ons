@@ -191,10 +191,7 @@ class PollShim extends Addon {
 			return;
 
 		this.channel_id = user_id;
-		const [user, self] = await Promise.all([
-			this.getUser(),
-			this.getSelf()
-		]);
+		const user = await this.getUser();
 		if ( ! user ) {
 			this.channel_id = null;
 			return;
@@ -554,6 +551,12 @@ class PollShim extends Addon {
 
 PollShim.register();
 
+/**
+ *
+ * @param {object} data
+ * @param {string} poll_id
+ * @returns {object}
+ */
 function formatPoll(data, poll_id) {
 	if ( ! data )
 		return {

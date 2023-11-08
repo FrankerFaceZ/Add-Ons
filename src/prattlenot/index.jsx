@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 'use strict';
 
 const {createElement, on, off} = FrankerFaceZ.utilities.dom;
@@ -43,7 +44,7 @@ class PrattleNot extends Addon {
 		this.inject('settings');
 		this.inject('i18n');
 		this.inject('site.fine');
-		
+
 		this.register('logic', Logic, true);
 
 		const positions = [
@@ -340,7 +341,7 @@ class PrattleNot extends Addon {
 		this.set_enabled = ! this.logic.enabled;
 		this.checkEnabled();
 	}
-	
+
 	updateButton(inst) {
 		const node = this.fine.getHostNode(inst);
 		if ( ! node )

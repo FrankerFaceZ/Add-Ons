@@ -7,14 +7,14 @@
 			{{ t('addon.deck.edit.game', 'Category:') }}
 		</label>
 		<autocomplete
-			:inputId="'game$' + value.id"
+			v-slot="slot"
+			:input-id="'game$' + value.id"
 			:items="fetchGames"
 			:value="value.settings.name"
-			:suggestOnFocus="true"
-			:escapeToClear="false"
+			:suggest-on-focus="true"
+			:escape-to-clear="false"
 			class="tw-full-width"
 			@selected="onSelected"
-			v-slot="slot"
 		>
 			<autocomplete-game :game="slot.item" />
 		</autocomplete>

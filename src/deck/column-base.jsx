@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {getLoader, Languages, VideoTypes} from './data';
 
 const {get, make_enum, deep_equals} = FrankerFaceZ.utilities.object;
@@ -90,7 +91,7 @@ export default class ColumnBase {
 	/**
 	 * Receive new settings for this column. Called when an existing
 	 * column has its settings edited.
-	 * @param {Object} settings The new settings object.
+	 * @param {object} settings The new settings object.
 	 */
 	updateSettings(settings) {
 		const old_settings = this.settings;
@@ -114,7 +115,7 @@ export default class ColumnBase {
 	/**
 	 * Receive new global settings for this column. Called when the global
 	 * settings or tab settings are edited.
-	 * @param {Object} settings The new global settings object.
+	 * @param {object} settings The new global settings object.
 	 */
 	updateGlobalSettings(settings) {
 		const old_global = this.global_settings;
@@ -157,7 +158,7 @@ export default class ColumnBase {
 	/**
 	 * Update the cached data if it differs, and save it. Only updates the keys
 	 * in the provided object. Does not remove existing keys.
-	 * @param {Object} data The data to save to the cache.
+	 * @param {object} data The data to save to the cache.
 	 */
 	updateCache(data) {
 		if ( ! data || typeof data !== 'object' )
@@ -191,7 +192,7 @@ export default class ColumnBase {
 
 	/**
 	 * Set the cache and save it.
-	 * @param {Object} cache The data to set the cache to.
+	 * @param {object} cache The data to set the cache to.
 	 */
 	setCache(cache) {
 		if ( ! cache )
@@ -502,7 +503,7 @@ export class LiveColumnBase extends ColumnBase {
 
 		if ( required_tags || blocked_tags ) {
 			const tags = get('stream.freeformTags', item).map(name => name && name.toLowerCase()) || [];
-				//lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase();
+			//lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase();
 
 			if ( required_tags )
 				for(const tag of required_tags)

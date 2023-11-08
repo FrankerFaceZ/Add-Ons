@@ -1,4 +1,4 @@
-const {get, deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
+const {generateUUID} = FrankerFaceZ.utilities.object;
 
 import ColumnBase, { LiveColumnBase, ClipColumnBase, VideoColumnBase } from '../../column-base';
 import { getLoader } from '../../data';
@@ -63,6 +63,7 @@ export default class Shelves extends ColumnBase {
 	}
 
 	async load(first = 10) {
+		// eslint-disable-next-line no-unused-vars
 		const data = await getLoader().queryApollo({
 			query: require('./shelves.gql'),
 			variables: {

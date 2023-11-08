@@ -38,7 +38,7 @@
 					:inst="inst"
 					:settings="activeSettings"
 					:now="now"
-					:getFFZ="getFFZ"
+					:get-f-f-z="getFFZ"
 				/>
 			</div>
 		</transition-group>

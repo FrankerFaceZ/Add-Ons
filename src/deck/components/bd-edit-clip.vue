@@ -4,17 +4,17 @@
 			{{ t('addon.deck.edit.period', 'Period:') }}
 		</label>
 		<select
-			ref="period"
 			:id="'period$' + value.id"
+			ref="period"
 			class="tw-flex-grow-1 tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-select"
 			@change="periodChange"
 		>
 			<option
 				v-for="(option, key) in periods"
+				v-once
 				:key="key"
 				:value="key"
 				:selected="key === value.settings.period"
-				v-once
 			>
 				{{ option.i18n ? t(option.i18n, option.title) : option.title }}
 			</option>
@@ -34,6 +34,8 @@ export default {
 			const out = this.inst && this.inst.getPeriods();
 			if ( out )
 				return deep_copy(out);
+
+			return null;
 		}
 	},
 

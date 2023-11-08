@@ -3,9 +3,7 @@
 		ref="root"
 		:class="{'collapsed': is_collapsed}"
 		class="bd--discover-column"
-	>
-
-	</div>
+	/>
 </template>
 
 <script>

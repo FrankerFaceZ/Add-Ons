@@ -118,7 +118,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		const stv_room = await this.stv_api.emotes.fetchChannelEmotes(room.id);
 		if (stv_room?.emote_set?.id) {
 			this._rooms[room.id] = stv_room;
-	
+
 			const set_id = stv_room.emote_set.id;
 			this._active_channel_set = set_id;
 
@@ -199,7 +199,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 
 	addChatNotice(channel, message) {
 		if (!this.settings.get('addon.seventv_emotes.update_messages')) return;
-		
+
 		this.siteChat.addNotice(channel.login, message);
 	}
 
@@ -272,24 +272,24 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 						if (value.key === 'emote_set') {
 							const oldSet = value.old_value;
 							const newSet = value.value;
-							
+
 							const channel = this.emotes.getChannelBySetID(oldSet.id, newSet.id);
 							if (!channel) continue;
-	
+
 							this.unsubscribe('emote_set.update', {
 								object_id: oldSet.id
 							});
-	
+
 							this.subscribe('emote_set.update', {
 								object_id: newSet.id
 							});
-	
+
 							this._active_channel_set = newSet.id;
-	
+
 							this.emotes.updateChannelSet(channel, newSet.id);
 							this.addChatNotice(channel, `[7TV] ${body.actor.display_name} updated the active emote set to '${newSet.name}'`);
 						}
-						
+
 						// TODO: Empty data / "updated" array when setting to "No Paint" or "No Badge"
 						// if (value.key === 'badge') {
 						// 	this.badges.addBadge(value.value);
@@ -451,11 +451,11 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		return subs.find(c => Object.entries(condition).every(([key, value]) => c.condition[key] === value)) ?? null;
-	}	
+	}
 
 	subscribe(type, condition) {
 		const sub = this.findSubscription(type, condition);
-		if (sub) return; 
+		if (sub) return;
 
 		this.emitSocket({
 			op: OPCODES.SUBSCRIBE,

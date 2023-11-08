@@ -90,7 +90,9 @@
 						<p
 							v-if="props.substatus"
 							class="ffz-i-clock tw-c-text-alt-2 tw-font-size-6 tw-line-height-heading tw-align-right"
-						>{{ props.substatus }}</p>
+						>
+							{{ props.substatus }}
+						</p>
 					</div>
 				</div>
 			</div>

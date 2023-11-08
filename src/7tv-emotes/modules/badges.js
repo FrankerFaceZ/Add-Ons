@@ -3,7 +3,7 @@ const SUB_BADGE_REGEX = /sub(?:\d+|founder)/;
 export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
-	
+
 		this.inject('settings');
 		this.inject('chat');
 		this.inject('i18n');

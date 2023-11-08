@@ -6,6 +6,7 @@ class FirstMessageHighlight extends Addon {
 		super(...args);
 
 		this.inject('chat');
+		this.inject('site');
 
 		this.settings.add('first_message_highlight.priority', {
 			default: 0,
@@ -68,9 +69,9 @@ class FirstMessageHighlight extends Addon {
 			priority: 0,
 
 			process(tokens, msg) {
-				if (!outerThis.chat.context.get('context.moderator') 
+				if (!outerThis.chat.context.get('context.moderator')
 					&& this.settings.get('first_message_highlight.only_moderated_channels')) return;
-				
+
 				if (msg.isHistorical) {
 					if (this.settings.get('first_message_highlight.remember_historical')
 						&& outerThis.remembersUser(msg)) return;
@@ -87,8 +88,8 @@ class FirstMessageHighlight extends Addon {
 	}
 
 	onEnable() {
-		if (ffz.site.getUser() !== null)
-			this.known_users.add(ffz.site.getUser().id);
+		if (this.site.getUser() !== null)
+			this.known_users.add(this.site.getUser().id);
 		this.chat.addTokenizer(this.messageHighlighter);
 		this.emit('chat:update-lines');
 	}

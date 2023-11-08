@@ -8,35 +8,37 @@
 			<markdown :source="t(type.about_i18n ? type.about_i18n : (type.i18n + '.about'), type.about)" />
 		</div>
 
-        <div
-            v-for="section in badges"
-            :key="section.title"
-        >
-            <div class="tw-mg-b-05 tw-mg-t-05">{{ section.title }}</div>
-            <div class="tw-flex tw-flex-wrap">
-                <div
-                    v-for="badge in section.badges"
-                    :key="badge.id"
-                    class="ffz-checkbox tw-mg-r-05 tw-mg-b-05"
-                >
-                    <input
-                        :id="'badge$' + badge.id + '$' + value.id"
-                        :checked="(enabled_badges.indexOf(badge.id) !== -1)"
-                        type="checkbox"
-                        class="ffz-checkbox__input"
-                        @input="onChange(badge.id, $event)"
-                    />
+		<div
+			v-for="section in badges"
+			:key="section.title"
+		>
+			<div class="tw-mg-b-05 tw-mg-t-05">
+				{{ section.title }}
+			</div>
+			<div class="tw-flex tw-flex-wrap">
+				<div
+					v-for="badge in section.badges"
+					:key="badge.id"
+					class="ffz-checkbox tw-mg-r-05 tw-mg-b-05"
+				>
+					<input
+						:id="'badge$' + badge.id + '$' + value.id"
+						:checked="(enabled_badges.indexOf(badge.id) !== -1)"
+						type="checkbox"
+						class="ffz-checkbox__input"
+						@input="onChange(badge.id, $event)"
+					>
 
-                    <label :for="'badge$' + badge.id + '$' + value.id" class="ffz-checkbox__label">
-                        <div
-                            :style="{backgroundColor: badge.color, backgroundImage: badge.styleImage }"
-                            class="ffz-pn--preview-image ffz-badge tw-mg-x-05 tw-flex-shrink-0"
-                        />
-                        {{ badge.name }}
-                    </label>
-                </div>
-            </div>
-        </div>
+					<label :for="'badge$' + badge.id + '$' + value.id" class="ffz-checkbox__label">
+						<div
+							:style="{backgroundColor: badge.color, backgroundImage: badge.styleImage }"
+							class="ffz-pn--preview-image ffz-badge tw-mg-x-05 tw-flex-shrink-0"
+						/>
+						{{ badge.name }}
+					</label>
+				</div>
+			</div>
+		</div>
 
 		<div class="tw-flex tw-align-items-center ffz-checkbox tw-mg-y-05 tw-mg-l-3">
 			<input
@@ -76,44 +78,44 @@ export default {
 	props: ['value', 'type', 'filters', 'context'],
 
 	data() {
-        const badges = FrankerFaceZ.get().resolve('chat.badges').getSettingsBadges(true, () => this.onBadgesLoad());
+		const badges = FrankerFaceZ.get().resolve('chat.badges').getSettingsBadges(true, () => this.onBadgesLoad());
 
 		return {
-            badges: badges,
+			badges,
 			id: last_id++
 		}
 	},
 
-    computed: {
-        enabled_badges() {
-            if ( Array.isArray(this.value.data.badges) )
-                return this.value.data.badges;
-            return [];
-        }
-    },
+	computed: {
+		enabled_badges() {
+			if ( Array.isArray(this.value.data.badges) )
+				return this.value.data.badges;
+			return [];
+		}
+	},
 
-    methods: {
-        onBadgesLoad() {
-            this.badges = FrankerFaceZ.get().resolve('chat.badges').getSettingsBadges();
-        },
+	methods: {
+		onBadgesLoad() {
+			this.badges = FrankerFaceZ.get().resolve('chat.badges').getSettingsBadges();
+		},
 
-        onChange(value, evt) {
-            const enabled = evt.target.checked,
-                values = this.value.data.badges;
+		onChange(value, evt) {
+			const enabled = evt.target.checked,
+				values = this.value.data.badges;
 
-            if ( ! Array.isArray(values) ) {
-                if ( enabled )
-                    this.value.data.badges = [value];
-                return;
-            }
+			if ( ! Array.isArray(values) ) {
+				if ( enabled )
+					this.value.data.badges = [value];
+				return;
+			}
 
-            const idx = values.indexOf(value);
-            if (idx === -1 && enabled)
-                values.push(value);
-            else if (idx !== -1 && ! enabled)
-                values.splice(idx, 1);
-        }
-    }
+			const idx = values.indexOf(value);
+			if (idx === -1 && enabled)
+				values.push(value);
+			else if (idx !== -1 && ! enabled)
+				values.splice(idx, 1);
+		}
+	}
 }
 
 </script>

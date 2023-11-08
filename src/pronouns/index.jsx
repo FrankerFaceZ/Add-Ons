@@ -2,6 +2,10 @@
 
 const {Mutex} = FrankerFaceZ.utilities.object;
 
+/**
+ * @param {string} endpoint
+ * @returns {object}
+ */
 function get(endpoint) {
 	return fetch(`https://pronouns.alejo.io/api/${endpoint}`).then(resp => resp.json());
 }

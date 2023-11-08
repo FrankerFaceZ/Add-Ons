@@ -84,7 +84,7 @@ export class Emotes extends FrankerFaceZ.utilities.module.Module {
 	fetchChannelEmotes(channelId) {
 		return this.parent.requestObject(`users/twitch/${channelId}`);
 	}
-	
+
 	fetchEmoteSet(setID) {
 		return this.parent.requestObject(`emote-sets/${setID}`);
 	}

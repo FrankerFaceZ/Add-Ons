@@ -11,8 +11,9 @@
 	/>
 </template>
 
-<script>
+<!-- eslint-disable no-unused-vars -->
 
+<script>
 import ColumnBase from '../column-base';
 import { reduceTags } from '../data';
 import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';

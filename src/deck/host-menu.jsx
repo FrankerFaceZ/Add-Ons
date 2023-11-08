@@ -1,9 +1,16 @@
+/* eslint-disable react/jsx-no-bind */
 'use strict';
 
 const ffz = FrankerFaceZ.get(),
 	i18n = ffz.resolve('i18n'),
 	{createElement} = FrankerFaceZ.utilities.dom;
 
+/**
+ *
+ * @param {number} x
+ * @param {number} y
+ * @returns {object}
+ */
 export function makeReference(x, y) {
 	return {
 		getBoundingClientRect: () => ({
@@ -19,6 +26,12 @@ export function makeReference(x, y) {
 	};
 }
 
+/**
+ *
+ * @param {object} item
+ * @param {Function} navigate
+ * @returns {HTMLElement}
+ */
 export function createMenu(item, navigate) {
 	return (<div class="bd--host-menu ffz-balloon tw-block">
 		<div class="tw-border tw-elevation-1 tw-border-radius-small tw-c-background-base">
@@ -45,6 +58,12 @@ export function createMenu(item, navigate) {
 	</div>);
 }
 
+/**
+ *
+ * @param {object} node
+ * @param {Function} navigate
+ * @returns {HTMLElement}
+ */
 function renderChannel(node, navigate) {
 	const url = `/${node.login}`
 	return (<a

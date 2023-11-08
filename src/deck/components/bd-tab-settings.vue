@@ -41,11 +41,11 @@
 
 			<div class="tw-pd-y-5" />
 			<div class="tw-pd-y-5" />
-
 		</simplebar>
 	</bd-modal>
 </template>
 
+<!-- eslint-disable no-unused-vars -->
 <script>
 
 import Sortable from 'sortablejs';

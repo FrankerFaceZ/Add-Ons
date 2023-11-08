@@ -3,6 +3,9 @@
 // pulling in external dependencies.
 const createElement = FrankerFaceZ.utilities.dom.createElement;
 
+/**
+ * @returns {string}
+ */
 function randomColor() {
 	return `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
 }
@@ -62,6 +65,7 @@ class Example extends Addon {
 			button: true,
 
 			click: data => {
+				// eslint-disable-next-line no-alert
 				alert('Did you know that alerts block JavaScript thread till you close them?');
 			},
 

@@ -15,7 +15,7 @@ class UnreadMentionsCounter extends Addon {
 				16: null,
 				32: null
 			}
-	  	};
+		};
 
 		this.favicon.original[16] = this.favicon.element[16].href;
 		this.favicon.original[32] = this.favicon.element[32].href;
@@ -57,7 +57,7 @@ class UnreadMentionsCounter extends Addon {
 				title:       'Enable Browser Notifications',
 				description: 'Enable browser notifications for new unread mentions/pings.\n\n**NOTE:** This requires enabling browser notifications on Twitch as a whole so if you don\'t want to receive browser notifications from Twitch itself be sure to disable those in the Notification Settings of your Twitch account.',
 				component:  'setting-check-box',
-				onUIChange: ( val ) => val && this.requestNotificationsPermission() // For some reason this works but setting changed: on this setting doesn't
+				onUIChange: val => val && this.requestNotificationsPermission() // For some reason this works but setting changed: on this setting doesn't
 			}
 		} );
 
@@ -114,12 +114,13 @@ class UnreadMentionsCounter extends Addon {
 
 	/**
 	 * Monitor new messages and detect user mentions/pings
+	 * @param {Event} event
 	 */
 	countMentions( event ) {
 		const 	msg              = event.message,
-				pingTypes        = this.settings.get( `${this.settingsNamespace}.ping-types` ),
-				matchedPings     = pingTypes.filter( ( value ) => msg.highlights?.has( value ) ),
-				notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
+			pingTypes        = this.settings.get( `${this.settingsNamespace}.ping-types` ),
+			matchedPings     = pingTypes.filter( value => msg.highlights?.has( value ) ),
+			notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
 
 		let pingAction = 'Mention';
 
@@ -138,6 +139,7 @@ class UnreadMentionsCounter extends Addon {
 			}
 
 			if ( this.settings.get( `${this.settingsNamespace}.browser-notifications.enabled` ) ) {
+				// eslint-disable-next-line no-unused-vars
 				const notification = new Notification( `${pingAction}ed by ${msg.user.displayName} in ${msg.roomLogin}'s chat`, {
 					body: `${msg.user.displayName}: ${msg.message}`,
 					icon: `https://cdn.frankerfacez.com/avatar/twitch/${notificationIcon}`,
@@ -150,8 +152,8 @@ class UnreadMentionsCounter extends Addon {
 	createIcon() {
 		for ( const size of [ 16, 32 ] ) {
 			const 	canvas  = document.createElement( 'canvas' ),
-					context = canvas.getContext( '2d' ),
-					img     = new Image();
+				context = canvas.getContext( '2d' ),
+				img     = new Image();
 
 			canvas.width  = size;
 			canvas.height = size;
@@ -168,7 +170,7 @@ class UnreadMentionsCounter extends Addon {
 				context.fill();
 
 				// Icon Counter Text
-				context.font         = Math.ceil( size / 1.78 ) + 'px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
+				context.font         = `${Math.ceil( size / 1.78 )  }px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif`;
 				context.textAlign    = 'center';
 				context.textBaseline = 'middle';
 				context.fillStyle    = this.settings.get( `${this.settingsNamespace}.icon.text-color` );
@@ -211,6 +213,7 @@ class UnreadMentionsCounter extends Addon {
 
 	/**
 	 * Try to monitor when Twitch changes the title (e.g. adding a "(1)", etc. when receiving a gift sub or similar event) and re-add counter if it existed before the change
+	 * @param {[object]} mutations
 	 */
 	monitorTitle( mutations ) {
 		if ( ! mutations[0].target.textContent.match( this.mentionCounterRegExp ) && this.mentionCount > 0 ) {
@@ -236,7 +239,7 @@ class UnreadMentionsCounter extends Addon {
 	}
 
 	requestNotificationsPermission() {
-		Notification.requestPermission().then( ( permission ) => {
+		Notification.requestPermission().then( permission => {
 			if ( permission === 'granted' ) {
 				this.log.info( 'Browser notification permission has been granted by the user.' );
 			} else {
@@ -268,7 +271,7 @@ class UnreadMentionsCounter extends Addon {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param {UnreadMentionsCounter} umcClass The UnreadMentionCounter class itself normally assigned to `this`
 	 */
 	toggleCounting( umcClass ) {

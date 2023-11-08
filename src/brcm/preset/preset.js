@@ -1,19 +1,19 @@
 export class Preset {
 	/**
-	 * @type string
+	 * @type {string}
 	 */
 	key;
-	
+
 	/**
-	 * @type string
+	 * @type {string}
 	 */
 	name;
-	
+
 	/**
-	 * @type string
+	 * @type {string}
 	 */
 	css;
-	
+
 	/**
 	 * @param {string} key
 	 * @param {string} name

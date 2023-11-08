@@ -24,7 +24,7 @@
 								class="tw-image tw-full-width"
 								:alt="props.cardTitle || props.title"
 								:src="props.image"
-							/>
+							>
 						</div>
 					</aspect>
 				</div>
