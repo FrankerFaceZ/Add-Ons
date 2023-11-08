@@ -5,11 +5,13 @@ module.exports = {
 	},
 	'extends': [
 		'eslint:recommended',
-		'plugin:vue/recommended'
+		'plugin:vue/recommended',
+		'plugin:jsdoc/recommended'
 	],
 	'plugins': [
 		'vue',
-		'react'
+		'react',
+		'jsdoc'
 	],
 	'parserOptions': {
 		//'parser': 'babel-eslint',
@@ -24,6 +26,15 @@ module.exports = {
 			'pragma': 'createElement'
 		}
 	},
+	'overrides': [
+		{
+			'files': [
+				'*.jsx',
+				'*.js',
+				'*.vue'
+			]
+		}
+	],
 	'globals': {
 		'import': false,
 		'require': false,
@@ -55,6 +66,12 @@ module.exports = {
 		'no-throw-literal': ['error'],
 		'no-undef-init': ['error'],
 		'no-unmodified-loop-condition': ['error'],
+		'no-unused-vars': [
+			'error',
+			{
+				'args': 'none',
+			}
+		],
 		'no-use-before-define': ['error', {
 			'functions': false,
 			'classes': false
@@ -63,16 +80,10 @@ module.exports = {
 		'no-useless-concat': ['warn'],
 		'no-useless-return': ['warn'],
 		'no-void': ['error'],
-		'no-warning-comments': ['warn'],
+		'no-warning-comments': 'off',
 		'no-with': ['error'],
 		'radix': ['error'],
 		'require-await': ['warn'],
-		'valid-jsdoc': [
-			'warn',
-			{
-				'requireReturn': false
-			}
-		],
 		'yoda': ['warn'],
 
 		'arrow-body-style': ['warn', 'as-needed'],
@@ -129,6 +140,11 @@ module.exports = {
 				'multiline': 'always'
 			}
 		],
+		'vue/no-textarea-mustache': 'off',
+		'vue/no-mutating-props': ['error', {
+			'shallowOnly': true
+		}],
+		'vue/multi-word-component-names': 'off',
 
 		'jsx-quotes': ['error', 'prefer-double'],
 		'react/jsx-boolean-value': 'error',
@@ -154,6 +170,11 @@ module.exports = {
 			'beforeClosing': 'never'
 		}],
 		'react/jsx-uses-react': 'error',
-		'react/jsx-wrap-multilines': 'error'
+		'react/jsx-wrap-multilines': 'error',
+
+		'jsdoc/require-param-description': 'off',
+		'jsdoc/require-returns-description': 'off',
+		'jsdoc/require-property-description': 'off',
+		'jsdoc/check-property-names': 'off',
 	}
 };

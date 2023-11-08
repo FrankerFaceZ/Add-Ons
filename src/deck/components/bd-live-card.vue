@@ -9,14 +9,14 @@
 		:class="klass"
 
 		:avatar="settings.show_avatars ? avatar : null"
-		:avatarTitle="item.displayName"
-		:avatarLink="getReactURL('user', item.login)"
+		:avatar-title="item.displayName"
+		:avatar-link="getReactURL('user', item.login)"
 
 		:boxart="settings.show_avatars ? boxart : null"
-		:boxartTitle="game && game.displayName"
-		:boxartLink="game && getReactURL('dir-game-index', game.name)"
+		:boxart-title="game && game.displayName"
+		:boxart-link="game && getReactURL('dir-game-index', game.name)"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
+		:bottom-left="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
 
 		@mouseover="startHover"
 		@mouseleave="stopHover"
@@ -28,7 +28,7 @@
 		<template #preview-extra>
 			<transition name="bd--hover-progress">
 				<div
-					v-if="hovering" 
+					v-if="hovering"
 					class="bd--hover-progress"
 				>
 					<div
@@ -68,10 +68,14 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">
+					{{ item.displayName }}
+				</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">
+					{{ game.displayName }}
+				</react-link>
 			</p>
 		</template>
 	</bd-card>
@@ -137,6 +141,8 @@ export default {
 		embed() {
 			if ( this.hover && this.settings.video_preview )
 				return getVideoPreviewURL(this.item.login);
+
+			return '';
 		},
 
 		image() {

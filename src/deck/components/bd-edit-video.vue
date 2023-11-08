@@ -19,7 +19,7 @@
 
 			<div>
 				<div
-					v-for="(type, key) in types"
+					v-for="(_type, key) in types"
 					:key="key"
 					class="ffz-checkbox"
 				>
@@ -33,7 +33,7 @@
 					>
 
 					<label :for="'type$' + key + '$' + value.id" class="ffz-checkbox__label bd-checkbox--label-indent">
-						{{ type.i18n ? t(type.i18n, type.text, type) : type.text }}
+						{{ _type.i18n ? t(_type.i18n, _type.text, _type) : _type.text }}
 					</label>
 				</div>
 			</div>
@@ -41,6 +41,7 @@
 	</div>
 </template>
 
+<!-- eslint-disable no-unused-vars -->
 <script>
 
 import { getLoader, VideoTypes } from '../data';

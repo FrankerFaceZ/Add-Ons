@@ -1,8 +1,9 @@
+/* eslint-disable react/jsx-no-bind */
 'use strict';
 
 const ffz = FrankerFaceZ.get(),
 	i18n = ffz.resolve('i18n'),
-	{createElement} = FrankerFaceZ.utilities.dom;
+	{ createElement } = FrankerFaceZ.utilities.dom;
 
 const STAT_CLASSES = 'preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05';
 const TYPES = {
@@ -16,15 +17,21 @@ const TYPES = {
 };
 
 
+/**
+ *
+ * @param {[HTMLElement]} lines
+ * @param {Function} navigate
+ * @returns {[HTMLElement]}
+ */
 export function createSubtitles(lines, navigate) {
 	const out = [];
 
-	for(const line of lines) {
-		if ( ! line )
+	for (const line of lines) {
+		if (!line)
 			continue;
 
 		let content = line.content;
-		if ( line.link )
+		if (line.link)
 			content = (<a
 				href={line.link}
 				class="tw-interactive ffz-link ffz-link--inherit"
@@ -38,11 +45,19 @@ export function createSubtitles(lines, navigate) {
 }
 
 
+/**
+ *
+ * @param {string} type
+ * @param {string} icon
+ * @param {string} label
+ * @param {object} slots
+ * @returns {HTMLElement}
+ */
 export function createStreamIndicator(type, icon, label, slots = {}) {
 	const data = TYPES[type];
-	if ( ! icon )
+	if (!icon)
 		icon = data ? data[1] : null;
-	if ( ! label )
+	if (!label)
 		label = data ? i18n.t(`addon.deck.type.${type}`, data[0]) : null;
 
 	return (<div class={`${STAT_CLASSES} preview-card-stat--${type}`}>
@@ -50,17 +65,25 @@ export function createStreamIndicator(type, icon, label, slots = {}) {
 			{slots.icon || null}
 			{icon ? <figure class={icon} /> : null}
 		</div> : null}
-		{label ? <span>{ label }</span> : null}
+		{label ? <span>{label}</span> : null}
 	</div>);
 }
 
 
+/**
+ *
+ * @param {object} props
+ * @param {object} slots
+ * @param {object} data
+ * @param {Function} navigate
+ * @returns {HTMLElement}
+ */
 export function createCard(props = {}, slots = {}, data = {}, navigate) {
 	let preview_children;
 
-	if ( props.image ) {
+	if (props.image) {
 		let tag;
-		if ( props.embed )
+		if (props.embed)
 			tag = (<iframe
 				class="tw-image tw-full-width"
 				src={props.embed}
@@ -89,7 +112,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 
 		const meta_bits = [];
 
-		if ( props.topLeft || slots.topLeft )
+		if (props.topLeft || slots.topLeft)
 			meta_bits.push(<div data-test-selector="top-left-selector" class="tw-absolute tw-left-0 tw-top-0 tw-mg-1">
 				{slots.topLeft || null}
 				{props.topLeft ? <div class={STAT_CLASSES}>
@@ -98,7 +121,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 				</div> : null}
 			</div>);
 
-		if ( props.topRight || slots.topRight )
+		if (props.topRight || slots.topRight)
 			meta_bits.push(<div data-test-selector="top-right-selector" class="tw-absolute tw-right-0 tw-top-0 tw-mg-1">
 				{slots.topRight || null}
 				{props.topRight ? <div class={STAT_CLASSES}>
@@ -107,7 +130,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 				</div> : null}
 			</div>);
 
-		if ( props.bottomLeft || slots.bottomLeft )
+		if (props.bottomLeft || slots.bottomLeft)
 			meta_bits.push(<div data-test-selector="bottom-left-selector" class="tw-absolute tw-left-0 tw-bottom-0 tw-mg-1">
 				{slots.bottomLeft || null}
 				{props.bottomLeft ? <div class={STAT_CLASSES}>
@@ -116,7 +139,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 				</div> : null}
 			</div>);
 
-		if ( props.bottomRight || slots.bottomRight )
+		if (props.bottomRight || slots.bottomRight)
 			meta_bits.push(<div data-test-selector="bottom-right-selector" class="tw-absolute tw-right-0 tw-bottom-0 tw-mg-1">
 				{slots.bottomRight || null}
 				{props.bottomRight ? <div class={STAT_CLASSES}>
@@ -125,27 +148,26 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 				</div> : null}
 			</div>);
 
-		if ( meta_bits.length )
+		if (meta_bits.length)
 			preview_children.push(<div class="preview-card-overlay tw-absolute tw-full-height tw-full-width tw-left-0 tw-top-0">
 				{meta_bits}
 			</div>);
 
-		if ( props.link )
+		if (props.link)
 			preview_children = (<a
 				class="tw-interactive ffz-link"
 				href={props.link}
 				data-a-target="preview-card-image-link"
-				// eslint-disable-next-line react/jsx-no-bind
 				onClick={e => navigate(props.link, e, props.state)}
 			>{preview_children}</a>);
 	}
 
 	let iconic;
 
-	if ( props.avatar || props.boxart || slots.iconic ) {
+	if (props.avatar || props.boxart || slots.iconic) {
 		let url, state, aspect, image;
 
-		if ( props.avatar ) {
+		if (props.avatar) {
 			url = props.avatarLink || props.link;
 			state = props.avatarLink ? props.avatarState : props.state;
 			aspect = 1;
@@ -159,14 +181,14 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 				</div>
 			</figure>);
 
-		} else if ( props.boxart ) {
+		} else if (props.boxart) {
 			url = props.boxartLink || props.link;
 			state = props.boxartLink ? props.boxartState : props.state;
-			aspect = 3/4;
+			aspect = 3 / 4;
 			image = <img class="tw-image" alt={props.boxartTitle || props.title} src={props.boxart} />;
 		}
 
-		if ( url )
+		if (url)
 			iconic = (<a
 				href={url}
 				class="tw-interactive ffz-link"
@@ -204,7 +226,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 								style={`--ffz-lines: 3`}
 								title={props.title}
 							>
-								{ props.title }
+								{props.title}
 							</h3>
 						</a>
 					</span>
@@ -217,17 +239,24 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 		</div>
 	</div>);
 
-	if ( data.id )
+	if (data.id)
 		out.id = data.id;
 
 	return out;
 }
 
 
+/**
+ *
+ * @param {[string]} tags
+ * @param {object} data
+ * @param {Function} navigate
+ * @returns {HTMLElement}
+ */
 export function createTagList(tags, data = {}, navigate) {
 	const out = [];
 
-	for(const tag of tags) {
+	for (const tag of tags) {
 		const lang = false,
 			url = `/directory/all/tags/${tag}`;
 
@@ -240,7 +269,7 @@ export function createTagList(tags, data = {}, navigate) {
 				<div
 					class={`ffz-tag__content ${lang ? 'ffz-i-language' : ''}`}
 				>
-					{ tag }
+					{tag}
 				</div>
 			</a>
 		</div>)

@@ -4,6 +4,7 @@ const Dialog = FrankerFaceZ.utilities.dialog.Dialog;
 const {deep_copy} = FrankerFaceZ.utilities.object;
 const {createElement} = FrankerFaceZ.utilities.dom;
 
+// eslint-disable-next-line no-unused-vars
 import {getLoader} from './data';
 import STYLE_URL from './styles.scss';
 

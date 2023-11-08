@@ -2,25 +2,42 @@
 
 const { FFZWaitableEvent } = FrankerFaceZ.utilities.events;
 
+/**
+ * @returns {object}
+ */
 export function getLoader() {
 	const ffz = FrankerFaceZ.get();
 	return ffz.resolve('site.twitch_data');
 }
 
+/**
+ * @returns {object}
+ */
 export function getTheme() {
 	const ffz = FrankerFaceZ.get();
 	return ffz.resolve('site.theme');
 }
 
+/**
+ * @returns {string}
+ */
 export function getLanguageCode() {
 	return getLoader().languageCode;
 }
 
+/**
+ * @returns {string}
+ */
 export function getLocale() {
 	return getLoader().locale;
 }
 
 
+/**
+ *
+ * @param {string} login
+ * @returns {string}
+ */
 export function getVideoPreviewURL(login) {
 	const stuff = new URLSearchParams({
 		channel: login,
@@ -39,6 +56,9 @@ export function getVideoPreviewURL(login) {
 
 const thing = {};
 
+/**
+ *
+ */
 export function cleanTooltips() {
 	if ( thing.frame )
 		return;
@@ -52,12 +72,23 @@ export function cleanTooltips() {
 }
 
 
+/**
+ *
+ * @param {object} copy
+ * @param {object} original
+ */
 export function cleanViewersCount(copy, original) {
 	if( copy.viewersCount !== original.viewersCount )
 		copy.viewersCount = Number(original.viewersCount);
 }
 
 
+/**
+ *
+ * @param {object} user
+ * @param {Function} callback
+ * @returns {string}
+ */
 export function checkCosmetics(user, callback) {
 	const ffz = FrankerFaceZ.get(),
 		event = new FFZWaitableEvent({
@@ -79,11 +110,15 @@ export function checkCosmetics(user, callback) {
 
 	else if ( callback )
 		callback(event.url, user);
-	
+
 	return event.url;
 }
 
 
+/**
+ *
+ * @param {object} item
+ */
 export function cleanTags(item) {
 	if ( Array.isArray(item.freeformTags) )
 		item.freeformTags = item.freeformTags.map(tag => {
@@ -99,6 +134,13 @@ export function cleanTags(item) {
 }
 
 
+/**
+ *
+ * @param {[string]} tags
+ * @param {number} count
+ * @param {boolean} required
+ * @returns {[string]}
+ */
 export function reduceTags(tags, count, required) {
 	if ( ! Array.isArray(tags) || ! count )
 		return null;
@@ -141,40 +183,40 @@ Object.freeze(VideoTypes);
 
 // TODO: Determine how to populate languages at runtime.
 export const Languages = {
-	en: "English",
-	id: "Bahasa Indonesia",
-	ca: "Català",
-	da: "Dansk",
-	de: "Deutsch",
-	es: "Español",
-	fr: "Français",
-	it: "Italiano",
-	hu: "Magyar",
-	nl: "Nederlands",
-	no: "Norsk",
-	pl: "Polski",
-	pt: "Português",
-	ro: "Română",
-	sk: "Slovenčina",
-	fi: "Suomi",
-	sv: "Svenska",
-	tl: "Tagalog",
-	vi: "Tiếng Việt",
-	tr: "Türkçe",
-	cs: "Čeština",
-	el: "Ελληνικά",
-	bg: "Български",
-	ru: "Русский",
-	uk: "Українська",
-	ar: "العربية",
-	ms: "بهاس ملايو",
-	hi: "मानक हिन्दी",
-	th: "ภาษาไทย",
-	zh: "中文",
-	ja: "日本語",
-	ko: "한국어",
-	asl: "American Sign Language",
-	other: "Other",
+	en: 'English',
+	id: 'Bahasa Indonesia',
+	ca: 'Català',
+	da: 'Dansk',
+	de: 'Deutsch',
+	es: 'Español',
+	fr: 'Français',
+	it: 'Italiano',
+	hu: 'Magyar',
+	nl: 'Nederlands',
+	no: 'Norsk',
+	pl: 'Polski',
+	pt: 'Português',
+	ro: 'Română',
+	sk: 'Slovenčina',
+	fi: 'Suomi',
+	sv: 'Svenska',
+	tl: 'Tagalog',
+	vi: 'Tiếng Việt',
+	tr: 'Türkçe',
+	cs: 'Čeština',
+	el: 'Ελληνικά',
+	bg: 'Български',
+	ru: 'Русский',
+	uk: 'Українська',
+	ar: 'العربية',
+	ms: 'بهاس ملايو',
+	hi: 'मानक हिन्दी',
+	th: 'ภาษาไทย',
+	zh: '中文',
+	ja: '日本語',
+	ko: '한국어',
+	asl: 'American Sign Language',
+	other: 'Other',
 };
 
 Object.freeze(Languages);

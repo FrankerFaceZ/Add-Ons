@@ -1,6 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { VideoColumnBase } from '../../column-base';
+// eslint-disable-next-line no-unused-vars
 import { checkCosmetics, cleanTags, getLoader } from '../../data';
 
 export default class Category extends VideoColumnBase {

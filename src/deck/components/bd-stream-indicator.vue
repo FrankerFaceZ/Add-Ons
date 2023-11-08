@@ -53,7 +53,7 @@ export default {
 				return this.label;
 
 			const type = types[this.type];
-			return type && this.t('addon.deck.type.' + this.type, type[0]);
+			return type && this.t(`addon.deck.type.${  this.type}`, type[0]);
 		}
 	}
 }

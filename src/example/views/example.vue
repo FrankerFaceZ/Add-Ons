@@ -1,5 +1,5 @@
 <template>
-    <div class="tw-c-background">
+	<div class="tw-c-background">
 		<header class="tw-full-width tw-align-items-center tw-flex tw-flex-nowrap">
 			<h4>{{ t('addon.example.vue', 'Example Vue Component') }}</h4>
 		</header>

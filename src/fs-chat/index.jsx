@@ -20,6 +20,11 @@ const BAD_SHORTCUTS = [
 	'alt+x'
 ];
 
+/**
+ *
+ * @param {string} key
+ * @returns {boolean}
+ */
 function isValidShortcut(key) {
 	if ( ! key )
 		return false;
@@ -329,7 +334,7 @@ class FSChat extends Addon {
 		// Sanity checking for love and justice.
 		if ( ! this.isChatHidden() || this.chat || ! document.fullscreenElement )
 			return;
-		
+
 		this.chat_pane = document.querySelector('.channel-root__right-column');
 		if ( ! this.chat_pane )
 			return;
@@ -387,7 +392,7 @@ class FSChat extends Addon {
 			fschat: true,
 			'force-theme': this.dark
 		});
-		
+
 		if ( ! this.scroll_frame )
 			this.scroll_frame = requestAnimationFrame(() => {
 				this.scroll_frame = null;
@@ -508,7 +513,7 @@ class FSChat extends Addon {
 
 		} else {
 			this.enableObserver();
-			
+
 			if ( this.was_active || this.settings.get('addon.fs-chat.automatic') )
 				this.turnOn();
 		}

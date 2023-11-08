@@ -19,12 +19,12 @@ class Aplatypuss extends Addon {
 		});
 
 		this.chat.context.on('changed:aplatypuss.enable_emoticons', this.updateEmotes, this);
-		
+
 	}
 
 	onEnable() {
 		this.log.debug('Aplatypuss Emotes module was enabled successfully.');
-		
+
 		this.on('chat:room-add', this.roomAdd);
 		this.on('chat:room-remove', this.roomRemove);
 
@@ -48,16 +48,16 @@ class Aplatypuss extends Addon {
 		if (!this.chat.context.get('aplatypuss.enable_emoticons')) {
 			return;
 		}
-		
-		const BASE_URL = "https://aplatypuss-emotes.pages.dev/static/"
+
+		const BASE_URL = 'https://aplatypuss-emotes.pages.dev/static/'
 		const response = await fetch('https://aplatypuss-emotes.pages.dev/emotes.json');
 		if (response.ok) {
 			const platyEmotes = [];
 
 			for (const dataEmote of await response.json()) {
-				
+
 				const arbitraryEmote = /[^A-Za-z0-9]/.test(dataEmote.code);
-		
+
 				const emote = {
 					id: dataEmote.code,
 					urls: {
@@ -70,29 +70,29 @@ class Aplatypuss extends Addon {
 					modifier: dataEmote.modifier !== undefined,
 					modifier_offset:  dataEmote.modifier,
 				};
-		
+
 				emote.urls = {
-					1: BASE_URL + `${dataEmote.id}` + "_28.webp",
-					2: BASE_URL + `${dataEmote.id}` + "_56.webp",
-					4: BASE_URL + `${dataEmote.id}` + "_112.webp",
+					1: `${BASE_URL  }${dataEmote.id}_28.webp`,
+					2: `${BASE_URL  }${dataEmote.id}_56.webp`,
+					4: `${BASE_URL  }${dataEmote.id}_112.webp`,
 				};
-		
-		
+
+
 				platyEmotes.push(emote);
 			}
-			
-	
+
+
 			let setEmotes = [];
 			setEmotes = setEmotes.concat(platyEmotes);
-	
-			let set = {
+
+			const set = {
 				emoticons: setEmotes,
 				title: 'Channel Emotes',
 				source: 'Aplatypuss',
 				icon: 'https://aplatypuss-emotes.pages.dev/static/icon.png',
 			};
 			room.addSet('addon--aplatypuss', realID, set);
-		
+
 		}else {
 			if (response.status === 404) return;
 
@@ -114,7 +114,7 @@ class Aplatypuss extends Addon {
 		}
 		else{
 			//console.log("Aplatypuss emotes enabled")
-			this.updateChannelEmotes(room);
+			await this.updateChannelEmotes(room);
 			this.emotes.loadSet('addon--aplatypuss', realID);
 
 		}

@@ -1,11 +1,13 @@
 {
-  "enabled": true,
-  "requires": [],
-  "unlisted": false,
-  "version": "1.0.0",
-  "short_name": "declutter",
-  "name": "Declutterer",
-  "author": "ae9is",
-  "description": "Removes some repetitive messages to help slow down your chat.",
-  "settings": "add_ons.declutter"
+	"enabled": true,
+	"requires": [],
+	"unlisted": false,
+	"version": "1.0.0",
+	"short_name": "declutter",
+	"name": "Declutterer",
+	"author": "ae9is",
+	"description": "Removes some repetitive messages to help slow down your chat.",
+	"settings": "add_ons.declutter",
+	"created": "2023-11-08T17:48:10.505Z",
+	"updated": "2023-11-08T17:48:10.505Z"
 }

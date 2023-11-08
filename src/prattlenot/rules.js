@@ -1,7 +1,5 @@
 'use strict';
 
-const {has} = FrankerFaceZ.utilities.object;
-
 import levenshtein from 'js-levenshtein';
 import MD5 from 'spark-md5';
 
@@ -27,6 +25,11 @@ try {
 	NON_NUMERIC_MULTI = /([^0-9]{2,3})\1+/gi;
 }
 
+/**
+ *
+ * @param {object} ctx
+ * @returns {string}
+ */
 function saniText(ctx) {
 	if ( ctx._sanitext )
 		return ctx._sanitext;
@@ -76,6 +79,11 @@ export const cheer = {
 }
 
 
+/**
+ *
+ * @param {object} msg
+ * @returns {[string]}
+ */
 function getBadgeIDs(msg) {
 	let keys = msg.badges ? Object.keys(msg.badges) : null;
 	if ( ! msg.ffz_badges )
@@ -235,6 +243,11 @@ distance is within the threshold, the message will be flagged.`,
 }
 
 
+/**
+ *
+ * @param {string} str
+ * @returns {number}
+ */
 function findSingleChars(str) {
 	let last = -1, idx, i = 0;
 	while ((idx = str.indexOf(' ', last + 1)) !== -1) {

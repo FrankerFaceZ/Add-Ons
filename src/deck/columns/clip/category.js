@@ -1,6 +1,6 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
-import ColumnBase, {ClipColumnBase} from '../../column-base';
+import {ClipColumnBase} from '../../column-base';
 import { checkCosmetics, getLoader } from '../../data';
 
 export default class Category extends ClipColumnBase {

@@ -6,8 +6,8 @@
 		<div class="tw-full-width">
 			<textarea 
 				:id="'edit_chat$' + id"
-				class="tw-border-radius-medium tw-font-size-6 tw-full-width tw-input tw-pd-x-1 tw-pd-y-05 tw-mg-y-05"
 				v-model="value.command"
+				class="tw-border-radius-medium tw-font-size-6 tw-full-width tw-input tw-pd-x-1 tw-pd-y-05 tw-mg-y-05"
 				:placeholder="defaults.command"
 				@input="$emit('input', value)"
 			/>

@@ -9,5 +9,5 @@
 	"description": "Addon to highlight the first message of a user during the current session. Useful for community-driven chats and welcoming.",
 	"settings": "add_ons.first_message_highlight",
 	"created": "2021-12-01T14:32:46.254Z",
-	"updated": "2023-03-08T17:54:06.268Z"
+	"updated": "2023-11-08T17:48:10.505Z"
 }

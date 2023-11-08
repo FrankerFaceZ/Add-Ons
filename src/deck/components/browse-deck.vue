@@ -96,23 +96,23 @@
 			</div>
 			<div ref="tablist" class="bd--deck-selector tw-flex">
 				<div
-					v-for="(tab, index) of tabs"
-					:key="tab.id"
+					v-for="(_tab, index) of tabs"
+					:key="_tab.id"
 					class="tw-mg-r-1"
 				>
 					<button
 						:class="index !== tab_index ? 'tw-button--text' : 'active'"
 						class="tw-button"
-						:data-tab-id="tab.id"
+						:data-tab-id="_tab.id"
 						@click="switchTab(index)"
 						@dragover="dragOverTab($event)"
 						@drop="dropOnTab($event)"
 					>
-						<span :class="tab.icon" class="tw-button__text">
-							{{ tab.i18n ? t(tab.i18n, tab.title) : tab.title }}
+						<span :class="_tab.icon" class="tw-button__text">
+							{{ _tab.i18n ? t(_tab.i18n, _tab.title) : _tab.title }}
 						</span>
 						<span
-							v-if="tab.sidebar"
+							v-if="_tab.sidebar"
 							class="tw-button__icon tw-pd-l-0 ffz-i-pin ffz-tooltip"
 							:data-title="t('addon.deck.tab-sidebar', 'This tab is being used as your sidebar.')"
 						/>
@@ -143,7 +143,7 @@
 						</div>
 					</div>
 				</div>
-				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
+				<bd-tag-list :tags="currentTags.slice(0, 3)" :no-margin="true" />
 				<div v-if="currentTags.length > 3" class="tw-mg-l-05 ffz-il-tooltip__container">
 					{{ t('addon.deck.filter-more', ' and {count, plural, one {# other} other {# others} }', {count: currentTags.length - 3}) }}
 					<div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right ffz-balloon--lg tw-pd-x-1 tw-pd-b-1">
@@ -164,16 +164,16 @@
 				class="tw-mg-t-5 tw-mg-l-3 tw-mg-b-1"
 			>
 				<component
+					:is="getColumnComponent(column)"
 					v-for="column in columns"
 					:key="column.id"
-					:is="getColumnComponent(column)"
 					:data="column"
 					:vertical="vertical"
 					:settings="activeSettings"
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
-					:getFFZ="getFFZ"
+					:get-f-f-z="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -198,16 +198,16 @@
 				class="tw-flex tw-flex-grow-1 tw-mg-t-5 tw-mg-l-3 tw-mg-b-1"
 			>
 				<component
+					:is="getColumnComponent(column)"
 					v-for="column in columns"
 					:key="column.id"
-					:is="getColumnComponent(column)"
 					:data="column"
 					:vertical="vertical"
 					:settings="activeSettings"
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
-					:getFFZ="getFFZ"
+					:get-f-f-z="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -228,7 +228,7 @@
 				:is="modal"
 				:data="modal_data"
 				:vertical="vertical"
-				:getFFZ="getFFZ"
+				:get-f-f-z="getFFZ"
 				@open-modal="openModal($event)"
 				@close="closeModal"
 			/>
@@ -240,6 +240,7 @@
 
 import Sortable from 'sortablejs';
 
+// eslint-disable-next-line no-unused-vars
 import {Languages, getLoader} from '../data';
 
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
@@ -252,6 +253,9 @@ const category_labels = {
 	other: 'Other'
 };
 
+/**
+ * @returns {object}
+ */
 function getDefaultTab() {
 	return {
 		id: generateUUID(),

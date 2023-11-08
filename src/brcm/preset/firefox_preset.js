@@ -3,7 +3,7 @@ import {Preset} from './preset.js';
 export class FirefoxDarkPreset extends Preset {
 	constructor() {
 		super('ffdark', 'Firefox (Dark)',
-`#brcm-main-container .show {
+			`#brcm-main-container .show {
 	background-color: rgb(59,63,69);
 	border:           1px solid rgb(95,98,102);
 	border-radius:    0px;
@@ -56,7 +56,7 @@ export class FirefoxDarkPreset extends Preset {
 export class FirefoxLightPreset extends Preset {
 	constructor() {
 		super('fflight', 'Firefox (Light)',
-`#brcm-main-container .show {
+			`#brcm-main-container .show {
 	background-color: rgb(242,242,242);
 	border:           1px solid rgb(221,221,221);
 	border-radius:    0px;

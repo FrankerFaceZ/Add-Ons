@@ -6,7 +6,7 @@
 			</h3>
 			<p>
 				{{ t('addon.deck.bad-column.explain', 'This column type ("{type}") is no longer supported and this column cannot be displayed. Please remove it.', {
-					type: this.data.type
+					type: data.type
 				}) }}
 			</p>
 			<div class="tw-mg-t-1">

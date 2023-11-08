@@ -8,9 +8,9 @@
 		:class="klass"
 
 		:avatar="settings.show_avatars ? item.profileImageURL : null"
-		:avatarTitle="item.displayName"
+		:avatar-title="item.displayName"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
+		:bottom-left="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
 
 		:click="openMenu"
 	>
@@ -42,22 +42,28 @@
 				<template v-if="game">
 					<t-list phrase="directory.user-playing" default="{user} playing {game}">
 						<template #user>
-							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">
+								{{ item.displayName }}
+							</react-link>
 						</template>
 						<template #game>
-							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
+							<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">
+								{{ game.displayName }}
+							</react-link>
 						</template>
 					</t-list>
 				</template>
 				<template v-else>
-					<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">{{ item.displayName }}</react-link>
+					<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/${item.login}/videos`">
+						{{ item.displayName }}
+					</react-link>
 				</template>
 			</p>
 			<p class="tw-c-text-alt tw-ellipsis">
 				<template v-if="item.hosts.length > 1">
 					{{ t('directory.hosted.by-many', 'Hosted by {count, plural, one {# channel} other {# channels} }', item.hosts.length) }}
 				</template>
-				<t-list v-else phrase='directory.hosted.by-one' default='Hosted by {user}'>
+				<t-list v-else phrase="directory.hosted.by-one" default="Hosted by {user}">
 					<template #user>
 						<react-link
 							class="tw-interactive ffz-link ffz-link--inherit"

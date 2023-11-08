@@ -2,10 +2,10 @@
 	<div class="bd--channel-selector tw-flex-column tw-flex-no-wrap" data-a-target="channel-dropdown">
 		<autocomplete
 			v-slot="slot"
-			:inputId="inputId"
+			:input-id="inputId"
 			:items="getItems"
-			:suggestOnFocus="true"
-			:clearOnSelect="true"
+			:suggest-on-focus="true"
+			:clear-on-select="true"
 			:allow-filter="false"
 			:placeholder="t('addon.deck.search-users', 'Search Users')"
 			icon="ffz-i-search"

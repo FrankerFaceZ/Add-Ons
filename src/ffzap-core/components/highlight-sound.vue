@@ -55,7 +55,7 @@
 					:data-title="t('addon.ffzap-core.no-file-support', 'Custom files are not supported by the current storage provider.\nPlease change your storage provider in Data Management > Storage >> Provider.')"
 					@click="openFileSelector"
 				>
-					<span class="tw-button__icon tw-button__icon--left ffz-i-upload"/>
+					<span class="tw-button__icon tw-button__icon--left ffz-i-upload" />
 					<span class="tw-button__text">Select File</span>
 				</button>
 			</div>
@@ -113,15 +113,15 @@ export default {
 		return {
 			isPresetSound: false,
 			isCustomURL: false,
-            isCustomFile: false
+			isCustomFile: false
 		}
 	},
 	computed: {
-		isBlobSupported: function () {
+		isBlobSupported () {
 			return this.context.getFFZ().resolve('settings').provider.supportsBlobs;
 		}
 	},
-	mounted: function () {
+	mounted () {
 		for (const { value } of this.data) {
 			if (value === this.value) {
 				this.isPresetSound = true;
@@ -172,7 +172,7 @@ export default {
 				this.set(value);
 			}
 		},
-		async canPlayAudio(blob) {
+		canPlayAudio(blob) {
 			return new Promise(resolve => {
 				const timeout = setTimeout(() => {
 					resolve(false);
@@ -196,17 +196,20 @@ export default {
 			const file = await openFile('audio/*', false);
 
 			if (file.size > 1024 * 1000 * 2) { // 2MB file size limit
+				// eslint-disable-next-line no-alert
 				alert(this.t('addon.ffzap-core.highlight-sound.file-too-big', 'Audio file is too big! (Max. 2MB)'));
 				return;
 			}
 
 			const audio = await this.canPlayAudio(file);
 			if (!audio) {
+				// eslint-disable-next-line no-alert
 				alert(this.t('addon.ffzap-core.highlight-sound.cant-play', 'Can\'t play audio file!'));
 				return;
 			}
 
 			if (audio.duration > 10) { // Longer than 10s
+				// eslint-disable-next-line no-alert
 				alert(this.t('addon.ffzap-core.highlight-sound.file-too-long', 'Audio file is too long! (Max. 10 seconds)'));
 				return;
 			}
@@ -233,11 +236,14 @@ export default {
 				}
 			}
 
+			const deletions = [];
 			for (const key of await settings.provider.blobKeys()) {
 				if (key.startsWith('ffzap.sound-file:') && !sounds.includes(key)) {
-					await settings.provider.deleteBlob(key);
+					deletions.push(settings.provider.deleteBlob(key));
 				}
 			}
+
+			await Promise.allSettled(deletions);
 		}
 	}
 }

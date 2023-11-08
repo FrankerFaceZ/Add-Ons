@@ -1,4 +1,4 @@
-import {BooleanConfig, Config, ConfigPath}     from './config/config.js';
+import {BooleanConfig, Config}     from './config/config.js';
 import * as MenuConfig                         from './config/menu_config.js';
 import {ChatModule}                            from './module/chat_module.js';
 import {RightClickModule}                      from './module/module.js';
@@ -21,14 +21,13 @@ export class BetterRightClickMenuAddon extends Addon {
 	 * and {@link RightClickModule#checkElement}. This
 	 * file requires no other modifications to add a module,
 	 * the same applies to presets below.
-	 *
 	 * @type {RightClickModule[]}
 	 */
 	modules = [
 		new ChatModule(this),
 		new VideoPlayerModule(this)
 	];
-	
+
 	/**
 	 * @type {Preset[]}
 	 */
@@ -39,38 +38,38 @@ export class BetterRightClickMenuAddon extends Addon {
 		new FirefoxDarkPreset(),
 		new FirefoxLightPreset()
 	];
-	
+
 	/**
 	 * @type {HTMLElement}
 	 */
 	customStyleElement;
-	
+
 	/**
 	 * @type {HTMLElement}
 	 */
 	staticStyleElement;
-	
+
 	/**
 	 * @type {HTMLElement}
 	 */
 	containerElement;
-	
+
 	constructor(...args) {
 		super(...args);
-		
+
 		this.log.info('Constructing BRCM');
-		
+
 		const injects = ['chat.actions', 'chat.badges', 'site.chat', 'site.twitch_data'];
 		this.modules.forEach(module => module.injects.forEach(inject => injects.push(inject)));
 		[...new Set(injects)].forEach(inject => this.inject(inject));
-		
+
 		this.loadMenuSettings();
 		this.loadModuleSettings();
 		this.loadDevBadge();
-		
+
 		this.log.info('Successfully constructed BRCM');
 	}
-	
+
 	//<editor-fold desc="Load Settings">
 	/**
 	 * @returns {void}
@@ -81,7 +80,7 @@ export class BetterRightClickMenuAddon extends Addon {
 			if (!(MenuConfig[configKey] instanceof Config)) continue;
 			this.settings.add(getConfigKey('menu', MenuConfig[configKey].key), MenuConfig[configKey].setSort(menuSort++).setOnChangeEvent(() => this.reloadElements()).config);
 		}
-		
+
 		this.settings.addUI(getConfigKey('menu', 'css'), {
 			ui: {
 				path       : `${MenuConfig.pathCSS}`,
@@ -94,7 +93,7 @@ export class BetterRightClickMenuAddon extends Addon {
 				onChange   : () => this.reloadElements()
 			}
 		});
-		
+
 		this.settings.add(getConfigKey('menu', 'css'), {
 			default: this.menuPresets[0].css,
 			ui     : {
@@ -110,7 +109,7 @@ export class BetterRightClickMenuAddon extends Addon {
 			}
 		});
 	}
-	
+
 	/**
 	 * @returns {void}
 	 */
@@ -122,7 +121,7 @@ export class BetterRightClickMenuAddon extends Addon {
 			for (const config of module.configs) {
 				this.settings.add(getConfigKey(module.key, config.key), config.setSort(configSort++).setOnChangeEvent(() => this.reloadElements()).config);
 			}
-			
+
 			for (const submodule of module.modules) {
 				const props = {
 					default: true,
@@ -139,34 +138,34 @@ export class BetterRightClickMenuAddon extends Addon {
 			}
 		}
 	}
-	
+
 	//</editor-fold>
-	
+
 	//<editor-fold desc="FFZ Events">
 	/**
 	 * @returns {void}
 	 */
 	onEnable() {
 		this.log.info('Setting up BRCM');
-		
+
 		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
 		document.head.appendChild(this.staticStyleElement = createElement('style', null, this.getStaticCSS()));
 		this.reloadElements();
 		document.addEventListener('contextmenu', event => this.onRightClick(event));
 		document.addEventListener('click', event => this.onLeftClick(event));
-		
+
 		this.log.info('Successfully setup BRCM');
 	}
-	
+
 	/**
 	 * @returns {void}
 	 */
 	onDisable() {
 		this.log.info('Disabling BRCM');
-		
+
 		document.removeEventListener('contextmenu', event => this.onRightClick(event));
 		document.removeEventListener('click', event => this.onLeftClick(event));
-		
+
 		if (this.containerElement) {
 			this.containerElement.remove();
 			this.containerElement = null;
@@ -179,12 +178,12 @@ export class BetterRightClickMenuAddon extends Addon {
 			this.staticStyleElement.remove();
 			this.staticStyleElement = null;
 		}
-		
+
 		this.log.info('Successfully disabled BRCM');
 	}
-	
+
 	//</editor-fold>
-	
+
 	//<editor-fold desc="Mouse Events">
 	/**
 	 * @param {MouseEvent} event
@@ -198,7 +197,7 @@ export class BetterRightClickMenuAddon extends Addon {
 				return;
 			}
 		}
-		
+
 		for (const child of this.containerElement.children) {
 			if (child.className === 'show') {
 				child.className = 'hide';
@@ -206,13 +205,13 @@ export class BetterRightClickMenuAddon extends Addon {
 				return;
 			}
 		}
-		
+
 		for (const module of this.modules) {
 			if (this.settings.get(getConfigKey(module.key, 'enabled')) && module.checkElement(event.target)) {
 				const menuElement = document.getElementById(`brcm-${module.key}-menu`);
 				if (module.onClickElement(event, menuElement)) continue;
 				event.preventDefault();
-				
+
 				const mousePos         = getMousePos(event);
 				menuElement.className  = 'show';
 				menuElement.style.top  = `${mousePos.y - (window.innerHeight - event.pageY > menuElement.offsetHeight ? 0 : menuElement.offsetHeight)}px`;
@@ -221,7 +220,7 @@ export class BetterRightClickMenuAddon extends Addon {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param {MouseEvent} event
 	 * @returns {void}
@@ -231,18 +230,18 @@ export class BetterRightClickMenuAddon extends Addon {
 			if (child.className === 'show') {
 				child.className = 'hide';
 			}
-			
+
 			if (event.target.parentElement === child && child.id.split('-').length === 3) {
 				const moduleKey       = child.id.split('-')[1];
 				const modulesFiltered = this.modules.filter(module => module.key === moduleKey);
-				
+
 				if (modulesFiltered.length === 1) {
 					const module            = modulesFiltered[0];
 					const submoduleFiltered = module.modules.filter(submodule => submodule.key === event.target.className);
-					
+
 					if (submoduleFiltered.length === 1) {
 						const submodule = submoduleFiltered[0];
-						
+
 						if ((submodule.requiresMod ? this.isMod() : true))
 							submodule.onClick(this);
 					}
@@ -250,42 +249,42 @@ export class BetterRightClickMenuAddon extends Addon {
 			}
 		}
 	}
-	
+
 	//</editor-fold>
-	
+
 	//<editor-fold desc="Document manipulation (Need a better name)">
 	/**
 	 * @returns {void}
 	 */
 	reloadElements() {
-		console.log('reloading');
-		
+		// console.log('reloading');
+
 		this.setCSS();
 		this.setHTML();
-		
+
 		const textArea = document.getElementById('brcm-css-text-area');
 		if (textArea && !this.getMenuSetting('css')) textArea.textContent = this.getCSS();
 	}
-	
+
 	/**
 	 * @returns {void}
 	 */
 	setHTML() {
 		if (!this.containerElement) return;
-		
+
 		this.containerElement.remove();
 		document.body.appendChild(this.containerElement = createElement('div', {id: 'brcm-main-container', className: 'chat-shell'}));
-		
+
 		this.modules.forEach(module => {
 			const moduleElement = createElement('ul', {id: `brcm-${module.key}-menu`, className: 'hide'});
-			
+
 			if (this.getMenuSetting(MenuConfig.config_displayHeader) && module.supportsHeader) {
 				moduleElement.appendChild(createElement('li', {className: 'header'}));
-				
+
 				if (this.getMenuSetting(MenuConfig.config_displayHeaderSeparators))
 					moduleElement.appendChild(createElement('li', {className: 'separator-header'}));
 			}
-			
+
 			module.modules.filter(submodule => this.settings.get(getConfigKey(module.key, submodule.key)))
 				.filter(submodule => submodule.requiresVIP ? this.isVIP() : true)
 				.filter(submodule => submodule.requiresMod ? this.isMod() : true)
@@ -296,11 +295,11 @@ export class BetterRightClickMenuAddon extends Addon {
 						moduleElement.appendChild(createElement('li', {className: 'separator-menu-item'}));
 					moduleElement.appendChild(createElement('li', {className: submodule.key}, (module.displayMenuRequirements ? (submodule.requiresMod ? '(Mod) ' : submodule.requiresBroadcaster ? '(Streamer) ' : '') : '') + submodule.title));
 				});
-			
+
 			this.containerElement.appendChild(moduleElement);
 		});
 	}
-	
+
 	/**
 	 * @returns {void}
 	 */
@@ -312,14 +311,14 @@ export class BetterRightClickMenuAddon extends Addon {
 			document.head.appendChild(this.customStyleElement = createElement('style', null, css));
 		}
 	}
-	
+
 	/**
 	 * @returns {string}
 	 */
 	getCSS() {
 		return this.getMenuSetting('css_enabled') ? (this.getMenuSetting('css') ? this.getMenuSetting('css') : this._getCSS()) : this._getCSS();
 	}
-	
+
 	/**
 	 * @returns {string}
 	 */
@@ -365,7 +364,7 @@ export class BetterRightClickMenuAddon extends Addon {
 	background-color: ${this.getMenuSetting(MenuConfig.color_highlight)};
 }`;
 	}
-	
+
 	getStaticCSS() {
 		return `#brcm-css-text-area {
 	font-family:        "Roboto Mono";
@@ -390,9 +389,9 @@ export class BetterRightClickMenuAddon extends Addon {
 	cursor:           default;
 }`;
 	}
-	
+
 	//</editor-fold>
-	
+
 	//<editor-fold desc="Util Methods">
 	/**
 	 * @param {string} message
@@ -401,38 +400,38 @@ export class BetterRightClickMenuAddon extends Addon {
 	sendMessage(message) {
 		this.chat.ChatService.first.sendMessage(message);
 	}
-	
+
 	/**
-	 * @param {boolean} [explicit = false]
+	 * @param {boolean} [explicit]
 	 * @returns {boolean}
 	 */
 	isVIP(explicit = false) {
 		return (explicit ? false : this.isMod()) || this.chat.ChatContainer.first.props.commandPermissionLevel === 1;
 	}
-	
+
 	/**
-	 * @param {boolean} [explicit = false]
+	 * @param {boolean} [explicit]
 	 * @returns {boolean}
 	 */
 	isMod(explicit) {
 		return (explicit ? false : this.isBroadcaster()) || this.chat.ChatContainer.first.props.commandPermissionLevel === 2;
 	}
-	
+
 	/**
 	 * @returns {boolean}
 	 */
 	isBroadcaster() {
 		return this.chat.ChatContainer.first.props.commandPermissionLevel === 3;
 	}
-	
+
 	/**
-	 * @param {Config||string} config
+	 * @param {Config|string} config
 	 * @returns {*}
 	 */
 	getMenuSetting(config) {
 		return this.settings.get(getConfigKey('menu', config.key || config));
 	}
-	
+
 	/**
 	 * @returns {void}
 	 */
@@ -449,10 +448,10 @@ export class BetterRightClickMenuAddon extends Addon {
 				4: 'https://i.imgur.com/rrD2aTS.png'
 			}
 		});
-		
+
 		this.resolve('chat').getUser(523772148, 'l3afme').addBadge('add_ons.brcm', 'add_ons.brcm--badge-developer');
 	}
-	
+
 	//</editor-fold>
 }
 

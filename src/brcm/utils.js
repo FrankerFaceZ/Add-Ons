@@ -10,9 +10,9 @@ export const getMousePos = event => ({
 });
 
 /**
- * @param {HTMLElement||EventTarget} element
- * @param {number} [parentCount = Number.MAX_SAFE_INTEGER]
- * @param {number} [itr = 0]
+ * @param {HTMLElement|EventTarget} element
+ * @param {number} [parentCount]
+ * @param {number} [itr]
  * @returns {string}
  */
 export const getParentClassNames = (element, parentCount = Number.MAX_SAFE_INTEGER, itr = 0) =>

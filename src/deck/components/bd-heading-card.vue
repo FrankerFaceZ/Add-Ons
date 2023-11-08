@@ -16,21 +16,29 @@ export default {
 		strong() {
 			if ( this.item.strong )
 				return 'tw-strong'
+
+			return '';
 		},
 
 		upcase() {
 			if ( this.item.upcase )
 				return 'tw-upcase';
+
+			return '';
 		},
 
 		textColor() {
 			if ( this.item.color )
 				return this.item.color;
+
+			return '';
 		},
 
 		fontSize() {
 			if ( this.item.size )
 				return `tw-font-size-${this.item.size}`;
+
+			return '';
 		},
 
 		title() {

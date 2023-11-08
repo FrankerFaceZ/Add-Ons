@@ -67,7 +67,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		for (const emote of globalSet.emotes) {
 			const convertedEmote = this.convertEmote(emote);
 			if (!convertedEmote) continue;
-			
+
 			ffzEmotes.push(convertedEmote);
 		}
 
@@ -301,7 +301,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		const webpEmoteVersions = emote.data.host.files.filter((value => value.format === 'WEBP'));
 		if (!webpEmoteVersions.length) return null;
-		
+
 		const emoteUrls = webpEmoteVersions.reduce((acc, value, key) => {
 			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
 			return acc;

@@ -25,7 +25,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 
 		// Twitch User ID -> Set(7TV Set ID)
 		this.userToSetsMap = new Map();
-		
+
 		// 7TV Set ID -> Set(Twitch User ID)
 		this.setToUsersMap = new Map();
 	}
@@ -73,7 +73,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		const userToSets = this.userToSetsMap.get(user_id) || new Set();
 		userToSets.add(set_id);
 		this.userToSetsMap.set(user_id, userToSets);
-		
+
 		const setToUsers = this.setToUsersMap.get(set_id) || new Set();
 		setToUsers.add(user_id);
 		this.setToUsersMap.set(set_id, setToUsers);
@@ -88,7 +88,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		this.reloadSet(setID);
 	}
 
-	updateSet(body) {		
+	updateSet(body) {
 		if (!this.settings.get('addon.seventv_emotes.personal_emotes')) return;
 
 		let action;
@@ -112,10 +112,10 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 
 		for (const emote of body[dataType]) {
 			if (emote.key !== 'emotes') continue;
-			
+
 			const emoteId = emote.value?.id ?? emote.old_value.id;
 			const oldEmote = this.getEmoteFromSet(setID, emoteId);
-			
+
 			switch (action) {
 				case 'UPDATE':
 					if (!oldEmote) break;
@@ -191,7 +191,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		const set = this.getPersonalSet(setID);
 
 		if (!set?.emotes) return null;
-		
+
 		return set.emotes[emoteID];
 	}
 
@@ -210,7 +210,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		if (!set.emotes[emoteID]) return false;
 
 		delete set.emotes[emoteID];
-		
+
 		return true;
 	}
 }

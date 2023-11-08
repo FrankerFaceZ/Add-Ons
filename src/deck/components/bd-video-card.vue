@@ -8,17 +8,17 @@
 		:class="[hasAnimation ? 'bd--animated-card' : '', hideThumbnails ? 'ffz-hide-thumbnail' : '']"
 
 		:avatar="settings.show_avatars ? avatar : null"
-		:avatarTitle="item.owner.displayName"
-		:avatarLink="getReactURL('user', item.owner.login)"
+		:avatar-title="item.owner.displayName"
+		:avatar-link="getReactURL('user', item.owner.login)"
 
 		:boxart="settings.show_avatars ? boxart : null"
-		:boxartTitle="game && game.displayName"
-		:boxartLink="game && getReactURL('dir-game-index', game.name)"
+		:boxart-title="game && game.displayName"
+		:boxart-link="game && getReactURL('dir-game-index', game.name)"
 
-		:topRight="duration"
-		topRightIcon="ffz-i-play"
+		:top-right="duration"
+		top-right-icon="ffz-i-play"
 
-		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
+		:bottom-left="settings.hide_viewers ? null : t('addon.deck.views', '{count, plural, one {# view} other {# views}}', item.viewCount)"
 
 		@mouseenter="onHover"
 		@mouseleave="onLeave"
@@ -40,10 +40,14 @@
 
 		<template #subtitles>
 			<p v-if="user_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-videos', item.owner.login)">{{ item.owner.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('user-videos', item.owner.login)">
+					{{ item.owner.displayName }}
+				</react-link>
 			</p>
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
-				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">{{ game.displayName }}</react-link>
+				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="getReactURL('dir-game-index', game.name)">
+					{{ game.displayName }}
+				</react-link>
 			</p>
 		</template>
 	</bd-card>

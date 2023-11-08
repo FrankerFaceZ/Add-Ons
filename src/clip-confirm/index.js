@@ -80,7 +80,7 @@ class ClipConfirm extends Addon {
 					{ value: 'shift', title: 'Shift' }
 				]
 			},
-			changed: ( val ) => { this.updateHotkey( val ); }
+			changed: val => { this.updateHotkey( val ); }
 		} );
 
 		this.settings.add( `${this.settingsNamespace}.skip-on-shortcut`, {
@@ -91,7 +91,7 @@ class ClipConfirm extends Addon {
 				description: 'By default, Twitch allows clipping using the "Alt + X" shortcut hotkey. Enabing this setting will automatically bypass the confirmation window when using this shortcut to make clips without needing to use the "Skip Confirmation" hotkey you have set above.',
 				component:   'setting-check-box'
 			},
-			changed: ( val ) => { this.skipOnShortcut = val; }
+			changed: val => { this.skipOnShortcut = val; }
 		} );
 	}
 
@@ -102,12 +102,12 @@ class ClipConfirm extends Addon {
 
 		const	view     = ( await import( './views/confirmation.vue' ) ).default;
 		const	instance = new vue.Vue( {
-					el:         document.createElement( 'div' ),
-					components: {
-						'confirmation-vue': view
-					},
-					render:     h => h( 'confirmation-vue' )
-				} );
+			el:         document.createElement( 'div' ),
+			components: {
+				'confirmation-vue': view
+			},
+			render:     h => h( 'confirmation-vue' )
+		} );
 
 		return instance.$el;
 	}
@@ -120,7 +120,7 @@ class ClipConfirm extends Addon {
 
 		this.clipConfirmed = false;
 
-		return;
+		
 	}
 
 	detectRoute( _route, _match ) {
@@ -197,7 +197,7 @@ class ClipConfirm extends Addon {
 		this.tooltipObserver       = new MutationObserver( this.tooltipObserverCallback.bind( this ) );
 
 		if ( this.rightControls ) {
-			this.buildVue().then( ( el ) => {
+			this.buildVue().then( el => {
 				document.body.appendChild( el );
 
 				this.clipConfirmationModal = document.getElementById( 'ffz-clip-confirm-modal' );
@@ -256,7 +256,7 @@ class ClipConfirm extends Addon {
 			if ( hotkey === 'ctrl' ) {
 				hotkeyPressed = e.ctrlKey || e.metaKey;
 			} else {
-				hotkeyPressed = e[ hotkey + 'Key' ];
+				hotkeyPressed = e[ `${hotkey  }Key` ];
 			}
 
 			if ( ! hotkeyPressed ) {
@@ -295,7 +295,7 @@ class ClipConfirm extends Addon {
 		this.clipButtonTooltipText.new = this.clipButtonTooltipText.original;
 
 		if ( this.skipHotkey ) {
-			this.clipButtonTooltipText.new += ' | Hold ' + this.hotkeyName + ' to skip confirmation';
+			this.clipButtonTooltipText.new += ` | Hold ${  this.hotkeyName  } to skip confirmation`;
 		}
 
 		this.clipButton.setAttribute( 'aria-label', this.clipButtonTooltipText.new );

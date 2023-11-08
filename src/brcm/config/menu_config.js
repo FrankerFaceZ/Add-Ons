@@ -9,13 +9,13 @@ import {BooleanConfig, ColorConfig, ConfigPath, TextBoxConfig} from './config.js
 
 const process = (val, defaultVal) => {
 	if(val.endsWith('rem')){
-		const n = parseInt(val.split('rem')[0]);
+		const n = parseInt(val.split('rem')[0], 10);
 		return isNaN(n) || !isFinite(n) ? `${defaultVal}px` : val;
 	} else if(val.endsWith('px')){
-		const n = parseInt(val.split('px')[0]);
+		const n = parseInt(val.split('px')[0], 10);
 		return isNaN(n) || !isFinite(n) ? `${defaultVal}px` : val;
 	} else {
-		const n = parseInt(val);
+		const n = parseInt(val, 10);
 		return isNaN(n) || !isFinite(n) ? `${defaultVal}px` : `${val}px`;
 	}
 };

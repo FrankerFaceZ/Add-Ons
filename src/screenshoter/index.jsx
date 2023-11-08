@@ -1,6 +1,7 @@
 const { createElement } = FrankerFaceZ.utilities.dom
 const { isValidShortcut } = FrankerFaceZ.utilities.object
 
+// eslint-disable-next-line no-unused-vars
 const BAD_SHORTCUTS = [
 	'f',
 	'space',
@@ -154,7 +155,7 @@ class Screenshoter extends Addon {
 		if (button) button.remove()
 		if (this.isClip(video)) return // We don't work with clips
 
-		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
+		let tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
 
 		cont = (<div class="ffz--player-screenshoter tw-inline-flex tw-relative ffz-il-tooltip__container">
 			{btn = (<button
@@ -165,7 +166,7 @@ class Screenshoter extends Addon {
 			>
 				<div class="tw-align-items-center tw-flex tw-flex-grow-0">
 					<div class="tw-button-icon__icon">
-						{icon = (<figure class="ffz-fa-photo ffz-i-camera" />)}
+						<figure class="ffz-fa-photo ffz-i-camera" />
 					</div>
 				</div>
 			</button>)}
@@ -241,7 +242,7 @@ class Screenshoter extends Addon {
 
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-		canvas.toBlob((blob) => {
+		canvas.toBlob(blob => {
 			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
 			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
 		})
