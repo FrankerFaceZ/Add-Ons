@@ -28,6 +28,9 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		this.settings.getChanges('addon.seventv_emotes.animated_avatars', () => this.onSettingChange());
 
 		this.on('common:update-avatar', async event => {
+			const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
+			if (!enabled) return;
+
 			const url = await this.getAvatar(event.user.login);
 			if (url)
 				event.url = url;
