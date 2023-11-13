@@ -163,19 +163,22 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 				|| e.props?.targetLogin
 				|| e.props?.userLogin
 				|| e.props?.channelLogin
-				|| e.props?.video?.owner?.login,
+				|| e.props?.video?.owner?.login
+				|| e.props?.content?.channelLogin,
 			50);
 
 			// props.user.login is for our own avatar in the top right
 			// props.targetLogin is for viewer cards
 			// props.userLogin appears to be for channels in the sidebar
 			// props.channelLogin is for the main channel you're watching
+			// props.content.channelLogin is for theatre / fullscreen mode
 			// The 'alt' attribute is a fallback
 			const login = parent?.props?.user?.login
 				|| parent?.props?.targetLogin
 				|| parent?.props?.userLogin
 				|| parent?.props?.channelLogin
 				|| parent?.props?.video?.owner?.login
+				|| parent.props?.content?.channelLogin
 				|| avatar.getAttribute('alt');
 
 			// No login? No avatar.
