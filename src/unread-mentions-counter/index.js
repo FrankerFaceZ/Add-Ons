@@ -1,11 +1,10 @@
 class UnreadMentionsCounter extends Addon {
-	constructor(...args) {
-		super(...args);
+	constructor( ...args ) {
+		super( ...args );
 
-		this.settingsNamespace    = 'addon.unread-mentions-counter';
 		this.mentionCounterRegExp = /\(@[0-9]*\)/;
 		this.titleObserver        = new MutationObserver( this.monitorTitle );
-		this.counterLocation      = this.settings.get( `${this.settingsNamespace}.counter-location` ) || 'icon';
+		this.counterLocation      = this.settings.get( 'addon.unread-mentions-counter.counter-location' ) || 'icon';
 		this.favicon              = {
 			element:  {
 				16: document.querySelector( 'link[rel="icon"][sizes="16x16"]' ),
@@ -22,7 +21,14 @@ class UnreadMentionsCounter extends Addon {
 
 		this.inject( 'chat' );
 
-		this.settings.add( `${this.settingsNamespace}.counter-location`, {
+		this.initializeSettings();
+	}
+
+	/**
+	 * Initialize add-on settings
+	 */
+	initializeSettings() {
+		this.settings.add( 'addon.unread-mentions-counter.counter-location', {
 			default: 'icon',
 			ui: {
 				path:        'Add-Ons > Unread Mentions Counter >> Behavior',
@@ -37,7 +43,7 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.ping-types`, {
+		this.settings.add( 'addon.unread-mentions-counter.ping-types', {
 			default: [ 'mention' ],
 			type: 'basic_array_merge',
 			ui: {
@@ -50,7 +56,7 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.browser-notifications.enabled`, {
+		this.settings.add( 'addon.unread-mentions-counter.browser-notifications.enabled', {
 			default: false,
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
@@ -61,17 +67,17 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.browser-notifications.interact-to-close`, {
+		this.settings.add( 'addon.unread-mentions-counter.browser-notifications.interact-to-close', {
 			default: false,
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
 				title:       'Interact To Close',
-				description: 'If enabled, notifications will only close when you manually close them. Otherwise, notifications will automatically close after several seconds.\n\n**NOTE:** Firefox does not yet properly support this setting and will automatically behave as if it is disabled.',
+				description: 'If enabled, notifications will only close when you manually close them. Otherwise, notifications will automatically close after several seconds.',
 				component:   'setting-check-box'
 			}
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.browser-notifications.icon-photo`, {
+		this.settings.add( 'addon.unread-mentions-counter.browser-notifications.icon-photo', {
 			default: 'channel',
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Browser Notifications',
@@ -85,7 +91,7 @@ class UnreadMentionsCounter extends Addon {
 			}
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.icon.bg-color`, {
+		this.settings.add( 'addon.unread-mentions-counter.icon.bg-color', {
 			default: 'rgba(255, 0, 0, 1.0)',
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Icon Counter Appearance',
@@ -98,7 +104,7 @@ class UnreadMentionsCounter extends Addon {
 			changed: () => { this.insertIconCounter(); }
 		} );
 
-		this.settings.add( `${this.settingsNamespace}.icon.text-color`, {
+		this.settings.add( 'addon.unread-mentions-counter.icon.text-color', {
 			default: 'rgba(255, 255, 255, 1.0)',
 			ui:      {
 				path:        'Add-Ons > Unread Mentions Counter >> Icon Counter Appearance',
@@ -117,9 +123,9 @@ class UnreadMentionsCounter extends Addon {
 	 */
 	countMentions( event ) {
 		const 	msg              = event.message,
-				pingTypes        = this.settings.get( `${this.settingsNamespace}.ping-types` ),
+				pingTypes        = this.settings.get( 'addon.unread-mentions-counter.ping-types' ),
 				matchedPings     = pingTypes.filter( ( value ) => msg.highlights?.has( value ) ),
-				notificationIcon = this.settings.get( `${this.settingsNamespace}.browser-notifications.icon-photo` ) === 'channel' ? msg.roomID : msg.user.id;
+				notificationIcon = this.settings.get( 'addon.unread-mentions-counter.browser-notifications.icon-photo' ) === 'channel' ? msg.roomID : msg.user.id;
 
 		let pingAction = 'Mention';
 
@@ -137,11 +143,11 @@ class UnreadMentionsCounter extends Addon {
 				pingAction = 'Ping';
 			}
 
-			if ( this.settings.get( `${this.settingsNamespace}.browser-notifications.enabled` ) ) {
+			if ( this.settings.get( 'addon.unread-mentions-counter.browser-notifications.enabled' ) ) {
 				const notification = new Notification( `${pingAction}ed by ${msg.user.displayName} in ${msg.roomLogin}'s chat`, {
 					body: `${msg.user.displayName}: ${msg.message}`,
 					icon: `https://cdn.frankerfacez.com/avatar/twitch/${notificationIcon}`,
-					requireInteraction: this.settings.get( `${this.settingsNamespace}.browser-notifications.interact-to-close` )
+					requireInteraction: this.settings.get( 'addon.unread-mentions-counter.browser-notifications.interact-to-close' )
 				} );
 			}
 		}
@@ -164,14 +170,14 @@ class UnreadMentionsCounter extends Addon {
 				// Icon Counter Background
 				context.beginPath();
 				context.arc( canvas.width - size / 3, size / 3, size / 3, 0, 2 * Math.PI );
-				context.fillStyle = this.settings.get( `${this.settingsNamespace}.icon.bg-color` );
+				context.fillStyle = this.settings.get( 'addon.unread-mentions-counter.icon.bg-color' );
 				context.fill();
 
 				// Icon Counter Text
 				context.font         = Math.ceil( size / 1.78 ) + 'px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
 				context.textAlign    = 'center';
 				context.textBaseline = 'middle';
-				context.fillStyle    = this.settings.get( `${this.settingsNamespace}.icon.text-color` );
+				context.fillStyle    = this.settings.get( 'addon.unread-mentions-counter.icon.text-color' );
 				context.fillText( this.mentionCount, canvas.width - size / 3, size / 2.75 );
 
 				this.favicon.element[ size ].href = canvas.toDataURL();
