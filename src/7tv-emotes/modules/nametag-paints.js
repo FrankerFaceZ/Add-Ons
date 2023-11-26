@@ -76,10 +76,10 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 	
 		document.head.appendChild(s);
 
-		s.sheet.insertRule(`.seventv-painted-content {
+		s.sheet.insertRule(`.seventv-painted-content .chat-author__display-name {
 			background-color: currentcolor;
 		}`);
-		s.sheet.insertRule(`.seventv-painted-content[data-seventv-painted-text="true"] {
+		s.sheet.insertRule(`.seventv-painted-content[data-seventv-painted-text="true"] .chat-author__display-name {
 			-webkit-text-fill-color: transparent;
 			background-clip: text !important;
 			/* stylelint-disable-next-line property-no-vendor-prefix */
@@ -165,7 +165,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			return paint.shadows.map(v => this.createFilterDropshadow(v)).join(' ');
 		})();
 		
-		const selector = `.seventv-paint[data-seventv-paint-id="${paint.id}"]`;
+		const selector = `.seventv-paint[data-seventv-paint-id="${paint.id}"] .chat-author__display-name`;
 		const text = `${selector} {
 			color: ${paint.color ? this.getCSSColorFromInt(paint.color) : 'inherit'};
 			background-image: ${gradients.map(v => v[0]).join(', ')};
