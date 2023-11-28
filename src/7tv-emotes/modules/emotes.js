@@ -31,7 +31,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		this.settings.add('addon.seventv_emotes.unlisted_emotes', {
-			default: true,
+			default: false,
 			ui: {
 				path: 'Add-Ons > 7TV Emotes >> Emotes > Emote Visibility',
 				title: 'Show unlisted emotes',
