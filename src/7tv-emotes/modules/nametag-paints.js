@@ -79,6 +79,10 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		s.sheet.insertRule(`.seventv-painted-content {
 			background-color: currentcolor;
 		}`);
+		// The following CSS rule fixes international names not being visible when painted
+		s.sheet.insertRule(`.seventv-painted-content > .chat-author__intl-login {
+			opacity: 1;
+		}`);
 		s.sheet.insertRule(`.seventv-painted-content[data-seventv-painted-text="true"] {
 			-webkit-text-fill-color: transparent;
 			background-clip: text !important;
