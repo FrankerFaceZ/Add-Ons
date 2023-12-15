@@ -77,6 +77,10 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		const setToUsers = this.setToUsersMap.get(set_id) || new Set();
 		setToUsers.add(user_id);
 		this.setToUsersMap.set(set_id, setToUsers);
+
+		this.chat
+			.getUser(user_id)
+			.addSet('addon.seventv_emotes', this.getSetID(set_id));
 	}
 
 	grantSetToUser(data) {
@@ -84,8 +88,6 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 		const user = data.user.connections.find(c => c.platform === 'TWITCH');
 
 		this.addUserToSets(user.id, setID);
-
-		this.reloadSet(setID);
 	}
 
 	updateSet(body) {		
@@ -135,16 +137,16 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 	}
 
 	reloadSet(setID) {
-		const userIDs = this.setToUsersMap.get(setID);
-		if (userIDs?.size) {
-			for (const userID of userIDs) {
-				this.chat
-					.getUser(userID)
-					.removeSet('addon.seventv_emotes', this.getSetID(setID));
-			}
-		}
-
 		if(!this.settings.get('addon.seventv_emotes.personal_emotes')) {
+			const userIDs = this.setToUsersMap.get(setID);
+			if (userIDs?.size) {
+				for (const userID of userIDs) {
+					this.chat
+						.getUser(userID)
+						.removeSet('addon.seventv_emotes', this.getSetID(setID));
+				}
+			}
+
 			this.emotes.unloadSet(this.getSetID(setID), true, true);
 			return;
 		}
@@ -164,24 +166,16 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 			}
 		}
 
-		const ffzSet = {
-			title: set.name,
-			source: '7TV',
-			icon: this.setIcon,
-			sort: 50,
-			emotes
-		};
-
 		if (emotes.length) {
-			this.emotes.loadSetData(this.getSetID(setID), ffzSet, true);
+			const ffzSet = {
+				title: set.name,
+				source: '7TV',
+				icon: this.setIcon,
+				sort: 50,
+				emotes
+			};
 
-			if (userIDs?.size) {
-				for (const userID of userIDs) {
-					this.chat
-						.getUser(userID)
-						.addSet('addon.seventv_emotes', this.getSetID(setID));
-				}
-			}
+			this.emotes.loadSetData(this.getSetID(setID), ffzSet, true);
 		}
 
 		return true;
