@@ -471,10 +471,22 @@ export class LiveColumnBase extends ColumnBase {
 		const hide_reruns = this.global_settings.hide_reruns,
 			blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games, this.languages, this.allowHideUnlisted() ? this.settings.hide_unlisted : false));
+		return items.filter(item => LiveColumnBase.filterStream(
+			item,
+			hide_reruns,
+			blocked_games,
+			this.required_tags,
+			this.blocked_tags,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.languages,
+			this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted) {
+	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted, blocked_titles, blocked_flags) {
 		if ( ! item.stream )
 			return false;
 
@@ -513,6 +525,20 @@ export class LiveColumnBase extends ColumnBase {
 				for(const tag of blocked_tags)
 					if ( tags.includes(tag) )
 						return false;
+		}
+
+		if ( item.broadcastSettings?.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.broadcastSettings.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.broadcastSettings.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('stream.contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
 		}
 
 		return true;
@@ -612,10 +638,17 @@ export class ClipColumnBase extends ColumnBase {
 
 		const blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => ClipColumnBase.filterClip(item, blocked_games, this.filter_games, this.filter_blocked_games));
+		return items.filter(item => ClipColumnBase.filterClip(
+			item,
+			blocked_games,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterClip(item, blocked_games, filter_games, filter_blocked_games) {
+	static filterClip(item, blocked_games, filter_games, filter_blocked_games, blocked_titles, blocked_flags) {
 		if ( blocked_games && item.game && blocked_games.includes(item.game.name) )
 			return false;
 
@@ -624,6 +657,20 @@ export class ClipColumnBase extends ColumnBase {
 
 		if ( filter_blocked_games && item.game && filter_blocked_games.includes(item.game.id) )
 			return false;
+
+		if ( item.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
+		}
 
 		return true;
 	}
@@ -736,10 +783,21 @@ export class VideoColumnBase extends ColumnBase {
 			types = this.types,
 			blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => VideoColumnBase.filterVideo(item, no_recordings, types, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games));
+		return items.filter(item => VideoColumnBase.filterVideo(
+			item,
+			no_recordings,
+			types,
+			blocked_games,
+			this.required_tags,
+			this.blocked_tags,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterVideo(item, no_recordings, types, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games) {
+	static filterVideo(item, no_recordings, types, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, blocked_titles, blocked_flags) {
 		if ( no_recordings && item.status === 'RECORDING' )
 			return false;
 
@@ -767,6 +825,20 @@ export class VideoColumnBase extends ColumnBase {
 				for(const tag of blocked_tags)
 					if ( tags.includes(tag) )
 						return false;
+		}
+
+		if ( item.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
 		}
 
 		return true;

@@ -9,6 +9,10 @@ fragment VideoInfo on Video {
 	animatedPreviewURL
 	previewThumbnailURL(width: $previewWidth, height: $previewHeight)
 	status
+	contentClassificationLabels {
+		id
+		localizedName
+	}
 	contentTags {
 		id
 		isAutomated

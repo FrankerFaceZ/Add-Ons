@@ -111,8 +111,15 @@ class BrowseDeck extends Addon {
 		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
 		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
 		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
-		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
 		this.on('settings:changed:deck.video-preview', val => this.updateSetting('video_preview', val));
+
+		this.on('settings:changed:__filter:directory.block-titles', val => this.updateSetting('blocked_titles', val ? deep_copy(val) : null));
+		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
+		this.on('settings:changed:__filter:directory.blur-titles', val => this.updateSetting('blur_titles', val ? deep_copy(val) : null));
+		this.on('settings:changed:directory.blur-tags', val => this.updateSetting('blur_tags', deep_copy(val || [])));
+		this.on('settings:changed:directory.block-flags', val => this.updateSetting('blocked_flags', deep_copy(val || [])));
+		this.on('settings:changed:directory.blur-flags', val => this.updateSetting('blur_flags', deep_copy(val || [])));
+		this.on('settings:changed:directory.show-flags', val => this.updateSetting('show_flags', val));
 
 		this.on('site.subpump:pubsub-message', this.onPubSub, this);
 
@@ -266,11 +273,18 @@ class BrowseDeck extends Addon {
 				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),
 				uptime: this.settings.get('directory.uptime'),
+				show_flags: this.settings.get('directory.show-flags'),
 				group_hosts: true, //this.settings.get('directory.following.group-hosts'),
 				host_menus: true, //this.settings.get('directory.following.host-menus'),
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
 				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', [])),
-				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags', []))
+
+				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags') ?? []),
+				blur_tags: deep_copy(this.settings.get('directory.blur-tags') ?? []),
+				blocked_titles: deep_copy(this.settings.get('__filter:directory.block-titles')),
+				blur_titles: deep_copy(this.settings.get('__filter:directory.blur-titles')),
+				blocked_flags: deep_copy(this.settings.get('directory.block-flags') ?? []),
+				blur_flags: deep_copy(this.settings.get('directory.blur-flags') ?? [])
 			},
 
 			getFFZ: () => this,

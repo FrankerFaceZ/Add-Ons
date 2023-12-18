@@ -79,13 +79,36 @@ export default class Channel extends VideoColumnBase {
 			let is_stream;
 
 			if ( item.stream ) {
-				if ( no_live || ! LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags) )
+				if ( no_live || ! LiveColumnBase.filterStream(
+					item,
+					hide_reruns,
+					blocked_games,
+					this.required_tags,
+					this.blocked_tags,
+					this.filter_games,
+					this.filter_blocked_games,
+					this.languages,
+					this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
+					this.global_settings.blocked_titles,
+					this.global_settings.blocked_flags
+				) )
 					continue;
 
 				is_stream = true;
 
 			} else {
-				if ( ! VideoColumnBase.filterVideo(item, no_recordings, this.types, blocked_games, this.required_tags) )
+				if ( ! VideoColumnBase.filterVideo(
+					item,
+					no_recordings,
+					this.types,
+					blocked_games,
+					this.required_tags,
+					this.blocked_tags,
+					this.filter_games,
+					this.filter_blocked_games,
+					this.global_settings.blocked_titles,
+					this.global_settings.blocked_flags
+				) )
 					continue;
 
 				is_stream = false;

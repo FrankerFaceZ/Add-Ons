@@ -64,6 +64,21 @@
 					</div>
 				</div>
 			</div>
+
+			<div
+				v-if="contentFlags"
+				class="ffz-il-tooltip__container tw-mg-t-05"
+			>
+				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
+					<figure class="ffz-i-flag" />
+				</div>
+				<div class="ffz-il-tooltip ffz-il-tooltip--20 ffz-il-tooltip--prewrap ffz-il-tooltip--down ffz-il-tooltip--align-right">{{
+					t(
+						'addon.deck.content-flags',
+						'Intended for certain audiences. May contain:'
+					) + '\n\n' + contentFlags.join('\n')
+				}}</div>
+			</div>
 		</template>
 
 		<template #subtitles>
@@ -128,10 +143,43 @@ export default {
 		},
 
 		klass() {
-			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+			if ( this.shouldHideThumbnail )
 				return 'ffz-hide-thumbnail';
 
 			return '';
+		},
+
+		contentFlags() {
+			if ( ! this.inst.global_settings?.show_flags )
+				return null;
+
+			const flags = get('stream.contentClassificationLabels.@each.localizedName', this.item);
+			if ( flags?.length > 0 )
+				return flags;
+			return null;
+		},
+
+		shouldHideThumbnail() {
+			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+				return true;
+
+			const regexes = this.inst.global_settings?.blur_titles;
+			if ( regexes &&
+				(( regexes[0] && regexes[0].test(this.title) ) ||
+				( regexes[1] && regexes[1].test(this.title) ))
+			)
+				return true;
+
+			const flags = this.inst.global_settings?.blur_flags;
+			if ( flags ) {
+				const item_flags = get('stream.contentClassificationLabels.@each.id', this.item) ?? [];
+				for(const flag of item_flags) {
+					if ( flags.has(flag) )
+						return true;
+				}
+			}
+
+			return false;
 		},
 
 		embed() {

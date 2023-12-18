@@ -17,7 +17,7 @@
 
 import ColumnBase from '../column-base';
 import { reduceTags, getVideoPreviewURL } from '../data';
-import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';
+import { createCard, createFlags, createStreamIndicator, createSubtitles } from '../tooltips';
 
 const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
@@ -113,6 +113,11 @@ export default {
 			if ( this.settings.video_preview )
 				embed = getVideoPreviewURL(this.item.login);
 
+			let extra;
+			const flags = get('stream.contentClassificationLabels.@each.localizedName', this.item);
+			if ( flags?.length > 0 )
+				extra = createFlags(flags);
+
 			return createCard({
 				link: this.getReactURL('user', this.item.login),
 				state: {channelView: 'Watch'},
@@ -150,7 +155,8 @@ export default {
 					this.game ? {
 						content: this.game.displayName
 					} : null
-				])
+				]),
+				extra
 			}, {
 				class: this.klass
 			});

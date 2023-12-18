@@ -37,7 +37,7 @@
 							<p>{{ props.topLeft }}</p>
 						</div>
 					</div>
-					<div data-test-selector="top-right-selector" class="tw-absolute tw-mg-1 tw-right-0 tw-top-0">
+					<div data-test-selector="top-right-selector" class="tw-absolute tw-mg-1 tw-right-0 tw-top-0 tw-flex tw-flex-column tw-align-items-end">
 						<slot name="top-right" />
 						<div v-if="props.topRight" class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
 							<figure v-if="props.topRightIcon" :class="props.topRightIcon" />

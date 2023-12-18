@@ -38,6 +38,15 @@ export function createSubtitles(lines, navigate) {
 }
 
 
+export function createFlags(flags) {
+	return (<div class="tw-border-t tw-mg-t-05 tw-pd-t-05 tw-font-size-6">{
+		i18n.t('metadata.flags.tooltip', 'Intended for certain audiences. May contain:')
+			+ '\n\n'
+			+ flags.join('\n')
+	}</div>);
+}
+
+
 export function createStreamIndicator(type, icon, label, slots = {}) {
 	const data = TYPES[type];
 	if ( ! icon )
@@ -186,7 +195,6 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 		</div>);
 	}
 
-
 	const out = (<div class={`preview-card ${data.class || ''}`}>
 		{preview_children ? <div class="tw-relative">{preview_children}</div> : null}
 		<div class="tw-flex tw-flex-nowrap tw-mg-t-1">
@@ -213,6 +221,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 					</div> : null}
 				</div>
 				{Array.isArray(props.tags) && props.tags.length ? createTagList(props.tags, {}, navigate) : null}
+				{slots.extra ?? null}
 			</div>
 		</div>
 	</div>);
