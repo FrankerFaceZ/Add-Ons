@@ -41,6 +41,13 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		this.setToChannelMap = new Map();
+
+		this.on('chat:reload-data', flags => {
+			if (!flags || flags.emotes) {
+				this.updateGlobalEmotes();
+				this.updateChannelSets();
+			}
+		});
 	}
 
 	onEnable() {

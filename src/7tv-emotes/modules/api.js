@@ -14,13 +14,22 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		this.clientVersion = this.parent.manifest.version;
 	}
 
-	makeRequest(route, options = {}) {
+	makeRequest(route, options = {}, skip_cache = false) {
 		const headers = new Headers(options && options.headers || {});
 
 		headers.set('X-SevenTV-Platform', this.clientPlatform);
 		headers.set('X-SevenTV-Version', this.clientVersion);
 
-		return fetch(`${this.apiBaseURI}/${route}`, {...options, headers})
+		const request = fetch(`${this.apiBaseURI}/${route}`, {
+			cache: skip_cache ? 'reload' : 'default',
+			...options,
+			headers
+		});
+
+		if ( ! skip_cache )
+			return request.catch(() => this.makeRequest(route, options, true));
+
+		return request;
 	}
 
 	async requestJSON(route, options = {}) {
