@@ -9,6 +9,10 @@ fragment ClipInfo on Clip {
 	thumbnailURL
 	slug
 	viewCount
+	contentClassificationLabels {
+		id
+		localizedName
+	}
 	curator {
 		...UserInfo
 	}

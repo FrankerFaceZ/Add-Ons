@@ -424,8 +424,8 @@ export default class Logic extends Addon {
 
                 bg_css = msg.mentioned && msg.mention_color ? this.site_chat.inverse_colors.process(msg.mention_color) : null;
 
-            const user_block = this.chat.formatUser(msg.user, createElement);
-            //const override_name = this.overrides.getName(msg.user.id);
+            const username = this.chat.formatUser(msg.user, createElement),
+				override_name = this.overrides.getName(msg.user.id);
 
             const show_reasons = this.chat.context.get('pn.show-reason');
 
@@ -437,12 +437,33 @@ export default class Logic extends Addon {
                 { reasons }
             </span>) : null;
 
+			let user_class = msg.ffz_user_class;
+			if ( user_class instanceof Set )
+				user_class = [...user_class].join(' ');
+			else if ( Array.isArray(user_class) )
+				user_class = user_class.join(' ');
+
+			const user_props = {
+				className: `chat-line__username notranslate${override_name ? ' ffz--name-override tw-relative ffz-il-tooltip__container' : ''} ${user_class ?? ''}`,
+				role: 'button',
+				style: { color },
+				// onClick: this.ffz_user_click_handler,
+				// onContextMenu: t.actions.handleUserContext
+			};
+
+			if ( msg.ffz_user_props )
+				Object.assign(user_props, msg.ffz_user_props);
+
+			if ( msg.ffz_user_style )
+				Object.assign(user_props.style, msg.ffz_user_style);
+
             line = (<div
-                class="chat-line__message"
+                class={`chat-line__message${msg.deleted ? ' ffz--deleted-message' : ''}${msg.mentioned ? ' ffz-mentioned' : ''}${bg_css ? ' ffz-custom-color' : ''}`}
                 data-room={room}
                 data-room-id={room_id}
                 data-user={msg.user.login}
                 data-user-id={msg.user.id}
+				style={{backgroundColor: bg_css}}
             >
                 {this.chat.context.get('pn.timestamps') ? (<span class="chat-line__timestamp">
                     { this.chat.formatTime(msg.timestamp) }
@@ -450,13 +471,13 @@ export default class Logic extends Addon {
                 {this.chat.context.get('pn.show-badges') ? (<span class="chat-line__message--badges">
                     { this.chat.badges.render(msg, createElement) }
                 </span>) : null}
-                <span
-                    class="chat-line__username notranslate"
-                    role="button"
-                    style={{color}}
-                >
-                    { user_block }
-                </span>
+				{createElement('span', user_props, override_name
+					? [
+						<span class="chat-author__display_name">{ override_name }</span>,
+						<div class="ffz-il-tooltip ffz-il-tooldip--down ffz-il-tooltip--align-center">{ username }</div>
+					]
+					: username
+				)}
                 <span aria-hidden="true">
                     {is_action && ! action_italic ? ' ' : ': '}
                 </span>

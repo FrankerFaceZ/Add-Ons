@@ -44,7 +44,7 @@ export default {
 		},
 
 		tags() {
-			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
+			return reduceTags(this.item.stream.freeformTags, this.settings.max_tags, this.inst.required_tags);
 		},
 
 		klass() {
@@ -120,7 +120,7 @@ export default {
 
 			let indicator;
 			if ( this.item.stream.type !== 'live' || ! this.settings.hide_live )
-				indicator = createStreamIndicator(this.iteam.stream.type);
+				indicator = createStreamIndicator(this.item.stream.type);
 
 			return createCard({
 				link: this.getReactURL('user', this.item.login),

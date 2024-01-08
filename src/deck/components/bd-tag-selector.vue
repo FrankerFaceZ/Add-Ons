@@ -12,25 +12,23 @@
 		/>
 		<div class="bd--tag-selector__list tw-flex tw-flex-wrap tw-c-background-base tw-pd-x-05 tw-pd-b-05 tw-border-l tw-border-b tw-border-r tw-border-radius-medium">
 			<div
-				v-if="! showTags || ! showTags.length"
+				v-if="! tags || ! tags.length"
 				class="tw-mg-t-05 tw-c-text-alt-2"
 			>
 				{{ t('addon.deck.no-tags', 'no tags') }}
 				&nbsp;
 			</div>
 			<div
-				v-for="tag of showTags"
-				:key="tag.id"
+				v-for="tag of tags"
+				:key="tag"
 				class="tw-inline-block tw-mg-t-05 tw-mg-r-05"
 			>
 				<button
 					class="tw-border-radius-rounded tw-inline-flex tw-interactive tw-semibold ffz-tag"
-					:title="tag.description"
-					@click="removeTag(tag.id)"
+					@click="removeTag(tag)"
 				>
 					<div class="tw-align-items-center tw-flex tw-font-size-7 ffz-tag__content">
-						<figure v-if="tag.is_language" class="ffz-i-language" />
-						{{ tag.label }}
+						{{ tag }}
 						<figure class="ffz-i-cancel" />
 					</div>
 				</button>
@@ -59,34 +57,15 @@ export default {
 		}
 	},
 
-	data() {
-		return {
-			loader: 0,
-			tags: Array.isArray(this.value) ? this.value.slice(0) : []
+	computed: {
+		lowerTags() {
+			return this.tags.map(tag => tag.toLowerCase())
 		}
 	},
 
-	computed: {
-		hasLanguage() {
-			this.loader;
-			for(const tag_id of this.tags) {
-				const tag = getLoader().getTagImmediate(tag_id, this.load);
-				if ( tag && tag.is_language )
-					return true;
-			}
-
-			return false;
-		},
-
-		showTags() {
-			this.loader;
-			return this.tags.map(id => {
-				const tag = getLoader().getTagImmediate(id, this.load, true);
-				return tag ? deep_copy(tag) : {
-					id,
-					name: '(...)'
-				}
-			});
+	data() {
+		return {
+			tags: Array.isArray(this.value) ? this.value.slice(0) : []
 		}
 	},
 
@@ -94,10 +73,6 @@ export default {
 		tags() {
 			this.$emit('input', this.tags);
 		}
-	},
-
-	created() {
-		this.load = () => this.loader++;
 	},
 
 	methods: {
@@ -110,26 +85,28 @@ export default {
 			}
 		},
 
-		addTag(id) {
-			// Make sure we weren't accidentally handed a tag object.
-			if ( id && id.id )
-				id = id.id;
+		addTag(obj) {
+			const tag = obj.name;
 
-			if ( ! this.tags.includes(id) )
-				this.tags.push(id);
+			if ( this.lowerTags.includes(tag.toLowerCase()))
+				return;
+
+			this.tags.push(tag);
 		},
 
 		async getItems(query) {
 			let out;
 			if ( ! query )
-				out = await getLoader().getTopTags(50);
+				return [];
 			else
-				out = await getLoader().getMatchingTags(query, this.category);
+				out = await getLoader().getMatchingTags(query);
 
 			if ( ! Array.isArray(out) )
 				return [];
 
-			return deep_copy(out.filter(tag => ! this.tags.includes(tag.id)));
+			return out
+				.filter(tag => ! this.lowerTags.includes(tag.toLowerCase()))
+				.map(x => ({name: x}));
 		}
 	}
 }

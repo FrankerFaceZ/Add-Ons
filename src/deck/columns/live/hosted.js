@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { cleanViewersCount, getLoader } from '../../data';
+import { checkCosmetics, cleanTags, cleanViewersCount, getLoader } from '../../data';
 
 export default class Hosted extends LiveColumnBase {
 
@@ -56,12 +56,13 @@ export default class Hosted extends LiveColumnBase {
 						channel = deep_copy(node.hosting);
 						channel.hosts = [];
 						cleanViewersCount(channel.stream, node.hosting.stream);
+						checkCosmetics(channel);
 						if ( group_hosts )
 							channels[channel.id] = channel;
 						else
 							channel.real_id = node.id;
 
-						this.memorizeTags(channel);
+						cleanTags(channel.stream);
 						items.push(channel);
 					}
 
@@ -91,7 +92,7 @@ export default class Hosted extends LiveColumnBase {
 }
 
 Hosted.presets = {
-	live: [
+	/*live: [
 		{
 			list: {
 				icon: 'ffz-i-plus',
@@ -102,5 +103,5 @@ Hosted.presets = {
 				desc: 'This column shows live channels being hosted by channels you follow.'
 			}
 		}
-	]
+	]*/
 };

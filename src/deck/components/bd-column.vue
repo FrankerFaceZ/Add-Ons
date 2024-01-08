@@ -140,9 +140,10 @@
 			<simplebar v-observe-visibility="{callback: onVisibilityChange}">
 				<div v-observe-visibility="{callback: onTopChange}" />
 				<div
-					v-for="item in filtered"
+					v-for="item in visible_items"
 					:key="item.real_id || item.id"
 					class="tw-mg-t-1 tw-mg-l-1 tw-pd-b-1 tw-border-b"
+					:class="{'bd--hidden-item': show_filtered && ! filtered.includes(item)}"
 				>
 					<component
 						:is="getComponent(item)"
@@ -189,6 +190,24 @@
 									total: items.length
 								}) }}
 							</div>
+							<button
+								v-if="filtered.length < items.length && ! show_filtered"
+								class="tw-button tw-button--text tw-mg-t-05"
+								@click="show_filtered = true"
+							>
+								<span class="ffz-i-eye tw-button__text">
+									{{ t('addon.deck.show-filtered', 'Show Filtered Items') }}
+								</span>
+							</button>
+							<button
+								v-if="show_filtered"
+								class="tw-button tw-button--text tw-mg-t-05"
+								@click="show_filtered = false"
+							>
+								<span class="ffz-i-eye-off tw-button__text">
+									{{ t('addon.deck.hide-filtered', 'Hide Filtered Items') }}
+								</span>
+							</button>
 						</div>
 						<div v-else-if="errored" class="bd--width">
 							<div class="tw-mg-b-1">
@@ -256,7 +275,7 @@ const {has, deep_copy} = FrankerFaceZ.utilities.object;
 const {Color} = FrankerFaceZ.utilities.color;
 
 export default {
-	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar', 'vertical'],
+	props: ['data', 'type', 'settings', 'collapsed', 'forSidebar', 'vertical', 'getFFZ'],
 
 	data() {
 		return {
@@ -286,6 +305,8 @@ export default {
 			throttle_count: 0,
 			too_throttled: false,
 			loading: false,
+
+			show_filtered: false,
 
 			// Error State
 			errored: false,
@@ -422,12 +443,25 @@ export default {
 			return this.inst && this.inst.canRun();
 		},
 
+		visible_items() {
+			if ( this.show_filtered )
+				return this.items;
+			return this.filtered;
+		},
+
 		filtered() {
 			this.loader;
 			if ( this.inst && this.inst.filterItems )
 				return this.inst.filterItems(this.items);
 
 			return this.items;
+		},
+
+		unfiltered() {
+			if ( this.items.length === this.filtered.length )
+				return [];
+
+			return this.items.filter(item => ! this.filtered.includes(item));
 		},
 
 		refreshDelay() {
@@ -681,9 +715,36 @@ export default {
 			if ( ! root || ! scroller )
 				return;
 
-			const height = root.clientHeight - (header ? header.clientHeight : 0);
-			this.size = Math.min(50, this.columns * Math.max(1, Math.ceil(height / 220)));
+			const height = root.clientHeight - (header ? header.clientHeight : 0),
+				width = root.clientWidth;
+
+			if ( height === this.old_height && width === this.old_width )
+				return;
+
+			this.old_height = height;
+			this.old_width = width;
+
 			scroller.style.height = Math.max(0, height) + 'px';
+
+			if ( this.vertical ) {
+				let item_width = 320;
+				if ( this.width === 2 )
+					item_width = 400;
+				else if ( this.width === 0 )
+					item_width = 200;
+
+				item_width += 10;
+
+				this.size = this.columns * Math.max(1, Math.floor(width / item_width));
+
+			} else
+				this.size = this.columns * Math.max(1, Math.ceil(height / 220));
+
+			// Sanity limits.
+			if ( this.size < 50 )
+				this.size = 50;
+			else if ( this.size > 200 )
+				this.size = 200;
 		},
 
 
@@ -715,7 +776,7 @@ export default {
 				display.width = this.width;
 
 			if ( ! has(display, 'default_count') )
-				display.default_count = 10;
+				display.default_count = this.forSidebar ? 5 : 10;
 
 			if ( ! has(display, 'columns') )
 				display.columns = this.columns;
@@ -757,6 +818,7 @@ export default {
 				this.throttle_incremented = false;
 				this.too_throttled = false;
 
+				this.show_filtered = false;
 				this.errored = false;
 				this.show_error = false;
 				this.error = null;

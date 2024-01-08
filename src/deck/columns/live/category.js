@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags, checkCosmetics } from '../../data';
 
 export default class Category extends LiveColumnBase {
 
@@ -44,6 +44,9 @@ export default class Category extends LiveColumnBase {
 	}
 
 	async load(first = 10, cursor = null) {
+		if ( first > 100 )
+			first = 100;
+
 		const data = await getLoader().queryApollo({
 			query: require('./category.gql'),
 			variables: {
@@ -52,7 +55,8 @@ export default class Category extends LiveColumnBase {
 				after: cursor,
 				options: {
 					sort: this.settings.sort || 'VIEWER_COUNT',
-					tags: this.required_tags
+					broadcasterLanguages: this.languages,
+					freeformTags: this.required_tags
 				}
 			},
 			fetchPolicy: 'network-only'
@@ -77,9 +81,10 @@ export default class Category extends LiveColumnBase {
 					seen.add(edge.node.id);
 					const node = deep_copy(edge.node);
 					cleanViewersCount(node, edge.node);
+					checkCosmetics(node.broadcaster);
 
 					node.broadcaster.stream = node;
-					this.memorizeTags(node.broadcaster);
+					cleanTags(node);
 					items.push(node.broadcaster);
 					node.broadcaster = undefined;
 				}

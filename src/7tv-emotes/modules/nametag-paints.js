@@ -1,11 +1,12 @@
+const { createElement } = FrankerFaceZ.utilities.dom;
+
 export default class NametagPaints extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
-		this.inject('..api');
-
 		this.inject('settings');
 		this.inject('site.fine');
+		this.inject('chat');
 
 		this.settings.add('addon.seventv_emotes.nametag_paints', {
 			default: true,
@@ -17,202 +18,295 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			}
 		});
 
+		this.namepaintsApplyer = {
+			type: 'apply_namepaints',
+
+			process: (tokens, msg) => {
+				const enabled = this.settings.get('addon.seventv_emotes.nametag_paints');
+				if (!enabled) return;
+
+				const paintID = this.getUserPaint(msg.user.userID);
+				if (!paintID) return;
+
+				msg.ffz_user_class = (msg.ffz_user_class || new Set());
+				msg.ffz_user_class.add('seventv-paint');
+				msg.ffz_user_class.add('seventv-painted-content');
+				msg.ffz_user_class.add('ffz-tooltip');
+				msg.ffz_user_class.add('ffz-tooltip--no-mouse');
+
+				msg.ffz_user_props = {
+					'data-seventv-paint-id': paintID,
+					'data-seventv-painted-text': true,
+					'data-tooltip-type': 'seventv-paint'
+				}
+
+				return tokens;
+			}
+		}
+
+		this.chat.addTokenizer(this.namepaintsApplyer);
+
+		this.resolve('tooltips').define('seventv-paint', target => {
+			const paint_id = target?.dataset?.seventvPaintId;
+			const paint_name = this.paintNames.get(paint_id);
+
+			if (!paint_name) return FrankerFaceZ.utilities.tooltip.NoContent;
+
+			return createElement('span', { className: 'seventv-paint-tooltip' }, paint_name);
+		});
+
+		this.paintSheet = false;
+		this.paintNames = new Map();
 		this.userPaints = new Map();
 	}
 
-	async onEnable() {
-		this.on('settings:changed:addon.seventv_emotes.nametag_paints', () => this.updatePaints());
+	onEnable() {
+		this.on('settings:changed:addon.seventv_emotes.nametag_paints', () => this.updateChatLines());
+	}
 
-		this.updatePaints();
+	getPaintStylesheet() {
+		if (this.paintSheet) return this.paintSheet;
+	
+		const link = document.createElement('link');
+		link.type = 'text/css';
+		link.rel = 'stylesheet';
+	
+		const s = document.createElement('style');
+		s.id = 'seventv-paint-styles';
+	
+		document.head.appendChild(s);
+
+		s.sheet.insertRule(`.seventv-painted-content {
+			background-color: currentcolor;
+		}`);
+		// The following CSS rule fixes international names not being visible when painted
+		s.sheet.insertRule(`.seventv-painted-content > .chat-author__intl-login {
+			opacity: 1;
+		}`);
+		s.sheet.insertRule(`.seventv-painted-content[data-seventv-painted-text="true"] {
+			-webkit-text-fill-color: transparent;
+			background-clip: text !important;
+			/* stylelint-disable-next-line property-no-vendor-prefix */
+			-webkit-background-clip: text !important;
+			font-weight: 700;
+		}`);
+		s.sheet.insertRule(`.seventv-paint-tooltip {
+			font-weight: 700;
+		}`);
+		
+		return (this.paintSheet = s.sheet ?? null);
 	}
 
 	getUserPaint(id) {
 		return this.userPaints.get(id);
 	}
 
-	async updatePaints() {
-		this.userPaints.clear();
-		this.removeStyleSheet();
+	deleteUserPaintByID(user_id, paint_id) {
+		const currentUserPaint = this.userPaints.get(user_id);
+		if (!currentUserPaint || currentUserPaint !== paint_id) return;
 
-		if (this.settings.get('addon.seventv_emotes.nametag_paints')) {
-			const paints = await this.api.cosmetics.getPaints();
-
-			const styles = [];
-			for (let paint of paints) {
-				styles.push(this.buildPaintCSS(paint));
-
-				for (let user of paint.users) {
-					this.userPaints.set(user, paint.id);
-				}
-			}
-
-			this.appendStyleSheet(styles.join(' '));
-		}
-
-		this.updateChatLines();
+		this.userPaints.delete(user_id);
+		this.updateChatLines(user_id);
 	}
 
-	buildPaintCSS(paint) {
-		let bgFunc;
-		let bgFuncArgs = [];
-		let isGradient = true;
-		switch (paint.function) {
-			case 'linear-gradient':
-				bgFunc = `${paint.repeat ? 'repeating-' : ''}linear-gradient`;
-				if (typeof paint.angle == 'number') bgFuncArgs.push(`${paint.angle}deg`);
-				else bgFuncArgs.push('90deg');
-				break;
-			case 'radial-gradient':
-				bgFunc = `${paint.repeat ? 'repeating-' : ''}radial-gradient`;
-				if (paint.shape == 'ellipse') bgFuncArgs.push('ellipse');
-				else bgFuncArgs.push('circle');
-				break;
-			case 'url':
-				bgFunc = 'url';
-				if (typeof paint.image_url == 'string') bgFuncArgs.push(`"${CSS.escape(paint.image_url)}"`);
-				else bgFuncArgs.push('""');
-				isGradient = false;
-				break;
-			default:
-				return null;
-		}
+	deleteUserPaint(data) {
+		const paint_id = data.ref_id || data.id;
+		const user = data.user?.connections?.find(c => c.platform === 'TWITCH');
 
-		if (isGradient && paint.stops instanceof Array) {
-			for (let stop of paint.stops) {
-				if (typeof stop.color == 'number' &&
-					typeof stop.at == 'number') {
-					bgFuncArgs.push(`${this.getCSSColorFromInt(stop.color)} ${stop.at * 100}%`);
-				}
-			}
-		}
+		if (!user?.id) return;
 
-		let background = `${bgFunc}(${bgFuncArgs.join(', ')})`;
-
-		let defaultColor;
-		if (typeof paint.color == 'number') {
-			defaultColor = this.getCSSColorFromInt(paint.color);
-		}
-
-		let dropShadow;
-		if (paint.drop_shadows instanceof Array) {
-			let shadows = [];
-			for (let shadow of paint.drop_shadows) {
-				if (typeof shadow.x_offset == 'number' &&
-					typeof shadow.y_offset == 'number' &&
-					typeof shadow.radius == 'number' &&
-					typeof shadow.color == 'number') {
-					shadows.push(`drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(shadow.color)})`);
-				}
-			}
-
-			dropShadow = shadows.join(' ');
-		}
-
-		return `
-			[data-seventv-paint="${paint.id}"]:not(.seventv-paint--default-only) span {
-				background-image: ${background};
-				background-size: cover;
-				background-clip: text;
-				-webkit-background-clip: text;
-				-webkit-text-fill-color: transparent;
-				background-color: currentColor;
-				${dropShadow ? `filter: ${dropShadow};` : ''}
-			}
-
-			${defaultColor ? `[data-seventv-paint="${paint.id}"] {
-				color: ${defaultColor} !important;
-			}` : ''}
-		`.replace(/[\n\t]/g, '');
+		this.deleteUserPaintByID(user.id, paint_id);
 	}
 
-	appendStyleSheet(style) {
-		this.removeStyleSheet();
+	setUserPaintByID(user_id, paint_id) {
+		const currentUserPaint = this.userPaints.get(user_id);
+		if (currentUserPaint === paint_id) return;
 
-		this.stylesheet = document.createElement('style');
-		this.stylesheet.id = `${this.path}--styles`;
-		this.stylesheet.textContent = style;
+		this.userPaints.set(user_id, paint_id);
 
-		document.head.appendChild(this.stylesheet);
+		this.updateChatLines(user_id);
 	}
 
-	removeStyleSheet() {
-		if (this.stylesheet) {
-			this.stylesheet.remove();
-			this.stylesheet = undefined;
+	setUserPaint(data) {
+		const paint_id = data.ref_id || data.id;
+		const user = data.user?.connections?.find(c => c.platform === 'TWITCH');
+
+		if (!user?.id) return;
+
+		this.setUserPaintByID(user.id, paint_id);
+	}
+
+	updatePaintStyle(paint, remove = false) {
+		this.paintNames.set(paint.id, paint.name);
+
+		const sheet = this.getPaintStylesheet();
+		if (!sheet) {
+			this.log.error('<Cosmetics>', 'Could not find paint stylesheet');
+			return;
 		}
+		
+		if (!paint.gradients?.length && paint.function) {
+			// add base gradient if using v2 format
+			if (!paint.gradients) paint.gradients = new Array(1);
+			paint.gradients[0] = {
+				function: paint.function,
+				canvas_repeat: '',
+				size: [1, 1],
+				shape: paint.shape,
+				image_url: paint.image_url,
+				stops: paint.stops ?? [],
+				repeat: paint.repeat ?? false,
+				angle: paint.angle,
+			};
+		}
+		
+		const gradients = paint.gradients.map(g => this.createGradientFromPaint(g));
+		const filter = (() => {
+			if (!paint.shadows) {
+				return '';
+			}
+		
+			return paint.shadows.map(v => this.createFilterDropshadow(v)).join(' ');
+		})();
+		
+		const selector = `.seventv-paint[data-seventv-paint-id="${paint.id}"]`;
+		const text = `${selector} {
+			color: ${paint.color ? this.getCSSColorFromInt(paint.color) : 'inherit'};
+			background-image: ${gradients.map(v => v[0]).join(', ')};
+			background-position: ${gradients.map(v => v[1]).join(', ')};
+			background-size: ${gradients.map(v => v[2]).join(', ')};
+			background-repeat: ${gradients.map(v => v[3]).join(', ')};
+			filter: ${filter || 'inherit'};
+			${
+	paint.text
+		? `
+						font-weight: ${paint.text.weight ? paint.text.weight * 100 : 'inherit'};
+						-webkit-text-stroke-width: ${paint.text.stroke ? `${paint.text.stroke.width}px` : 'inherit'};
+						-webkit-text-stroke-color: ${paint.text.stroke ? this.getCSSColorFromInt(paint.text.stroke.color) : 'inherit'};
+						text-shadow: ${
+	paint.text.shadows
+		?.map(v => `${v.x_offset}px ${v.y_offset}px ${v.radius}px ${this.getCSSColorFromInt(v.color)}`)
+		.join(', ') ?? 'unset'
+};
+					text-transform: ${paint.text.transform ?? 'unset'};
+					`
+		: ''
+}
+		}
+		`;
+		
+		let currentIndex = -1;
+		for (let i = 0; i < sheet.cssRules.length; i++) {
+			const r = sheet.cssRules[i];
+			if (!(r instanceof CSSStyleRule)) continue;
+			if (r.selectorText !== selector) continue;
+		
+			currentIndex = i;
+			break;
+		}
+
+		if (remove) {
+			if (currentIndex >= 0) {
+				sheet.deleteRule(currentIndex);
+			}
+			return;
+		}
+		
+		if (currentIndex >= 0) {
+			sheet.deleteRule(currentIndex);
+			sheet.insertRule(text, currentIndex);
+		} else {
+			sheet.insertRule(text, sheet.cssRules.length);
+		}
+	}
+
+	createGradientFromPaint(gradient) {
+		const result = ['', '', '', ''];
+	
+		const args = [];
+		switch (gradient.function) {
+			case 'LINEAR_GRADIENT': // paint is linear gradient
+				args.push(`${gradient.angle ?? 0}deg`);
+				break;
+			case 'RADIAL_GRADIENT': // paint is radial gradient
+				args.push(gradient.shape ?? 'circle');
+				break;
+			case 'URL': // paint is an image
+				args.push(gradient.image_url ?? '');
+				break;
+		}
+		let funcPrefix = '';
+		if (gradient.function !== 'URL') {
+			funcPrefix = gradient.repeat ? 'repeating-' : '';
+	
+			for (const stop of gradient.stops) {
+				const color = this.getCSSColorFromInt(stop.color);
+				args.push(`${color} ${stop.at * 100}%`);
+			}
+		}
+	
+		result[0] = `${funcPrefix}${gradient.function.toLowerCase().replace('_', '-')}(${args.join(', ')})`;
+		result[1] = gradient.at && gradient.at.length === 2 ? `${gradient.at[0] * 100}% ${gradient.at[1] * 100}%` : '';
+		result[2] =
+			gradient.size && gradient.size.length === 2 ? `${gradient.size[0] * 100}% ${gradient.size[1] * 100}%` : '';
+		result[3] = gradient.canvas_repeat ?? 'unset';
+	
+		return result;
+	}
+	
+	createFilterDropshadow(shadow) {
+		return `drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(
+			shadow.color,
+		)})`;
 	}
 
 	getCSSColorFromInt(int) {
-		const red = int >>> 24 & 255;
-		const green = int >>> 16 & 255;
-		const blue = int >>> 8 & 255;
-		const alpha = int & 255;
+		const red = int >>> 24 & 0xFF;
+		const green = int >>> 16 & 0xFF;
+		const blue = int >>> 8 & 0xFF;
+		const alpha = int & 0xFF;
 
 		return `rgba(${red}, ${green}, ${blue}, ${alpha / 255})`
 	}
 
-	updateChatLines() {
-		let enabled = this.settings.get('addon.seventv_emotes.nametag_paints');
+	updateChatLines(user_id = undefined) {
+		const enabled = this.settings.get('addon.seventv_emotes.nametag_paints');
 
-		let chatLines = [];
+		for(const { message, update } of this.chat.iterateMessages()) {
+			const user = message.user;
+			if (user_id !== undefined && user.userID !== user_id) continue;
 
-		if (this.root.flavor == 'main') {
-			const line = this.resolve('site.chat.chat_line');
-			chatLines.push(line.ChatLine);
+			const paintID = enabled ? this.getUserPaint(user.userID) : null;
 
-			const videoChat = this.resolve('site.video_chat');
-			chatLines.push(videoChat.VideoChatLine);
-		}
-		else if (this.root.flavor == 'clips') {
-			const line = this.resolve('site.chat.line');
-			chatLines.push(line.ChatLine);
-		}
-
-		for (let ChatLine of chatLines) {
-			ChatLine.off('mount', this.updateChatLine);
-			ChatLine.off('update', this.updateChatLine);
-
-			if (enabled) {
-				ChatLine.on('mount', this.updateChatLine, this);
-				ChatLine.on('update', this.updateChatLine, this);
-			}
-
-			ChatLine.each(inst => this.updateChatLine(inst, enabled));
-		}
-	}
-
-	updateChatLine(inst, enabled) {
-		enabled = enabled || this.settings.get('addon.seventv_emotes.nametag_paints');
-
-		const userID = inst.props?.message?.user?.id			//Regular Chat
-					|| inst.props?.messageContext?.author?.id	//Video Chat
-					|| inst.props?.node?.commenter?.id;			//Clips Chat
-
-		const el = this.fine.getChildNode(inst);
-		const username = el.querySelector('.chat-line__username, .video-chat__message-author, .clip-chat__message-author');
-		const message = el.querySelector('.message');
-
-		if (username) {
-			username.removeAttribute('data-seventv-paint');
-		}
-
-		if (message) {
-			message.removeAttribute('data-seventv-paint');
-			message.classList.remove('seventv-paint--default-only');
-		}
-
-		if (enabled) {
-			const paintID = this.getUserPaint(userID);
 			if (paintID) {
-				if (username) {
-					username.setAttribute('data-seventv-paint', paintID);
-				}
+				message.ffz_user_class = (message.ffz_user_class || new Set());
+				message.ffz_user_class.add('seventv-paint');
+				message.ffz_user_class.add('seventv-painted-content');
+				message.ffz_user_class.add('ffz-tooltip');
+				message.ffz_user_class.add('ffz-tooltip--no-mouse');
 
-				if (message && message.style.color) {
-					message.setAttribute('data-seventv-paint', paintID);
-					message.classList.add('seventv-paint--default-only');
+				message.ffz_user_props = {
+					...message.ffz_user_props,
+					'data-seventv-paint-id': paintID,
+					'data-seventv-painted-text': true,
+					'data-tooltip-type': 'seventv-paint'
 				}
 			}
+			else {
+				message.ffz_user_class = (message.ffz_user_class || new Set());
+				message.ffz_user_class.delete('seventv-paint');
+				message.ffz_user_class.delete('seventv-painted-content');
+				message.ffz_user_class.delete('ffz-tooltip');
+				message.ffz_user_class.delete('ffz-tooltip--no-mouse');
+
+				if (message.ffz_user_props?.['data-seventv-paint-id']) {
+					delete message.ffz_user_props['data-seventv-paint-id'];
+					delete message.ffz_user_props['data-seventv-painted-text'];
+					delete message.ffz_user_props['data-tooltip-type'];
+				}
+			}
+
+			update();
 		}
 	}
 }

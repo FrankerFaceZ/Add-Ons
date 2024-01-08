@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import ColumnBase, { VideoColumnBase, LiveColumnBase } from '../../column-base';
-import { getLoader, cleanViewersCount } from '../../data';
+import { getLoader, cleanViewersCount, cleanTags, checkCosmetics } from '../../data';
 
 export default class Channel extends VideoColumnBase {
 	getComponent(item) {
@@ -79,13 +79,36 @@ export default class Channel extends VideoColumnBase {
 			let is_stream;
 
 			if ( item.stream ) {
-				if ( no_live || ! LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags) )
+				if ( no_live || ! LiveColumnBase.filterStream(
+					item,
+					hide_reruns,
+					blocked_games,
+					this.required_tags,
+					this.blocked_tags,
+					this.filter_games,
+					this.filter_blocked_games,
+					this.languages,
+					this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
+					this.global_settings.blocked_titles,
+					this.global_settings.blocked_flags
+				) )
 					continue;
 
 				is_stream = true;
 
 			} else {
-				if ( ! VideoColumnBase.filterVideo(item, no_recordings, this.types, blocked_games, this.required_tags) )
+				if ( ! VideoColumnBase.filterVideo(
+					item,
+					no_recordings,
+					this.types,
+					blocked_games,
+					this.required_tags,
+					this.blocked_tags,
+					this.filter_games,
+					this.filter_blocked_games,
+					this.global_settings.blocked_titles,
+					this.global_settings.blocked_flags
+				) )
 					continue;
 
 				is_stream = false;
@@ -130,10 +153,22 @@ export default class Channel extends VideoColumnBase {
 			fetchPolicy: 'network-only'
 		});
 
-		this.updateCache({
+		const owner = {
+			id: get('data.user.id', data),
+			login: get('data.user.login', data),
 			displayName: get('data.user.displayName', data),
-			avatar: get('data.user.profileImageURL', data),
-			cover: get('data.user.bannerImageURL', data)
+			profileImageURL: get('data.user.profileImageURL', data),
+			bannerImageURL: get('data.user.bannerImageURL', data)
+		};
+
+		owner.profileImageURL = checkCosmetics(owner, () => this.updateCache({
+			avatar: owner.profileImageURL
+		}));
+
+		this.updateCache({
+			displayName: owner.displayName,
+			avatar: owner.profileImageURL,
+			cover: owner.bannerImageURL
 		});
 
 		const edges = get('data.user.videos.edges', data),
@@ -151,17 +186,10 @@ export default class Channel extends VideoColumnBase {
 				}));
 
 				cleanViewersCount(item.stream, data.data.user.stream);
-				LiveColumnBase.memorizeTags(item);
+				cleanTags(item.stream);
 				items.push(item);
 			}
 		}
-
-		const owner = {
-			id: get('data.user.id', data),
-			login: get('data.user.login', data),
-			displayName: get('data.user.displayName', data),
-			profileImageURL: get('data.user.profileImageURL', data)
-		};
 
 		if ( Array.isArray(edges) )
 			for(const edge of edges) {
@@ -170,7 +198,8 @@ export default class Channel extends VideoColumnBase {
 					seen.add(edge.node.id);
 					const copy = deep_copy(edge.node);
 					copy.owner = owner;
-					this.memorizeTags(copy);
+					// TODO: Clean tags
+					//this.memorizeTags(copy);
 					items.push(copy);
 				}
 			}

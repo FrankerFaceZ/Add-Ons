@@ -200,6 +200,8 @@ class FSChat extends Addon {
 		this.handle_right = false;
 		this.style = new ManagedStyle;
 		this.style_link = null;
+
+		this.onParentChanges = this.onParentChanges.bind(this);
 	}
 
 	onEnable() {
@@ -221,6 +223,14 @@ class FSChat extends Addon {
 
 		this.updateButtons();
 		this.updateShortcut();
+		this.enableObserver();
+	}
+
+	onDisable() {
+		this.turnOff();
+		this.updateButtons();
+		this.updateShortcut();
+		this.disableObserver();
 	}
 
 	updateShortcut() {
@@ -232,6 +242,9 @@ class FSChat extends Addon {
 			Mousetrap.unbind(this._shortcut_bound);
 			this._shortcut_bound = null;
 		}
+
+		if ( this.disabling )
+			return;
 
 		const key = this.settings.get('addon.fs-chat.shortcut');
 		if ( key && isValidShortcut(key) ) {
@@ -301,74 +314,114 @@ class FSChat extends Addon {
 }`);
 	}
 
+	isChatHidden() {
+		if ( document.fullscreenElement?.classList?.contains?.('video-player__container') )
+			return true;
+
+		const right_column = document.querySelector('.right-column');
+		if ( right_column.classList.contains('right-column--fullscreen') && right_column.classList.contains('right-column--collapsed') )
+			return true;
+
+		return false;
+	}
+
 	turnOn() {
-		if ( document.fullscreenElement && ! this.chat ) {
-			this.chat_pane = document.querySelector('.channel-root__right-column');
-			if ( ! this.chat_pane )
-				return;
+		// Sanity checking for love and justice.
+		if ( ! this.isChatHidden() || this.chat || ! document.fullscreenElement )
+			return;
+		
+		this.chat_pane = document.querySelector('.channel-root__right-column');
+		if ( ! this.chat_pane )
+			return;
 
-			this.old_parent = this.chat_pane.parentNode;
-			this.chat_pane.remove();
+		this.old_parent = this.chat_pane.parentNode;
+		this.chat_pane.remove();
 
-			let meta = this.settings.get('addon.fs-chat.metadata');
-			if ( meta !== 0 ) {
-				this.meta_pane = document.querySelector('.ffz--meta-tray');
-				if ( this.meta_pane ) {
-					this.meta_parent = this.meta_pane.parentNode;
-					this.meta_pane.remove();
-				} else
-					meta = 0;
-			}
-
-			let handle;
-
-			this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''}${this.settings.get('addon.fs-chat.hide-scroll') ? ' hide-scroll' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base ${this.handle_right ? 'handle--right' : ''}`}>
-				{handle = <div class="handle ffz-i-move" />}
-				{this.chat_pane}
-				{this.meta_pane}
-			</div>);
-
-			this.chat.addEventListener('mouseout', () => this.checkHandle());
-
-			if ( this.settings.provider.has('fschat.top') ) {
-				this.chat.style.position = 'absolute';
-				this.chat.style.top = this.settings.provider.get('fschat.top');
-				this.chat.style.left = this.settings.provider.get('fschat.left');
-
-				this.checkConstraints();
-				this.checkHandle();
-			}
-
-			document.fullscreenElement.appendChild(this.chat);
-
-			const savePos = () => {
-				const top = this.chat.style.top,
-					left = this.chat.style.left;
-
-				this.settings.provider.set('fschat.top', top);
-				this.settings.provider.set('fschat.left', left);
-			}
-
-			this.chat_mover = displace(this.chat, {
-				handle,
-				constrain: true,
-				onMouseUp: savePos,
-				onTouchStop: savePos
-			});
-
-			this.settings.updateContext({
-				fschat: true,
-				'force-theme': this.dark
-			});
-
-			if ( ! this.scroll_frame )
-				this.scroll_frame = requestAnimationFrame(() => {
-					this.scroll_frame = null;
-					const scroller = this.chat && this.chat.querySelector('.simplebar-scroll-content');
-					if ( scroller )
-						scroller.scrollTop = scroller.scrollHeight;
-				});
+		let meta = this.settings.get('addon.fs-chat.metadata');
+		if ( meta !== 0 ) {
+			this.meta_pane = document.querySelector('.ffz--meta-tray');
+			if ( this.meta_pane ) {
+				this.meta_parent = this.meta_pane.parentNode;
+				this.meta_pane.remove();
+			} else
+				meta = 0;
 		}
+
+		let handle;
+
+		this.chat = (<div class={`ffz--fschat meta-${meta}${this.settings.get('addon.fs-chat.round') ? '' : ' no-rounding'} ${this.settings.get('addon.fs-chat.no-input') ? ' no-input' : ''}${this.settings.get('addon.fs-chat.minimal') ? ' minimal' : ''}${this.settings.get('addon.fs-chat.hide-scroll') ? ' hide-scroll' : ''} ${this.dark ? 'tw-root--theme-dark' : 'tw-root--theme-light'} tw-c-text-base ${this.handle_right ? 'handle--right' : ''}`}>
+			{handle = <div class="handle ffz-i-move" />}
+			{this.chat_pane}
+			{this.meta_pane}
+		</div>);
+
+		this.chat.addEventListener('mouseout', () => this.checkHandle());
+
+		if ( this.settings.provider.has('fschat.top') ) {
+			this.chat.style.position = 'absolute';
+			this.chat.style.top = this.settings.provider.get('fschat.top');
+			this.chat.style.left = this.settings.provider.get('fschat.left');
+
+			this.checkConstraints();
+			this.checkHandle();
+		}
+
+		document.fullscreenElement.appendChild(this.chat);
+
+		const savePos = () => {
+			const top = this.chat.style.top,
+				left = this.chat.style.left;
+
+			this.settings.provider.set('fschat.top', top);
+			this.settings.provider.set('fschat.left', left);
+		}
+
+		this.chat_mover = displace(this.chat, {
+			handle,
+			constrain: true,
+			onMouseUp: savePos,
+			onTouchStop: savePos
+		});
+
+		this.settings.updateContext({
+			fschat: true,
+			'force-theme': this.dark
+		});
+		
+		if ( ! this.scroll_frame )
+			this.scroll_frame = requestAnimationFrame(() => {
+				this.scroll_frame = null;
+				const scroller = this.chat && this.chat.querySelector('.simplebar-scroll-content');
+				if ( scroller )
+					scroller.scrollTop = scroller.scrollHeight;
+			});
+	}
+
+	enableObserver() {
+		if ( this.parent_observer || ! document.fullscreenElement )
+			return;
+
+		const right_column = document.querySelector('.right-column');
+		if ( ! right_column )
+			return;
+
+		this.parent_observer = new MutationObserver(this.onParentChanges);
+		this.parent_observer.observe(document.querySelector('.right-column'), {attributes: true});
+	}
+
+	disableObserver() {
+		if ( this.parent_observer ) {
+			this.parent_observer.disconnect();
+			this.parent_observer = null;
+		}
+	}
+
+	onParentChanges(mutations) {
+		if ( ! this.isChatHidden() ) {
+			this.was_active = !! this.chat;
+			this.turnOff();
+		} else if ( this.was_active )
+			this.turnOn();
 	}
 
 	checkConstraints() {
@@ -422,7 +475,6 @@ class FSChat extends Addon {
 		});
 	}
 
-
 	turnOff() {
 		if ( this.chat_mover ) {
 			this.chat_mover.destroy();
@@ -452,8 +504,14 @@ class FSChat extends Addon {
 		if ( ! document.fullscreenElement ) {
 			this.was_active = !! this.chat;
 			this.turnOff();
-		} else if ( this.was_active || this.settings.get('addon.fs-chat.automatic') )
-			this.turnOn();
+			this.disableObserver();
+
+		} else {
+			this.enableObserver();
+			
+			if ( this.was_active || this.settings.get('addon.fs-chat.automatic') )
+				this.turnOn();
+		}
 
 		this.updateButtons();
 	}
@@ -474,7 +532,7 @@ class FSChat extends Addon {
 		const can_chat = this.chat || document.querySelector('.channel-root__right-column') != null;
 
 		let icon, tip, btn, cont = container.querySelector('.ffz--player-fschat');
-		if ( ! is_fs || ! can_chat ) {
+		if ( ! is_fs || ! can_chat || ! this.isChatHidden() || this.disabling ) {
 			if ( cont )
 				cont.remove();
 			return;
@@ -533,7 +591,6 @@ class FSChat extends Addon {
 
 		this.updateButton(inst);
 	}
-
 }
 
 FSChat.register();

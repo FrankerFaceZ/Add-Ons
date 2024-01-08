@@ -18,125 +18,188 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			}
 		});
 
-		this.userAvatars = new Map();
+		this.avatarCache = new Map();
+		this.socketWaiters = new Map();
+
+		this.updateInterval = false;
 	}
 
-	async onEnable() {
-		await this.findAvatarClass();
+	onEnable() {
+		this.settings.getChanges('addon.seventv_emotes.animated_avatars', () => this.onSettingChange());
 
-		this.on('settings:changed:addon.seventv_emotes.animated_avatars', () => this.updateAnimatedAvatars());
+		this.on('common:update-avatar', async event => {
+			const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
+			if (!enabled) return;
 
-		this.updateAnimatedAvatars();
+			const url = await this.getAvatar(event.user.login);
+			if (url)
+				event.url = url;
+		});
+
+		this.onSettingChange();
 	}
 
-	async findAvatarClass() {
-		if (this.root.flavor != 'main') return;
+	receiveAvatarData(data) {
+		if (!data.user?.username || !data.host?.files) return;
+		const login = data.user.username.toLowerCase();
 
-		let avatarElement = await this.site.awaitElement('.tw-avatar');
+		const waiter = this.socketWaiters.get(login);
+		if (!waiter)
+			return;
 
-		if (avatarElement) {
-			let avatarComponent = this.fine.getOwner(avatarElement);
+		this.socketWaiters.delete(login);
 
-			if (avatarComponent.type.displayName == 'ScAvatar') {
-				this.AvatarClass = avatarComponent.type;
+		const webpEmoteVersions = data.host.files.filter((value => value.format === 'WEBP'));
+		if (!webpEmoteVersions.length) return;
+
+		const highestQuality = webpEmoteVersions[webpEmoteVersions.length - 1];
+		waiter(`${data.host.url}/${highestQuality.name}`);
+	}
+
+	getAvatar(login) {
+		login = login.toLowerCase();
+
+		const entry = this.avatarCache.get(login);
+		if ( entry?.done && Date.now() < entry.expires_at )
+			return entry.value;
+
+		if ( entry && ! entry.done )
+			return entry.promise;
+
+		const promise = new Promise(resolve => {
+			let timer;
+			const onDone = value => {
+				clearTimeout(timer);
+				if ( ! value )
+					value = null;
+
+				this.avatarCache.set(login, {
+					done: true,
+					value,
+					expires_at: Date.now() + 1000 * 60 * 3 // 3 minutes
+				});
+
+				resolve(value);
+			};
+
+			this.socketWaiters.set(login, onDone);
+			timer = setTimeout(onDone, 3000);
+
+			this.waitingAvatars = this.waitingAvatars || [];
+			this.waitingAvatars.push(login);
+
+			if ( ! this.requestTimer )
+				this.requestTimer = setTimeout(() => {
+					this.requestTimer = null;
+					const waiting = this.waitingAvatars;
+					this.waitingAvatars = null;
+
+					const socket = this.resolve('..socket');
+					socket.emitSocket({
+						op: socket.OPCODES.BRIDGE,
+						d: {
+							command: 'userstate',
+							body: {
+								identifiers: waiting.map(login => `username:${login}`),
+								platform: 'TWITCH',
+								kinds: ['AVATAR']
+							}
+						}
+					});
+				}, 1000); // request them all after 1000ms
+		});
+
+		this.avatarCache.set(login, {
+			done: false,
+			promise
+		});
+
+		return promise;
+	}
+
+	onSettingChange() {
+		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
+
+		if (enabled) {
+			if (!this.updateInterval) {
+				this.updateInterval = setInterval(() => {
+					this.updateAvatars();
+				}, 1000);
 			}
 		}
+		else {
+			clearInterval(this.updateInterval);
+			this.updateInterval = false;
+		}
+
+		this.updateAvatars();
 	}
 
-	getUserAvatar(login) {
-		return this.userAvatars.get(login.toLowerCase());
+	getVisibleAvatars() {
+		return document.querySelectorAll('.tw-image-avatar');
 	}
 
-	async updateAnimatedAvatars() {
-		this.userAvatars.clear();
+	updateAvatars() {
+		const enabled = this.settings.get('addon.seventv_emotes.animated_avatars');
 
-		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
-			const avatars = await this.api.cosmetics.fetchAvatars();
-			for (const [login, avatar] of Object.entries(avatars)) {
-				this.userAvatars.set(login, avatar);
-			}
-		};
-
-		this.updateAvatarRenderer();
-	};
-
-	updateAvatarRenderer() {
-		if (!this.AvatarClass) return;
-
-		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
-			let oldRenderer = this.AvatarClass.SEVENTV_oldRenderer || this.AvatarClass.render;
-
-			this.AvatarClass.render = (component, ...args) => {
-				for (let child of component.children) {
-					if (child?.type?.displayName == 'ImageAvatar') this.patchImageAvatar(child);
+		const avatars = this.getVisibleAvatars();
+		avatars.forEach(async avatar => {
+			if (!enabled) {
+				// Check if the avatar has an seventv-original-avatar attribute and set it
+				if (avatar.hasAttribute('seventv-original-avatar')) {
+					avatar.setAttribute('src', avatar.getAttribute('seventv-original-avatar'));
+					avatar.removeAttribute('seventv-original-avatar');
 				}
-				return oldRenderer(component, ...args);
+
+				return;
 			}
 
-			this.AvatarClass.SEVENTV_oldRenderer = oldRenderer;
+			// Get the react instance for the avatar element
+			const avatarComponent = this.fine.getOwner(avatar);
+			if (!avatarComponent) return;
 
-			this.rerenderAvatars();
-		}
-		else if (this.AvatarClass.SEVENTV_oldRenderer) {
-			this.rerenderAvatars();
+			// Find the nearest parent that has information about the user login
+			const parent = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
+				|| e.props?.targetLogin
+				|| e.props?.userLogin
+				|| e.props?.channelLogin
+				|| e.props?.video?.owner?.login
+				|| e.props?.content?.channelLogin,
+			50);
 
-			this.AvatarClass.render = this.AvatarClass.SEVENTV_oldRenderer;
-			delete this.AvatarClass['SEVENTV_oldRenderer'];
-		}
-	}
+			// props.user.login is for our own avatar in the top right
+			// props.targetLogin is for viewer cards
+			// props.userLogin appears to be for channels in the sidebar
+			// props.channelLogin is for the main channel you're watching
+			// props.content.channelLogin is for theatre / fullscreen mode
+			// The 'alt' attribute is a fallback
+			const pprops = parent?.props;
 
-	patchImageAvatar(component) {
-		let props = component.props;
-		if (props.userLogin && props['data-a-target'] != 'profile-image') {
-			let animatedAvatarURL = this.getUserAvatar(props.userLogin);
-			if (animatedAvatarURL) {
-				props.SEVENTV_oldSrc = props.SEVENTV_oldSrc || props.src;
-				props.src = animatedAvatarURL;
-			}
-			else if (props.SEVENTV_oldSrc) {
-				props.src = props.SEVENTV_oldSrc;
-				delete props['SEVENTV_oldSrc'];
-			}
-		}
-	}
+			const login = pprops?.user?.login
+				|| pprops?.targetLogin
+				|| pprops?.userLogin
+				|| pprops?.channelLogin
+				|| pprops?.video?.owner?.login
+				|| pprops?.content?.channelLogin
+				|| avatar.getAttribute('alt');
 
-	rerenderAvatars() {
-		let avatarElements = document.querySelectorAll('.tw-avatar');
+			// No login? No avatar.
+			if (!login) return;
 
-		let componentsToForceUpdate = new Set();
-		let oldKeys = new Map();
+			// Get the current image src URL
+			const current_url = avatar.getAttribute('src');
 
-		for (let avatarElement of avatarElements) {
-			let avatarComponent = this.fine.getOwner(avatarElement);
-
-			//Walk component tree upwards from until we find a full component we can run forceUpdate on
-			let component = avatarComponent;
-			while (component) {
-				//Updating key on every parent is necissary to force entire tree to update
-				if (!oldKeys.has(component)) {
-					oldKeys.set(component, component.key);
-					component.key = 'SEVENTV_rerender';
+			// Get the animated avatar URL for this login
+			const url = await this.getAvatar(login);
+			if (url && url !== current_url) {
+				if (!avatar.hasAttribute('seventv-original-avatar')) {
+					// Set the seventv-original-avatar attribute to the current src attribute
+					avatar.setAttribute('seventv-original-avatar', avatar.getAttribute('src'));
 				}
 
-				if (component.stateNode) {
-					if (component.stateNode.forceUpdate) {
-						componentsToForceUpdate.add(component.stateNode);
-						break;
-					}
-				}
-
-				component = component.return;
+				// Set the src attribute to the animated avatar
+				avatar.setAttribute('src', url);
 			}
-		}
-
-		for (let component of componentsToForceUpdate) {
-			//Force updating twice is necissary for some reason. (Something to do with the way react diffs the key changes?)
-			component.forceUpdate();
-			component.forceUpdate();
-		}
-
-		for (const [component, oldKey] of oldKeys) {
-			component.key = oldKey;
-		}
+		});
 	}
 }

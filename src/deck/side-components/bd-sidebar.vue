@@ -9,6 +9,7 @@
 			:settings="activeSettings"
 			:collapsed="shelf.collapsed"
 			:type="types[shelf.type]"
+			:getFFZ="getFFZ"
 			@can-refresh="updateRefresh()"
 		/>
 	</div>

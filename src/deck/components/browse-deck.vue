@@ -128,9 +128,20 @@
 					</div>
 				</button>
 			</div>
-			<div v-if="currentTags && currentTags.length" class="bd--global-tags tw-flex tw-align-items-center tw-mg-l-1 tw-border-l tw-pd-l-1">
+			<div v-if="(currentTags && currentTags.length) || (currentLangs && currentLangs.length)" class="bd--global-tags tw-flex tw-align-items-center tw-mg-l-1 tw-border-l tw-pd-l-1">
 				<div class="tw-mg-r-05">
 					{{ t('addon.deck.filtered', 'Filtered by') }}
+				</div>
+				<div v-if="displayLangs && displayLangs.length" class="bd--tag-list tw-font-size-7 tw-c-text-base">
+					<div
+						v-for="(lang, idx) in displayLangs"
+						:key="idx"
+						class="tw-border-radius-rounded tw-semibold tw-inline-block ffz-tag tw-mg-r-05"
+					>
+						<div class="ffz-tag__content ffz-i-language">
+							{{ lang }}
+						</div>
+					</div>
 				</div>
 				<bd-tag-list :tags="currentTags.slice(0, 3)" :noMargin="true" />
 				<div v-if="currentTags.length > 3" class="tw-mg-l-05 ffz-il-tooltip__container">
@@ -162,6 +173,7 @@
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
+					:getFFZ="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -195,6 +207,7 @@
 					:collapsed="column.collapsed"
 					:type="types[column.type]"
 					:for-sidebar="tab.sidebar"
+					:getFFZ="getFFZ"
 					@can-refresh="updateRefresh()"
 					@save="updateColumn($event)"
 					@delete="removeColumn(column.id)"
@@ -215,6 +228,7 @@
 				:is="modal"
 				:data="modal_data"
 				:vertical="vertical"
+				:getFFZ="getFFZ"
 				@open-modal="openModal($event)"
 				@close="closeModal"
 			/>
@@ -226,7 +240,7 @@
 
 import Sortable from 'sortablejs';
 
-import {getLoader} from '../data';
+import {Languages, getLoader} from '../data';
 
 const {maybeLoad} = FrankerFaceZ.utilities.fontAwesome;
 const {deep_copy, generateUUID} = FrankerFaceZ.utilities.object;
@@ -283,18 +297,25 @@ export default {
 			return this.tab.vertical || false;
 		},
 
+		currentLangs() {
+			if ( ! this.tab || ! Array.isArray(this.tab.lang) )
+				return null;
+
+			return this.tab.lang;
+		},
+
+		displayLangs() {
+			if ( ! this.currentLangs )
+				return;
+
+			return this.currentLangs.map(lang => Languages[lang] ?? lang);
+		},
+
 		currentTags() {
 			if ( ! this.tab || ! Array.isArray(this.tab.tags) )
 				return null;
 
-			this.loader;
-			return this.tab.tags.map(id => {
-				const tag = getLoader().getTagImmediate(id, this.load, true);
-				return tag ? deep_copy(tag) : {
-					id,
-					name: '(...)'
-				}
-			});
+			return this.tab.tags;
 		},
 
 		activeSettings() {

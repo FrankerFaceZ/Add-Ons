@@ -54,6 +54,7 @@
 import ColumnBase from '../column-base';
 import { reduceTags } from '../data';
 
+const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
 
 export default {
@@ -113,7 +114,26 @@ export default {
 		},
 
 		hideThumbnails() {
-			return this.game && this.settings.hidden_thumbnails.includes(this.game.name);
+			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+				return true;
+
+			const regexes = this.inst.global_settings?.blur_titles;
+			if ( regexes &&
+				(( regexes[0] && regexes[0].test(this.title) ) ||
+				( regexes[1] && regexes[1].test(this.title) ))
+			)
+				return true;
+
+			const flags = this.inst.global_settings?.blur_flags;
+			if ( flags ) {
+				const item_flags = get('contentClassificationLabels.@each.id', this.item) ?? [];
+				for(const flag of item_flags) {
+					if ( flags.has(flag) )
+						return true;
+				}
+			}
+
+			return false;
 		},
 
 		hasAnimation() {

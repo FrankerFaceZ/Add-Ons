@@ -1,7 +1,7 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"load_events": [
 		"chat-data"
 	],
@@ -11,5 +11,5 @@
 	"description": "This add-on turns Super Mario Maker 2 course and maker IDs in chat into clickable links.",
 	"settings": "add_ons.smm2_links",
 	"created": "2023-04-19T21:50:22.107Z",
-	"updated": "2023-04-19T21:50:22.107Z"
+	"updated": "2023-11-05T19:56:16.231Z"
 }

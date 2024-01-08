@@ -38,6 +38,15 @@ export function createSubtitles(lines, navigate) {
 }
 
 
+export function createFlags(flags) {
+	return (<div class="tw-border-t tw-mg-t-05 tw-pd-t-05 tw-font-size-6">{
+		i18n.t('metadata.flags.tooltip', 'Intended for certain audiences. May contain:')
+			+ '\n\n'
+			+ flags.join('\n')
+	}</div>);
+}
+
+
 export function createStreamIndicator(type, icon, label, slots = {}) {
 	const data = TYPES[type];
 	if ( ! icon )
@@ -59,17 +68,29 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 	let preview_children;
 
 	if ( props.image ) {
+		let tag;
+		if ( props.embed )
+			tag = (<iframe
+				class="tw-image tw-full-width"
+				src={props.embed}
+				allowFullScreen={false}
+				allow="accelerometer; autoplay; encrypted-media; gyroscope"
+				frameBorder={0}
+			/>);
+		else
+			tag = (<img
+				class="tw-image tw-full-width"
+				alt={props.cardTitle || props.title}
+				src={props.image}
+			/>);
+
 		preview_children = [
 			// eslint-disable-next-line react/jsx-key
 			<div class="tw-border-radius-medium tw-c-background-alt-2 tw-overflow-hidden">
 				<div class="ffz-aspect ffz-aspect--align-top">
 					<div class="ffz-aspect__spacer" style="padding-top: 56.25%" />
 					<div class="preview-card-thumbnail__image">
-						<img
-							class="tw-image tw-full-width"
-							alt={props.cardTitle || props.title}
-							src={props.image}
-						/>
+						{tag}
 					</div>
 				</div>
 			</div>
@@ -174,7 +195,6 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 		</div>);
 	}
 
-
 	const out = (<div class={`preview-card ${data.class || ''}`}>
 		{preview_children ? <div class="tw-relative">{preview_children}</div> : null}
 		<div class="tw-flex tw-flex-nowrap tw-mg-t-1">
@@ -201,6 +221,7 @@ export function createCard(props = {}, slots = {}, data = {}, navigate) {
 					</div> : null}
 				</div>
 				{Array.isArray(props.tags) && props.tags.length ? createTagList(props.tags, {}, navigate) : null}
+				{slots.extra ?? null}
 			</div>
 		</div>
 	</div>);
@@ -216,8 +237,8 @@ export function createTagList(tags, data = {}, navigate) {
 	const out = [];
 
 	for(const tag of tags) {
-		const lang = tag.isLanguageTag || tag.is_language,
-			url = `/directory/all/tags/${tag.id}`;
+		const lang = false,
+			url = `/directory/all/tags/${tag}`;
 
 		out.push(<div class={`tw-border-radius-rounded tw-semibold tw-inline-block ffz-tag tw-mg-r-05 ${data.noMargin ? '' : 'tw-mg-t-05'}`}>
 			<a
@@ -226,11 +247,9 @@ export function createTagList(tags, data = {}, navigate) {
 				onClick={e => navigate(url, e)}
 			>
 				<div
-					class={`ffz-tooltip ffz-tag__content ${lang ? 'ffz-i-language' : ''}`}
-					data-tooltip-type="twitch-tag"
-					data-tag-id={tag.id}
+					class={`ffz-tag__content ${lang ? 'ffz-i-language' : ''}`}
 				>
-					{ tag.localizedName || tag.label || tag.name }
+					{ tag }
 				</div>
 			</a>
 		</div>)

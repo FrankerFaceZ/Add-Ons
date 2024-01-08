@@ -38,6 +38,7 @@
 					:inst="inst"
 					:settings="activeSettings"
 					:now="now"
+					:getFFZ="getFFZ"
 				/>
 			</div>
 		</transition-group>
@@ -97,7 +98,7 @@ const {Color} = FrankerFaceZ.utilities.color;
 
 
 export default {
-	props: ['data', 'type', 'settings', 'offset'],
+	props: ['data', 'type', 'settings', 'offset', 'getFFZ'],
 
 	data() {
 		const count = this.data.display?.default_count || 5;
@@ -332,6 +333,8 @@ export default {
 			handler() {
 				if ( this.inst )
 					this.inst.updateSettings(deep_copy(this.data.settings));
+
+				this.size = this.data.display?.default_count || 5;
 
 				this.refreshFromInst();
 			}

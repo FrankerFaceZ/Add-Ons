@@ -16,8 +16,8 @@
 <script>
 
 import ColumnBase from '../column-base';
-import { reduceTags } from '../data';
-import { createCard, createStreamIndicator, createSubtitles } from '../tooltips';
+import { reduceTags, getVideoPreviewURL } from '../data';
+import { createCard, createFlags, createStreamIndicator, createSubtitles } from '../tooltips';
 
 const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
@@ -45,7 +45,7 @@ export default {
 		},
 
 		tags() {
-			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
+			return reduceTags(this.item.stream.freeformTags, this.settings.max_tags, this.inst.required_tags);
 		},
 
 		klass() {
@@ -107,13 +107,25 @@ export default {
 
 			let indicator;
 			if ( this.item.stream.type !== 'live' || ! this.settings.hide_live )
-				indicator = createStreamIndicator(this.iteam.stream.type);
+				indicator = createStreamIndicator(this.item.stream.type);
+
+			let embed = null;
+			if ( this.settings.video_preview )
+				embed = getVideoPreviewURL(this.item.login);
+
+			let extra;
+			const flags = get('stream.contentClassificationLabels.@each.localizedName', this.item);
+			if ( flags?.length > 0 )
+				extra = createFlags(flags);
 
 			return createCard({
 				link: this.getReactURL('user', this.item.login),
 				state: {channelView: 'Watch'},
 				title: this.title,
 				image: this.image,
+
+				embed,
+
 				tags: this.tags,
 
 				avatar: this.settings.show_avatars ? this.avatar : null,
@@ -143,7 +155,8 @@ export default {
 					this.game ? {
 						content: this.game.displayName
 					} : null
-				])
+				]),
+				extra
 			}, {
 				class: this.klass
 			});

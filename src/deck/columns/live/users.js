@@ -1,7 +1,7 @@
 const {get, deep_copy} = FrankerFaceZ.utilities.object;
 
 import { LiveColumnBase } from '../../column-base';
-import { getLoader } from '../../data';
+import { checkCosmetics, cleanTags, getLoader } from '../../data';
 
 export default class Users extends LiveColumnBase {
 
@@ -63,6 +63,9 @@ export default class Users extends LiveColumnBase {
 	}
 
 	async load(first = 10) {
+		if ( first > 100 )
+			first = 100;
+
 		if ( this.remaining == null )
 			this.remaining = Array.from(this.settings.ids);
 
@@ -92,7 +95,8 @@ export default class Users extends LiveColumnBase {
 					continue;
 
 				const copy = deep_copy(node);
-				this.memorizeTags(copy);
+				cleanTags(copy.stream);
+				checkCosmetics(copy);
 				items.push(copy);
 			}
 

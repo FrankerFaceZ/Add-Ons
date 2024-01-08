@@ -1,9 +1,16 @@
 'use strict';
 
 const fs = require('fs');
-const jsonfile = require('jsonfile');
+//const jsonfile = require('jsonfile');
 const sgf = require('staged-git-files');
 const child = require('child_process');
+
+
+function readJSON(file) {
+	try {
+		return JSON.parse(fs.readFileSync(file));
+	} catch(err) { /* no-op */ }
+}
 
 
 async function main() {
@@ -27,7 +34,7 @@ async function main() {
 
 	for(const addon of modified) {
 		const manifest = `src/${addon}/manifest.json`,
-			json = jsonfile.readFileSync(manifest, {throws: false});
+			json = readJSON(manifest);
 
 		if ( ! json || ! json.enabled ) {
 			console.debug('Skipping add-on:', addon);

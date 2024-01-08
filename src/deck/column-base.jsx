@@ -1,4 +1,4 @@
-import {getLoader, VideoTypes} from './data';
+import {getLoader, Languages, VideoTypes} from './data';
 
 const {get, make_enum, deep_equals} = FrankerFaceZ.utilities.object;
 const {createElement} = FrankerFaceZ.utilities.dom;
@@ -56,19 +56,19 @@ export default class ColumnBase {
 
 		if ( this.settings && this.settings.tags )
 			for(const tag of this.settings.tags)
-				set.add(tag);
+				set.add(tag.toLowerCase());
 
 		if ( this.settings && this.settings.blocked_tags )
 			for(const tag of this.settings.blocked_tags)
-				blocked.add(tag);
+				blocked.add(tag.toLowerCase());
 
 		if ( this.global_settings && this.global_settings.tags )
 			for(const tag of this.global_settings.tags)
-				set.add(tag);
+				set.add(tag.toLowerCase());
 
 		if ( this.global_settings && this.global_settings.blocked_tags )
 			for(const tag of this.global_settings.blocked_tags)
-				blocked.add(tag);
+				blocked.add(tag.toLowerCase());
 
 		this.required_tags = set.size > 0 ? [...set] : null;
 		this.blocked_tags = blocked.size > 0 ? [...blocked] : null;
@@ -245,15 +245,18 @@ export default class ColumnBase {
 
 	getSubtitles() {
 		const sort_sub = this.getSortSubtitle(),
+			lang_sub = this.getLangSubtitle(),
 			tag_sub = this.getTagSubtitle(),
 			cat_sub = this.getCatSubtitle();
 
-		if ( ! sort_sub && ! tag_sub && ! cat_sub )
+		if ( ! sort_sub && ! lang_sub && ! tag_sub && ! cat_sub )
 			return null;
 
 		const out = [];
 		if ( sort_sub )
 			out.push(sort_sub);
+		if ( lang_sub )
+			out.push(lang_sub);
 		if ( tag_sub )
 			out.push(tag_sub);
 		if ( cat_sub )
@@ -281,6 +284,35 @@ export default class ColumnBase {
 		};
 	}
 
+	getLangSubtitle() {
+		if ( ! this.settings )
+			return null;
+
+		const langs = this.settings.lang ?? [];
+		if ( ! langs.length )
+			return null;
+
+		const tip = [];
+
+		for(const lang of langs)
+			tip.push(Languages[lang] ?? lang);
+
+		if ( tip.length === 1 )
+			return {
+				icon: 'ffz-i-language',
+				text: tip[0],
+				tip: tip[0]
+			};
+
+		return {
+			icon: 'ffz-i-language',
+			i18n: 'addon.deck.sub.lang',
+			text: '{count, plural, one {{count} language} other {{count} languages}}',
+			count: tip.length,
+			tip: tip.join(', ')
+		}
+	}
+
 	getTagSubtitle() {
 		if ( ! this.settings )
 			return null;
@@ -291,19 +323,16 @@ export default class ColumnBase {
 		if ( tag_count === 0 && blocked_count === 0 )
 			return null;
 
-		const tip = [],
-			loader = getLoader();
+		const tip = [];
 
 		if (tag_count > 0)
-			for(const tag_id of this.settings.tags) {
-				const tag = loader.getTagImmediate(tag_id, () => this.vue.refreshFromInst());
+			for(const tag of this.settings.tags) {
 				if ( tag )
-					tip.push(tag.label);
+					tip.push(tag);
 			}
 
 		if (blocked_count > 0)
-			for(const tag_id of this.settings.blocked_tags) {
-				const tag = loader.getTagImmediate(tag_id, () => this.vue.refreshFromInst());
+			for(const tag of this.settings.blocked_tags) {
 				if ( tag )
 					tip.push(`-${tag.label}`);
 			}
@@ -367,6 +396,10 @@ export default class ColumnBase {
 		return false;
 	}
 
+	allowHideUnlisted() {
+		return false;
+	}
+
 	useTags() {
 		return true;
 	}
@@ -400,13 +433,6 @@ ColumnBase.ICONIC_TYPES = Object.freeze(make_enum(
 
 
 export class LiveColumnBase extends ColumnBase {
-	static memorizeTags(item) {
-		const tags = item && item.stream && item.stream.tags,
-			loader = getLoader();
-		if ( loader && Array.isArray(tags) )
-			for(const tag of tags)
-				loader.memorizeTag(tag);
-	}
 
 	onStreamChange(type, id) {
 		super.onStreamChange(type, id);
@@ -415,16 +441,16 @@ export class LiveColumnBase extends ColumnBase {
 			this.vue.items = this.vue.items.filter(item => item.id != id);
 	}
 
+	allowHideUnlisted() {
+		return true;
+	}
+
 	getComponent(item) { // eslint-disable-line no-unused-vars
 		return 'bd-live-card';
 	}
 
 	getShelfComponent(item) { // eslint-disable-line no-unused-vars
 		return 'bd-live-shelf-card';
-	}
-
-	memorizeTags(item) {
-		LiveColumnBase.memorizeTags(item);
 	}
 
 	performClientSort(items, sort) {
@@ -445,10 +471,22 @@ export class LiveColumnBase extends ColumnBase {
 		const hide_reruns = this.global_settings.hide_reruns,
 			blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => LiveColumnBase.filterStream(item, hide_reruns, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games));
+		return items.filter(item => LiveColumnBase.filterStream(
+			item,
+			hide_reruns,
+			blocked_games,
+			this.required_tags,
+			this.blocked_tags,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.languages,
+			this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games) {
+	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted, blocked_titles, blocked_flags) {
 		if ( ! item.stream )
 			return false;
 
@@ -459,31 +497,48 @@ export class LiveColumnBase extends ColumnBase {
 		if ( blocked_games && game && blocked_games.includes(game.name) )
 			return false;
 
+		if ( ! game?.name && hide_unlisted )
+			return false;
+
 		if ( filter_games && game && ! filter_games.includes(game.id) )
 			return false;
 
 		if ( filter_blocked_games && game && filter_blocked_games.includes(game.id) )
 			return false;
 
+		if ( languages && languages.length ) {
+			const lang = item.broadcastSettings?.language;
+			if ( lang && ! languages.includes(lang) )
+				return false;
+		}
+
 		if ( required_tags || blocked_tags ) {
-			const tags = get('stream.tags.@each.id', item) || [],
-				lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase(),
-				loader = getLoader();
+			const tags = get('stream.freeformTags', item).map(name => name && name.toLowerCase()) || [];
+				//lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase();
 
 			if ( required_tags )
-				for(const tag_id of required_tags)
-					if ( ! tags.includes(tag_id) ) {
-						const tag = loader.getTagImmediate(tag_id);
-						if( tag && tag.is_language && lang && lang === tag.language )
-							continue;
-
+				for(const tag of required_tags)
+					if ( ! tags.includes(tag) )
 						return false;
-					}
 
-			if (blocked_tags )
-				for(const tag_id of blocked_tags)
-					if ( tags.includes(tag_id) )
+			if ( blocked_tags )
+				for(const tag of blocked_tags)
+					if ( tags.includes(tag) )
 						return false;
+		}
+
+		if ( item.broadcastSettings?.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.broadcastSettings.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.broadcastSettings.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('stream.contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
 		}
 
 		return true;
@@ -583,10 +638,17 @@ export class ClipColumnBase extends ColumnBase {
 
 		const blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => ClipColumnBase.filterClip(item, blocked_games, this.filter_games, this.filter_blocked_games));
+		return items.filter(item => ClipColumnBase.filterClip(
+			item,
+			blocked_games,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterClip(item, blocked_games, filter_games, filter_blocked_games) {
+	static filterClip(item, blocked_games, filter_games, filter_blocked_games, blocked_titles, blocked_flags) {
 		if ( blocked_games && item.game && blocked_games.includes(item.game.name) )
 			return false;
 
@@ -595,6 +657,20 @@ export class ClipColumnBase extends ColumnBase {
 
 		if ( filter_blocked_games && item.game && filter_blocked_games.includes(item.game.id) )
 			return false;
+
+		if ( item.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
+		}
 
 		return true;
 	}
@@ -661,14 +737,6 @@ Object.freeze(ClipColumnBase.CLIP_PERIOD);
 
 export class VideoColumnBase extends ColumnBase {
 
-	static memorizeTags(item) {
-		const tags = item && item.contentTags,
-			loader = getLoader();
-		if ( loader && Array.isArray(tags) )
-			for(const tag of tags)
-				loader.memorizeTag(tag);
-	}
-
 	constructor(...args) {
 		super(...args);
 
@@ -707,10 +775,6 @@ export class VideoColumnBase extends ColumnBase {
 		return 'bd-video-shelf-card';
 	}
 
-	memorizeTags(item) {
-		VideoColumnBase.memorizeTags(item);
-	}
-
 	filterItems(items) {
 		if ( ! Array.isArray(items) )
 			return [];
@@ -719,10 +783,21 @@ export class VideoColumnBase extends ColumnBase {
 			types = this.types,
 			blocked_games = this.global_settings.blocked_games;
 
-		return items.filter(item => VideoColumnBase.filterVideo(item, no_recordings, types, blocked_games, this.required_tags, this.blocked_tags, this.filter_games, this.filter_blocked_games));
+		return items.filter(item => VideoColumnBase.filterVideo(
+			item,
+			no_recordings,
+			types,
+			blocked_games,
+			this.required_tags,
+			this.blocked_tags,
+			this.filter_games,
+			this.filter_blocked_games,
+			this.global_settings.blocked_titles,
+			this.global_settings.blocked_flags
+		));
 	}
 
-	static filterVideo(item, no_recordings, types, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games) {
+	static filterVideo(item, no_recordings, types, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, blocked_titles, blocked_flags) {
 		if ( no_recordings && item.status === 'RECORDING' )
 			return false;
 
@@ -739,24 +814,31 @@ export class VideoColumnBase extends ColumnBase {
 			return false;
 
 		if ( required_tags || blocked_tags ) {
-			const tags = get('contentTags.@each.id', item) || [],
-				lang = item.language && item.language.toLowerCase(),
-				loader = getLoader();
+			const tags = get('contentTags.@each.id', item).map(tag => tag && tag.toLowerCase()) || [];
 
-			if (required_tags)
-				for(const tag_id of required_tags)
-					if ( ! tags.includes(tag_id) ) {
-						const tag = loader.getTagImmediate(tag_id);
-						if ( tag && tag.is_language && lang && lang === tag.language )
-							continue;
-
+			if ( required_tags )
+				for(const tag of required_tags)
+					if ( ! tags.includes(tag) )
 						return false;
-					}
 
-			if (blocked_tags)
-				for(const tag_id of blocked_tags)
-					if ( tags.includes(tag_id) )
+			if ( blocked_tags )
+				for(const tag of blocked_tags)
+					if ( tags.includes(tag) )
 						return false;
+		}
+
+		if ( item.title && blocked_titles &&
+			(( blocked_titles[0] && blocked_titles[0].test(item.title) ) ||
+			( blocked_titles[1] && blocked_titles[1].test(item.title) ))
+		)
+			return false;
+
+		if ( blocked_flags ) {
+			const flags = get('contentClassificationLabels.@each.id', item) ?? [];
+			for(const flag of flags) {
+				if ( blocked_flags.has(flag) )
+					return false;
+			}
 		}
 
 		return true;

@@ -39,6 +39,16 @@ class BrowseDeck extends Addon {
 			}
 		});
 
+		this.settings.add('deck.video-preview', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Deck >> Behavior',
+				title: 'Display video previews of live content.',
+				component: 'setting-check-box',
+				description: 'When this is enabled, the embedded player will be used in some situations to display previews of live channels. This is used primarily in tool-tips for the custom sidebar, but also works when hovering the mouse over a stream thumbnail.'
+			}
+		});
+
 		this.dialog = new Dialog(() => this.buildDialog());
 		this.dialog.exclusive = false;
 		this.dialog.maximized = true;
@@ -71,28 +81,15 @@ class BrowseDeck extends Addon {
 		this.router.route('addons.deck', '/_deck/:tab?');
 		this.router.routeName('addons.deck', 'Deck');
 
-		await this.site.awaitElement(Dialog.EXCLUSIVE);
-
-		const tip_handler = this.tooltips.types['twitch-tag'] = target => {
-			const tag_id = target.dataset.tagId,
-				loader = getLoader(),
-				data = loader.getTagImmediate(tag_id);
-
-			if ( data && data.description )
-				return data.description;
-
-			return loader.getTag(tag_id, true).then(tag => tag.description);
-		}
-
-		tip_handler.delayShow = 500;
-
-		const card_tip = this.tooltips.types['bd-sidebar-card'] = (target, tip) => {
+		const card_tip = (target, tip) => {
 			const shelf = target.__vue__?.$parent;
 			if ( ! shelf )
 				return null;
 
 			return shelf.renderTooltip(target, tip);
 		};
+
+		this.tooltips.define('bd-sidebar-card', card_tip);
 
 		let card_tip_open = 0;
 
@@ -114,6 +111,15 @@ class BrowseDeck extends Addon {
 		this.on('settings:changed:directory.hide-live', val => this.updateSetting('hide_live', val));
 		this.on('settings:changed:deck.auto-settings', val => this.updateSetting('open_settings', val));
 		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
+		this.on('settings:changed:deck.video-preview', val => this.updateSetting('video_preview', val));
+
+		this.on('settings:changed:__filter:directory.block-titles', val => this.updateSetting('blocked_titles', val ? deep_copy(val) : null));
+		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
+		this.on('settings:changed:__filter:directory.blur-titles', val => this.updateSetting('blur_titles', val ? deep_copy(val) : null));
+		this.on('settings:changed:directory.blur-tags', val => this.updateSetting('blur_tags', deep_copy(val || [])));
+		this.on('settings:changed:directory.block-flags', val => this.updateSetting('blocked_flags', deep_copy(val || [])));
+		this.on('settings:changed:directory.blur-flags', val => this.updateSetting('blur_flags', deep_copy(val || [])));
+		this.on('settings:changed:directory.show-flags', val => this.updateSetting('show_flags', val));
 
 		this.on('site.subpump:pubsub-message', this.onPubSub, this);
 
@@ -128,8 +134,10 @@ class BrowseDeck extends Addon {
 
 		this.sidebar.on('hide', this.destroySidebar, this);
 		this.dialog.on('hide', this.destroyDialog, this);
-		this.onNavigate();
 
+		await this.site.awaitElement(Dialog.EXCLUSIVE);
+
+		this.onNavigate();
 		this.checkSidebar();
 	}
 
@@ -180,9 +188,6 @@ class BrowseDeck extends Addon {
 
 			else if ( key === 'directory.game.blocked-games' )
 				this.updateSetting('blocked_games', deep_copy(value || []));
-
-			else if ( key === 'directory.game.blocked-tags' )
-				this.updateSetting('blocked_tags', deep_copy(value || []));
 		}
 	}
 
@@ -263,16 +268,26 @@ class BrowseDeck extends Addon {
 			settings: {
 				open_setting: this.settings.get('deck.auto-settings'),
 				swap_sidebars: this.settings.get('layout.swap-sidebars'),
+				video_preview: this.settings.get('deck.video-preview'),
 				show_avatars: true, // this.settings.get('directory.show-channel-avatars'),
 				hide_live: this.settings.get('directory.hide-live'),
 				hide_reruns: this.settings.get('directory.hide-vodcasts'),
 				uptime: this.settings.get('directory.uptime'),
+				show_flags: this.settings.get('directory.show-flags'),
 				group_hosts: true, //this.settings.get('directory.following.group-hosts'),
 				host_menus: true, //this.settings.get('directory.following.host-menus'),
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
 				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', [])),
-				blocked_tags: deep_copy(this.settings.provider.get('directory.game.blocked-tags', []))
+
+				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags') ?? []),
+				blur_tags: deep_copy(this.settings.get('directory.blur-tags') ?? []),
+				blocked_titles: deep_copy(this.settings.get('__filter:directory.block-titles')),
+				blur_titles: deep_copy(this.settings.get('__filter:directory.blur-titles')),
+				blocked_flags: deep_copy(this.settings.get('directory.block-flags') ?? []),
+				blur_flags: deep_copy(this.settings.get('directory.blur-flags') ?? [])
 			},
+
+			getFFZ: () => this,
 
 			tab_index: this.currentTab,
 
@@ -287,11 +302,11 @@ class BrowseDeck extends Addon {
 			saveTabs(data) {
 				t.settings.provider.set('deck-tabs', deep_copy(data));
 
-				t.log.info('save-tabs', data, is_side_vue, t._side_vue);
+				//t.log.info('save-tabs', data, is_side_vue, t._side_vue);
 
 				t.checkSidebar();
 
-				t.log.info('--', t._side_vue);
+				//t.log.info('--', t._side_vue);
 
 				if ( ! is_side_vue && t._side_vue )
 					t._side_vue.$children[0].tabs = deep_copy(data);

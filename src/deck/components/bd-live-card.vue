@@ -4,6 +4,7 @@
 		:state="{channelView: 'Watch'}"
 		:title="title"
 		:image="image"
+		:embed="embed"
 		:tags="tags"
 		:class="klass"
 
@@ -16,9 +17,34 @@
 		:boxartLink="game && getReactURL('dir-game-index', game.name)"
 
 		:bottomLeft="settings.hide_viewers ? null : t('addon.deck.viewers', '{viewers, plural, one {# viewer} other {# viewers}}', {viewers: item.stream.viewersCount})"
+
+		@mouseover="startHover"
+		@mouseleave="stopHover"
 	>
 		<template #top-left>
 			<bd-stream-indicator v-if="! settings.hide_live" :type="item.stream.type" />
+		</template>
+
+		<template #preview-extra>
+			<transition name="bd--hover-progress">
+				<div
+					v-if="hovering" 
+					class="bd--hover-progress"
+				>
+					<div
+						v-if="hovering"
+						class="ffz-progress-bar ffz-progress-bar-countdown ffz-progress-bar--default ffz-progress-bar--mask"
+					>
+						<div
+							class="tw-block ffz-progress-bar__fill"
+							data-a-target="tw-progress-bar-animation"
+							:style="{
+								transition: '0.5s linear all'
+							}"
+						/>
+					</div>
+				</div>
+			</transition>
 		</template>
 
 		<template #top-right>
@@ -38,6 +64,21 @@
 					</div>
 				</div>
 			</div>
+
+			<div
+				v-if="contentFlags"
+				class="ffz-il-tooltip__container tw-mg-t-05"
+			>
+				<div class="preview-card-stat tw-align-items-center tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-font-size-6 tw-justify-content-center tw-pd-x-05">
+					<figure class="ffz-i-flag" />
+				</div>
+				<div class="ffz-il-tooltip ffz-il-tooltip--20 ffz-il-tooltip--prewrap ffz-il-tooltip--down ffz-il-tooltip--align-right">{{
+					t(
+						'addon.deck.content-flags',
+						'Intended for certain audiences. May contain:'
+					) + '\n\n' + contentFlags.join('\n')
+				}}</div>
+			</div>
 		</template>
 
 		<template #subtitles>
@@ -54,7 +95,7 @@
 <script>
 
 import ColumnBase from '../column-base';
-import { reduceTags } from '../data';
+import { reduceTags, getVideoPreviewURL } from '../data';
 
 const {get} = FrankerFaceZ.utilities.object;
 const {duration_to_string} = FrankerFaceZ.utilities.time;
@@ -64,7 +105,9 @@ export default {
 
 	data() {
 		return {
-			now: Date.now()
+			now: Date.now(),
+			hover: false,
+			hovering: false
 		}
 	},
 
@@ -96,14 +139,52 @@ export default {
 		},
 
 		tags() {
-			return reduceTags(this.item.stream.tags, this.settings.max_tags, this.inst.required_tags);
+			return reduceTags(this.item.stream.freeformTags, this.settings.max_tags, this.inst.required_tags);
 		},
 
 		klass() {
-			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+			if ( this.shouldHideThumbnail )
 				return 'ffz-hide-thumbnail';
 
 			return '';
+		},
+
+		contentFlags() {
+			if ( ! this.inst.global_settings?.show_flags )
+				return null;
+
+			const flags = get('stream.contentClassificationLabels.@each.localizedName', this.item);
+			if ( flags?.length > 0 )
+				return flags;
+			return null;
+		},
+
+		shouldHideThumbnail() {
+			if ( this.game && this.settings.hidden_thumbnails.includes(this.game.name) )
+				return true;
+
+			const regexes = this.inst.global_settings?.blur_titles;
+			if ( regexes &&
+				(( regexes[0] && regexes[0].test(this.title) ) ||
+				( regexes[1] && regexes[1].test(this.title) ))
+			)
+				return true;
+
+			const flags = this.inst.global_settings?.blur_flags;
+			if ( flags ) {
+				const item_flags = get('stream.contentClassificationLabels.@each.id', this.item) ?? [];
+				for(const flag of item_flags) {
+					if ( flags.has(flag) )
+						return true;
+				}
+			}
+
+			return false;
+		},
+
+		embed() {
+			if ( this.hover && this.settings.video_preview )
+				return getVideoPreviewURL(this.item.login);
 		},
 
 		image() {
@@ -154,7 +235,29 @@ export default {
 	},
 
 	destroyed() {
+		clearTimeout(this.hover_timer);
 		clearInterval(this.clock);
+	},
+
+	methods: {
+		startHover() {
+			if ( ! this.settings.video_preview )
+				return;
+
+			this.hovering = true;
+			if ( ! this.hover_timer )
+				this.hover_timer = setTimeout(() => {
+					this.hover = true;
+					this.hovering = false;
+				}, 500);
+		},
+
+		stopHover() {
+			this.hovering = false;
+			this.hover = false;
+			clearTimeout(this.hover_timer);
+			this.hover_timer = null;
+		}
 	}
 
 }

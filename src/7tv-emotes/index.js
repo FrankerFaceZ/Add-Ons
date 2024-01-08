@@ -10,12 +10,12 @@ class SevenTVEmotes extends Addon {
 	}
 
 	async onLoad() {
-		let context = await require.context('./modules', false, /\.js$/);
+		const context = await require.context('./modules', false, /\.js$/);
 		await this.populate(context);
 	}
 
 	onEnable() {
-		for (let child of Object.values(this.children)) {
+		for (const child of Object.values(this.children)) {
 			child.enable();
 		}
 	}
