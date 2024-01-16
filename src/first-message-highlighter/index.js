@@ -179,9 +179,9 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
-		this.chat.addHighlightReason('first-message', "First message from a user during this session");
-		this.chat.addHighlightReason('first-time-chatter', "First messages from a user new to the channel");
-		this.chat.addHighlightReason('returning-chatter', "First messages from a user returning to the channel");
+		this.chat.addHighlightReason('first-message', 'First message from a user during this session');
+		this.chat.addHighlightReason('first-time-chatter', 'First messages from a user new to the channel');
+		this.chat.addHighlightReason('returning-chatter', 'First messages from a user returning to the channel');
 
 		const outerThis = this;
 		this.messageHighlighter = {
@@ -259,6 +259,8 @@ class FirstMessageHighlight extends Addon {
 	}
 
 	highlightMessage(ctx, msg) {
+		if (!this.settings.get('first_message_highlight.enabled')) return;
+
 		if (this.settings.get('first_message_highlight.only_moderated_channels')) {
 			if (!this.chat.context.get('context.moderator'))
 				return;
