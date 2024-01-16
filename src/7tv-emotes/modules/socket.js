@@ -51,6 +51,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this._connect_attempts = 0;
 
 		this._session_id = '';
+		this._last_presence_at = 0;
 
 		this._user_id = false;
 		this._active_channel_set = false;
@@ -98,6 +99,12 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 	sendPresences(self = false, room_id = undefined) {
 		if (!this._user_id) return;
 
+		// Only send a presence at most every 10 seconds
+		if (this._last_presence_at && this._last_presence_at > Date.now() - 1000 * 10)
+			return;
+
+		this._last_presence_at = Date.now();
+
 		if (room_id) {
 			this.stv_api.user.updateUserPresences(this._user_id, room_id, self, this._session_id);
 			return;
@@ -108,6 +115,8 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				this.stv_api.user.updateUserPresences(this._user_id, room.id, self, this._session_id);
 			}
 		}
+
+		this._last_presence_at = Date.now();
 	}
 
 	async roomAdd(room) {
