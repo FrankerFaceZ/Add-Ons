@@ -264,7 +264,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 					let message = `${body.actor.display_name} `;
 					switch (action) {
 						case 'ADD': {
-							message += `added the emote ${emote.value.name}`;
+							message += `added the emote ${emote.value.name} (${emote.value.name})`;
 							break;
 						}
 						case 'REMOVE': {
@@ -273,9 +273,9 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 						}
 						case 'UPDATE': {
 							if (oldEmote?.name !== emote.value.name) {
-								message += `renamed the emote ${oldEmote.name} to ${emote.value.name}`;
+								message += `renamed the emote ${oldEmote.name} to ${emote.value.name} (${emote.value.name})`;
 							} else {
-								message += `updated the emote ${emote.value.name}`;
+								message += `updated the emote ${emote.value.name} (${emote.value.name})`;
 							}
 							break;
 						}
