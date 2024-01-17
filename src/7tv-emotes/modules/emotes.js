@@ -261,21 +261,21 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				}
 
 				if (completed) {
-					let message = `[7TV] ${body.actor.display_name} `;
+					let message = `${body.actor.display_name} `;
 					switch (action) {
 						case 'ADD': {
-							message += `added the emote '${emote.value.name}'`;
+							message += `added the emote ${emote.value.name}`;
 							break;
 						}
 						case 'REMOVE': {
-							message += `removed the emote '${emote.old_value.name}'`;
+							message += `removed the emote ${emote.old_value.name}`;
 							break;
 						}
 						case 'UPDATE': {
 							if (oldEmote?.name !== emote.value.name) {
-								message += `renamed the emote '${oldEmote.name}' to '${emote.value.name}'`;
+								message += `renamed the emote ${oldEmote.name} to ${emote.value.name}`;
 							} else {
-								message += `updated the emote '${emote.value.name}'`;
+								message += `updated the emote ${emote.value.name}`;
 							}
 							break;
 						}

@@ -206,10 +206,14 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		delete this._rooms[room.id];
 	}
 
-	addChatNotice(channel, message) {
+	addChatNotice(channel, message, tokenize = true) {
 		if (!this.settings.get('addon.seventv_emotes.update_messages')) return;
 		
-		this.siteChat.addNotice(channel.login, message);
+		this.siteChat.addNotice(channel.login, {
+			message,
+			icon: new URL('https://cdn.frankerfacez.com/static/addons/7tv-emotes/logo.png'),
+			tokenize
+		});
 	}
 
 	onMessage({ op: opcode, d: _data }) {
@@ -296,7 +300,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 							this._active_channel_set = newSet.id;
 	
 							this.emotes.updateChannelSet(channel, newSet.id);
-							this.addChatNotice(channel, `[7TV] ${body.actor.display_name} updated the active emote set to '${newSet.name}'`);
+							this.addChatNotice(channel, `${body.actor.display_name} updated the active emote set to ${newSet.name}`);
 						}
 						
 						// TODO: Empty data / "updated" array when setting to "No Paint" or "No Badge"
