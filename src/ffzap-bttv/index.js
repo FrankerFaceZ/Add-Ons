@@ -46,6 +46,16 @@ class BetterTTV extends Addon {
 			},
 		});
 
+		this.settings.add('ffzap.betterttv.update_messages', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > BetterTTV Emotes >> Emotes > Live Emote Updates',
+				title: 'Show update messages',
+				description: 'Show messages in chat when emotes are updated in the current channel.',
+				component: 'setting-check-box',
+			}
+		});
+
 		this.settings.add('ffzap.betterttv.pro_badges', {
 			default: true,
 
@@ -66,7 +76,7 @@ class BetterTTV extends Addon {
 				description: 'Enable to show BetterTTV Pro emoticons.',
 				component: 'setting-check-box',
 			},
-		});		
+		});
 		
 		this.chat.context.on('changed:ffzap.betterttv.global_emoticons', this.updateEmotes, this);
 		this.chat.context.on('changed:ffzap.betterttv.arbitrary_emoticons', this.updateEmotes, this);
@@ -144,6 +154,25 @@ class BetterTTV extends Addon {
 		}
 	}
 
+	addEmoteUpdateMessage(bttvChannel, message) {
+		const channelId = bttvChannel.replace('twitch:', '');
+		const channel = this.chat.getRoom(channelId);
+
+		this.addChatNotice(channel, message);
+	}
+
+	addChatNotice(channel, message, tokenize = true) {
+		if (!channel.login) return;
+
+		if (!this.settings.get('ffzap.betterttv.update_messages')) return;
+		
+		this.resolve('site.chat').addNotice(channel.login, {
+			message,
+			icon: new URL('https://betterttv.com/favicon.png'),
+			tokenize
+		});
+	}
+
 	getSocketEvents() {
 		return {
 			lookup_user: data => {
@@ -184,6 +213,7 @@ class BetterTTV extends Addon {
 				}
 			},
 			emote_create: ({ channel, emote: createdEmote }) => {
+				this.log.info(channel, createdEmote);
 				const emotes = this.room_emotes[channel];
 				if (!emotes) return;
 
@@ -194,14 +224,21 @@ class BetterTTV extends Addon {
 				emotes.push(emote);
 
 				this.emotes.addEmoteToSet(this.getChannelSetID(channel, false), emote);
+
+				this.addEmoteUpdateMessage(channel, `Added the emote ${emote.name} (${emote.name})`);
 			},
 			emote_delete: ({ channel, emoteId }) => {
 				const emotes = this.room_emotes[channel];
 				if (!emotes) return;
 
+				const existingEmote = emotes.find(e => e.id === emoteId);
+				if (!existingEmote) return;
+
 				this.room_emotes[channel] = emotes.filter(e => e.id !== emoteId);
 
 				this.emotes.removeEmoteFromSet(this.getChannelSetID(channel, false), emoteId);
+
+				this.addEmoteUpdateMessage(channel, `Removed the emote ${existingEmote.name}`);
 			},
 			emote_update: ({ channel, ...payload }) => {
 				const updatedEmote = payload.emote;
@@ -212,9 +249,12 @@ class BetterTTV extends Addon {
 				const emote = emotes.find(e => e.id === updatedEmote.id);
 				if (!emote) return;
 
+				const oldName = emote.name;
 				emote.name = updatedEmote.code;
 
 				this.emotes.addEmoteToSet(this.getChannelSetID(channel, false), emote);
+
+				this.addEmoteUpdateMessage(channel, `Renamed the emote ${oldName} to ${emote.name} (${emote.name})`);
 			}
 		};
 	}
