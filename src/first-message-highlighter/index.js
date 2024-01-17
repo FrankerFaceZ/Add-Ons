@@ -179,6 +179,14 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
+		this.settings.addUI('first_message_highlight.pad-bottom', {
+			path: 'Add-Ons > First Message Highlight >> Returning Chatter',
+			sort: 1000,
+			component: 'setting-spacer',
+			top: '25rem',
+			force_seen: true
+		});
+
 		this.chat.addHighlightReason('first-message', 'First message from a user during this session');
 		this.chat.addHighlightReason('first-time-chatter', 'First messages from a user new to the channel');
 		this.chat.addHighlightReason('returning-chatter', 'First messages from a user returning to the channel');
