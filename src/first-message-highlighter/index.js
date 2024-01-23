@@ -81,16 +81,6 @@ class FirstMessageHighlight extends Addon {
 			}
 		});
 
-		this.settings.add('first_message_highlight.remember_historical', {
-			default: true,
-			ui: {
-				path: 'Add-Ons > First Message Highlight >> Current Session >> Historical Messages',
-				title: 'Remember historical messages',
-				description: 'Remember logged user messages from before you joined the chat.',
-				component: 'setting-check-box'
-			}
-		});
-
 		// First Time Chatter
 		this.settings.add('first_message_highlight.first_time_chatter', {
 			default: false,
@@ -277,11 +267,11 @@ class FirstMessageHighlight extends Addon {
 		const shouldHighlight = this.shouldHighlight(msg);
 
 		if (msg.isHistorical) {
-			if (this.settings.get('first_message_highlight.remember_historical')
-				&& !shouldHighlight) return;
+			if (!this.settings.get('first_message_highlight.highlight_historical')) {
+				this.known_users.delete(msg.user.userID);
 
-			if (!this.settings.get('first_message_highlight.highlight_historical'))
 				return;
+			}
 		}
 
 		if (!shouldHighlight) return;
