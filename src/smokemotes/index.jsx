@@ -14,6 +14,7 @@ class SmokeysUtils extends Addon {
 		this.inject('site');
 		this.injectAs('site_chat', 'site.chat');
 		this.inject('site.fine');
+		this.inject('site.router');
 
 		this.user = this.site.getUser();
 		this.onKeyDown = this.onKeyDown.bind(this);
@@ -21,6 +22,16 @@ class SmokeysUtils extends Addon {
 			user: undefined,
 			message_id: undefined,
 		};
+
+		this.firstLoad = 0;
+
+		this.site.router.on(':route', (route, match) => {
+			if (match && match[0] == '/directory/following' && this.firstLoad === 0){
+				this.liveFollowing();
+				// do this just in case the user wants to go to Overview later for videos etc..
+				this.firstLoad = 1;
+			}
+		});
 
 		this.settings.add('smokemotes.pinned_mentions', {
 			default: true,
@@ -215,9 +226,9 @@ class SmokeysUtils extends Addon {
 	onEnable() {
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
 
-		this.keep_hd_video();
-
-		this.liveFollowing();
+		window.addEventListener('load', () => {
+			this.keep_hd_video();
+		  });
 
 		this.mod_keybind_handler();
 
@@ -270,7 +281,8 @@ class SmokeysUtils extends Addon {
 
 			pinned_log = createElement('div', {
 				id: 'smokey_pinned_log',
-				class: 'pinned-highlight-log tw-absolute tw-top-0 tw-full-width tw-z-above tw-c-background-base'
+				class: 'pinned-highlight-log tw-absolute tw-top-0 tw-full-width tw-z-above tw-c-background-base',
+				style: 'z-order:11 !important;'
 			});
 
 			el.parentNode.prepend(pinned_log);
@@ -389,7 +401,7 @@ class SmokeysUtils extends Addon {
 			try {
 				document.addEventListener(
 					'visibilitychange',
-					(e) => {
+					e => {
 						e.stopImmediatePropagation();
 					},
 					true,
@@ -402,10 +414,7 @@ class SmokeysUtils extends Addon {
 	}
 
 	liveFollowing() {
-		if (
-			window.location.href == 'https://www.twitch.tv/directory/following' &&
-      this.chat.context.get('smokemotes.auto_live_follow_page')
-		) {
+		if (this.chat.context.get('smokemotes.auto_live_follow_page')) {
 			try {
 				document.querySelector('a[data-a-target="following-live-tab"]').click();
 			} catch (error) {
@@ -434,8 +443,7 @@ class SmokeysUtils extends Addon {
 	onKeyDown(e) {
 
 		if (
-			document.activeElement.matches('input') ||
-			document.activeElement.matches('textarea') ||
+			document.activeElement == document.querySelector('div[data-a-target="chat-input"]') ||
 			e.ctrlKey ||
 			e.metaKey ||
 			e.shiftKey ||
@@ -448,7 +456,7 @@ class SmokeysUtils extends Addon {
 		const keyCode = e.keyCode || e.which;
 
 		switch (keyCode) {
-				// timeout
+			// timeout
 			case 84:
 
 				this.resolve('site.chat').ChatService.first.sendMessage(
