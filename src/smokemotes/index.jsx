@@ -224,16 +224,20 @@ class SmokeysUtils extends Addon {
 	}
 
 	onEnable() {
-		this.log.debug("Smokey's Utilities module was enabled successfully.");
-
-		window.addEventListener('load', () => {
+		if (document.readyState != "complete") {
+			window.addEventListener('load', () => {
+				this.keep_hd_video();
+			  });
+		} else {
 			this.keep_hd_video();
-		  });
+		}
 
 		this.mod_keybind_handler();
 
 		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
+
+		this.log.debug("Smokey's Utilities module was enabled successfully.");
 	}
 
 	/**
@@ -408,7 +412,7 @@ class SmokeysUtils extends Addon {
 					true
 				);
 			} catch (err) {
-				this.log.warn('Unable to install document visibility hook.', err);
+				this.log.warn('Unable to install always HD document visibility hook.', err);
 			}
 		}
 	}
