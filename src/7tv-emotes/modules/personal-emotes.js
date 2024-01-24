@@ -171,6 +171,7 @@ export default class PersonalEmotes extends FrankerFaceZ.utilities.module.Module
 				title: set.name,
 				source: '7TV',
 				icon: this.setIcon,
+				personal: true,
 				sort: 50,
 				emotes
 			};
