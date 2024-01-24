@@ -10,7 +10,7 @@
 	"load_events": [
 		"chat-data"
 	],
-	"version": "3.3.20",
+	"version": "3.3.21",
 	"short_name": "FFZ:AP BTTV",
 	"name": "BetterTTV Emotes",
 	"author": "Lordmau5",
@@ -18,5 +18,5 @@
 	"website": "https://betterttv.com/",
 	"settings": "add_ons.better_ttv_emotes",
 	"created": "2019-09-12T15:31:59.000Z",
-	"updated": "2024-01-17T20:25:24.043Z"
+	"updated": "2024-01-24T20:01:29.705Z"
 }

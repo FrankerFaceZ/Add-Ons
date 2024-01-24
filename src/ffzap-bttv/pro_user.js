@@ -56,6 +56,7 @@ export default class ProUser {
 
 		const set = {
 			emotes,
+			personal: true,
 			title: 'Personal Emotes',
 			source: 'BetterTTV',
 			icon: 'https://betterttv.com/favicon.png',
