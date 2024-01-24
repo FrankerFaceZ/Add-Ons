@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"icon": "https://cdn.frankerfacez.com/badge/2/4/solid",
+	"short_name": "NoBadEmotes",
+	"name": "No Bad Emotes",
+	"author": "SirStendec",
+	"description": "This add-on removes undesired emotes from chat, so you only see the words. Tired of people using replacing stupidly common words like 'the' with emotes using platforms without any sort of common sense restrictions? Just grab this.",
+	"settings": "add_ons.no_bad_emotes",
+	"created": "2024-01-24T20:02:45.938Z",
+	"updated": "2024-01-24T20:02:45.938Z"
+}

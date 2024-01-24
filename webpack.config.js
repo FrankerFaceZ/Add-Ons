@@ -217,6 +217,16 @@ const config = {
 				}
 			},
 			{
+				test: /\.json$/,
+				include: /src/,
+				type: 'asset/resource',
+				generator: {
+					filename: (FOR_EXTENSION || DEV_BUILD)
+						? '[name].json'
+						: '[name].[contenthash:8].json'
+				}
+			},
+			{
 				test: /\.(graphql|gql)$/,
 				exclude: /node_modules/,
 				use: [
