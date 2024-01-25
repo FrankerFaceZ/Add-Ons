@@ -46,11 +46,13 @@
 		"js-levenshtein": "^1.1.6",
 		"reconnecting-websocket": "^4.4.0",
 		"sortablejs": "^1.14.0",
-		"spark-md5": "^3.0.2"
+		"spark-md5": "^3.0.2",
+		"unescape-js": "^1.1.4"
 	},
 	"pnpm": {
 		"overrides": {
 			"ansi-regex@>2.1.1 <5.0.1": ">=5.0.1",
+			"chalk@<4": ">=4 <5",
 			"glob-parent@<5.1.2": ">=5.1.2"
 		}
 	}

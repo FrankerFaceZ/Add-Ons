@@ -1,5 +1,6 @@
 const { has, addWordSeparators, glob_to_regex, escape_regex } = FrankerFaceZ.utilities.object; 
 
+import unescape from 'unescape-js';
 
 const COMMON_WORDS = require('./common.json');
 
@@ -31,6 +32,41 @@ class NoBadEmotes extends Addon {
 		this.doesEmoteMatch = this.doesEmoteMatch.bind(this);
 
 		// Settings
+		this.settings.add('addon.nobademotes.process-outgoing', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > No Bad Emotes >> General',
+				title: 'Escape filtered emotes in outgoing chat messages.',
+				description: 'The filtering this add-on performs is client-only, so normally your filtering only affects what you see. If you enable this, any messages you send will be modified based on your filtering rules to prevent you from inadvertently using an emote that you have filtered out.',
+				component: 'setting-check-box'
+			}
+		});
+
+		this.settings.add('addon.nobademotes.outgoing-escape', {
+			default: '\\u{E0002}{NAME}',
+			process(ctx, val) {
+				try {
+					return unescape(val);
+				} catch(err) {
+					return `\u{E0002}{NAME}`;
+				}
+			},
+			ui: {
+				path: 'Add-Ons > No Bad Emotes >> Advanced @{"sort": 99}',
+				title: 'Escape Character',
+				description: 'The character(s) to add to an emote\'s name when escaping filtered emotes in outgoing chat messages. Use `\'{\'NAME\'}\'` where the emote\'s name should go. Standard escape sequences are supported.',
+				component: 'setting-text-box',
+				validate(val) {
+					try {
+						unescape(val);
+						return true;
+					} catch(err) {
+						return false;
+					}
+				}
+			}
+		});
+
 		this.settings.add('addon.nobademotes.no-filter-personal', {
 			default: false,
 			ui: {
@@ -163,6 +199,8 @@ class NoBadEmotes extends Addon {
 		// Call this before adding our filter so we only process once.
 		this.onUseCommon(this.settings.get('addon.nobademotes.use-common'));
 
+		this.on('chat:pre-send-message', this.processOutbound);
+
 		this.emotes.addFilter({
 			type: 'nobademotes',
 			test: this.doesEmoteMatch
@@ -171,6 +209,7 @@ class NoBadEmotes extends Addon {
 
 	onDisable() {
 		this.emotes.removeFilter('nobademotes');
+		this.off('chat:pre-send-message', this.processOutbound);
 	}
 
 	// Common Words
@@ -226,6 +265,41 @@ class NoBadEmotes extends Addon {
 
 		if ( this._use_common )
 			this.emotes.updateFiltered();
+	}
+
+
+	// Outbound Messages
+
+	processOutbound(event) {
+		if ( ! this.settings.get('addon.nobademotes.process-outgoing') )
+			return;
+
+		const site = this.resolve('site'),
+			user = site?.getUser?.();
+
+		const bad_emotes = new Set;
+
+		for(const set of this.emotes.getSets(user?.id, user?.login, null, event.channel)) {
+			for(const emote of Object.values(set.disabled_emotes)) {
+				if ( emote?.name )
+					bad_emotes.add(emote.name);
+			}
+		}
+
+		if ( ! bad_emotes.size )
+			return;
+
+		const out = [],
+			char = this.settings.get('addon.nobademotes.outgoing-escape');
+
+		for(const word of event.message.split(/ /g)) {
+			if ( bad_emotes.has(word) ) {
+				out.push(char.replace(/\{NAME\}/g, word));
+			} else
+				out.push(word);
+		}
+
+		event.message = out.join(' ');
 	}
 
 
