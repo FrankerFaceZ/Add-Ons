@@ -5,13 +5,13 @@
 		"clips"
 	],
 	"requires": [],
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"short_name": "pronouns",
 	"name": "Pronouns",
 	"author": "Alejo Pereyra",
 	"description": "Add Pronouns to Chat\n\nInclude Pronouns as a chat badge next to user's names in Chat!\n\nTo set your own pronouns, visit https://pronouns.alejo.io/",
-	"website": "https://pronouns.alejo.io/",
+	"website": "https://pr.alejo.io/",
 	"settings": "add_ons.pronouns",
 	"created": "2021-02-17T17:53:38.000Z",
-	"updated": "2023-01-21T23:15:31.109Z"
+	"updated": "2024-02-16T18:30:31.679Z"
 }
