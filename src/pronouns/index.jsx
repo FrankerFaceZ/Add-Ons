@@ -1,10 +1,12 @@
 // Pronouns Addon
 
+const {createElement, setChildren} = FrankerFaceZ.utilities.dom;
 const {Mutex} = FrankerFaceZ.utilities.object;
 
-function get(endpoint) {
-	return fetch(`https://pronouns.alejo.io/api/${endpoint}`).then(resp => resp.json());
+function get(endpoint, options) {
+	return fetch(`https://api.pronouns.alejo.io/v1/${endpoint}`, options).then(resp => resp.ok ? resp.json() : null);
 }
+
 
 class Pronouns extends Addon {
 	constructor(...args) {
@@ -22,11 +24,16 @@ class Pronouns extends Addon {
 		this.users = new Map;
 	}
 
-	async onLoad() {
-		await this.loadPronouns();
-	}
+	async onEnable() {
+		this.settings.add('addon.pronouns.streamer', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Pronouns >> Appearance',
+				title: 'Show a pronoun badge for the streamer if they have pronouns set.',
+				component: 'setting-check-box'
+			}
+		});
 
-	onEnable() {
 		this.settings.add('addon.pronouns.color', {
 			default: '',
 			ui: {
@@ -47,9 +54,13 @@ class Pronouns extends Addon {
 			changed: () => this.updateBadges()
 		});
 
-		this.buildBadges();
-
 		const process = this.onMessage.bind(this);
+
+		// Before adding our tokenizer, load some data.
+		await this.loadPronouns()
+			.then(() => this.buildBadges());
+
+		this.on('site.channel:update-bar', this.updateChannelPronouns, this);
 
 		this.chat.addTokenizer({
 			type: 'pronouns',
@@ -58,6 +69,89 @@ class Pronouns extends Addon {
 
 		this.emit('chat:update-lines');
 	}
+
+	onDisable() {
+		this.removeBadges();
+		this.chat.removeTokenizer('pronouns');
+		this.emit('chat:update-lines');
+		this.off('site.channel:update-bar', this.updateChannelPronouns, this);
+	}
+
+
+	updateChannelPronouns(el, props, channel) {
+		if ( el._pn_badge && ! el.contains(el._pn_badge) ) {
+			el._pn_badge.remove();
+			el._pn_badge = null;
+		}
+
+		if ( ! el._pn_badge ) {
+			const link = el.querySelector('a .tw-title'),
+				anchor = link && link.closest('a'),
+				cont = anchor && anchor.closest('div');
+
+			if ( cont && el.contains(cont) ) {
+				el._pn_badge = <div class="pn--badge"></div>;
+
+				let before;
+				if ( anchor.parentElement === cont ) {
+					before = anchor.nextElementSibling;
+					if ( before && before.querySelector('svg') )
+						before = before.nextElementSibling;
+				}
+
+				if ( before )
+					cont.insertBefore(el._pn_badge, before);
+				else
+					cont.appendChild(el._pn_badge);
+			}
+		}
+
+		if ( ! el._pn_badge || props?.channelLogin === el._pn_login )
+			return;
+
+		const login = el._pn_login = props?.channelLogin;
+		if ( ! login || ! this.settings.get('addon.pronouns.streamer') ) {
+			el._pn_badge.innerHTML = '';
+			return;
+		}
+
+		let value = this.getUser(login, true);
+		if ( value instanceof Promise )
+			return value.then(() => {
+				if ( el._pn_login === login ) {
+					el._pn_login = null;
+					this.updateChannelPronouns(el, props, channel);
+				}
+			});
+
+		if ( ! value ) {
+			el._pn_badge.innerHTML = '';
+			return;
+		}
+
+		// Make a fake message, for badge rendering.
+		const msg = {
+			user: {
+				id: props.channelID,
+				login,
+				displayName: props.displayName
+			},
+			roomID: props.channelID,
+			roomLogin: login,
+			ffz_badges: [
+				{id: `addon-pn-${value}`}
+			]
+		};
+
+		el._pn_badge.dataset.roomId = msg.roomID;
+		el._pn_badge.dataset.room = login;
+		el._pn_badge.dataset.userId = msg.roomID;
+		el._pn_badge.dataset.user = login;
+		el._pn_badge.message = msg;
+
+		setChildren(el._pn_badge, this.badges.render(msg, createElement, true, true));
+	}
+
 
 	onMessage(tokens, msg) {
 		const user = msg?.user,
@@ -83,7 +177,7 @@ class Pronouns extends Addon {
 		if ( cache ) {
 			if ( ! cache.done ) {
 				if ( multiple_waits )
-					return new Promise((s,f) => cache.promises.push([s,f]));
+					return cache.promise;
 				return null;
 			}
 
@@ -91,64 +185,84 @@ class Pronouns extends Addon {
 				return cache.value;
 		}
 
-		return new Promise((s,f) => {
-			this.users.set(login, {
-				done: false,
-				promises: [[s,f]]
-			});
+		if ( this.load_wait )
+			return this.load_wait.then(() => this.getUser(login, multiple_waits));
 
-			this.waiting.wait().then(done => Promise.all([
-				done, get(`users/${login}`)
-			])).then(([done, data]) => {
-				let had_user = false;
-				if ( Array.isArray(data) )
-					for(const item of data) {
-						if ( item.login === login )
-							had_user = true;
+		const promise = this.waiting.wait()
+			.then(done => this._getUser(login)
+				.then(value => {
+					this.users.set(login, {
+						done: true,
+						value,
+						time: Date.now()
+					});
 
-						const cached = this.users.get(item.login);
-						if ( cached ) {
-							cached.done = true;
-							cached.value = item.pronoun_id;
-							cached.time = Date.now();
+					return value;
+				})
+				.catch(err => {
+					this.users.set(login, {
+						done: true,
+						value: null,
+						time: Date.now()
+					});
+					throw err;
+				})
+				.finally(done));
 
-							if ( cached.promises ) {
-								for(const pair of cached.promises)
-									pair[0](cached.value);
-
-								cached.promises = null;
-							}
-						}
-					}
-
-				if ( ! had_user ) {
-					const cached = this.users.get(login);
-					if ( cached ) {
-						cached.done = true;
-						cached.value = null;
-						cached.time = Date.now();
-
-						if ( cached.promises ) {
-							for(const pair of cached.promises)
-								pair[0](cached.value);
-
-							cached.promises = null;
-						}
-					}
-				}
-
-				done();
-			});
+		this.users.set(login, {
+			done: false,
+			promise
 		});
+
+		return promise;
+	}
+
+	async _getUser(login) {
+		const data = await get(`users/${login}`);
+		let out = data?.pronoun_id;
+		if ( ! out?.length )
+			return null;
+
+		if ( data.alt_pronoun_id?.length )
+			return `${out}|${data.alt_pronoun_id}`;
+
+		return out;
 	}
 
 	async loadPronouns() {
 		const data = await get('pronouns');
 		this.pronouns = {};
 
-		if ( Array.isArray(data) )
-			for(const item of data)
-				this.pronouns[item.name] = item.display;
+		if ( ! data )
+			return;
+
+		for(const [key, val] of Object.entries(data)) {
+			this.pronouns[key] = (val.singular || ! val.object?.length) ? val.subject : `${val.subject}/${val.object}`;
+			for(const [key_two, val_two] of Object.entries(data)) {
+				if ( key === key_two )
+					continue;
+
+				this.pronouns[key + '|' + key_two] = `${val.subject || val.object}/${val_two.subject || val_two.object}`;
+			}
+		}
+
+	}
+
+	clearUserData() {
+		for(const user of this.chat.iterateUsers())
+			user.removeAllBadges('pronouns');
+
+		this.users.clear();
+	}
+
+	removeBadges() {
+		for(const key of Object.keys(this.pronouns)) {
+			this.badges.removeBadge(`addon-pn-${key}`, false);
+			this.settings.remove(`addon.pronouns.color.${key}`);
+		}
+
+		this.old_badges = new Set();
+		this.badges.buildBadgeCSS();
 	}
 
 	buildBadges() {
@@ -163,7 +277,7 @@ class Pronouns extends Addon {
 
 		if ( old_badges )
 			for(const name of old_badges)
-				this.badges.loadBadgeData(`addon-pn-${name}`, undefined, false);
+				this.badges.removeBadge(`addon-pn-${name}`, false);
 
 		this.old_badges = new Set(Object.keys(this.pronouns));
 		this.badges.buildBadgeCSS();
@@ -174,9 +288,10 @@ class Pronouns extends Addon {
 		if ( this.settings.get('addon.pronouns.border') )
 			css = `${css}border:0.1rem solid;border-radius:0.5rem`;
 
-		const setting = `addon.pronouns.color.${name}`;
+		const idx = name.indexOf('|'),
+			setting = `addon.pronouns.color.${idx === -1 ? name : name.slice(0, idx)}`;
 
-		if ( ! this.old_badges || ! this.old_badges.has(name) )
+		if ( ! this.old_badges || ! this.old_badges.has(name) && idx === -1 )
 			this.settings.add(setting, {
 				default: null,
 				requires: ['addon.pronouns.color'],
@@ -197,11 +312,12 @@ class Pronouns extends Addon {
 			});
 
 		this.badges.loadBadgeData(`addon-pn-${name}`, {
+			no_visibility: true,
 			content: display,
 			title: this.i18n.t('addon.pronouns.title', 'Pronouns: {value}', {
 				value: display
 			}),
-			click_url: 'https://pronouns.alejo.io/',
+			click_url: 'https://pr.alejo.io/',
 			color: this.settings.get(setting),
 			slot: 100,
 			css
