@@ -2,7 +2,6 @@
   "enabled": false,
   "requires": [],
   "version": "0.0.1",
-  "icon": "https://twir.app/twir.svg",
   "short_name": "twir",
   "name": "Twir",
   "author": "crashmax",
