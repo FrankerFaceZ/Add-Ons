@@ -1,12 +1,14 @@
 {
   "enabled": false,
   "requires": [],
-  "version": "1.0.0",
+  "version": "0.0.1",
   "icon": "https://twir.app/twir.svg",
   "short_name": "twir",
   "name": "Twir",
   "author": "crashmax",
-  "description": "Command suggestions for Twir chat bot.",
+  "description": "Twir command suggestions.",
+  "website": "https://twir.app",
   "settings": "add_ons.twir",
-  "website": "https://twir.app"
+  "created": "2024-03-16T00:00:00.000Z",
+  "updated": "2024-03-16T00:00:00.000Z"
 }

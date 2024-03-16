@@ -62,7 +62,7 @@ class Twir extends Addon {
 				: '';
 
 			return {
-				name: command.name + ZWE_SYMBOL,
+				name: ZWE_SYMBOL + command.name,
 				description,
 				// parse `command.permisions`
 				permissionLevel: 0,
@@ -79,7 +79,7 @@ class Twir extends Addon {
 		const message = event.message.trim();
 		if (message.startsWith('!')) return;
 
-		if (message.includes(ZWE_SYMBOL) && message.startsWith('/')) {
+		if (message.startsWith('/') && message.includes(ZWE_SYMBOL)) {
 			const command = message.replace(ZWE_SYMBOL, '').slice(1);
 			if (!command) return;
 			event.message = `!${command}`;
