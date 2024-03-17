@@ -1,16 +1,12 @@
 import { Api } from './api.js';
 
-// identify commands of Twir
-const ZWE_SYMBOL = '​';
-
 class Twir extends Addon {
-	tabCommands = []
+	roomCommands = new Map();
 
 	constructor(...args) {
 		super(...args);
 
 		this.inject(Api);
-		this.inject('site');
 		this.inject('chat');
 	}
 
@@ -24,50 +20,52 @@ class Twir extends Addon {
 			}
 		}
 
-		this.on('chat:pre-send-message', this.preSendMessage);
-
-		this.on('chat:get-tab-commands', event => {
-			event.commands.push(...this.tabCommands);
-		})
+		this.on('chat:get-tab-commands', this.getTabCommands);
 	}
 
 	onDisable() {
-		this.unregisterRoomCommands();
+		this.off('chat:room-add', this.registerRoomCommands);
+		this.off('chat:room-remove', this.unregisterRoomCommands);
+
+		for (const roomId of this.roomCommands.keys()) {
+			this.unregisterRoomCommands({ id: roomId });
+		}
+
+		this.off('chat:get-tab-commands', this.getTabCommands);
+	}
+
+	getTabCommands(event) {
+		for (const room of this.chat.iterateRooms()) {
+			if (room) {
+				const commands = this.roomCommands.get(room.id);
+				if (commands) {
+					event.commands.push(...commands);
+				}
+			}
+		}
 	}
 
 	async registerRoomCommands(room) {
 		const commandsResponse = await this.api.commands.getChannelCommands(room.id);
 		if (!commandsResponse) return;
 
-		this.tabCommands = commandsResponse.commands.map(command => {
-			const description = command.description
-				|| command.responses.length > 0
-				? command.responses[0]
-				: '';
+		const commands = commandsResponse.commands.map(command => {
+			const description = command.description || command.responses.join(' | ');
 
 			return {
-				name: ZWE_SYMBOL + command.name,
+				prefix: '!',
+				name: command.name,
 				description,
-				// parse `command.permisions`
 				permissionLevel: 0,
-				ffz_group: `Twir (${command.module})`,
+				ffz_group: `Twir (${command.group ?? command.module})`,
 			}
 		})
+
+		this.roomCommands.set(room.id, commands);
 	}
 
-	unregisterRoomCommands() {
-		this.tabCommands = [];
-	}
-
-	preSendMessage(event) {
-		const message = event.message.trim();
-		if (message.startsWith('!')) return;
-
-		if (message.startsWith('/') && message.includes(ZWE_SYMBOL)) {
-			const command = message.replace(ZWE_SYMBOL, '').slice(1);
-			if (!command) return;
-			event.message = `!${command}`;
-		}
+	unregisterRoomCommands(room) {
+		this.roomCommands.delete(room.id);
 	}
 }
 
