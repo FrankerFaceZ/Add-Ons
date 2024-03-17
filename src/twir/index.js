@@ -1,13 +1,25 @@
 import { Api } from './api.js';
 
 class Twir extends Addon {
-	roomCommands = new Map();
-
 	constructor(...args) {
 		super(...args);
 
 		this.inject(Api);
+
 		this.inject('chat');
+		this.inject('settings');
+
+		this.roomCommands = new Map();
+
+		this.settings.add('addon.twir.command_description', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Twir >> Chat',
+				title: 'Command description',
+				description: 'Show command description or responses.',
+				component: 'setting-check-box',
+			}
+		});
 	}
 
 	onEnable() {
@@ -37,7 +49,7 @@ class Twir extends Addon {
 	getTabCommands(event) {
 		for (const room of this.chat.iterateRooms()) {
 			if (room) {
-				const commands = this.roomCommands.get(room.id);
+				const commands = this.getRoomCommands(room);
 				if (commands) {
 					event.commands.push(...commands);
 				}
@@ -48,24 +60,30 @@ class Twir extends Addon {
 	async registerRoomCommands(room) {
 		const commandsResponse = await this.api.commands.getChannelCommands(room.id);
 		if (!commandsResponse) return;
+		this.roomCommands.set(room.id, commandsResponse.commands);
+	}
 
-		const commands = commandsResponse.commands.map(command => {
+	unregisterRoomCommands(room) {
+		this.roomCommands.delete(room.id);
+	}
+
+	getRoomCommands(room) {
+		const commands = this.roomCommands.get(room.id);
+		if (!commands) return;
+
+		const showCommandDescription = this.settings.get('addon.twir.command_description');
+
+		return commands.map(command => {
 			const description = command.description || command.responses.join(' | ');
 
 			return {
 				prefix: '!',
 				name: command.name,
-				description,
+				description: showCommandDescription ? description : '',
 				permissionLevel: 0,
 				ffz_group: `Twir (${command.group ?? command.module})`,
 			}
 		})
-
-		this.roomCommands.set(room.id, commands);
-	}
-
-	unregisterRoomCommands(room) {
-		this.roomCommands.delete(room.id);
 	}
 }
 
