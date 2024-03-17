@@ -1,0 +1,15 @@
+{
+	"enabled": true,
+	"unlisted": true,
+	"requires": [],
+	"version": "1.0.1",
+	"icon": "https://cdn.frankerfacez.com/badge/2/4/solid",
+	"short_name": "rodb",
+	"name": "Ragnarok Online Database",
+	"author": "Wizzzzard",
+	"description": "This plugin enables the pulling of data from the divine-pride.net database and displaying it in the chat when a link is provided.",
+	"website": "https://blog.wizzzzard.moe",
+	"settings": "add_ons.rodb",
+	"created": "2024-03-16T11:00:00.000Z",
+	"updated": "2024-03-17T11:00:00.000Z"
+}

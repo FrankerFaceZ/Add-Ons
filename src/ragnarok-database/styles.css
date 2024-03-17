@@ -1,0 +1,139 @@
+.dp-tooltip .title, .dp-tooltip .subtitle {
+    font-family: "Palatino Linotype", "Georgia", "Times", serif;
+    color: #F3E6D0;
+    font-weight: normal;
+    margin-bottom: 6px !important;
+}
+
+.dp-tooltip .dp-tooltip-head h3 a{
+	color: #000000;
+	font-size: 16px;
+	height: 28px;
+	line-height: 30px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-align: left;
+}
+
+.dp-tooltip-item .dp-tooltip-head {
+    height: 25px;
+    width: 280px;
+    padding: 0px 15px !important;
+    background: url("https://static.divine-pride.net/images/ui/collection_header.png") no-repeat;
+}
+
+.dp-tooltip-item .dp-icon-item {
+    float: left;
+    margin-right: 10px !important;
+    margin-bottom: 10px !important;
+}
+
+.dp-tooltip .dp-tooltip-body {
+    position: relative;
+    padding: 10px !important;
+    max-width: 258px !important;
+    height: 100px;
+	background: url("https://static.divine-pride.net/images/ui/collection_line.png");
+    box-sizing: content-box;
+	
+}
+
+.dp-tooltip-item .dp-icon-item {
+    float: left;
+    margin-right: 10px !important;
+    margin-bottom: 10px !important;
+}
+
+.dp-icon-item {
+    -moz-box-shadow: 0 0 5px #000;
+    -webkit-box-shadow: 0 0 5px #000;
+    box-shadow: 0 0 5px #000;
+}
+
+.dp-icon-item {
+    border: 1px solid black;
+    background: no-repeat left top;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.dp-icon-item .icon-item-inner {
+	display: block;
+	background: no-repeat center center;
+	border: 1px solid black;
+	font-size: 1px;
+	line-height: normal;
+	text-align: center;
+	overflow: hidden;
+}
+
+.dp-icon-item-large .icon-item-default {
+    width: 75px;
+    height: 100px;
+}
+
+.dp-icon-item-white {
+    border-color: #2d1c0f;
+    border-right-color: #382213;
+    border-bottom-color: #402715;
+}
+
+.dp-item-properties p {
+    margin: 0 !important;
+}
+
+.dp-item-properties .indent {
+    padding-left: 18px !important;
+}
+
+.dp-item-properties .value {
+    color: #ded2ab;
+}
+
+.dp-item-properties .item-armor-weapon .dps {
+    font-size: 175%;
+    line-height: 100%;
+}
+
+.dp-item-properties .item-requirement {
+    color: #A99877;
+}
+
+.dp-item-properties .dp-color-blue .value {
+    color: #bda6db !important;
+}
+
+.dp-item-properties .dp-color-gold .value {
+    color: white !important;
+}
+
+.dp-item-properties .item-type, .dp-item-properties .item-type-right {
+    margin-top: 0 !important;
+}
+
+.dp-item-properties .item-type-right {
+    float: right;
+    text-align: right;
+}
+
+.dp-item-properties .item-before-effects {
+    display: none;
+}
+
+.dp-tooltip .dp-tooltip-foot {
+    height: 7px;
+    width: 280px;
+    padding: 0px 15px !important;
+    background: url("https://static.divine-pride.net/images/ui/collection_foot.png") no-repeat;
+}
+
+.dp-tooltip ul {
+	list-style-type: none;
+	padding-left: 0px;
+	margin-top: 0px;
+	height: 105px;
+	overflow-y: scroll;
+	scrollbar-width: thin;
+}
