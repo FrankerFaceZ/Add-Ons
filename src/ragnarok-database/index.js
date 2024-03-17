@@ -37,7 +37,10 @@ class RagnarokDatabase extends Addon {
 									{ value: 'iROC', 	title: 'iROC' }
 								]
 			},
-			changed: (val) => {this.server = val;}
+			changed: (val) => {
+					this.server = val;
+					this.emit('chat:update-lines');
+				}
 		});
 		
 		var self = this;
