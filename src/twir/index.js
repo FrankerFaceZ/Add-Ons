@@ -7,6 +7,7 @@ class Twir extends Addon {
 		this.inject(Api);
 
 		this.inject('chat');
+		this.inject('chat.badges');
 		this.inject('settings');
 
 		this.roomCommands = new Map();
@@ -14,12 +15,24 @@ class Twir extends Addon {
 		this.settings.add('addon.twir.command_description', {
 			default: true,
 			ui: {
-				path: 'Add-Ons > Twir >> Chat',
-				title: 'Command description',
+				path: 'Add-Ons > Twir >> Commands',
+				title: 'Description',
 				description: 'Show command description or responses.',
 				component: 'setting-check-box',
 			}
 		});
+
+		this.settings.add('addon.twir.user_badges', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Twir >> User Cosmetics',
+				title: 'Badges',
+				description: 'Show user badges.\n\n(Per-badge visibilty can be set in [Chat >> Badges > Visibilty > Add-Ons](~chat.badges.tabs.visibility))',
+				component: 'setting-check-box',
+			}
+		});
+
+		this.loadBadges();
 	}
 
 	onEnable() {
@@ -33,6 +46,7 @@ class Twir extends Addon {
 		}
 
 		this.on('chat:get-tab-commands', this.getTabCommands);
+		this.settings.getChanges('addon.twir.user_badges', this.updateBadges, this);
 	}
 
 	onDisable() {
@@ -43,7 +57,7 @@ class Twir extends Addon {
 			this.unregisterRoomCommands({ id: roomId });
 		}
 
-		this.off('chat:get-tab-commands', this.getTabCommands);
+		this.unloadBadges();
 	}
 
 	getTabCommands(event) {
@@ -84,6 +98,49 @@ class Twir extends Addon {
 				ffz_group: `Twir (${command.group ?? command.module})`,
 			}
 		})
+	}
+
+	updateBadges(enabled) {
+		if (!enabled) {
+			this.unloadBadges();
+		} else {
+			this.loadBadges();
+		}
+	}
+
+	unloadBadges() {
+		this.badges.removeBadge('addon.twir.badge_contributor');
+		this.emit('chat:update-lines');
+	}
+
+	async loadBadges() {
+		const showUserBadges = this.settings.get('addon.twir.user_badges');
+		if (!showUserBadges) return;
+
+		this.badges.loadBadgeData('addon.twir.badge_contributor', {
+			id: 'contributor',
+			name: 'Twir Contributor',
+			title: 'Twir Contributor',
+			click_url: 'https://twir.app',
+			image: 'https://twir.app/twir.svg',
+			slot: 100,
+			svg: true,
+		});
+
+		try {
+			const response = await fetch('https://raw.githubusercontent.com/twirapp/.github/main/contributors.json');
+			if (!response.ok) return;
+
+			const contributors = await response.json();
+			for (const contributor of contributors) {
+				const user = this.chat.getUser(contributor.id);
+				user.addBadge('addon.twir', 'addon.twir.badge_contributor');
+			}
+		} catch (err) {
+			this.log.error(err);
+		}
+
+		this.emit('chat:update-lines');
 	}
 }
 
