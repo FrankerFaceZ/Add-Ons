@@ -1,3 +1,5 @@
+import { Api } from './api.js';
+
 // identify commands of Twir
 const ZWE_SYMBOL = '​';
 
@@ -7,27 +9,9 @@ class Twir extends Addon {
 	constructor(...args) {
 		super(...args);
 
+		this.inject(Api);
 		this.inject('site');
 		this.inject('chat');
-	}
-
-	async fetchRoomCommands(room) {
-		try {
-			const response = await fetch(
-				'https://twir.app/api/v1/api.UnProtected/GetChannelCommands',
-				{
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ channelId: room.id }),
-				}
-			);
-
-			const { commands } = await response.json();
-			return commands;
-		} catch (err) {
-			this.log.error(err);
-			return [];
-		}
 	}
 
 	onEnable() {
@@ -52,10 +36,10 @@ class Twir extends Addon {
 	}
 
 	async registerRoomCommands(room) {
-		const roomCommands = await this.fetchRoomCommands(room);
-		if (!roomCommands.length) return;
+		const commandsResponse = await this.api.commands.getChannelCommands(room.id);
+		if (!commandsResponse) return;
 
-		this.tabCommands = roomCommands.map(command => {
+		this.tabCommands = commandsResponse.commands.map(command => {
 			const description = command.description
 				|| command.responses.length > 0
 				? command.responses[0]
