@@ -31,8 +31,6 @@ class Twir extends Addon {
 				component: 'setting-check-box',
 			}
 		});
-
-		this.loadBadges();
 	}
 
 	onEnable() {
@@ -101,10 +99,10 @@ class Twir extends Addon {
 	}
 
 	updateBadges(enabled) {
-		if (!enabled) {
-			this.unloadBadges();
-		} else {
+		if (enabled) {
 			this.loadBadges();
+		} else {
+			this.unloadBadges();
 		}
 	}
 
@@ -117,12 +115,15 @@ class Twir extends Addon {
 		const showUserBadges = this.settings.get('addon.twir.user_badges');
 		if (!showUserBadges) return;
 
+		// twitchbot badge for TwirApp
+		this.chat.getUser(870280719).addBadge('ffz', 2);
+
 		this.badges.loadBadgeData('addon.twir.badge_contributor', {
 			id: 'contributor',
 			name: 'Twir Contributor',
 			title: 'Twir Contributor',
 			click_url: 'https://twir.app',
-			image: 'https://twir.app/twir.svg',
+			image: 'https://raw.githubusercontent.com/twirapp/twir/main/libs/brand/src/logo.svg',
 			slot: 100,
 			svg: true,
 		});

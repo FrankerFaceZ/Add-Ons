@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "requires": [],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "short_name": "Twir",
   "name": "Twir",
   "author": "crashmax",
@@ -9,5 +9,5 @@
   "website": "https://twir.app",
   "settings": "add_ons.twir",
   "created": "2024-03-16T00:00:00.000Z",
-  "updated": "2024-03-16T00:00:00.000Z"
+  "updated": "2024-03-18T10:23:00.299Z"
 }
