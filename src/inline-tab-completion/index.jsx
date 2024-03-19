@@ -224,7 +224,7 @@ class InlineTab extends Addon {
 		let letter = null;
 
 		if ( type === 'command' )
-			letter = '/';
+			letter = item.text[0]; // '/';
 		else if ( type === 'mention' )
 			letter = '@';
 
@@ -245,6 +245,12 @@ class InlineTab extends Addon {
 		}
 
 		let source = null;
+		if ( type === 'command' && item.source ) {
+			source = this.i18n.t('addon.inlinetab.type.command-source', 'Command - {source}', {
+				source: item.source
+			});
+		}
+
 		// TODO: Something nice for emotes.
 		if ( type === 'emoji' && item.source ) {
 			const cat = this.emoji.categories?.[item.source];
@@ -271,8 +277,11 @@ class InlineTab extends Addon {
 				<div class="tw-ellipsis">
 					{ Array.isArray(text) ? text : <span class="tw-strong">{text}</span> }
 				</div>
+				{ item.subtitle ? (<div class="tw-ellipsis tw-font-size-8 tw-c-text-alt-2">{
+					item.subtitle
+				}</div>) : null }
 				<div class="tw-flex tw-c-text-alt tw-font-size-8">
-					<div class="tw-flex-grow-1">
+					<div class="tw-flex-grow-1 tw-ellipsis">
 						{ source }
 					</div>
 					{pos && total ? <div class="tw-flex-shrink-0 tw-mg-l-1">
@@ -444,7 +453,13 @@ class InlineTab extends Addon {
 					if ( idx !== -1 )
 						idx += prefix.length;
 
-					let srcSet = item.srcSet, source, extra;
+					let srcSet = item.srcSet, source, subtitle, extra;
+
+					if ( type === 'command' ) {
+						subtitle = item.description;
+						source = item.group;
+					}
+
 					if ( item.emoji ) {
 						type = 'emoji';
 						source = item.emoji.category;
@@ -461,6 +476,7 @@ class InlineTab extends Addon {
 						source,
 						extra,
 						label,
+						subtitle,
 						text: prefix + text,
 						sel: idx === -1 ? null : [idx, length],
 						fav: item.favorite,
