@@ -1,7 +1,6 @@
 {
 	"enabled": true,
 	"requires": [],
-	"icon": "https://i.imgur.com/a98FccA.png",
 	"version": "1.2.1",
 	"short_name": "smokeys_utils",
 	"name": "Smokey's Utilities",

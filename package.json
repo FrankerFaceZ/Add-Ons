@@ -9,6 +9,7 @@
 		"build": "cross-env NODE_ENV=production webpack build && node bin/addon_hash",
 		"build:dev": "cross-env NODE_ENV=development webpack build && node bin/addon_hash",
 		"clean": "rimraf dist",
+		"fixlogos": "node bin/fix_remote_logos",
 		"eslint": "eslint \"src/**/*.{js,jsx,vue}\"",
 		"update-times": "node bin/update_times",
 		"prepare": "husky install"
@@ -24,6 +25,7 @@
 		"eslint-plugin-vue": "^9.17.0",
 		"extract-loader": "^5.1.0",
 		"file-loader": "^6.2.0",
+		"glob": "^10.3.10",
 		"husky": "^8.0.3",
 		"minify-graphql-loader": "^1.0.2",
 		"rimraf": "^5.0.1",

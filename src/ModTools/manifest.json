@@ -1,15 +1,11 @@
 {
 	"enabled": true,
 	"requires": [],
-
 	"version": "1.0.1",
-	"icon": "https://i.imgur.com/hAsolYa.png",
-
 	"short_name": "Mod Tools",
 	"name": "Mod Tools",
 	"author": "Greger",
 	"description": "Adds new actions for making modding easier",
-
 	"settings": "add_ons.mod_tools",
 	"created": "2020-10-05T13:25:13.000Z",
 	"updated": "2020-10-14T15:05:57.000Z"

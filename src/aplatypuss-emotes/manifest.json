@@ -8,7 +8,6 @@
 	"requires": [
 		"ffzap-core"
 	],
-	"icon": "https://aplatypuss-emotes.pages.dev/static/icon.png",
 	"version": "1.0.0",
 	"short_name": "Aplatypuss Emotes",
 	"name": "Aplatypuss Emotes",

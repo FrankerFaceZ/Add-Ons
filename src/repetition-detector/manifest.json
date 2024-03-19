@@ -3,7 +3,6 @@
 	"requires": [],
 	"unlisted": false,
 	"version": "1.1.0",
-	"icon": "https://i.imgur.com/dxgqdza.png",
 	"short_name": "repetition_detector",
 	"name": "Chat Repetition Detector",
 	"author": "yannismate",

@@ -1,17 +1,13 @@
 {
-    "enabled": true,
-    "requires": [],
-
-    "version": "1.0.6",
-    "icon": "https://echtkpvl.de/EchtkPvL-logo.png",
-
-    "short_name": "emote_less_chat",
-    "name": "Emote Less Chat",
-    "author": "EchtkPvL",
-    "description": "This addon removes every chat message, that only contains emotes.",
-
-    "website": "https://echtkpvl.de",
-    "settings": "add_ons.emote_less_chat",
-    "created": "2022-07-14T19:00:00.000Z",
-    "updated": "2022-08-07T13:37:01.337Z"
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.6",
+	"short_name": "emote_less_chat",
+	"name": "Emote Less Chat",
+	"author": "EchtkPvL",
+	"description": "This addon removes every chat message, that only contains emotes.",
+	"website": "https://echtkpvl.de",
+	"settings": "add_ons.emote_less_chat",
+	"created": "2022-07-14T19:00:00.000Z",
+	"updated": "2022-08-07T13:37:01.337Z"
 }
