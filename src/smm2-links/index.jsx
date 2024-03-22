@@ -46,12 +46,13 @@ class SMM2Links extends Addon {
 				}
 			}
 		});
+
 		this.settings.add('addon.smm2-links.viewer_link', {
-			default: false,
+			default: 0,
 			ui: {
 				path: 'Add-Ons > SMM2 Links >> General',
-				title: 'Enable viewer link.',
-				description: 'Choose how to display the viewer link.',
+				title: 'Wizulus\'s Viewer Link',
+				description: 'You can optionally include a link to view makers and courses using Wizulus\'s SMM2 Viewer.',
 				component: 'setting-select-box',
 
 				data: [
@@ -140,17 +141,18 @@ class SMM2Links extends Addon {
 							text: code
 						});
 
-						if ( viewer_link === 2 )
-						{
-							const editorURL = `https://smm2.wizul.us/smm2/course/${parsed.toString()}`;
+						if ( viewer_link === 2 ) {
+							out.push({type: 'text', text: ' ['});
 							out.push({
 								type: 'link',
 								allow_rich : false,
-								url : editorURL,
+								url : `https://smm2.wizul.us/smm2/course/${parsed.toString()}`,
 								is_mail: false,
-								text: '[Viewer]'
+								text: 'Viewer'
 							});
+							out.push({type: 'text', text: ']'});
 						}
+
 						idx = nix + code.length;
 					}
 
@@ -172,7 +174,8 @@ class SMM2Links extends Addon {
 
 		for(const setting of [
 			'addon.smm2-links.enabled',
-			'addon.smm2-links.allow-embed'
+			'addon.smm2-links.allow-embed',
+			'addon.smm2-links.viewer_link'
 		])
 			this.chat.context.on(`changed:${setting}`, this.onChanged, this);
 	}
@@ -182,7 +185,8 @@ class SMM2Links extends Addon {
 
 		for(const setting of [
 			'addon.smm2-links.enabled',
-			'addon.smm2-links.allow-embed'
+			'addon.smm2-links.allow-embed',
+			'addon.smm2-links.viewer_link'
 		])
 			this.chat.context.off(`changed:${setting}`, this.onChanged, this);
 	}
