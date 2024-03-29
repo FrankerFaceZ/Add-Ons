@@ -158,30 +158,8 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			const avatarComponent = this.fine.getOwner(avatar);
 			if (!avatarComponent) return;
 
-			// Find the nearest parent that has information about the user login
-			const parent = this.fine.searchParent(avatarComponent, e => e.props?.user?.login
-				|| e.props?.targetLogin
-				|| e.props?.userLogin
-				|| e.props?.channelLogin
-				|| e.props?.video?.owner?.login
-				|| e.props?.content?.channelLogin,
-			50);
-
-			// props.user.login is for our own avatar in the top right
-			// props.targetLogin is for viewer cards
-			// props.userLogin appears to be for channels in the sidebar
-			// props.channelLogin is for the main channel you're watching
-			// props.content.channelLogin is for theatre / fullscreen mode
-			// The 'alt' attribute is a fallback
-			const pprops = parent?.props;
-
-			const login = pprops?.user?.login
-				|| pprops?.targetLogin
-				|| pprops?.userLogin
-				|| pprops?.channelLogin
-				|| pprops?.video?.owner?.login
-				|| pprops?.content?.channelLogin
-				|| avatar.getAttribute('alt');
+			const node = this.fine.searchParentNode(avatarComponent, e => e.memoizedProps?.userLogin);
+			const login = node?.memoizedProps?.userLogin;
 
 			// No login? No avatar.
 			if (!login) return;
