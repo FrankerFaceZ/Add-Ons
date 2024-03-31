@@ -4,7 +4,7 @@ import STYLE_URL from './styles.scss';
 class EmoteSidePanel extends Addon {
 
 	getContainer() {
-		return document.querySelector("[aria-label='Chat messages']");
+		return document.querySelector(".chat-list--default,.chat-list--other");
 	}
 
 	getPanel() {
@@ -24,7 +24,8 @@ class EmoteSidePanel extends Addon {
 	}
 
 	updatePadding() {
-		const padding = (this.emotes.length > 0) ? 50 : 0;
+		// Had some problems changing the chat width, so for now i'll leave it fixed
+		const padding = (this.emotes.length > 0) ? 50 : 50;
 		this.getContainer().querySelector(".simplebar-content").style.setProperty('padding-right', padding + 'px');
 	}
 
@@ -88,6 +89,10 @@ class EmoteSidePanel extends Addon {
 	}
 
 	handleMessage(ctx, tokens, msg) {
+		// Avoid handling the message twice
+		if (msg.esp_handled) return tokens;
+		msg.esp_handled = true;
+
 		let removeMessage = false;
 
 		let emoteOnly = true;
