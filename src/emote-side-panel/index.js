@@ -1,4 +1,4 @@
-const {createElement} = FrankerFaceZ.utilities.dom;
+const { createElement } = FrankerFaceZ.utilities.dom;
 import STYLE_URL from './styles.scss';
 
 class EmoteSidePanel extends Addon {
@@ -64,6 +64,28 @@ class EmoteSidePanel extends Addon {
 			}
 		}
 
+		// Sort emotes by count if the setting is enabled
+		if (this.settings.get('emote_side_panel.sort_by_count') && this.emotes.length > 1) {
+			const sortOrder = this.settings.get('emote_side_panel.sort_order');
+			if (sortOrder === 'ascending') {
+				this.emotes.sort((a, b) => a.instances.length - b.instances.length);
+			} else if (sortOrder === 'descending') {
+				this.emotes.sort((a, b) => b.instances.length - a.instances.length);
+			}
+
+			if (sortOrder !== 'none') {
+				// Remove all emotes from the panel
+				while (panel.firstChild) {
+					panel.removeChild(panel.firstChild);
+				}
+
+				// Add emotes back to the panel in the sorted order
+				for (let emote of this.emotes) {
+					panel.appendChild(emote.element);
+				}
+			}
+		}
+
 		this.updatePadding();
 		this.setUpdatePanel();
 	}
@@ -97,7 +119,7 @@ class EmoteSidePanel extends Addon {
 
 		let emoteOnly = true;
 		for (const token of tokens) {
-			if ((token.type === 'emote') || 
+			if ((token.type === 'emote') ||
 				(token.type === 'text' && /^(\s|[^\x20-\x7E])+$/g.test(token.text))) continue;
 			emoteOnly = false;
 			break;
@@ -113,7 +135,7 @@ class EmoteSidePanel extends Addon {
 		for (const token of tokens) {
 			if (token.type === 'emote') {
 				this.log.debug(token);
-				const instance = {user: msg.user, time: msg.timestamp};
+				const instance = { user: msg.user, time: msg.timestamp };
 				const text = token.text;
 				const el = this.emotes.find(e => e.text == text);
 				if (el) {
@@ -123,7 +145,7 @@ class EmoteSidePanel extends Addon {
 					const el = this.createEmoteElement(token, 1);
 					this.getPanel().appendChild(el);
 					this.setRemoveAnimation(el);
-					this.emotes.push({text: text, element: el, firstTime: instance.timestamp, instances: [instance]});
+					this.emotes.push({ text: text, element: el, firstTime: instance.timestamp, instances: [instance] });
 				}
 			}
 		}
@@ -150,6 +172,21 @@ class EmoteSidePanel extends Addon {
 			},
 		});
 
+		this.settings.add('emote_side_panel.sort_order', {
+			default: 'none',
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Sort Order',
+				description: 'Sort emotes by count',
+				component: 'setting-select-box',
+				data: [
+					{ value: 'none', title: 'None' },
+					{ value: 'ascending', title: 'Ascending' },
+					{ value: 'descending', title: 'Descending' },
+				],
+			},
+		});
+
 		this.settings.add('emote_side_panel.keep_messages', {
 			default: false,
 			ui: {
@@ -171,7 +208,7 @@ class EmoteSidePanel extends Addon {
 			changed: val => this.timeout = parseInt(val) == 0 ? 30 : parseInt(val)
 		});
 
-		this.emotes = {};
+		this.emotes = [];
 		this.updateTimer = null;
 		this.style_link = null;
 		this.timeout = parseInt(this.settings.get('emote_side_panel.timeout'));
