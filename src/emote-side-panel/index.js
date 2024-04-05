@@ -20,6 +20,10 @@ class EmoteSidePanel extends Addon {
 		container.style.setProperty("position", "relative");
 		container.append(newPanel);
 
+		if (this.settings.get('emote_side_panel.override_width')) {
+			newPanel.style.width = this.settings.get('emote_side_panel.width_in_px') + 'px';
+		}
+
 		return newPanel;
 	}
 
@@ -65,6 +69,14 @@ class EmoteSidePanel extends Addon {
 		}
 
 		// Sort emotes by count if the setting is enabled
+		this.sortEmotes();
+
+		this.updatePadding();
+		this.setUpdatePanel();
+	}
+
+	sortEmotes() {
+		const panel = this.getPanel();
 		if (this.settings.get('emote_side_panel.sort_by_count') && this.emotes.length > 1) {
 			const sortOrder = this.settings.get('emote_side_panel.sort_order');
 			if (sortOrder === 'ascending') {
@@ -85,9 +97,6 @@ class EmoteSidePanel extends Addon {
 				}
 			}
 		}
-
-		this.updatePadding();
-		this.setUpdatePanel();
 	}
 
 	setUpdatePanel() {
@@ -151,6 +160,7 @@ class EmoteSidePanel extends Addon {
 		}
 
 		this.updatePadding();
+		this.sortEmotes();
 		this.setUpdatePanel();
 
 		return tokens;
@@ -206,6 +216,26 @@ class EmoteSidePanel extends Addon {
 				component: 'setting-text-box',
 			},
 			changed: val => this.timeout = parseInt(val) == 0 ? 30 : parseInt(val)
+		});
+
+		this.settings.add('emote_side_panel.override_width', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Override Panel Width',
+				description: 'Enable to set a custom width for the emote panel',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('emote_side_panel.width_in_px', {
+			default: 32,
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Panel Width in Pixels',
+				description: 'Set the width of the emote panel in pixels',
+				component: 'setting-text-box',
+			},
 		});
 
 		this.emotes = [];
