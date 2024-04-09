@@ -3,11 +3,12 @@ export class Api extends FrankerFaceZ.utilities.module.Module {
 		super(...args);
 
 		this.inject(Commands);
+		this.inject(Badges);
 
 		this.apiBase = 'https://twir.app/api/v1/api.';
 	}
 
-	async request(path, body) {
+	async request(path, body = {}) {
 		try {
 			const response = await fetch(`${this.apiBase}${path}`, {
 				method: 'POST',
@@ -33,5 +34,12 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 		return this.parent.request('UnProtected/GetChannelCommands', {
 			channelId,
 		});
+	}
+}
+
+export class Badges extends FrankerFaceZ.utilities.module.Module {
+	// https://twir.app/api/v1/api.UnProtected/GetBadgesWithUsers
+	getBadges() {
+		return this.parent.request('UnProtected/GetBadgesWithUsers');
 	}
 }
