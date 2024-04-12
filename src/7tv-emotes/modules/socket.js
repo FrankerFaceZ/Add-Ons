@@ -75,11 +75,11 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 
 	async get7TVUserData() {
 		const user = this.site.getUser();
-		if (!user) return;
-
-		const resp = await this.stv_api.user.fetchUserData(user.id);
-
-		this._user_id = resp?.user?.id || false;
+		if (user) {
+			const resp = await this.stv_api.user.fetchUserData(user.id);
+	
+			this._user_id = resp?.user?.id || false;
+		}
 
 		this.connect();
 	}
@@ -338,22 +338,22 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		}
 	}
 
-	connect() {
-		if (!this.site.getUser()) {
-			return;
-		}
-
+	connect(is_planned_reconnect = false) {
 		if (this._connected || this._connecting) {
 			return;
 		}
 		this._connecting = true;
 
-		this.log.info('Socket: Connecting to socket server...');
+		if (!is_planned_reconnect) {
+			this.log.info('Socket: Connecting to socket server...');
+		}
 
 		this.socket = new WebSocket('wss://events.7tv.io/v3');
 
 		this.socket.onopen = () => {
-			this.log.info('Socket: Connected to socket server.');
+			if (!is_planned_reconnect) {
+				this.log.info('Socket: Connected to socket server.');
+			}
 
 			this._connected = true;
 			this._connecting = false;
@@ -371,16 +371,17 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				return;
 			}
 
-			this.log.info('Socket: Lost connection to socket server...', evt);
+			const is_planned_reconnect = evt.code === 4012;
+			if (!is_planned_reconnect) {
+				this.log.info('Socket: Lost connection to socket server...', evt);
 
-			if (evt.code !== 4012) {
 				this._connect_attempts++;
 			}
 
 			this._subscriptions = {};
 			this._rooms = {};
 
-			this.reconnect();
+			this.reconnect(is_planned_reconnect);
 		};
 
 		this.socket.onmessage = message => {
@@ -396,10 +397,12 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		};
 	}
 
-	reconnect() {
+	reconnect(is_planned_reconnect = false) {
 		this.disconnect();
 
-		this.log.info('Socket: Trying to reconnect to socket server...');
+		if (!is_planned_reconnect) {
+			this.log.info('Socket: Trying to reconnect to socket server...');
+		}
 
 		// Optimally this should always end up being 0 on a normal disconnect (End of Stream event)
 		// meaning we'll pretty much immediately reconnect
@@ -410,7 +413,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		this._connect_attempts++;
 
 		setTimeout(() => {
-			this.connect();
+			this.connect(is_planned_reconnect);
 		}, delay);
 	}
 

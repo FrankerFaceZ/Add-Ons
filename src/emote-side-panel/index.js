@@ -24,7 +24,7 @@ class EmoteSidePanel extends Addon {
 			newPanel.style.width = this.settings.get('emote_side_panel.width_in_px') + 'px';
 		}
 
-		return newPanel;
+    return newPanel;
 	}
 
 	updatePadding() {
