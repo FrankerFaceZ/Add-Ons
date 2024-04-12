@@ -171,7 +171,7 @@ class EmoteSidePanel extends Addon {
 			changed: val => this.timeout = parseInt(val) == 0 ? 30 : parseInt(val)
 		});
 
-		this.emotes = {};
+		this.emotes = [];
 		this.updateTimer = null;
 		this.style_link = null;
 		this.timeout = parseInt(this.settings.get('emote_side_panel.timeout'));
