@@ -1,7 +1,7 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"short_name": "EmoteSidePanel",
 	"name": "Emote Side Panel",
 	"author": "amartini",

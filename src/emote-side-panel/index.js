@@ -1,4 +1,4 @@
-const {createElement} = FrankerFaceZ.utilities.dom;
+const { createElement } = FrankerFaceZ.utilities.dom;
 import STYLE_URL from './styles.scss';
 
 class EmoteSidePanel extends Addon {
@@ -19,6 +19,10 @@ class EmoteSidePanel extends Addon {
 		const container = this.getContainer();
 		container.style.setProperty("position", "relative");
 		container.append(newPanel);
+
+		if (this.settings.get('emote_side_panel.override_width')) {
+			newPanel.style.width = this.settings.get('emote_side_panel.width_in_px') + 'px';
+		}
 
 		return newPanel;
 	}
@@ -64,8 +68,35 @@ class EmoteSidePanel extends Addon {
 			}
 		}
 
+		// Sort emotes by count if the setting is enabled
+		this.sortEmotes();
+
 		this.updatePadding();
 		this.setUpdatePanel();
+	}
+
+	sortEmotes() {
+		const panel = this.getPanel();
+		if (this.settings.get('emote_side_panel.sort_by_count') && this.emotes.length > 1) {
+			const sortOrder = this.settings.get('emote_side_panel.sort_order');
+			if (sortOrder === 'ascending') {
+				this.emotes.sort((a, b) => a.instances.length - b.instances.length);
+			} else if (sortOrder === 'descending') {
+				this.emotes.sort((a, b) => b.instances.length - a.instances.length);
+			}
+
+			if (sortOrder !== 'none') {
+				// Remove all emotes from the panel
+				while (panel.firstChild) {
+					panel.removeChild(panel.firstChild);
+				}
+
+				// Add emotes back to the panel in the sorted order
+				for (let emote of this.emotes) {
+					panel.appendChild(emote.element);
+				}
+			}
+		}
 	}
 
 	setUpdatePanel() {
@@ -97,7 +128,7 @@ class EmoteSidePanel extends Addon {
 
 		let emoteOnly = true;
 		for (const token of tokens) {
-			if ((token.type === 'emote') || 
+			if ((token.type === 'emote') ||
 				(token.type === 'text' && /^(\s|[^\x20-\x7E])+$/g.test(token.text))) continue;
 			emoteOnly = false;
 			break;
@@ -113,7 +144,7 @@ class EmoteSidePanel extends Addon {
 		for (const token of tokens) {
 			if (token.type === 'emote') {
 				this.log.debug(token);
-				const instance = {user: msg.user, time: msg.timestamp};
+				const instance = { user: msg.user, time: msg.timestamp };
 				const text = token.text;
 				const el = this.emotes.find(e => e.text == text);
 				if (el) {
@@ -123,12 +154,13 @@ class EmoteSidePanel extends Addon {
 					const el = this.createEmoteElement(token, 1);
 					this.getPanel().appendChild(el);
 					this.setRemoveAnimation(el);
-					this.emotes.push({text: text, element: el, firstTime: instance.timestamp, instances: [instance]});
+					this.emotes.push({ text: text, element: el, firstTime: instance.timestamp, instances: [instance] });
 				}
 			}
 		}
 
 		this.updatePadding();
+		this.sortEmotes();
 		this.setUpdatePanel();
 
 		return tokens;
@@ -147,6 +179,21 @@ class EmoteSidePanel extends Addon {
 				title: 'Capture all',
 				description: 'Capture emotes from all messages, even those that are not emote only',
 				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('emote_side_panel.sort_order', {
+			default: 'none',
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Sort Order',
+				description: 'Sort emotes by count',
+				component: 'setting-select-box',
+				data: [
+					{ value: 'none', title: 'None' },
+					{ value: 'ascending', title: 'Ascending' },
+					{ value: 'descending', title: 'Descending' },
+				],
 			},
 		});
 
@@ -169,6 +216,26 @@ class EmoteSidePanel extends Addon {
 				component: 'setting-text-box',
 			},
 			changed: val => this.timeout = parseInt(val) == 0 ? 30 : parseInt(val)
+		});
+
+		this.settings.add('emote_side_panel.override_width', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Override Panel Width',
+				description: 'Enable to set a custom width for the emote panel',
+				component: 'setting-check-box',
+			},
+		});
+
+		this.settings.add('emote_side_panel.width_in_px', {
+			default: 32,
+			ui: {
+				path: 'Add-Ons > Emote Side Panel',
+				title: 'Panel Width in Pixels',
+				description: 'Set the width of the emote panel in pixels',
+				component: 'setting-text-box',
+			},
 		});
 
 		this.emotes = [];
