@@ -1,4 +1,4 @@
-// twitch.tv/twirapp
+// https://twitch.tv/twirapp
 const TWIR_APP_ID = 870280719;
 
 export class Badges extends FrankerFaceZ.utilities.module.Module {
@@ -10,6 +10,8 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.inject('settings');
 
 		this.badgeIds = new Set();
+
+		this.updateBadges = this.updateBadges.bind(this);
 	}
 
 	updateBadges(enabled) {
@@ -35,42 +37,32 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 		// twitchbot badge for TwirApp
 		this.chat.getUser(TWIR_APP_ID).addBadge('ffz', 2);
 
-		try {
-			const { badges } = await this.parent.api.badges.getBadges();
-
-			for (const [key, badge] of Object.entries(badges)) {
-				if (!badge.enabled || !badge.users.length) return;
-				const badgeId = this.registerBadge(badge, key);
-				this.badgeIds.add(badgeId);
-
-				for (const userId of badge.users) {
-					const user = this.chat.getUser(userId);
-					user.addBadge('addon.twir', badgeId);
-				}
-			}
-		} catch (err) {
-			this.log.error(err);
+		const badges = await this.parent.api.badges.getBadges();
+		for (const badge of badges) {
+			if (!badge.users.length) return;
+			const badgeId = this.registerBadge(badge);
+			this.badges.setBulk('addon.twir', badgeId, badge.users);
 		}
 
 		this.emit('chat:update-lines');
 	}
 
-	registerBadge(badge, key) {
+	registerBadge(badge) {
 		const badgeId = `addon.twir.badge_${badge.id}`;
+		this.badgeIds.add(badgeId);
 
 		this.badges.loadBadgeData(badgeId, {
 			id: badgeId,
 			name: badge.name,
 			title: badge.name,
 			click_url: 'https://twir.app',
-			image: badge.file_url,
+			image: badge.url,
 			urls: {
-				1: badge.file_url,
-				2: badge.file_url,
-				3: badge.file_url
+				1: badge.url,
+				2: badge.url,
+				3: badge.url,
 			},
-			slot: 100 + Number(key),
-			svg: false,
+			slot: badge.ffzSlot,
 		});
 
 		return badgeId;

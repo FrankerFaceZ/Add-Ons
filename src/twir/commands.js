@@ -7,7 +7,9 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 
 		this.roomCommands = new Map();
 
+		this.getTabCommands = this.getTabCommands.bind(this);
 		this.registerRoomCommands = this.registerRoomCommands.bind(this);
+		this.unregisterRoomCommands = this.unregisterRoomCommands.bind(this);
 	}
 
 	getTabCommands(event) {
@@ -22,12 +24,8 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	async registerRoomCommands(room) {
-		try {
-			const { commands } = await this.parent.api.commands.getChannelCommands(room.id);
-			this.roomCommands.set(room.id, commands);
-		} catch (err) {
-			this.log.error(err);
-		}
+		const commands = await this.parent.api.commands.getChannelCommands(room.id);
+		this.roomCommands.set(room.id, commands);
 	}
 
 	unregisterRoomCommands(room) {
@@ -41,7 +39,7 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 		const showCommandDescription = this.settings.get('addon.twir.command_description');
 
 		return commands.map(command => {
-			const description = command.description || command.responses.join(' | ');
+			const description = command.description || command.responses?.map(response => response.text).join(' | ');
 
 			return {
 				prefix: '!',

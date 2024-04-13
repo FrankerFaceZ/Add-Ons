@@ -5,41 +5,37 @@ export class Api extends FrankerFaceZ.utilities.module.Module {
 		this.inject(Commands);
 		this.inject(Badges);
 
-		this.apiBase = 'https://twir.app/api/v1/api.';
+		this.apiBase = 'https://twir.app/api-new/v1/public';
 	}
 
-	async request(path, body = {}) {
+	async request(path) {
 		try {
-			const response = await fetch(`${this.apiBase}${path}`, {
-				method: 'POST',
+			const response = await fetch(`${this.apiBase}/${path}`, {
+				method: 'GET',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
 			});
 
 			if (response.ok) {
-				const json = await response.json();
-				return json;
+				return await response.json();
 			}
 		} catch (err) {
 			this.log.error(err);
 		}
 
-		return null;
+		return [];
 	}
 }
 
 export class Commands extends FrankerFaceZ.utilities.module.Module {
-	// https://twir.app/api/v1/api.UnProtected/GetChannelCommands
-	getChannelCommands(channelId) {
-		return this.parent.request('UnProtected/GetChannelCommands', {
-			channelId,
-		});
+	// https://twir.app/api-new/v1/public/channels/{userId}/commands
+	getChannelCommands(userId) {
+		return this.parent.request(`channels/${userId}/commands`);
 	}
 }
 
 export class Badges extends FrankerFaceZ.utilities.module.Module {
-	// https://twir.app/api/v1/api.UnProtected/GetBadgesWithUsers
+	// https://twir.app/api-new/v1/public/badges
 	getBadges() {
-		return this.parent.request('UnProtected/GetBadgesWithUsers');
+		return this.parent.request('badges');
 	}
 }

@@ -45,15 +45,15 @@ class Twir extends Addon {
 		}
 
 		this.on('chat:get-tab-commands', this.commands.getTabCommands);
-		this.settings.getChanges('addon.twir.user_badges', enabled => this.badges.updateBadges(enabled));
+		this.settings.getChanges('addon.twir.user_badges', this.badges.updateBadges);
 	}
 
 	onDisable() {
 		this.off('chat:room-add', this.commands.registerRoomCommands);
 		this.off('chat:room-remove', this.commands.unregisterRoomCommands);
 
-		for (const roomId of this.commands.roomCommands.keys()) {
-			this.unregisterRoomCommands({ id: roomId });
+		for (const roomId of this.roomCommands.keys()) {
+			this.commands.unregisterRoomCommands({ id: roomId });
 		}
 
 		this.badges.unloadBadges();
