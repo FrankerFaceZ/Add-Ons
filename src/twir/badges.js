@@ -1,5 +1,4 @@
-// https://twitch.tv/twirapp
-const TWIR_APP_ID = 870280719;
+import { TWIR_APP_ID } from './settings.js';
 
 export class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
@@ -11,10 +10,15 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 
 		this.badgeIds = new Set();
 
-		this.updateBadges = this.updateBadges.bind(this);
+		// twitchbot badge for TwirApp
+		this.chat.getUser(TWIR_APP_ID).addBadge('ffz', 2);
 	}
 
-	updateBadges(enabled) {
+	onDisable() {
+		this.unloadBadges();
+	}
+
+	updateSettingBadges(enabled) {
 		if (enabled) {
 			this.loadBadges();
 		} else {
@@ -31,12 +35,6 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	async loadBadges() {
-		const showUserBadges = this.settings.get('addon.twir.user_badges');
-		if (!showUserBadges) return;
-
-		// twitchbot badge for TwirApp
-		this.chat.getUser(TWIR_APP_ID).addBadge('ffz', 2);
-
 		const badges = await this.parent.api.badges.getBadges();
 		for (const badge of badges) {
 			if (!badge.users.length) return;

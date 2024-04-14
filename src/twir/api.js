@@ -10,11 +10,7 @@ export class Api extends FrankerFaceZ.utilities.module.Module {
 
 	async request(path) {
 		try {
-			const response = await fetch(`${this.apiBase}/${path}`, {
-				method: 'GET',
-				headers: { 'Content-Type': 'application/json' },
-			});
-
+			const response = await fetch(`${this.apiBase}/${path}`);
 			if (response.ok) {
 				return await response.json();
 			}

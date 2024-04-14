@@ -1,3 +1,5 @@
+import { SETTING_KEYS } from './settings.js';
+
 export class Commands extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
@@ -6,10 +8,30 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 		this.inject('settings');
 
 		this.roomCommands = new Map();
+	}
 
-		this.getTabCommands = this.getTabCommands.bind(this);
-		this.registerRoomCommands = this.registerRoomCommands.bind(this);
-		this.unregisterRoomCommands = this.unregisterRoomCommands.bind(this);
+	onEnable() {
+		this.on('chat:room-add', this.registerRoomCommands, this);
+		this.on('chat:room-remove', this.unregisterRoomCommands, this);
+
+		for (const room of this.chat.iterateRooms()) {
+			if (room) {
+				this.registerRoomCommands(room);
+			}
+		}
+
+		this.on('chat:get-tab-commands', this.getTabCommands, this);
+	}
+
+	onDisable() {
+		this.off('chat:room-add', this.registerRoomCommands, this);
+		this.off('chat:room-remove', this.unregisterRoomCommands, this);
+
+		for (const roomId of this.roomCommands.keys()) {
+			this.unregisterRoomCommands({ id: roomId });
+		}
+
+		this.off('chat:get-tab-commands', this.getTabCommands, this);
 	}
 
 	getTabCommands(event) {
@@ -36,7 +58,7 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 		const commands = this.roomCommands.get(room.id);
 		if (!commands) return;
 
-		const showCommandDescription = this.settings.get('addon.twir.command_description');
+		const showCommandDescription = this.settings.get(SETTING_KEYS.commandDescription);
 
 		return commands.map(command => {
 			const description = command.description || command.responses?.map(response => response.text).join(' | ');
