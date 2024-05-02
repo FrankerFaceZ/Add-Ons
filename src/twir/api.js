@@ -5,7 +5,7 @@ export class Api extends FrankerFaceZ.utilities.module.Module {
 		this.inject(Commands);
 		this.inject(Badges);
 
-		this.apiBase = 'https://twir.app/api-new/v1/public';
+		this.apiBase = 'https://twir.app/api/v1/public';
 	}
 
 	async request(path) {
