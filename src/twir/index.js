@@ -7,10 +7,10 @@ class Twir extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.inject(Api);
-		this.inject(Commands);
-		this.inject(Badges);
-		this.inject(Settings);
+		this.injectAs('twir_api', Api);
+		this.injectAs('twir_commands', Commands);
+		this.injectAs('twir_badges', Badges);
+		this.injectAs('twir_settings', Settings);
 	}
 }
 

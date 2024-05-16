@@ -33,7 +33,7 @@ export class Settings extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		this.settings.getChanges(SETTING_KEYS.userBadges, enabled => {
-			this.parent.badges.updateSettingBadges(enabled);
+			this.parent.twir_badges.toggleBadges(enabled);
 		});
 	}
 }
