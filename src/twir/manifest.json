@@ -1,13 +1,13 @@
 {
-  "enabled": true,
-  "requires": [],
-  "version": "1.0.1",
-  "short_name": "Twir",
-  "name": "Twir",
-  "author": "crashmax",
-  "description": "Twir command suggestions and badges.",
-  "website": "https://twir.app",
-  "settings": "add_ons.twir",
-  "created": "2024-03-16T00:00:00.000Z",
-  "updated": "2024-03-18T10:23:00.299Z"
+	"enabled": true,
+	"requires": [],
+	"version": "1.1.0",
+	"short_name": "Twir",
+	"name": "Twir",
+	"author": "crashmax",
+	"description": "Adds command suggestions and badges from Twir.",
+	"website": "https://twir.app",
+	"settings": "add_ons.twir",
+	"created": "2024-03-16T00:00:00.000Z",
+	"updated": "2024-04-13T16:32:00.829Z"
 }
