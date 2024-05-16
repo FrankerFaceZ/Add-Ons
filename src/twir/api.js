@@ -23,14 +23,14 @@ export class Api extends FrankerFaceZ.utilities.module.Module {
 }
 
 export class Commands extends FrankerFaceZ.utilities.module.Module {
-	// https://twir.app/api-new/v1/public/channels/{userId}/commands
+	// https://twir.app/api/v1/public/channels/{userId}/commands
 	getChannelCommands(userId) {
 		return this.parent.request(`channels/${userId}/commands`);
 	}
 }
 
 export class Badges extends FrankerFaceZ.utilities.module.Module {
-	// https://twir.app/api-new/v1/public/badges
+	// https://twir.app/api/v1/public/badges
 	getBadges() {
 		return this.parent.request('badges');
 	}

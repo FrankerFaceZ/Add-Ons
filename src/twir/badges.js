@@ -18,7 +18,7 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.unloadBadges();
 	}
 
-	updateSettingBadges(enabled) {
+	toggleBadges(enabled) {
 		if (enabled) {
 			this.loadBadges();
 		} else {
@@ -35,7 +35,7 @@ export class Badges extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	async loadBadges() {
-		const badges = await this.parent.api.badges.getBadges();
+		const badges = await this.parent.twir_api.badges.getBadges();
 		for (const badge of badges) {
 			if (!badge.users.length) return;
 			const badgeId = this.registerBadge(badge);

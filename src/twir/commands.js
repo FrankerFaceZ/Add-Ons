@@ -46,7 +46,7 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	async registerRoomCommands(room) {
-		const commands = await this.parent.api.commands.getChannelCommands(room.id);
+		const commands = await this.parent.twir_api.commands.getChannelCommands(room.id);
 		this.roomCommands.set(room.id, commands);
 	}
 
