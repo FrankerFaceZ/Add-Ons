@@ -1,0 +1,9 @@
+{
+    "enabled": true,
+    "requires": [],
+    "version": "1.0.0",
+    "short_name": "BetterMineBadge",
+    "name": "Better minecraft badge",
+    "author": "MrPandir",
+    "description": "Replace the Minecraft badge for the 15th anniversary with a more beautiful one"
+}
