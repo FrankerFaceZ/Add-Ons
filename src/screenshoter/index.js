@@ -36,6 +36,16 @@ class Screenshoter extends Addon {
 			}
 		});
 
+		this.settings.add(`${this.settingsNamespace}.copyAndDownload`, {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Screenshoter >> Behavior',
+				title: 'Copy to clipboard & Save as file',
+				description: 'Enable this if you wish to save a screenshot to the clipboard (if supported by your browser) and download it as a file.',
+				component: 'setting-check-box'
+			}
+		});
+
 		this.settings.add(`${this.settingsNamespace}.shortcut`, {
 			default: 'ctrl+alt+shift+q',
 			ui: {
@@ -242,6 +252,10 @@ class Screenshoter extends Addon {
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
 		canvas.toBlob((blob) => {
+			if (this.settings.get(`${this.settingsNamespace}.copyAndDownload`)) {
+				this.saveToClipboard(blob);
+				this.saveToFile(blob);
+			};
 			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
 			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
 		})
