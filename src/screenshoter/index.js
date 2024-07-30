@@ -26,22 +26,22 @@ class Screenshoter extends Addon {
 
 		this.settingsNamespace = 'addon.screenshoter'
 
-		this.settings.add(`${this.settingsNamespace}.clipboard`, {
-			default: false,
+		this.settings.add(`${this.settingsNamespace}.copy`, {
+			default: true,
 			ui: {
 				path: 'Add-Ons > Screenshoter >> Behavior',
 				title: 'Copy to clipboard',
-				description: 'By default, screenshots are saved as a file. Enable this to use clipboard instead (if supported by your browser).',
+				description: 'Enable this to copy the screenshot to the clipboard (if supported by your browser).',
 				component: 'setting-check-box'
 			}
 		});
 
-		this.settings.add(`${this.settingsNamespace}.copyAndDownload`, {
+		this.settings.add(`${this.settingsNamespace}.download`, {
 			default: false,
 			ui: {
 				path: 'Add-Ons > Screenshoter >> Behavior',
-				title: 'Copy to clipboard & Save as file',
-				description: 'Enable this if you wish to save a screenshot to the clipboard (if supported by your browser) and download it as a file.',
+				title: 'Save as file',
+				description: 'Enable this if you wish to download the screenshot as a file.',
 				component: 'setting-check-box'
 			}
 		});
@@ -252,12 +252,13 @@ class Screenshoter extends Addon {
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
 		canvas.toBlob((blob) => {
-			if (this.settings.get(`${this.settingsNamespace}.copyAndDownload`)) {
-				this.saveToClipboard(blob);
+			if (!this.settings.get(`$this.settingsNamespace}.download`) || !this.settings.get(`$this.settingsNamespace}.copy`)) return this.saveToClipboard(blob); // Default to clipboard if both settings r turned off for some reason
+			if (this.settings.get(`${this.settingsNamespace}.download`)) {
 				this.saveToFile(blob);
-			};
-			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
-			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
+			}
+			if (this.settings.get(`${this.settingsNamespace}.copy`)) {
+				this.saveToClipboard(blob);
+			}
 		})
 
 		canvas.remove()
