@@ -252,7 +252,7 @@ class Screenshoter extends Addon {
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
 		canvas.toBlob((blob) => {
-			if (!this.settings.get(`$this.settingsNamespace}.download`) || !this.settings.get(`$this.settingsNamespace}.copy`)) return this.saveToClipboard(blob); // Default to clipboard if both settings r turned off for some reason
+			if (!this.settings.get(`${this.settingsNamespace}.download`) || !this.settings.get(`${this.settingsNamespace}.copy`)) return this.saveToClipboard(blob); // Default to clipboard if both settings r turned off for some reason
 			if (this.settings.get(`${this.settingsNamespace}.download`)) {
 				this.saveToFile(blob);
 			}
