@@ -30,11 +30,15 @@ jobs:
       run: pnpm build
 
     - name: Archive Build
-      uses: actions/upload-artifact@v3
+      id: artifact-upload-step
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: |
           dist
+
+    - name: Artifact Info
+      run: echo 'Artifact ID is: ${{ steps.artifact-upload-step.outputs.artifact-id }}'
 
     - name: Deploy (Clean)
       uses: garygrossgarten/github-action-ssh@release
@@ -46,10 +50,12 @@ jobs:
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Copy)
-      uses: srueda99/scp-action@v12
+      run: scp 
+      uses: appleboy/scp-action@v0.1.7
       with:
-        origin: ./dist/*
-        destination: /home/ffz/addons
+        source: dist
+        target: addons
+        strip_components: 1
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
