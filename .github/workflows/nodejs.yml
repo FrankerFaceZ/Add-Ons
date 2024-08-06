@@ -60,7 +60,6 @@ jobs:
         strip_components: 1
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Execute)
