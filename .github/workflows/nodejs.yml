@@ -53,7 +53,6 @@ jobs:
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Copy)
-      run: scp 
       uses: appleboy/scp-action@v0.1.7
       with:
         source: dist
