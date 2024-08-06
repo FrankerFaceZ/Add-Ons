@@ -12,14 +12,15 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Uses PNPM
-      uses: pnpm/action-setup@v2.0.1
+      uses: pnpm/action-setup@v4
       with:
-        version: 6.20.4
+        version: 8
+        run_install: false
 
-    - name: Use Node.js 16.x
-      uses: actions/setup-node@v2
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
       with:
-        node-version: '16.x'
+        node-version: 18
         cache: 'pnpm'
 
     - name: Install Dependencies
@@ -45,14 +46,15 @@ jobs:
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Copy)
-      uses: garygrossgarten/github-action-scp@release
+      uses: appleboy/scp-action@v0.1.7
       with:
-        local: dist
-        remote: addons
+        source: dist
+        strip_components: 1
+        target: addons
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Execute)
       uses: garygrossgarten/github-action-ssh@release
