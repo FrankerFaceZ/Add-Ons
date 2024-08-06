@@ -38,7 +38,10 @@ jobs:
           dist
 
     - name: Artifact Info
-      run: echo 'Artifact ID is: ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+      env:
+        ARTIFACT_ID: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+      run: |
+        echo "Artifact ID is: $ARTIFACT_ID"
 
     - name: Deploy (Clean)
       uses: garygrossgarten/github-action-ssh@release
