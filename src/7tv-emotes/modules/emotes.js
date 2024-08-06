@@ -322,8 +322,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	convertEmote(emote) {
 		const emoteHostUrl = emote?.data?.host?.url;
 		if (!emoteHostUrl) return null;
+
 		const format = this.settings.get('addon.seventv_emotes.emote_format');
-		console.log(format);
 		const formatEmoteVersions = emote.data.host.files.filter((value => value.format === format));
 		if (!formatEmoteVersions.length) return null;
 
