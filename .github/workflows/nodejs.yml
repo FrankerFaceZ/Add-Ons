@@ -48,8 +48,8 @@ jobs:
     - name: Deploy (Copy)
       uses: srueda99/scp-action@v12
       with:
-        origin: dist
-        destination: addons
+        origin: ./dist/*
+        destination: /home/ffz/addons
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
