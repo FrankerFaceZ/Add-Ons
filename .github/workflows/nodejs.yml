@@ -46,11 +46,10 @@ jobs:
         privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy (Copy)
-      uses: appleboy/scp-action@v0.1.7
+      uses: srueda99/scp-action@v12
       with:
-        source: dist
-        strip_components: 1
-        target: addons
+        origin: dist
+        destination: addons
         host: ${{ secrets.HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
