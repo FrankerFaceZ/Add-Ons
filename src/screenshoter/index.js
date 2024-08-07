@@ -14,7 +14,7 @@ const BAD_SHORTCUTS = [
 	'alt+x'
 ]
 
-class Screenshoter extends Addon {
+class Screenshotter extends Addon {
 	constructor(...args) {
 		super(...args)
 
@@ -24,14 +24,24 @@ class Screenshoter extends Addon {
 
 		this.onShortcut = this.onShortcut.bind(this)
 
-		this.settingsNamespace = 'addon.screenshoter'
+		this.settingsNamespace = 'addon.screenshotter'
 
-		this.settings.add(`${this.settingsNamespace}.clipboard`, {
+		this.settings.add(`${this.settingsNamespace}.copy`, {
+			default: true,
+			ui: {
+				path: 'Add-Ons > Screenshotter >> Behavior',
+				title: 'Copy to clipboard',
+				description: 'Enable this to copy the screenshot to the clipboard (if supported by your browser).',
+				component: 'setting-check-box'
+			}
+		});
+
+		this.settings.add(`${this.settingsNamespace}.download`, {
 			default: false,
 			ui: {
-				path: 'Add-Ons > Screenshoter >> Behavior',
-				title: 'Copy to clipboard',
-				description: 'By default, screenshots are saved as a file. Enable this to use clipboard instead (if supported by your browser).',
+				path: 'Add-Ons > Screenshotter >> Behavior',
+				title: 'Save as file',
+				description: 'Enable this if you wish to download the screenshot as a file.',
 				component: 'setting-check-box'
 			}
 		});
@@ -39,7 +49,7 @@ class Screenshoter extends Addon {
 		this.settings.add(`${this.settingsNamespace}.shortcut`, {
 			default: 'ctrl+alt+shift+q',
 			ui: {
-				path: 'Add-Ons > Screenshoter >> Behavior',
+				path: 'Add-Ons > Screenshotter >> Behavior',
 				title: 'Shortcut Key',
 				description: 'This key sequence can be used to take a screenshot.',
 				component: 'setting-hotkey'
@@ -68,7 +78,7 @@ class Screenshoter extends Addon {
 		if (this.tooltip) this.destroyTooltip()
 
 		this.tooltip = document.createElement('span')
-		this.tooltip.id = 'ffz-screenshoter-tooltip'
+		this.tooltip.id = 'ffz-screenshotter-tooltip'
 		this.tooltip.style = `
 			color: var(--color-text-pill);
 			background-color: var(--color-background-pill-subtle);
@@ -111,7 +121,7 @@ class Screenshoter extends Addon {
 	}
 
 	destroyButton(inst) {
-		const button = document.querySelector('.ffz--player-screenshoter')
+		const button = document.querySelector('.ffz--player-screenshotter')
 		button?.remove()
 	}
 
@@ -146,7 +156,7 @@ class Screenshoter extends Addon {
 	updateButton(inst) {
 		const outer = inst.props.containerRef || this.fine.getChildNode(inst)
 		const container = outer?.querySelector?.(this.player.RIGHT_CONTROLS || '.video-player__default-player .player-controls__right-control-group')
-		const button = container?.querySelector('.ffz--player-screenshoter')
+		const button = container?.querySelector('.ffz--player-screenshotter')
 
 		const video = outer?.querySelector('video')
 		if (!video || !container) return
@@ -154,13 +164,13 @@ class Screenshoter extends Addon {
 		if (button) button.remove()
 		if (this.isClip(video)) return // We don't work with clips
 
-		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshoter')
+		let icon, tip, btn, cont = container.querySelector('.ffz--player-screenshotter')
 
-		cont = (<div class="ffz--player-screenshoter tw-inline-flex tw-relative ffz-il-tooltip__container">
+		cont = (<div class="ffz--player-screenshotter tw-inline-flex tw-relative ffz-il-tooltip__container">
 			{btn = (<button
 				class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon tw-button-icon--overlay ffz-core-button ffz-core-button--border ffz-core-button--overlay tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative"
 				type="button"
-				data-a-target="ffz-player-screenshoter-button"
+				data-a-target="ffz-player-screenshotter-button"
 				onClick={this.onButtonClick.bind(this, inst)} // eslint-disable-line react/jsx-no-bind
 			>
 				<div class="tw-align-items-center tw-flex tw-flex-grow-0">
@@ -242,12 +252,17 @@ class Screenshoter extends Addon {
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
 		canvas.toBlob((blob) => {
-			const clipboard = this.settings.get(`${this.settingsNamespace}.clipboard`)
-			clipboard ? this.saveToClipboard(blob) : this.saveToFile(blob)
+			if (!this.settings.get(`${this.settingsNamespace}.download`) || !this.settings.get(`${this.settingsNamespace}.copy`)) return this.saveToClipboard(blob); // Default to clipboard if both settings r turned off for some reason
+			if (this.settings.get(`${this.settingsNamespace}.download`)) {
+				this.saveToFile(blob);
+			}
+			if (this.settings.get(`${this.settingsNamespace}.copy`)) {
+				this.saveToClipboard(blob);
+			}
 		})
 
 		canvas.remove()
 	}
 }
 
-Screenshoter.register()
+screenshotter.register()
