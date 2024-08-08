@@ -18,10 +18,22 @@ class Modchecker extends Addon {
 				ffzSlot: 120,
 			},
 			{
+				textId: 'contributor',
+				id: 12,
+				name: 'Modchecker Contributor',
+				ffzSlot: 121,
+			},
+			{
+				textId: 'topdonator',
+				id: 10,
+				name: 'Modchecker Top Donator',
+				ffzSlot: 122,
+			},
+			{
 				textId: 'donator',
 				id: 8,
 				name: 'Modchecker Donator',
-				ffzSlot: 121,
+				ffzSlot: 123,
 			},
 		];
 
