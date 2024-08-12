@@ -1,7 +1,7 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.2.1",
+	"version": "1.2.0",
 	"short_name": "screenshoter",
 	"name": "Screenshotter",
 	"author": "CJMAXiK / c0nnorgg",
