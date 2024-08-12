@@ -59,6 +59,19 @@
 	width: 4rem;
 }
 
+.bd--half-width-max { max-width: 50vw; }
+
+.bd-modal code {
+	user-select: all;
+	padding: 0 5px;
+	border-radius: 5px;
+	background-color: rgba(0,0,0,0.1);
+
+	.tw-root--theme-dark & {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+}
+
 .side-nav:not(.side-nav--expanded) .bd--shelf-expanded,
 .side-nav--expanded .bd--shelf-collapsed {
 	display: none !important;

@@ -1,0 +1,27 @@
+#import "../fragments/stream-info.gql"
+#import "../fragments/stream-broadcaster.gql"
+
+query Deck_LiveCollection($slug: String!, $first: Int, $after: Cursor, $options: BrowsableCollectionStreamsOptions, $previewWidth: Int, $previewHeight: Int) {
+    collection: browsableCollection(input: {slug: $slug}) {
+        id
+        slug
+        name {
+            fallbackLocalizedTitle
+        }
+        description {
+            fallbackLocalizedTitle
+        }
+		streams(first: $first, after: $after, options: $options) {
+			pageInfo {
+				hasNextPage
+			}
+			edges {
+				cursor
+				node {
+					...StreamInfo
+                    ...StreamBroadcaster
+				}
+			}
+		}
+	}
+}
