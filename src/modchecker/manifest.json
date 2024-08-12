@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0",
+	"short_name": "Modchecker",
+	"name": "Modchecker",
+	"author": "MrPandir",
+	"description": "Adds Modchecker Badges into the Twitch Chat",
+	"website": "https://modchecker.com",
+	"created": "2024-08-07T00:00:00.000Z",
+	"updated": "2024-08-07T00:00:00.000Z"
+}
