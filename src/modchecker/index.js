@@ -3,9 +3,8 @@ class Modchecker extends Addon {
 		super(...args);
 		this.inject('chat.badges');
 
-		const corsProxy = 'https://relaxo.dev/?a=';
 		this.domain = 'https://modchecker.com';
-		this.apiBase = `${corsProxy}${this.domain}/api/v1`;
+		this.apiBase = `${this.domain}/api/v1`;
 		this.badgeBase = this.domain;
 
 		this.clickRedirectLink = this.domain;
