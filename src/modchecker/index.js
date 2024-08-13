@@ -8,7 +8,6 @@ class Modchecker extends Addon {
 		this.badgeBase = this.domain;
 
 		this.clickRedirectLink = this.domain;
-		this.namespace = 'addon.modchecker';
 		this.badgeIds = new Set();
 	}
 
@@ -25,7 +24,7 @@ class Modchecker extends Addon {
 
 		for (const badge of badges) {
 			const badgeId = this.registerBadge(badge);
-			this.badges.setBulk(this.namespace, badgeId, badge.users);
+			this.badges.setBulk(this.name, badgeId, badge.users);
 		}
 
 		this.emit('chat:update-lines');
@@ -45,7 +44,7 @@ class Modchecker extends Addon {
 		// 3. replace spaces with dashes
 		badgeName = badgeName.toLowerCase().replace(/\s*modchecker\s*/g, '').replace(/\s+/g, '-');
 
-		const badgeId = `${this.namespace}.badge-${badgeName}`;
+		const badgeId = `${this.name}.badge-${badgeName}`;
 		this.badgeIds.add(badgeId);
 		return badgeId;
 	}
