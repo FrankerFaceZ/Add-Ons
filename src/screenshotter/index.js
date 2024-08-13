@@ -21,6 +21,7 @@ class Screenshotter extends Addon {
 		this.inject('site.fine')
 		this.inject('site.player')
 		this.inject('site.web_munch')
+		this.inject('settings') // Who knows bro
 
 		this.onShortcut = this.onShortcut.bind(this)
 
@@ -252,17 +253,27 @@ class Screenshotter extends Addon {
 		context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
 		canvas.toBlob((blob) => {
-			if (!this.settings.get(`${this.settingsNamespace}.download`) || !this.settings.get(`${this.settingsNamespace}.copy`)) return this.saveToClipboard(blob); // Default to clipboard if both settings r turned off for some reason
-			if (this.settings.get(`${this.settingsNamespace}.download`)) {
+			const shouldDownload = this.settings.get(`${this.settingsNamespace}.download`);
+			const shouldCopy = this.settings.get(`${this.settingsNamespace}.copy`);
+		
+			if (!shouldDownload && !shouldCopy) return this.saveToClipboard(blob);
+		
+			if (shouldDownload) {
 				this.saveToFile(blob);
 			}
-			if (this.settings.get(`${this.settingsNamespace}.copy`)) {
-				this.saveToClipboard(blob);
+		
+			if (shouldCopy) {
+				if (shouldDownload) {
+					// use a timeout or some mechanism to delay clipboard copy after download
+					setTimeout(() => this.saveToClipboard(blob), 100);
+				} else {
+					this.saveToClipboard(blob);
+				}
 			}
-		})
+		});		
 
 		canvas.remove()
 	}
 }
 
-screenshotter.register()
+Screenshotter.register()
