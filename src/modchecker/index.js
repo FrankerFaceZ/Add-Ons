@@ -2,6 +2,7 @@ class Modchecker extends Addon {
 	constructor(...args) {
 		super(...args);
 		this.inject('chat.badges');
+		this.inject('settings');
 
 		this.domain = 'https://modchecker.com';
 		this.apiBase = `${this.domain}/api/v1`;
@@ -9,18 +10,33 @@ class Modchecker extends Addon {
 
 		this.clickRedirectLink = this.domain;
 		this.badgeIds = new Set();
+
+		const autoRefreshId = `${this.name}.refresh_interval`
+		this.settings.add(autoRefreshId, {
+			default: 300000,
+			ui: {
+				path: 'Add-Ons > Modchecker',
+				title: 'Refresh interval',
+				description: 'Seconds between automatic badge refreshes. Set to 0 to disable. (Default: 5 minutes, Minimum: 20 seconds)',
+				component: 'setting-text-box',
+				process: 'to_int',
+				bounds: [0],
+			},
+		});
+		this.settings.getChanges(autoRefreshId, value => this.autoRefresh(value));
 	}
 
 	onEnable() {
 		this.loadBadges();
 	}
-	
+
 	onDisable() {
 		this.unloadBadges();
 	}
 	
 	async loadBadges() {
 		const badges = await this.fetchBadgeData();
+		this.log.info('Loaded', badges.length, 'badges');
 
 		for (const badge of badges) {
 			const badgeId = this.registerBadge(badge);
@@ -36,6 +52,18 @@ class Modchecker extends Addon {
 		}
 
 		this.emit('chat:update-lines');
+	}
+
+	autoRefresh(secondsInterval) {
+		clearInterval(this.refreshTimerId);
+
+		if (secondsInterval === 0) {
+			return this.refreshTimerId = null;
+		} else if (secondsInterval < 20) {
+			secondsInterval = 20;
+		}
+
+		this.refreshTimerId = setInterval(() => this.loadBadges(), secondsInterval * 1000);
 	}
 
 	createBadgeId(badgeName) {
