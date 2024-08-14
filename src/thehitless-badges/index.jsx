@@ -23,13 +23,16 @@ class TheHitlessBadges extends Addon {
 	async onEnable() {
 		const process = this.onMessage.bind(this);
 
+		await this.loadTHBadges()
+			.then(() => this.buildBadges());
+
+			
+		this.on('site.channel:update-bar', this.updateChannelTHBadge, this);
+
 		this.chat.addTokenizer({
 			type: 'thehitless-badges',
 			process
 		});
-
-		await this.loadTHBadges()
-			.then(() => console.log("TheHitless Badges fetched"));
 
 		this.emit('chat:update-lines');
 	}
@@ -43,28 +46,21 @@ class TheHitlessBadges extends Addon {
 	onMessage(tokens, msg) {
 		const user = msg?.user,
 			login = user?.login;
+
 		if ( login ) {
 			const ret = this.getUser(user.userID);
-			if ( ret instanceof Promise ){
-				ret.then(userExt => {
-					if ( ! userExt || !this.thbadges )
+			if ( ret instanceof Promise )
+				ret.then(ext => {
+					if ( ! ext || !ext.userId)
 						return;
-					const badge = this.thbadges[userExt.badge];
 
-					this.updateBadge(user.userID, login, badge, userExt.name );
+					const badge = ext.userId.badge;
+					if(badge){
+						const badgeId = `addon-thehitless-badges-${badge}`;
+						this.chat.getUser(user.id, login).addBadge('thehitless-badges', badgeId);
+						this.emit('chat:update-lines-by-user', user.id, login, false, true);
+					}
 				});
-			}else{
-				const data = ret;
-				if(! data || !this.thbadges)
-					return;
-				
-				const { userId } = data;
-				if( !userId || !userId.badge)
-					return;
-
-				const badge = this.thbadges[userId.badge];
-				this.updateBadge(user.userID, login, badge, userId.name );
-			}		
 		}
 
 		return tokens;
@@ -141,16 +137,14 @@ class TheHitlessBadges extends Addon {
 
 	clearUserData() {
 		for(const user of this.chat.iterateUsers())
-			user.removeAllBadges('thbadges');
+			user.removeAllBadges('thehitless-badges');
 
 		this.users.clear();
 	}
 
 
-	updateBadge(userId, login, badge, username) {
-		const badgeId = `addon-thehitless-badges-${badge._id}-${userId}`;
-		if(this.badges.getBadge(badgeId))
-			return;
+	updateBadge(badge) {
+		const badgeId = `addon-thehitless-badges-${badge._id}`;
 
 		const badgeData = {
 			id: badgeId,
@@ -168,14 +162,43 @@ class TheHitlessBadges extends Addon {
 				4: badge.url,
 			},
 			svg: false,
-			click_url: `https://thehitless.com/runners/${username}/`,
+			click_url: `https://thehitless.com/`,
 		};
 		this.badges.loadBadgeData(badgeId, badgeData);
+		return badgeId;
+	}
 
+	
+	buildBadges() {
+		const old_badges = this.old_badges;
+
+		for(const [_id, badge] of Object.entries(this.thbadges)) {
+			if ( old_badges && old_badges.has(_id) )
+				old_badges.delete(_id);
+			else
+				this.updateBadge(badge);
+		}
+
+		if ( old_badges )
+			for(const _id of old_badges){
+				const badgeId = `addon-thehitless-badges-${_id}`;
+				this.badges.removeBadge(badgeId, false);
+
+			}
+
+		this.old_badges = new Set(Object.keys(this.thbadges));
 		this.badges.buildBadgeCSS();
-		
-		this.chat.getUser(userId, login).addBadge('thehitless-badges', badgeId);
-		this.emit('chat:update-lines-by-user', userId, login, false, true);
+	}
+
+	removeBadges() {
+		for(const key of Object.keys(this.thbadges)) {
+			const badgeId = `addon-thehitless-badges-${key}`;
+
+			this.badges.removeBadge(badgeId, false);
+		}
+
+		this.old_badges = new Set();
+		this.badges.buildBadgeCSS();
 	}
 }
 
