@@ -6,7 +6,8 @@ class ChatterinoBadges extends Addon {
 		this.inject('chat.badges');
 		this.inject('settings');
 
-		this.badgeUrl = 'https://api.chatterino.com/badges';
+        const corsProxy = 'https://corsproxy.io/?'
+		this.badgeUrl = `${corsProxy}https://api.chatterino.com/badges`;
 		this.maxBadgeId = -1;
 
 		this.settings.add('addon.chatterino_badges.badges', {
