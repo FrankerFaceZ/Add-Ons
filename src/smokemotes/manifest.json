@@ -1,7 +1,7 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"short_name": "smokeys_utils",
 	"name": "Smokey's Utilities",
 	"author": "Smokey",
