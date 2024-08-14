@@ -285,7 +285,7 @@ class SmokeysUtils extends Addon {
 
 			pinned_log = createElement('div', {
 				id: 'smokey_pinned_log',
-				class: 'pinned-highlight-log tw-absolute tw-top-0 tw-full-width tw-c-background-base',
+				class: 'pinned-highlight-log tw-absolute tw-top-0 tw-z-above tw-full-width tw-c-background-base',
 				style: 'z-order:99 !important;'
 			});
 
