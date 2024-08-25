@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0",
+	"short_name": "Chatterino Homies",
+	"name": "Chatterino Homies",
+	"author": "RETRORELAXO",
+	"description": "Adds Chatterino Homies Badges into the Twitch Chat",
+	"website": "https://chatterinohomies.com",
+	"created": "2024-08-25T00:00:00.000Z",
+	"updated": "2024-08-25T00:00:00.000Z"
+}
