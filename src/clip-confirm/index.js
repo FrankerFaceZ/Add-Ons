@@ -71,7 +71,7 @@ class ClipConfirm extends Addon {
 			ui:      {
 				path:        'Add-Ons > Clip Confirm >> Behavior',
 				title:       '"Skip Confirmation" Hotkey',
-				description: 'Hotkey for skipping the clip confirmation when attempting to clip.\n\nIf you press/hold whatever combination of hotkeys you select here when you click the clip button (or use Twitch\'s built-in "Alt + X" shortcut) you will bypass the confirmation window entirely (so basically, the default behavior when this add-on is not installed). This makes it easier to make a clip when you know for a fact that you want to make a clip and don\'t require a confirmation.\n\nIf you do not select any hotkeys, this feature will be disabled.',
+				description: 'Hotkey for skipping the clip confirmation when attempting to clip.\n\nIf you press/hold whatever combination of hotkeys you select here when you click the clip button (or use Twitch\'s built-in "Alt + X" shortcut) you will bypass the confirmation window entirely (so basically, the default behavior when this add-on is not enabled). This makes it easier to make a clip when you know for a fact that you want to make a clip and don\'t require a confirmation.\n\nIf you do not select any hotkeys, this feature will be disabled.',
 				component:   'setting-select-box',
 				multiple:    true,
 				data:        [
@@ -216,7 +216,7 @@ class ClipConfirm extends Addon {
 			this.rightControlsObserver.observe( this.rightControls, { childList: true, subtree: true } );
 
 			/**
-			 * Twitch sometimes uses a different kind of tooltio that gets
+			 * Twitch sometimes uses a different kind of tooltip that gets
 			 * dynamically added/removed instead of the other tooltip they
 			 * use which keeps the tooltip's HTML always present on the
 			 * page, so we need this observer to check for that and update
