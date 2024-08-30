@@ -1,0 +1,17 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main",
+		"clips"
+	],
+	"version": "1.0",
+	"short_name": "THBadges",
+	"name": "TheHitless Badges",
+	"author": "Wolfang",
+	"maintainer": "Wolfang",
+	"description": "Add TheHitless Badges to twitch chat",
+	"website": "https://thehitless.com",
+	"created": "2024-08-12T21:42:04.878Z",
+	"updated": "2024-08-14T08:41:25.607Z"
+}
