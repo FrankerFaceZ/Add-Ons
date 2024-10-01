@@ -18,6 +18,16 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			}
 		});
 
+		this.settings.add('addon.seventv_emotes.nametag_paints_drop_shadows', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
+				title: 'Nametag Paints Drop Shadows',
+				description: 'Whether to show drop shadows for nametag paints **(Note: Too many drop shadows on screen can cause a drop in performance)**',
+				component: 'setting-check-box',
+			}
+		});
+
 		this.namepaintsApplyer = {
 			type: 'apply_namepaints',
 
@@ -48,7 +58,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 
 		this.resolve('tooltips').define('seventv-paint', target => {
 			const paint_id = target?.dataset?.seventvPaintId;
-			const paint_name = this.paintNames.get(paint_id);
+			const paint_name = this.paints.get(paint_id)?.name;
 
 			if (!paint_name) return FrankerFaceZ.utilities.tooltip.NoContent;
 
@@ -56,12 +66,13 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		});
 
 		this.paintSheet = false;
-		this.paintNames = new Map();
+		this.paints = new Map();
 		this.userPaints = new Map();
 	}
 
 	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.nametag_paints', () => this.updateChatLines());
+		this.on('settings:changed:addon.seventv_emotes.nametag_paints_drop_shadows', () => this.updatePaintSheet());
 	}
 
 	getPaintStylesheet() {
@@ -136,8 +147,16 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		this.setUserPaintByID(user.id, paint_id);
 	}
 
+	updatePaintSheet() {
+		for (const paint of this.paints.values()) {
+			this.updatePaintStyle(paint);
+		}
+
+		this.updateChatLines();
+	}
+
 	updatePaintStyle(paint, remove = false) {
-		this.paintNames.set(paint.id, paint.name);
+		this.paints.set(paint.id, paint);
 
 		const sheet = this.getPaintStylesheet();
 		if (!sheet) {
@@ -161,8 +180,11 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		}
 		
 		const gradients = paint.gradients.map(g => this.createGradientFromPaint(g));
+		
+		const drop_shadows_enabled = this.settings.get('addon.seventv_emotes.nametag_paints_drop_shadows');
+		
 		const filter = (() => {
-			if (!paint.shadows) {
+			if (!drop_shadows_enabled || !paint.shadows) {
 				return '';
 			}
 		
