@@ -7,6 +7,7 @@
 		"start": "cross-env NODE_ENV=development webpack serve",
 		"start:prod": "cross-env NODE_ENV=production webpack serve",
 		"build": "cross-env NODE_ENV=production webpack build && node bin/addon_hash",
+		"build:ext": "cross-env NODE_ENV=production FFZ_EXTENSION=true webpack build && node bin/addon_hash",
 		"build:dev": "cross-env NODE_ENV=development webpack build && node bin/addon_hash",
 		"clean": "rimraf dist",
 		"fixlogos": "node bin/fix_remote_logos",

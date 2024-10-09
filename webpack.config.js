@@ -100,6 +100,8 @@ const config = {
 	
 	target: ['web', TARGET],
 	
+	node: false,
+
 	entry: ENTRIES,
 	
 	externals: [
