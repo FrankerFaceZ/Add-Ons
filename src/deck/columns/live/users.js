@@ -91,7 +91,7 @@ export default class Users extends LiveColumnBase {
 		if ( Array.isArray(nodes) )
 			for(const node of nodes) {
 				// We only want live streaming users.
-				if ( ! node.stream )
+				if ( ! node?.stream )
 					continue;
 
 				const copy = deep_copy(node);

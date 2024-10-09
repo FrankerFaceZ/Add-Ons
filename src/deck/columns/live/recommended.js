@@ -41,7 +41,7 @@ export default class Recommended extends LiveColumnBase {
 
 		if ( Array.isArray(edges) )
 			for(const edge of edges) {
-				if ( edge.node && edge.node.broadcaster ) {
+				if ( edge?.node && edge.node.broadcaster ) {
 					const node = deep_copy(edge.node);
 					cleanViewersCount(node, edge.node);
 					checkCosmetics(node.broadcaster);

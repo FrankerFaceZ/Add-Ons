@@ -56,6 +56,8 @@ export default class Channels extends LiveColumnBase {
 
 		if ( Array.isArray(edges) )
 			for(const edge of edges) {
+				if (! edge)
+					continue;
 				cursor = edge.cursor;
 				if ( edge.node && edge.node.broadcaster && ! seen.has(edge.node.id) ) {
 					seen.add(edge.node.id);

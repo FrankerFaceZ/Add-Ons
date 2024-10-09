@@ -38,7 +38,7 @@ export default class Featured extends LiveColumnBase {
 
 		if ( Array.isArray(edges) )
 			for(const edge of edges) {
-				if ( edge.broadcaster && edge.stream ) {
+				if ( edge?.broadcaster && edge.stream ) {
 					const copy = deep_copy(edge.broadcaster);
 					copy.stream = deep_copy(edge.stream);
 					copy.priority = edge.priorityLevel || 0;

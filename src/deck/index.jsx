@@ -113,6 +113,7 @@ class BrowseDeck extends Addon {
 		this.on('settings:changed:layout.swap-sidebars', val => this.updateSetting('swap_sidebars', val));
 		this.on('settings:changed:deck.video-preview', val => this.updateSetting('video_preview', val));
 
+		this.on('settings:changed:__filter:directory.block-users', val => this.updateSetting('blocked_users', val ? deep_copy(val) : null));
 		this.on('settings:changed:__filter:directory.block-titles', val => this.updateSetting('blocked_titles', val ? deep_copy(val) : null));
 		this.on('settings:changed:directory.blocked-tags', val => this.updateSetting('blocked_tags', deep_copy(val || [])));
 		this.on('settings:changed:__filter:directory.blur-titles', val => this.updateSetting('blur_titles', val ? deep_copy(val) : null));
@@ -279,6 +280,7 @@ class BrowseDeck extends Addon {
 				hidden_thumbnails: deep_copy(this.settings.provider.get('directory.game.hidden-thumbnails', [])),
 				blocked_games: deep_copy(this.settings.provider.get('directory.game.blocked-games', [])),
 
+				blocked_users: deep_copy(this.settings.get('__filter:directory.block-users')),
 				blocked_tags: deep_copy(this.settings.get('directory.blocked-tags') ?? []),
 				blur_tags: deep_copy(this.settings.get('directory.blur-tags') ?? []),
 				blocked_titles: deep_copy(this.settings.get('__filter:directory.block-titles')),

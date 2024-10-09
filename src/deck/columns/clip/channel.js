@@ -80,7 +80,8 @@ export default class Channel extends ClipColumnBase {
 						this.languages,
 						this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
 						this.global_settings.blocked_titles,
-						this.global_settings.blocked_flags
+						this.global_settings.blocked_flags,
+						this.global_settings.blocked_users
 					) )
 					continue;
 
@@ -93,7 +94,8 @@ export default class Channel extends ClipColumnBase {
 					this.filter_games,
 					this.filter_blocked_games,
 					this.global_settings.blocked_titles,
-					this.global_settings.blocked_flags
+					this.global_settings.blocked_flags,
+					this.global_settings.blocked_users
 				) )
 					continue;
 
