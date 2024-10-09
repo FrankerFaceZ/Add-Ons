@@ -34,8 +34,11 @@ class EmoteSidePanel extends Addon {
 	}
 
 	updateCount(emote) {
-		const len = emote.instances.length;
-		emote.element.querySelector("span").innerHTML = ((len == 1) ? "" : "x" + len);
+		const len = emote.instances.length,
+			label = emote.element.querySelector("span");
+
+		if (label)
+			label.textContent = (len <= 1) ? "" : `x${len}`;
 	}
 
 	updateElement(emote) {
