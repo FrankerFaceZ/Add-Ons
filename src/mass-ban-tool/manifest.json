@@ -1,0 +1,15 @@
+{
+	"enabled": true,
+	"targets": [
+		"main"
+	],
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "MassBanTool",
+	"name": "Mass Ban Tool",
+	"author": "ArgoWizbang",
+	"description": "A tool for mass banning/unbanning users via mod view in channels that you moderate or own.\n\nThe button to open the tool can be found in the mod dock on the bottom left section of the mod view page.",
+	"website": "https://argowizbang.com/ffz-add-on/mass-ban-tool/",
+	"created": "2024-09-20T03:19:29.317Z",
+	"updated": "2024-09-20T03:19:29.317Z"
+}
