@@ -5,6 +5,7 @@ const glob = require('glob');
 const fs = require('fs');
 
 //const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const { CycloneDxWebpackPlugin } = require('@cyclonedx/webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { EsbuildPlugin } = require('esbuild-loader');
@@ -136,6 +137,11 @@ const config = {
 	},
 	
 	plugins: [
+		new CycloneDxWebpackPlugin({
+			specVersion: '1.6',
+			outputLocation: '../addons-bom',
+			includeWellknown: false
+		}),
 		new VueLoaderPlugin(),
 		new EsbuildPlugin({
 			define: {
