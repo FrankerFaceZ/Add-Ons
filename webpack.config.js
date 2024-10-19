@@ -30,7 +30,7 @@ const FILE_PATH = DEV_SERVER
 	? 'https://localhost:8001/script/addons/'
 	: FOR_EXTENSION
 		? ''
-		: 'https://cdn.frankerfacez.com/static/addons/';
+		: 'https://cdn2.frankerfacez.com/static/addons/';
 
 
 console.log('NODE_ENV:', process.env.NODE_ENV);
