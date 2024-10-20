@@ -1,0 +1,24 @@
+#ffz-mass-ban-tool-modal {
+    --width: min(40vw, 128rem);
+    max-width: 40vw;
+
+    & > header {
+        cursor: initial;
+    }
+
+    & > section {
+        padding: 0.9rem 1rem 0.9rem 2rem;
+    }
+
+    & .ffz--widget button {
+        margin: 0.5rem 0 !important
+    }
+
+    & .ffz--widget:has(.ffz-mass-ban-tool-ban-reason:disabled) .tw-flex:hover {
+        cursor: not-allowed;
+    }
+
+    & .ffz-mass-ban-tool-run-btn {
+        text-align: right;
+    }
+}
