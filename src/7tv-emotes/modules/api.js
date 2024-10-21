@@ -33,7 +33,13 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	async requestJSON(route, options = {}) {
-		const response = await this.makeRequest(route, options);
+		const response = await this.makeRequest(route, 
+			{
+				...options,
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
 
 		if (response.ok) {
 			const json = await response.json();
