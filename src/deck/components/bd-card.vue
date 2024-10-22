@@ -1,6 +1,6 @@
 <template functional>
 	<div :id="data.attrs && data.attrs.id" class="preview-card" :class="data.class" v-on="listeners">
-		<div class="tw-relative">
+		<div v-if="props.image" class="tw-relative">
 			<react-link
 				class="tw-interactive ffz-link"
 				:href="props.link"
@@ -61,7 +61,7 @@
 				</div>
 			</react-link>
 		</div>
-		<div class="tw-flex tw-flex-nowrap tw-mg-t-1">
+		<div class="tw-flex tw-flex-nowrap" :class="props.image ? ' tw-mg-t-1' : ''">
 			<div v-if="!!props.avatar || !!props.boxart || !!$scopedSlots['iconic']" class="tw-flex-grow-0 tw-flex-shrink-0 tw-mg-r-1">
 				<slot name="iconic" />
 				<react-link v-if="props.avatar" class="tw-interactive ffz-link" :href="props.avatarLink || props.link" v-on="props.clickAvatar || props.click ? {click: props.clickAvatar || props.click} : {}">
@@ -88,7 +88,7 @@
 			</div>
 			<div class="deck-card__titles-wrapper tw-flex-grow-1 tw-flex-shrink-1 tw-full-width">
 				<div>
-					<span class="tw-c-text-alt">
+					<span v-if="props.title" class="tw-c-text-alt">
 						<react-link class="tw-interactive ffz-link ffz-link--hover-underline-none ffz-link--inherit" :href="props.titleLink || props.link" v-on="props.clickTitle || props.click ? {click: props.clickTitle || props.click} : {}">
 							<h3 class="tw-ellipsis tw-font-size-5" :title="props.title">{{ props.title }}</h3>
 						</react-link>

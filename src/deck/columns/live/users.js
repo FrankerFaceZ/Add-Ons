@@ -5,9 +5,24 @@ import { checkCosmetics, cleanTags, getLoader } from '../../data';
 
 export default class Users extends LiveColumnBase {
 
+	getComponent(item) {
+		if ( item.stream )
+			return 'bd-live-card';
+
+		return 'bd-offline-card';
+	}
+
+	getShelfComponent(item) {
+		if ( item.stream )
+			return 'bd-live-shelf-card';
+
+		return 'bd-offline-shelf-card';
+	}
+
 	getEditComponent() {
 		return [
-			'bd-edit-channels'
+			'bd-edit-channels',
+			'bd-edit-show-offline'
 		]
 	}
 
@@ -90,12 +105,17 @@ export default class Users extends LiveColumnBase {
 
 		if ( Array.isArray(nodes) )
 			for(const node of nodes) {
-				// We only want live streaming users.
-				if ( ! node?.stream )
+				if ( ! node )
+					continue;
+
+				if ( ! node.stream && ! this.settings.show_offline )
+					// We only want live streaming users.
 					continue;
 
 				const copy = deep_copy(node);
-				cleanTags(copy.stream);
+				if (node.stream)
+					cleanTags(copy.stream);
+
 				checkCosmetics(copy);
 				items.push(copy);
 			}

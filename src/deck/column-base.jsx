@@ -483,17 +483,12 @@ export class LiveColumnBase extends ColumnBase {
 			this.allowHideUnlisted() ? this.settings.hide_unlisted : false,
 			this.global_settings.blocked_titles,
 			this.global_settings.blocked_flags,
-			this.global_settings.blocked_users
+			this.global_settings.blocked_users,
+			this.settings.show_offline
 		));
 	}
 
-	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted, blocked_titles, blocked_flags, blocked_users) {
-		if ( ! item?.stream )
-			return false;
-
-		if ( hide_reruns && item.stream.type === 'rerun' )
-			return false;
-
+	static filterStream(item, hide_reruns, blocked_games, required_tags, blocked_tags, filter_games, filter_blocked_games, languages, hide_unlisted, blocked_titles, blocked_flags, blocked_users, show_offline) {
 		const game = item.broadcastSettings && item.broadcastSettings.game;
 		if ( blocked_games && game && blocked_games.includes(game.name) )
 			return false;
@@ -511,21 +506,6 @@ export class LiveColumnBase extends ColumnBase {
 			const lang = item.broadcastSettings?.language;
 			if ( lang && ! languages.includes(lang) )
 				return false;
-		}
-
-		if ( required_tags || blocked_tags ) {
-			const tags = get('stream.freeformTags', item).map(name => name && name.toLowerCase()) || [];
-				//lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase();
-
-			if ( required_tags )
-				for(const tag of required_tags)
-					if ( ! tags.includes(tag) )
-						return false;
-
-			if ( blocked_tags )
-				for(const tag of blocked_tags)
-					if ( tags.includes(tag) )
-						return false;
 		}
 
 		if ( blocked_users ) {
@@ -550,6 +530,27 @@ export class LiveColumnBase extends ColumnBase {
 				( blocked_titles[1] && blocked_titles[1].test(item.broadcastSettings.title) )
 			)
 				return false;
+		}
+
+		if ( ! item?.stream )
+			return show_offline;
+
+		if ( hide_reruns && item.stream.type === 'rerun' )
+			return false;
+
+		if ( required_tags || blocked_tags ) {
+			const tags = get('stream.freeformTags', item).map(name => name && name.toLowerCase()) || [];
+				//lang = item.broadcastSettings && item.broadcastSettings.language && item.broadcastSettings.language.toLowerCase();
+
+			if ( required_tags )
+				for(const tag of required_tags)
+					if ( ! tags.includes(tag) )
+						return false;
+
+			if ( blocked_tags )
+				for(const tag of blocked_tags)
+					if ( tags.includes(tag) )
+						return false;
 		}
 
 		if ( blocked_flags ) {

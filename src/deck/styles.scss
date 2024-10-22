@@ -162,6 +162,14 @@
 }
 
 
+.bd--offline-card {
+	.deck-card-iconic-image__wrapper,
+	.side-nav-card__avatar {
+		filter: grayscale(100%) contrast(85%);
+	}
+}
+
+
 .bd--slide-down-enter-active,
 .bd--slide-down-leave-active {
 	transition: top .25s;
