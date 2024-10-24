@@ -570,6 +570,7 @@ class BetterTTV extends Addon {
 			const set = {
 				emotes,
 				title: 'Channel Emotes',
+				title_is_channel: true,
 				source: 'BetterTTV',
 				icon: 'https://betterttv.com/favicon.png',
 				_type: 1,
