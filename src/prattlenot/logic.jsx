@@ -85,6 +85,8 @@ export default class Logic extends Addon {
 		this.chat.context.on(`changed:pn.active-position`, this.updateContainer, this);
 		this.chat.context.on(`changed:pn.active-size`, this.updateContainer, this);
 
+		this.chat.context.on(`changed:pn.shared-chat.style`, this.rerenderLines, this);
+
 		for(const setting of MORE_RERENDER_SETTINGS)
 			this.chat.context.on(`changed:${setting}`, this.rerenderLines, this);
 
@@ -387,6 +389,42 @@ export default class Logic extends Addon {
 		this.scheduleUpdate();
 	}
 
+	renderSharedChatPill(msg) {
+		let style = this.chat.context.get('pn.shared-chat.style') ?? 0;
+		if ( ! style )
+			return null;
+
+		const source_id = msg.sourceRoomID,
+			source = source_id && this.site_chat.shared_room_data?.get?.(source_id);
+
+		if ( ! source )
+			return null;
+
+		const in_source = source_id === msg.roomId;
+
+		const title = this.i18n.t('chat.sent-from-source', 'Sent from {source}', {source: source.displayName ?? source.login});
+
+		if ( style === 1 )
+			return (<span
+				class={`ffz-pill ffz-tooltip tw-mg-r-05 ${in_source ? 'ffz-pill--brand' : ''}`}
+				data-title={title}
+			>{source.displayName ?? source.login}</span>);
+
+		if ( style === 2 )
+			return (<figure
+				class={`ffz-tooltip ffz-tooltip--no-mouse ffz-shared-chat-badge ffz-avatar tw-border-radius-rounded ${in_source ? 'ffz-shared-chat-badge--active' : ''} tw-mg-r-05`}
+				data-title={this.i18n.t('chat.sent-from-source', 'Sent from {source}', {source: source.displayName})}
+			>	
+				<img
+					class="tw-block tw-border-radius-rounded tw-image"
+					src={source.profileImageURL}
+					alt={source.displayName}
+				/>
+			</figure>);
+
+		return null;
+	}
+
 	renderLine(msg) {
         let line;
 
@@ -403,6 +441,13 @@ export default class Logic extends Addon {
             if ( r && r.id )
                 room_id = msg.roomId = r.id;
         }
+
+		const source_id = msg.sourceRoomID,
+			source = source_id && this.site_chat.shared_room_data?.get?.(source_id),
+			is_in_source = ! source || (source_id === room_id),
+			source_room = is_in_source
+				? { id: room_id, login: room }
+				: { id: source_id, login: source?.login };
 
         if ( msg.type && msg.type === this.site_chat.chat_types?.Notice ) {
             line = (<div
@@ -459,12 +504,13 @@ export default class Logic extends Addon {
 
             line = (<div
                 class={`chat-line__message${msg.deleted ? ' ffz--deleted-message' : ''}${msg.mentioned ? ' ffz-mentioned' : ''}${bg_css ? ' ffz-custom-color' : ''}`}
-                data-room={room}
-                data-room-id={room_id}
+                data-room={source_room.login}
+                data-room-id={source_room.id}
                 data-user={msg.user.login}
                 data-user-id={msg.user.id}
 				style={{backgroundColor: bg_css}}
             >
+				{source ? this.renderSharedChatPill(msg) : null}
                 {this.chat.context.get('pn.timestamps') ? (<span class="chat-line__timestamp">
                     { this.chat.formatTime(msg.timestamp) }
                 </span>) : null}

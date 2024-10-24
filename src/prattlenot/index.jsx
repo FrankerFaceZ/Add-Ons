@@ -67,6 +67,29 @@ class PrattleNot extends Addon {
 			}
 		});
 
+		this.settings.add('pn.shared-chat.style', {
+			default: -1,
+			requires: ['chat.shared-chat.style'],
+			process(ctx, val) {
+				if ( val === -1 )
+					return ctx.get('chat.shared-chat.style');
+				return val;
+			},
+			ui: {
+				path: 'Add-Ons > PrattleNot >> Appearance',
+				title: 'Shared Chat: Pill Style',
+				component: 'setting-select-box',
+				description: 'This controls the appearance of the pill at the left-side of chat messages when a message is part of a Shared Chat. By default, this is Avatar for moderators and broadcasters and Hidden for everyone else.',
+				data: [
+					{value: -1, title: 'Same as Normal Chat'},
+					{value: null, title: 'Automatic'},
+					{value: 0, title: 'Hidden'},
+					{value: 1, title: 'Channel Name'},
+					{value: 2, title: 'Avatar'}
+				]
+			}
+		});
+
 		this.settings.add('pn.scrollback', {
 			default: 20,
 			ui: {
