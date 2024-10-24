@@ -211,7 +211,7 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		
 		this.siteChat.addNotice(channel.login, {
 			message,
-			icon: new URL('https://cdn.frankerfacez.com/static/addons/7tv-emotes/logo.png'),
+			icon: new URL('https://cdn2.frankerfacez.com/static/addons/7tv-emotes/logo.png'),
 			tokenize
 		});
 	}

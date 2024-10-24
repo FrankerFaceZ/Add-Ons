@@ -120,6 +120,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		if (ffzEmotes && ffzEmotes.length > 0) {
 			channel.addSet('addon.seventv_emotes', setID, {
 				title: 'Channel Emotes',
+				title_is_channel: true,
 				source: '7TV',
 				icon: this.setIcon,
 				emotes: ffzEmotes
