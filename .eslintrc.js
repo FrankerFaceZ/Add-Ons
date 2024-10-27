@@ -30,7 +30,8 @@ module.exports = {
 		'__webpack_hash__': false,
 		'__git_commit__': false,
 		'FrankerFaceZ': false,
-		'Addon': false
+		'Addon': false,
+		'__addon_version__': false,
 	},
 	'rules': {
 		'accessor-pairs': ['error'],
