@@ -5,7 +5,7 @@
 		"main",
 		"clips"
 	],
-	"version": "1.4.26",
+	"version": "1.4.27",
 	"short_name": "7TV",
 	"name": "7TV Emotes",
 	"author": "Melonify",
@@ -14,5 +14,5 @@
 	"website": "https://7tv.app",
 	"settings": "add_ons.7tv_emotes",
 	"created": "2021-07-12T23:18:04.000Z",
-	"updated": "2024-10-24T18:38:10.025Z"
+	"updated": "2024-10-27T17:15:54.817Z"
 }

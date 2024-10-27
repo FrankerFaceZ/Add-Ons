@@ -348,7 +348,8 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 			this.log.info('Socket: Connecting to socket server...');
 		}
 
-		this.socket = new WebSocket('wss://events.7tv.io/v3');
+		const addon_version = this.parent.manifest.version;
+		this.socket = new WebSocket(`wss://events.7tv.io/v3?client=ffz:${addon_version}`);
 
 		this.socket.onopen = () => {
 			if (!is_planned_reconnect) {
