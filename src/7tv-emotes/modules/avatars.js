@@ -89,23 +89,16 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			this.waitingAvatars.push(login);
 
 			if ( ! this.requestTimer )
-				this.requestTimer = setTimeout(() => {
+				this.requestTimer = setTimeout(async () => {
 					this.requestTimer = null;
 					const waiting = this.waitingAvatars;
 					this.waitingAvatars = null;
 
-					const socket = this.resolve('..socket');
-					socket.emitSocket({
-						op: socket.OPCODES.BRIDGE,
-						d: {
-							command: 'userstate',
-							body: {
-								identifiers: waiting.map(login => `username:${login}`),
-								platform: 'TWITCH',
-								kinds: ['AVATAR']
-							}
-						}
-					});
+					const avatars = await this.api.cosmetics.fetchAvatars(waiting.map(login => `username:${login}`));
+					for (const { body } of avatars) {
+						const { data } = body.object;
+						this.receiveAvatarData(data);
+					}
 				}, 1000); // request them all after 1000ms
 		});
 

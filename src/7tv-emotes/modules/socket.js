@@ -252,9 +252,11 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 				else if (kind === 'BADGE') {
 					this.badges.addBadge(data);
 				}
-				else if (kind === 'AVATAR') {
-					this.avatars.receiveAvatarData(data);
-				}
+				// Deprecated because it was causing too many issues on their websocket
+				// It's using an API endpoint now
+				// else if (kind === 'AVATAR') {
+				// 	this.avatars.receiveAvatarData(data);
+				// }
 			}
 			else if (type === 'entitlement.create') {
 				const object = body.object;

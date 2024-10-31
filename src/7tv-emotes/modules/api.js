@@ -106,8 +106,12 @@ export class Emotes extends FrankerFaceZ.utilities.module.Module {
 }
 
 export class Cosmetics extends FrankerFaceZ.utilities.module.Module {
-	fetchAvatars() {
-		return {};
-		// return this.parent.requestObject('cosmetics/avatars?map_to=login');
+	fetchAvatars(identifiers) {
+		return this.parent.requestJSON('bridge/event-api', {
+			method: 'POST',
+			body: JSON.stringify({
+				identifiers
+			})
+		});
 	}
 }
