@@ -8,12 +8,12 @@
 	"requires": [
 		"ffzap-core"
 	],
-	"version": "1.0.0",
-	"short_name": "Aplatypuss Emotes",
-	"name": "Aplatypuss Emotes",
+	"version": "1.1.0",
+	"short_name": "Aplatypuss",
+	"name": "Aplatypuss",
 	"author": "nznaza",
-	"description": "This is adds custom emotes to Aplatypuss chat",
-	"settings": "add_ons.aplatypuss_emotes",
+	"description": "This is adds custom emotes and badges to Aplatypuss chat",
+	"settings": "add_ons.aplatypuss",
 	"created": "2022-06-26T00:29:27.347Z",
 	"updated": "2022-06-26T22:38:00.705Z"
 }
