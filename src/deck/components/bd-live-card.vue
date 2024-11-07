@@ -88,6 +88,9 @@
 			<p v-if="game_line" class="tw-c-text-alt tw-ellipsis">
 				<react-link class="tw-interactive ffz-link ffz-link--inherit" :href="`/directory/game/${game.name}`">{{ game.displayName }}</react-link>
 			</p>
+			<p v-if="hypeTrain" class="tw-c-text-alt-2 tw-ellipsis ffz-i-hype-train">
+				{{ t('addon.deck.has-hype-train', 'Hype Train') }}
+			</p>
 		</template>
 	</bd-card>
 </template>
@@ -147,6 +150,10 @@ export default {
 				return 'ffz-hide-thumbnail';
 
 			return '';
+		},
+
+		hypeTrain() {
+			return this.settings.hype_trains && this.item.stream.hasHypeTrain
 		},
 
 		contentFlags() {

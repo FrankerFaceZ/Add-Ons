@@ -400,6 +400,10 @@ export default class ColumnBase {
 		return false;
 	}
 
+	useHypeTrains() {
+		return false;
+	}
+
 	useTags() {
 		return true;
 	}
@@ -442,6 +446,10 @@ export class LiveColumnBase extends ColumnBase {
 	}
 
 	allowHideUnlisted() {
+		return true;
+	}
+
+	useHypeTrains() {
 		return true;
 	}
 

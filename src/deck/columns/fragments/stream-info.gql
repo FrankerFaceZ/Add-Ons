@@ -3,6 +3,7 @@ fragment StreamInfo on Stream {
 	type
 	viewersCount
 	createdAt
+	hasHypeTrain
 	previewImageURL(width: $previewWidth, height: $previewHeight)
 	contentClassificationLabels {
 		id

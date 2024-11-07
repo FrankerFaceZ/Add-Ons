@@ -30,6 +30,10 @@ export default class Channel extends VideoColumnBase {
 		return ColumnBase.ICONIC_TYPES.BOXART;
 	}
 
+	useHypeTrains() {
+		return true;
+	}
+
 	showUserLine() {
 		return false;
 	}

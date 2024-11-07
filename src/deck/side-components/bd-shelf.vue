@@ -318,6 +318,9 @@ export default {
 				max_tags: has(this.data.display, 'max_tags') ? this.data.display.max_tags : 3
 			}, this.settings);
 
+			if ( this.data.display.hype_trains )
+				out.hype_trains = true;
+
 			if ( this.data.display.hide_avatars )
 				out.show_avatars = false;
 

@@ -25,6 +25,10 @@ export default class Channel extends ClipColumnBase {
 		return ColumnBase.ICONIC_TYPES.BOXART;
 	}
 
+	useHypeTrains() {
+		return true;
+	}
+
 	showUserLine() {
 		return false;
 	}

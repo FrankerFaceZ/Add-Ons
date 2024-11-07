@@ -202,6 +202,18 @@
 					</div>
 				</div>
 
+				<div v-if="useHypeTrains" class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05">
+					<input
+						:id="'hype_trains$' + column.id"
+						v-model="column.display.hype_trains"
+						type="checkbox"
+						class="ffz-checkbox__input"
+					>
+					<label :for="'hype_trains$' + column.id" class="ffz-checkbox__label">
+						{{ t('addon.deck.edit.hype-trains', 'Display active Hype Trains.') }}
+					</label>
+				</div>
+
 				<div class="tw-flex tw-align-items-center ffz-checkbox bd-checkbox--indent tw-mg-y-05">
 					<input
 						:id="'no_avatars$' + column.id"
@@ -460,6 +472,10 @@ export default {
 
 		useTags() {
 			return this.inst && this.inst.useTags();
+		},
+
+		useHypeTrains() {
+			return this.inst && this.inst.useHypeTrains();
 		},
 
 		useHideUnlisted() {

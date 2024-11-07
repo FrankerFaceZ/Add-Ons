@@ -10,7 +10,16 @@
 		:viewers="settings.hide_viewers ? null : tNumber(item.stream.viewersCount)"
 		:tooltip-side="settings.swap_sidebars ? 'left' : 'right'"
 		:substatus="upString"
-	/>
+	>
+		<template #subsubtitle>
+			<p
+				v-if="hypeTrain"
+				class="tw-c-text-alt-2 tw-font-size-6 tw-line-height-heading tw-ellipsis ffz-i-hype-train"
+			>
+				{{ t('addon.deck.has-hype-train', 'Hype Train') }}
+			</p>
+		</template>
+	</bd-shelf-card>
 </template>
 
 <script>
@@ -53,6 +62,10 @@ export default {
 				return 'ffz-hide-thumbnail';
 
 			return '';
+		},
+
+		hypeTrain() {
+			return this.settings.hype_trains && this.item.stream.hasHypeTrain
 		},
 
 		image() {
