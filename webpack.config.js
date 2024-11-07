@@ -194,7 +194,11 @@ const config = {
 						if ( folder.startsWith('src\\') || folder.startsWith('src/') )
 							folder = folder.substring(4);
 						
-						return `.register(${JSON.stringify(folder)});`;
+						const manifest = MANIFESTS[folder];
+						if (!manifest)
+							return `.register();`;
+
+						return `.register(${JSON.stringify(folder)}, null, ${JSON.stringify(manifest?.version ?? '0.0.0-unknown')});`;
 					}
 				}
 			},
