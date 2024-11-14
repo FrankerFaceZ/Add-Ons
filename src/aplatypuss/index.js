@@ -1,4 +1,3 @@
-
 class Aplatypuss extends Addon {
 	HOST_URL = 'https://ffz.thetiki.club';
 	ASSETS_URL = `${this.HOST_URL}/static`;
@@ -16,11 +15,18 @@ class Aplatypuss extends Addon {
 	BADGES_START_SLOT = 420;
 	DEFAULT_BADGE_URL = 'https://thetiki.club/';
 
-	REFRESH_TIME = 30 * 1000;	
+	REFRESH_TIME_SETTINGS = `${this.ADDON_ID}.refresh_time`;
+	MIN_REFRESH_TIME_SECONDS = 20;
+	DEFAULT_REFRESH_TIME_SECONDS = 60;
+	REFRESH_TIME_SECONDS = this.settings.get(this.REFRESH_TIME_SETTINGS) ?? this.DEFAULT_REFRESH_TIME_SECONDS;
 	UPDATE_TIMER_ID = null;
-	BADGES_KEYS = [];
 	SHOULD_REFRESH = true;
-	
+
+	BADGES_KEYS = [];
+	CURRENT_BADGES = {};
+	CURRENT_BADGES_USERS = {};
+
+
 	constructor(...args) {
 		super(...args);
 
@@ -51,6 +57,31 @@ class Aplatypuss extends Addon {
 			changed: () => this.updateAllChannels()
 		});
 
+		this.settings.add(this.REFRESH_TIME_SETTINGS, {
+			default: this.DEFAULT_REFRESH_TIME_SECONDS,
+			ui: {
+				path: `Add-Ons > ${this.ADDON_NAME} >> Refresh`,
+				title: 'Refresh Time',
+				description: 'Time in seconds to check for updates',
+				component: 'setting-text-box',
+				process: (newVal, _oldVal) => {
+					let newTime = parseInt(newVal);
+					newTime = newTime < this.MIN_REFRESH_TIME_SECONDS ? this.MIN_REFRESH_TIME_SECONDS : newTime;
+					return newTime;
+				},
+			},
+			changed: val => {
+				if (val != this.REFRESH_TIME_SECONDS) {
+					this.REFRESH_TIME_SECONDS = val;
+					this.log.info(`new refresh time, ${this.REFRESH_TIME_SECONDS}`)
+					clearInterval(this.UPDATE_TIMER_ID);
+					this.UPDATE_TIMER_ID = setInterval(() => {
+						this.refreshData();
+					}, this.REFRESH_TIME_SECONDS * 1000);
+				}
+			}
+		});
+
 		setTimeout(() => this.enable(), 0)
 
 	}
@@ -64,21 +95,22 @@ class Aplatypuss extends Addon {
 
 		this.UPDATE_TIMER_ID = setInterval(() => {
 			this.refreshData();
-		}, this.REFRESH_TIME);
+		}, this.REFRESH_TIME_SECONDS * 1000);
 	}
 
-	onDisable(){
+	onDisable() {
 		clearInterval(this.UPDATE_TIMER_ID);
 	}
-	async refreshData(){
+	
+	async refreshData() {
 		this.log.info(`refreshing emotes and badges`)
 		this.updateAllChannels(false);
-		await this.updateBadges(0,false);
-		if(!this.SHOULD_REFRESH){
+		await this.updateBadges(0, false);
+		if (!this.SHOULD_REFRESH) {
 			clearInterval(this.UPDATE_TIMER_ID);
 		}
 	}
-	
+
 	roomChange(room) {
 		this.updateChannel(room);
 	}
@@ -93,7 +125,6 @@ class Aplatypuss extends Addon {
 		}
 		else {
 			this.updateChannelEmotes(room, retry);
-			this.updateBadges();
 		}
 	}
 
@@ -105,7 +136,6 @@ class Aplatypuss extends Addon {
 
 	async updateChannelEmotes(room, attempts = 0, retry = true) {
 		room.removeSet(this.ADDON_ID, this.ADDON_EMOTES_ID);
-
 		if (!this.chat.context.get(this.EMOTICONS_SETTINGS_CHECK)) {
 			return;
 		}
@@ -139,12 +169,11 @@ class Aplatypuss extends Addon {
 				emotesData.push(emote);
 			}
 
-
-			let emotesArray = [];
-			emotesArray = emotesArray.concat(emotesData);
+			let EMOTES_ARRAY = [];
+			EMOTES_ARRAY = EMOTES_ARRAY.concat(emotesData);
 
 			const emoteSet = {
-				emoticons: emotesArray,
+				emoticons: EMOTES_ARRAY,
 				title: 'Channel Emotes',
 				source: `${this.ADDON_NAME}`,
 				icon: `${this.ASSETS_URL}/icon.png`,
@@ -156,14 +185,13 @@ class Aplatypuss extends Addon {
 
 			const newAttempts = (attempts || 0) + 1;
 			if (newAttempts < 12) {
-				this.log.error(`Failed to fetch ${this.ADDON_NAME} emotes. Trying again in 5 seconds.`);
+				this.log.error(`Failed to fetch emotes. Trying again in 5 seconds.`);
 				setTimeout(this.updateChannelEmotes.bind(this, room, newAttempts), 5000);
 			}
 		}
 	}
 
-	async updateBadges(attempts = 0,retry = true) {
-		this.disableBadges();
+	async updateBadges(attempts = 0, retry = true) {
 		if (!this.settings.get(this.BADGES_SETTINGS_CHECK)) {
 			return;
 		}
@@ -174,13 +202,13 @@ class Aplatypuss extends Addon {
 			const baseBadgeData = await baseBadgesResponse.json();
 			const usersData = await baseUsersResponse.json();
 			this.BADGES_KEYS = Object.keys(baseBadgeData);
-			const badges = {};
-			const badgesUsers = {};
+			const NEW_BADGES = {};
+			const NEW_BADGES_USERS = {};
 
 			for (let i = 0; i < this.BADGES_KEYS.length; i++) {
 				const badge = baseBadgeData[this.BADGES_KEYS[i]]
 				const badgeId = `${this.BADGE_PREFIX}.${this.BADGES_KEYS[i].toLowerCase()}`;
-				badges[badgeId] = {
+				NEW_BADGES[badgeId] = {
 					id: `${badgeId}`,
 					addon: this.ADDON_ID,
 					name: this.BADGES_KEYS[i],
@@ -194,32 +222,39 @@ class Aplatypuss extends Addon {
 					},
 					click_url: badge.url ?? this.DEFAULT_BADGE_URL
 				};
-				badgesUsers[badgeId] = badge.users ?? [];
+				NEW_BADGES_USERS[badgeId] = badge.users ?? [];
 			}
 
 			for (let i = 0; i < usersData.length; i++) {
 				const userData = usersData[i]
 				for (let j = 0; j < userData.badges.length; j++) {
 					const badgeId = `${this.BADGE_PREFIX}.${userData.badges[j].toLowerCase()}`;
-					badgesUsers[badgeId] = badgesUsers[badgeId].concat(userData.user);
+					NEW_BADGES_USERS[badgeId] = NEW_BADGES_USERS[badgeId].concat(userData.user);
 				}
 
 			}
-			for (let i = 0; i < this.BADGES_KEYS.length; i++) {
-				const badgeId = `${this.BADGE_PREFIX}.${this.BADGES_KEYS[i].toLowerCase()}`;
-				this.badges.loadBadgeData(badgeId, badges[badgeId]);
-				this.badges.setBulk(this.ADDON_BADGES_ID, badgeId, badgesUsers[badgeId]);
-			}
-			this.badges.buildBadgeCSS();
-			this.emit('chat:update-lines');
 
+			if (!(JSON.stringify(NEW_BADGES) === JSON.stringify(this.CURRENT_BADGES) || JSON.stringify(NEW_BADGES_USERS) === JSON.stringify(this.CURRENT_BADGES_USERS))) {
+				this.log.info(`Badge info differs, updating ...`);
+				this.CURRENT_BADGES = NEW_BADGES;
+				this.CURRENT_BADGES_USERS = NEW_BADGES_USERS;
+
+				for (let i = 0; i < this.BADGES_KEYS.length; i++) {
+					const badgeId = `${this.BADGE_PREFIX}.${this.BADGES_KEYS[i].toLowerCase()}`;
+					this.badges.loadBadgeData(badgeId, (this.CURRENT_BADGES[badgeId]));
+					this.badges.setBulk(this.ADDON_BADGES_ID, badgeId, (this.CURRENT_BADGES_USERS[badgeId]));
+				}
+
+				this.badges.buildBadgeCSS();
+				this.emit('chat:update-lines');
+			}
 		}
 		else {
 			if (baseBadgesResponse.status === 404 || !retry) return;
 
 			const newAttempts = (attempts || 0) + 1;
 			if (newAttempts < 12) {
-				this.log.error(`Failed to fetch ${this.ADDON_NAME} badges. Trying again in 5 seconds.`);
+				this.log.error(`Failed to fetch badges. Trying again in 5 seconds.`);
 				setTimeout(this.updateBadges.bind(this, newAttempts), 5000);
 			}
 		}
