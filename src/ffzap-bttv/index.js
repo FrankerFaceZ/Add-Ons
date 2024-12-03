@@ -112,6 +112,11 @@ class BetterTTV extends Addon {
 	onEnable() {
 		this.log.debug('FFZ:AP\'s BetterTTV Emotes module was enabled successfully.');
 
+		this.emotes.setProvider('addon--ffzap.betterttv', {
+			name: this.addon_manifest.name,
+			icon: this.addon_manifest.icon,
+		});
+
 		this.on('chat:room-add', this.roomAdd);
 		this.on('chat:room-remove', this.roomRemove);
 		this.on('chat:receive-message', this.onReceiveMessage);
@@ -264,11 +269,11 @@ class BetterTTV extends Addon {
 	}
 
 	addProBadge() {
-		this.removeProBadge();
+		const wanted = this.chat.context.get('ffzap.betterttv.pro_badges') && ! window.BetterTTV;
 
-		if (!this.chat.context.get('ffzap.betterttv.pro_badges')) return;
-
-		if (window.BetterTTV) return;
+		this.removeProBadge(!wanted);
+		if (!wanted)
+			return;
 
 		const badgeData = {
 			id: `bttv-pro`,
@@ -281,9 +286,9 @@ class BetterTTV extends Addon {
 		this.badges.loadBadgeData(this.getProBadgeID(), badgeData);
 	}
 
-	removeProBadge() {
+	removeProBadge(generate_css = true) {
 		this.badges.deleteBulk('addon.ffzap-bttv', this.getProBadgeID());
-		delete this.badges.badges[this.getProBadgeID()];
+		this.badges.removeBadge(this.getProBadgeID(), generate_css);
 	}
 
 	async addBadges(attempts = 0) {
