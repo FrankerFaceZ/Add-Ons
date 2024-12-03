@@ -11,7 +11,7 @@ class SevenTVEmotes extends Addon {
 
 	async onLoad() {
 		const context = await require.context('./modules', false, /\.js$/);
-		await this.populate(context);
+		await this.loadFromContext(context);
 	}
 
 	onEnable() {

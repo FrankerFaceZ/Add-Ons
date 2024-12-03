@@ -63,6 +63,11 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				this.updateChannelSets();
 			}
 		});
+
+		this.emotes.setProvider('addon.seventv_emotes', {
+			name: this.addon_manifest.name,
+			icon: this.addon_manifest.icon,
+		});
 	}
 
 	onEnable() {
