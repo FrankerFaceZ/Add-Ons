@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "CopyCode",
+	"name": "Copy Code",
+	"author": "Neko Boi Nick",
+	"website": "https://github.com/thakyZ/FrankerFaceZ_Add-Ons",
+	"description": "Adds a copy code button to notifications with a redeem code.",
+	"created": "2024-12-04T22:24:51.713Z",
+	"updated": "2024-12-04T22:24:51.713Z"
+}
