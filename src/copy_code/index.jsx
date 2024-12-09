@@ -86,7 +86,7 @@ class CopyCode extends Addon {
 		if (!element) return;
 
 		/** @type {HTMLParagraphElement | undefined} */
-		const notificationBody = element.querySelector('div[data-test-selector="persistent-notification__body"] > span > p');
+		const notificationBody = element.querySelector('div[data-test-selector="persistent-notification__body"] p');
 
 		if (!notificationBody) return;
 
