@@ -5,56 +5,73 @@ class CopyCode extends Addon {
 	constructor(...args) {
 		super(...args);
 		this.inject('i18n');
-		this.inject('site.elemental');
 
 		/** @type {RegExp} */
 		this.codeRegex = /Click here to redeem: (.*?)\./;
 		/** @type {HTMLDivElement | undefined} */
 		this.inboxPopup = undefined;
 		/** @type {string} */
-		this.notificationSelector = 'body > div div[role="dialog"] div.center-window > div:last-child > div.simplebar-scroll-content div[data-test-selector="center-window__content"] > div:first-child > div:not(:first-child) > div';
-		/** @type {ElementalWrapper<HTMLBodyElement>} */
-		this.Root = this.elemental.define(
-			'notification',  this.notificationSelector,
-			['notification'],
-			{childNodes: true, subtree: true}, 1, 30000, false);
+		/** @type {FineWrapper<HTMLBodyElement>} */
+		// this.RootFine = this.fine.define(
+		//	'notification', () => true);
 		/** @type {Record<string, string>} */
 		this.cache = {};
 		/** @type {HTMLDivElement[]} */
 		this.buttons = [];
 	}
 
+	/**
+	 * Triggered on enable of the add-on
+	 */
 	onEnable() {
-		this.Root.on('mount', this.updateNotifications, this);
-		this.Root.on('mutate', this.updateNotifications, this);
-		this.Root.each(element => this.updateNotifications(element));
+		this.notificationObserver = new MutationObserver(this.notificationObserverCallback.bind(this));
+		this.notificationObserver.observe(document.body, { childList: true, subtree: true, attributes: true });
 	}
 
-	onDisable() {
-		this.destroyButtons();
+	elementIs(element, ...queries) {
+		for (const query of queries) {
+			const queried = document.querySelector(query);
+			if (queried == element) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
 	 * Updates notifications menus.
-	 * @param {HTMLDivElement} element The element that was mutated or mounted.
+	 * @param {MutationRecord[]} mutations The list of mutations
+	 * @param {MutationObserver} _observer The mutation observer
 	 */
-	updateNotifications(element) {
-		try {
-			this.updateButton(element);
-		} catch (error) {
-			this.log.error(error);
+	/* eslint-disable-next-line no-unused-vars */
+	notificationObserverCallback(mutations, _observer) {
+		for (const mutation of mutations) {
+			if ((mutation.type === 'childList' && mutation.addedNodes.length > 0 && this.elementIs(mutation.target, 'div[data-test-selector="center-window__content"]')) || this.elementIs(mutation.target, '.ReactModal__Body--open')) {
+				for (const element of mutation.addedNodes) {
+					for (const innerElement of element.querySelectorAll('div.simplebar-scroll-content div[data-test-selector="center-window__content"] > div > div:not(:first-child) > div')) {
+						this.updateButton(innerElement);
+					}
+				}
+			}
 		}
+	}
+
+	/**
+	 * Triggered on disabling of the add-on
+	 */
+	onDisable() {
+		this.notificationObserver.disconnect();
+		this.destroyButtons();
 	}
 
 	/**
 	 * Destroys all button instances.
 	 */
 	destroyButtons() {
+		// statically store the count of how many buttons.
 		const count = this.buttons.length;
+		// Loop from end to the beginning of the array as pop() removes the last one.
 		for (let i = count - 1; i >= 0; i--) {
-			this.log.info('pop', i);
-			this.log.info('remove', this.buttons[i]);
-			this.log.info('count', count);
 			this.buttons[i]?.remove();
 			this.buttons.pop();
 		}
@@ -66,27 +83,25 @@ class CopyCode extends Addon {
 	 * @returns {void} Nothing...
 	 */
 	updateButton(element) {
+		if (!element) return;
+
 		/** @type {HTMLParagraphElement | undefined} */
 		const notificationBody = element.querySelector('div[data-test-selector="persistent-notification__body"] > span > p');
 
-		if (!notificationBody)
-			return;
+		if (!notificationBody) return;
 
 		/** @type {HTMLDivElement | undefined} */
 		const button = element.querySelector('.ffz--copy-code-button');
 
-		if (button)
-			return;
+		if (button) return;
 
-		if (!this.codeRegex.test(notificationBody.innerText))
-			return;
+		if (!this.codeRegex.test(notificationBody.innerText)) return;
 
 		if (this.cache[notificationBody.innerText] === undefined) {
 			/** @type {string[] | null} */
 			const match = notificationBody.innerText.match(this.codeRegex);
 
-			if (match === null || match.length != 2)
-				return;
+			if (match === null || match.length != 2) return;
 
 			/** @type {string} */
 			this.cache[notificationBody.innerText] = match[1];
@@ -169,7 +184,7 @@ class CopyCode extends Addon {
 			try {
 				navigator.clipboard.writeText(code);
 			} catch (err) {
-				this.log.error('Clipboard is not accessible', err);
+				this.log.error('Clipboard is not accessible', event, err);
 			}
 		} catch (err) {
 			this.log.error('Failed to copy redeem code.', event, err);
