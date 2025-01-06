@@ -1,0 +1,5 @@
+query FFZ_GetVideoDate($id: ID!) {
+	video(id: $id) {
+		createdAt
+	}
+}

@@ -1,0 +1,5 @@
+query FFZ_GetClipDate($slug: ID!) {
+	clip(slug: $slug) {
+		createdAt
+	}
+}

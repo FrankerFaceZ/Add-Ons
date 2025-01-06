@@ -1,0 +1,18 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main",
+		"clips"
+	],
+	"name": "Trubbel’s Utilities",
+	"short_name": "Trubbel",
+	"description": "Just some random things.",
+	"author": "Trubbel",
+	"maintainer": "Trubbel",
+	"version": "1.0.0",
+	"search_terms": "trubbel",
+	"website": "https://twitch.tv/trubbel",
+	"created": "2025-01-06T23:29:54.496Z",
+	"updated": "2025-01-06T23:29:54.496Z"
+}
