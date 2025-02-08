@@ -13,7 +13,7 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 			ui: {
 				path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
 				title: 'Nametag Paints',
-				description: 'Show 7TV username gradients and images on users who have them set. [(7TV Subscriber Perk)](https://7tv.app/subscribe)',
+				description: 'Show 7TV username gradients and images on users who have them set. [(7TV Subscriber Perk)](https://7tv.app/store)',
 				component: 'setting-check-box',
 			}
 		});
