@@ -13,7 +13,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			ui: {
 				path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
 				title: 'Animated Avatars',
-				description: 'Show 7TV animated avatars on users who have them set. [(7TV Subscriber Perk)](https://7tv.app/subscribe)',
+				description: 'Show 7TV animated avatars on users who have them set. [(7TV Subscriber Perk)](https://7tv.app/store)',
 				component: 'setting-check-box',
 			}
 		});
