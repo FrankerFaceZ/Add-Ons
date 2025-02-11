@@ -142,7 +142,7 @@ class ClipConfirm extends Addon {
 	}
 
 	getClipButton() {
-		this.clipButton = this.rightControls.querySelector( '[data-a-target="player-clip-button"]' );
+		this.clipButton = this.rightControls.querySelector( '#channel-player .ScCoreButton-sc-ocjdkq-0.yKpkn' );
 	}
 
 	hideConfirmationModal( e ) {
