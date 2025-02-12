@@ -1,0 +1,10 @@
+query FFZ_GetUserFollowAge($login: String!) {
+	user(login: $login) {
+    id
+		self {
+      follower {
+        followedAt
+      }
+    }
+	}
+}
