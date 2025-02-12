@@ -1,0 +1,14 @@
+query FFZ_GetVideoInfo($id: ID!) {
+	video(id: $id) {
+    id
+		muteInfo {
+      mutedSegmentConnection {
+        nodes {
+          offset
+          duration
+        }
+      }
+    }
+		createdAt
+	}
+}
