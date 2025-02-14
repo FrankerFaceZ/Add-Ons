@@ -1,4 +1,3 @@
-const NewTransCore = FrankerFaceZ.utilities.i18n.TranslationCore;
 import setTimestamp from "../features/clips-videos/set-timestamp";
 import applyMostRecentVideoTimestamp from "../features/clips-videos/most-recent-video";
 import GET_VIDEO from "../utils/graphql/video_info.gql";
@@ -69,7 +68,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
         },
         data: () => {
           const out = [], now = new Date;
-          for (const [key, fmt] of Object.entries(this._.formats.datetime)) {
+          for (const [key, fmt] of Object.entries(this.i18n._.formats.datetime)) {
             out.push({
               value: key, title: `${this.i18n.formatDateTime(now, key)} (${key})`
             })
@@ -78,7 +77,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
         }
       },
       changed: val => {
-        this._.defaultDateTimeFormat = val;
+        this.i18n._.defaultDateTimeFormat = val;
         this.emit(":update");
         this.getClipOrVideo();
       }
@@ -126,11 +125,6 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
   }
 
   onEnable() {
-    this._ = new NewTransCore({
-      warn: (...args) => this.log.warn(...args),
-      defaultDateTimeFormat: this.settings.get("addon.trubbel.clip-video.timestamps-format")
-    });
-
     this.settings.getChanges("addon.trubbel.vods.skip-segments", () => this.getMutedSegments());
     this.router.on(":route", this.checkNavigation, this);
     this.checkNavigation();

@@ -1,4 +1,3 @@
-import GET_FOLLOWAGE from "../../utils/graphql/followage.gql";
 import { formatFollowAge } from "../../utils/format";
 
 export default async function getFollowAge(context, inst) {
@@ -20,20 +19,9 @@ export default async function getFollowAge(context, inst) {
   const broadcaster = getBroadcaster.displayName.toLowerCase() === getBroadcaster.login ? getBroadcaster.displayName : `${getBroadcaster.displayName} (${getBroadcaster.login})`;
   const user = getUser.displayName.toLowerCase() === getUser.login ? getUser.displayName : `${getUser.displayName} (${getUser.login})`;
 
-  const apollo = context.resolve("site.apollo");
-  if (!apollo) {
-    return null;
-  }
-
-  const result = await apollo.client.query({
-    query: GET_FOLLOWAGE,
-    variables: {
-      login: channelLogin
-    }
-  });
-
-  const followAge = result?.data?.user?.self?.follower?.followedAt;
-  if (followAge) {
+  const data = await context.twitch_data.getUserFollowed(null, channelLogin);
+  if (data) {
+    const followAge = data.followedAt;
     inst.addMessage({
       type: context.site.children.chat.chat_types.Notice,
       message: `${user} has been following ${broadcaster} for ${formatFollowAge(followAge)}.`

@@ -21,7 +21,6 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
     this.style = new ManagedStyle;
 
     this.inject("settings");
-    this.inject("site.css_tweaks");
     this.inject("site.router");
 
     // Remove/Hide Things - Left Navigation - Remove the "For You"-text
@@ -211,39 +210,39 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
   updateCSS() {
     // Remove/Hide Things - Stream - Remove the Gradient from Player
     if (this.settings.get("addon.trubbel.remove-things.player-gradient")) {
-      this.css_tweaks.set("hide-player-gradient", ".video-player .top-bar, .video-player .player-controls { background: transparent !important; }");
+      this.style.set("hide-player-gradient", ".video-player .top-bar, .video-player .player-controls { background: transparent !important; }");
     } else {
-      this.css_tweaks.delete("hide-player-gradient");
+      this.style.delete("hide-player-gradient");
     }
     // Remove/Hide Things - Stream - Remove Remove About Section and Panels
     if (this.settings.get("addon.trubbel.remove-things.stream-about-panels")) {
-      this.css_tweaks.set("hide-stream-about-panels1", "[id=\"live-channel-about-panel\"], .channel-panels { display: none !important; }");
-      this.css_tweaks.set("hide-stream-about-panels2", ".channel-info-content:not(:has(.timestamp-metadata__bar)) :is(div[style^=\"min-height:\"]) { min-height: 0px !important; }");
-      this.css_tweaks.set("hide-stream-about-panels3", ".channel-info-content:not(:has(.timestamp-metadata__bar)) :is(.tw-tower:has(.tw-placeholder-wrapper)) { display: none !important; }");
+      this.style.set("hide-stream-about-panels1", "[id=\"live-channel-about-panel\"], .channel-panels { display: none !important; }");
+      this.style.set("hide-stream-about-panels2", ".channel-info-content:not(:has(.timestamp-metadata__bar)) :is(div[style^=\"min-height:\"]) { min-height: 0px !important; }");
+      this.style.set("hide-stream-about-panels3", ".channel-info-content:not(:has(.timestamp-metadata__bar)) :is(.tw-tower:has(.tw-placeholder-wrapper)) { display: none !important; }");
     } else {
-      this.css_tweaks.delete("hide-stream-about-panels1");
-      this.css_tweaks.delete("hide-stream-about-panels2");
-      this.css_tweaks.delete("hide-stream-about-panels3");
+      this.style.delete("hide-stream-about-panels1");
+      this.style.delete("hide-stream-about-panels2");
+      this.style.delete("hide-stream-about-panels3");
     }
     // Remove/Hide Things - Stream - Remove Power-ups within the Rewards popup
     if (this.settings.get("addon.trubbel.remove-things.stream-power-ups")) {
-      this.css_tweaks.set("hide-stream-power-ups1", ".rewards-list :is([class*=\"bitsRewardListItem--\"]) { display: none !important; }");
-      this.css_tweaks.set("hide-stream-power-ups2", ".rewards-list > div:first-child:has(.tw-title:only-child) { display: none !important; }");
-      this.css_tweaks.set("hide-stream-power-ups3", ".rewards-list > :is(div:has(> div > .tw-title)) { padding: 0rem 0.5rem 1rem !important; }");
+      this.style.set("hide-stream-power-ups1", ".rewards-list :is([class*=\"bitsRewardListItem--\"]) { display: none !important; }");
+      this.style.set("hide-stream-power-ups2", ".rewards-list > div:first-child:has(.tw-title:only-child) { display: none !important; }");
+      this.style.set("hide-stream-power-ups3", ".rewards-list > :is(div:has(> div > .tw-title)) { padding: 0rem 0.5rem 1rem !important; }");
     } else {
-      this.css_tweaks.delete("hide-stream-power-ups1");
-      this.css_tweaks.delete("hide-stream-power-ups2");
-      this.css_tweaks.delete("hide-stream-power-ups3");
+      this.style.delete("hide-stream-power-ups1");
+      this.style.delete("hide-stream-power-ups2");
+      this.style.delete("hide-stream-power-ups3");
     }
     // Remove/Hide Things - Stories - Remove Stories
     if (this.settings.get("addon.trubbel.remove-things.stories")) {
-      this.css_tweaks.set("hide-stories-left-nav-expanded", "#side-nav [class*=\"storiesLeftNavSection--\"] { display: none !important; }");
-      this.css_tweaks.set("hide-stories-left-nav-collapsed", "#side-nav :is([style]) :has([class*=\"storiesLeftNavSectionCollapsedButton--\"]) { display: none !important; }");
-      this.css_tweaks.set("hide-stories-following-page", "div[class^=\"Layout-sc-\"] > [data-simplebar=\"init\"] > div:nth-child(3) > :has(h2[class*=\"sr-only\"]:is([class^=\"CoreText-sc-\"])) { display: none !important; }");
+      this.style.set("hide-stories-left-nav-expanded", "#side-nav [class*=\"storiesLeftNavSection--\"] { display: none !important; }");
+      this.style.set("hide-stories-left-nav-collapsed", "#side-nav :is([style]) :has([class*=\"storiesLeftNavSectionCollapsedButton--\"]) { display: none !important; }");
+      this.style.set("hide-stories-following-page", "div[class^=\"Layout-sc-\"] > [data-simplebar=\"init\"] > div:nth-child(3) > :has(h2[class*=\"sr-only\"]:is([class^=\"CoreText-sc-\"])) { display: none !important; }");
     } else {
-      this.css_tweaks.delete("hide-stories-left-nav-expanded");
-      this.css_tweaks.delete("hide-stories-left-nav-collapsed");
-      this.css_tweaks.delete("hide-stories-following-page");
+      this.style.delete("hide-stories-left-nav-expanded");
+      this.style.delete("hide-stories-left-nav-collapsed");
+      this.style.delete("hide-stories-following-page");
     }
   }
 }

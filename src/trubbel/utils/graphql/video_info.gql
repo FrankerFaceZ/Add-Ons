@@ -1,4 +1,4 @@
-query FFZ_GetVideoInfo($id: ID!) {
+query Trubbel_GetVideoInfo($id: ID!) {
 	video(id: $id) {
     id
 		muteInfo {

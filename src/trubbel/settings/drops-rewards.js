@@ -146,16 +146,25 @@ export class DropsRewards extends FrankerFaceZ.utilities.module.Module {
   }
 
   async waitForElements() {
-    return new Promise((resolve) => {
+    let timeoutId;
+    let animFrameId;
+
+    return new Promise((resolve, reject) => {
+      timeoutId = setTimeout(() => {
+        cancelAnimationFrame(animFrameId);
+        reject();
+      }, 10000);
+
       const checkElements = () => {
         const elements = document.querySelectorAll(".inventory-campaign-info");
         if (elements.length > 0) {
+          clearTimeout(timeoutId);
           resolve(elements);
         } else {
-          requestAnimationFrame(checkElements);
+          animFrameId = requestAnimationFrame(checkElements);
         }
       };
-      checkElements();
+      animFrameId = requestAnimationFrame(checkElements);
     });
   }
 
@@ -183,13 +192,15 @@ export class DropsRewards extends FrankerFaceZ.utilities.module.Module {
     const currentLocation = this.router?.location;
     if (currentLocation !== "/drops/inventory" && currentLocation !== "/inventory") return;
     if (this.hasInitialized) return;
-
-    const infoElements = await this.waitForElements();
-    this.cleanupStorage();
-
-    infoElements.forEach(element => this.makeCollapsible(element));
-
-    this.hasInitialized = true;
+    try {
+      const infoElements = await this.waitForElements();
+      this.cleanupStorage();
+      infoElements.forEach(element => this.makeCollapsible(element));
+      this.hasInitialized = true;
+    } catch (error) {
+      this.log.error("[Collapsible Drops] Failed to find inventory elements");
+      this.hasInitialized = false;
+    }
   }
 
   handleCollapsibleDrops() {

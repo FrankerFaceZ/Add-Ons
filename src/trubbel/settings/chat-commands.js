@@ -71,7 +71,7 @@ export class ChatCommands extends FrankerFaceZ.utilities.module.Module {
 
   removeCommandHandlers() {
     for (const handler of this.commandHandlers) {
-      ffz.off("chat:get-tab-commands", handler);
+      this.off("chat:get-tab-commands", handler);
     }
     this.commandHandlers.clear();
   }
@@ -141,7 +141,7 @@ export class ChatCommands extends FrankerFaceZ.utilities.module.Module {
       };
 
       // Register the handler and store it for cleanup
-      ffz.on("chat:get-tab-commands", commandHandler);
+      this.on("chat:get-tab-commands", commandHandler);
       this.commandHandlers.add(commandHandler);
     }
   }

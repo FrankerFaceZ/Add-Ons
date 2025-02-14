@@ -1,4 +1,4 @@
-query FFZ_GetClipDate($slug: ID!) {
+query Trubbel_GetClipDate($slug: ID!) {
 	clip(slug: $slug) {
 		id
 		createdAt
