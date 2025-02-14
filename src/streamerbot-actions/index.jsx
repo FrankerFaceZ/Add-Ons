@@ -62,6 +62,19 @@ class DoStreamerbotAction extends Addon {
 
 				const msgid = `ffz.doaction.${Date.now()}`;
 				const socket = new WebSocket(url);
+
+				socket.onerror = err => {
+					if (data.room?.login) {
+						this.addNotice(
+							data.room.login,
+							this.i18n.t(
+								'addon.streamerbot-actions.error',
+								'There was an error sending the action to StreamerBot.'
+							)
+						);
+					}
+				};
+
 				socket.onopen = () => {
 					socket.send(
 						JSON.stringify({
@@ -71,8 +84,41 @@ class DoStreamerbotAction extends Addon {
 							args,
 						})
 					);
+				};
 
-					setTimeout(() => socket.close(), 500);
+				socket.onmessage = ev => {
+					try {
+						const response = JSON.parse(ev.data);
+
+						if (response.status !== 'error') return;
+						if (data.room?.login) {
+							this.addNotice(
+								data.room.login,
+								this.i18n.t(
+									'addon.streamerbot-actions.error',
+									`Error running StreamerBot action: ${response.error}`
+								)
+							);
+						} else {
+							console.error(response);
+						}
+
+						socket.close();
+					} catch (err) {
+						if (data.room?.login) {
+							this.addNotice(
+								data.room.login,
+								this.i18n.t(
+									'addon.streamerbot-actions.error',
+									'There was an error sending the action to StreamerBot.'
+								)
+							);
+						} else {
+							console.error(err);
+						}
+
+						socket.close();
+					}
 				};
 			},
 		});
