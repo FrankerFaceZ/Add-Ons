@@ -1,0 +1,6 @@
+query Trubbel_GetUserAccountAge($login: String!) {
+	user(login: $login) {
+		id
+		createdAt
+	}
+}
