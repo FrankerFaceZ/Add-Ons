@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"settings": "add_ons.ffz-streamerbot",
+	"short_name": "do-streamerbot-action",
+	"name": "Run Streamerbot Action",
+	"author": "Patch Does",
+	"description": "Run an action in Streamerbot with a chat action!",
+	"website": "https://twitch.tv/patchdoes",
+	"created": "2025-02-14T06:13:55.417Z",
+	"updated": "2025-02-14T06:15:01.045Z"
+}
