@@ -22,6 +22,18 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
       },
       changed: () => this.updateCSS()
     });
+    // UI Tweaks - Chat - Show Full Messages /w Expanded Replies
+    this.settings.add("addon.trubbel.ui-tweaks.chat-show-full-message", {
+      default: false,
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > UI Tweaks >> Chat",
+        title: "Show Full Messages /w Expanded Replies",
+        description: "Allows you to see the entire message someone is replying to in chat, instead of it being cut off.\n\n**Note:** Twitch settings needs to be \"**Expanded**\" in \`Chat Settings > Chat Appearance > Replies in Chat > Expanded\`,\n\n& FFZ settings needs to be \"**Twitch (Default)**\" in [Chat > Appearance > Replies](~chat.appearance.replies).",
+        component: "setting-check-box"
+      },
+      changed: () => this.updateCSS()
+    });
     // UI Tweaks - System Theme - Enable System Theme
     this.settings.add("addon.trubbel.ui-tweaks.system-theme", {
       default: false,
@@ -164,6 +176,14 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
     } else {
       this.style.delete("viewer-list-padding1");
       this.style.delete("viewer-list-padding2");
+    }
+    // UI Tweaks - Chat - Show Full Messages /w Expanded Replies
+    if (this.settings.get("addon.trubbel.ui-tweaks.chat-show-full-message")) {
+      this.style.set("show-full-message", ".chat-line__message-container p[title*=\"@\"] {white-space: break-spaces !important;}");
+      this.style.set("show-full-message-mentioned", ".chat-line__message-container p:has(.reply-line--mentioned) {white-space: break-spaces !important;}");
+    } else {
+      this.style.delete("show-full-message");
+      this.style.delete("show-full-message-mentioned");
     }
     // UI Tweaks - Titles - Show full titles for Stream Tooltips
     if (this.settings.get("addon.trubbel.ui-tweaks.full-side-nav-tooltip")) {

@@ -1,4 +1,6 @@
 import { ChatCommands } from "./settings/chat-commands";
+import { ChatModeration } from "./settings/chat-moderation";
+import { ChatViewerCard } from "./settings/chat-viewer-card";
 import { ClipsVideos } from "./settings/clips-videos";
 import { Directory } from "./settings/directory";
 import { DropsRewards } from "./settings/drops-rewards";
@@ -12,6 +14,8 @@ class Trubbel extends Addon {
 		super(...args);
 
 		this.inject(ChatCommands);
+		this.inject(ChatModeration);
+		this.inject(ChatViewerCard);
 		this.inject(ClipsVideos);
 		this.inject(Directory);
 		this.inject(DropsRewards);

@@ -19,7 +19,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> Timestamps",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> Timestamps",
         title: "Enable Custom Timestamps for Clips",
         description: "Show the full timestamp when a clip was created.",
         component: "setting-check-box"
@@ -31,7 +31,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> Timestamps",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> Timestamps",
         title: "Enable Custom Timestamps for Videos",
         description: "Show the full timestamp when a video was created.",
         component: "setting-check-box"
@@ -44,7 +44,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 2,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> Timestamps",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> Timestamps",
         title: "Enable Timestamps for Most Recent Videos",
         description: "Show timestamps on most recent videos when a stream is offline.",
         component: "setting-check-box"
@@ -57,7 +57,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: "medium",
       ui: {
         sort: 3,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> Timestamps",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> Timestamps",
         title: "Timestamp Format",
         description: "The default combined timestamp format. Custom time formats are formatted using the [Day.js](https://day.js.org/docs/en/display/format) library.",
         component: "setting-combo-box",
@@ -87,7 +87,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 4,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> Timestamps",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> Timestamps",
         title: "Enable Relative Timestamp",
         description: "Include relative timestamp, such as `(2 days ago)`, `(2 months ago)`, `(2 years ago)` at the end.",
         component: "setting-check-box"
@@ -100,7 +100,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> VODs",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> VODs",
         title: "Enable Auto-Skip Muted Segments",
         description: "Automatically detects and skips muted segments.\n\nOnce you reach the start of a muted segment, this will automatically skip to the end of that muted segment.",
         component: "setting-check-box"
@@ -112,7 +112,7 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel's Utilities > Clips and Videos >> VODs",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Clips and Videos >> VODs",
         title: "Enable Auto-Skip Notifications",
         description: "Show a notification bottom left when a muted segment is skipped.",
         component: "setting-check-box"

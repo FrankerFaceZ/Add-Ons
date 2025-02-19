@@ -27,23 +27,20 @@ export const ffzCommands = [
   },
   {
     prefix: "/",
-    name: "uptime",
-    description: "Show the channels current uptime.",
-    permissionLevel: PermissionLevels.VIEWER,
-    ffz_group: "Trubbel\u2019s Utilities",
-    commandArgs: []
-  },
-
-
-  {
-    prefix: "/",
     name: "shrug",
-    description: "¯\\_(ツ)_/¯",
+    description: "Appends ¯\\_(ツ)_/¯ to your message.",
     permissionLevel: PermissionLevels.VIEWER,
     ffz_group: "Trubbel\u2019s Utilities",
     commandArgs: [
       { name: "message", isRequired: false }
     ]
   },
-
+  {
+    prefix: "/",
+    name: "uptime",
+    description: "Show the channels current uptime.",
+    permissionLevel: PermissionLevels.VIEWER,
+    ffz_group: "Trubbel\u2019s Utilities",
+    commandArgs: []
+  },
 ];
