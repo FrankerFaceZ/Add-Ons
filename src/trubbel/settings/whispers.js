@@ -21,7 +21,7 @@ export class Whispers extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel's Utilities > Whispers >> Resizable",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Whispers >> Resizable",
         title: "Enable Resizable Drop Down",
         description: "Gives the ability to adjust the height of the whisper window drop down.",
         component: "setting-check-box"
