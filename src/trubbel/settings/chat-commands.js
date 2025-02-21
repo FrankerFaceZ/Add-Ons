@@ -19,6 +19,7 @@ export class ChatCommands extends FrankerFaceZ.utilities.module.Module {
     // Store command handler functions for cleanup
     this.commandHandlers = new Set();
 
+    // Chat - Custom Commands - Enable Custom Chat Commands
     this.settings.add("addon.trubbel.chat.custom-commands", {
       default: false,
       ui: {
@@ -34,6 +35,7 @@ export class ChatCommands extends FrankerFaceZ.utilities.module.Module {
       accountage: "Show how long ago you created your account.",
       chatters: "Show the current channels amount of chatters.",
       followage: "Show your followage in the current channel.",
+      shrug: "Appends `¯\\_(ツ)_/¯` to your message.",
       uptime: "Show the channels current uptime."
     };
 
@@ -113,6 +115,9 @@ export class ChatCommands extends FrankerFaceZ.utilities.module.Module {
             break;
           case "followage":
             getFollowAge(this, inst);
+            break;
+          case "shrug":
+            shrug(this, inst, e);
             break;
           case "uptime":
             getStreamUptime(this, inst);
