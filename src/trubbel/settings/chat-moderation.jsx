@@ -36,7 +36,7 @@ export class ChatModeration extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities - Dev > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Chat >> Moderation",
         title: "Enable BTTV-like Mod Action",
         description: "Gives you the ability to use the right click context menu to ban, timeout, purge and delete messages. With some extra options below.",
         component: "setting-check-box"
@@ -54,7 +54,7 @@ export class ChatModeration extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities - Dev > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Chat >> Moderation",
         title: "Options",
         description: "Decide how you want to moderate when right clicking in chat;\n\n`Usernames` -> Only on usernames\n\n`Messages` -> Everywhere in a message\n\n`Messages (except embeds and links)` -> Same as above but this lets you use normal context menu when right clicking rich embeds and links.",
         component: "setting-select-box",
