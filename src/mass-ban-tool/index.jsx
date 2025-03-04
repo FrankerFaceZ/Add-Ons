@@ -18,6 +18,7 @@ class MassBanTool extends Addon {
 		this.toolIsRunning = false;
 
 		this.inject( 'site.chat' );
+		this.inject( 'site.fine' );
 	}
 
 	buildMassBanToolModal() {
@@ -166,9 +167,11 @@ class MassBanTool extends Addon {
 	}
 
 	checkForModView() {
-		this.modViewContainer = document.querySelector( '.modview-dock > div:last-child' );
+		this.modBar = this.fine.define( 'mod-view-bar' );
 
-		if ( this.modViewContainer ) {
+		if ( this.modBar ) {
+			this.reactModBar();
+
 			return true;	
 		}
 
@@ -185,28 +188,48 @@ class MassBanTool extends Addon {
 		}
 	}
 
-	insertModViewButton() {
-		this.modViewBtn  =( <div class="tw-relative tw-mg-b-1" onClick={ () => this.insertmassBanToolModal() }>
-			<div id="ffz-mass-ban-tool-btn" class="tw-inline-flex tw-relative ffz-il-tooltip__container">
-				<button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon ffz-core-button ffz-core-button--border tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative">
-						<div class="tw-align-items-center tw-flex tw-flex-grow-0">
-							<span class="tw-button-icon__icon">
-								<figure class="ffz-i-block"></figure>
-							</span>
-						</div>
-				</button>
+	reactModBar() {
+		this.modBar.ready( () => { this.update(); } );
+		this.modBar.on( 'mount', this.insertModViewButton, this );
+		this.modBar.on( 'update', this.insertModViewButton, this );
+	}
 
-				<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-left">Mass Ban Tool</div>
-			</div>
-		</div> );
+	update() {
+		requestAnimationFrame( () => {
+			for ( const inst of this.modBar.instances ) {
+				this.insertModViewButton( inst );
+			}
+		} );
+	}
 
-		// Insert mod view button
-		this.modViewContainer.insertBefore( this.modViewBtn, document.getElementsByClassName( 'ffz-mod-view-button' )[0].nextElementSibling );
+	insertModViewButton( inst, modBarContainer, _is_sunlight ) {
+		const root = this.fine.getChildNode( inst );
+
+		if ( inst?.childContext && ! root.contains( this.modViewBtn ) ) {
+			this.modBarContainer = root && root.querySelector('.modview-dock > div:last-child');
+
+			this.modViewBtn  = ( <div class="tw-relative tw-mg-b-1" onClick={ () => this.insertmassBanToolModal() }>
+				<div id="ffz-mass-ban-tool-btn" class="tw-inline-flex tw-relative ffz-il-tooltip__container">
+					<button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon ffz-core-button ffz-core-button--border tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative">
+							<div class="tw-align-items-center tw-flex tw-flex-grow-0">
+								<span class="tw-button-icon__icon">
+									<figure class="ffz-i-block"></figure>
+								</span>
+							</div>
+					</button>
+
+					<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-left">Mass Ban Tool</div>
+				</div>
+			</div> );
+
+			// Insert mod view button
+			this.modBarContainer.insertBefore( this.modViewBtn, this.modBarContainer.lastElementChild );
+		}
 	}
 
 	removeModViewButton() {
-		if ( this.modViewContainer.contains( this.modViewBtn ) ) {
-			this.modViewContainer.removeChild( this.modViewBtn );
+		if ( this.modBarContainer.contains( this.modViewBtn ) ) {
+			this.modBarContainer.removeChild( this.modViewBtn );
 		}
 	}
 
