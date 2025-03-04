@@ -44,8 +44,7 @@ export class ChatViewerCard extends FrankerFaceZ.utilities.module.Module {
   onBufferMessage(event) {
     if (!this.settings.get("addon.trubbel.chat.viewer-card")) return;
 
-    const messageType = event?.message?.type;
-    if (messageType !== 29) return;
+    if (event?.message?.type !== this.chat?.chat_types.Info) return;
 
     const message = event?.message?.message;
     const regex = /:\s*(.+?)\./;
@@ -158,16 +157,7 @@ export class ChatViewerCard extends FrankerFaceZ.utilities.module.Module {
 
   checkNavigation() {
     if (!this.settings.get("addon.trubbel.chat.viewer-card")) return;
-
-    const chatRoutes = [
-      "dash-popout-chat",
-      "dash-stream-manager",
-      "embed-chat",
-      "mod-popout-chat",
-      "mod-view",
-      "popout",
-      "user"
-    ];
+    const chatRoutes = this.site.constructor.CHAT_ROUTES;
 
     if (chatRoutes.includes(this.router?.current?.name)) {
       this.init();

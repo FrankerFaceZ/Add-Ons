@@ -10,14 +10,13 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
     this.inject("settings");
     this.inject("site.router");
 
-    // UI Tweaks - Chat - Reduce Chat Viewer List Padding
+    // UI Tweaks - Chat - Reduce padding in Viewer List
     this.settings.add("addon.trubbel.ui-tweaks.chat-viewer-list-padding", {
       default: false,
       ui: {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > UI Tweaks >> Chat",
-        title: "Reduce Chat Viewer List Padding",
-        description: "Gives the ability to adjust the height of the whisper window drop down.",
+        title: "Reduce padding in Viewer List",
         component: "setting-check-box"
       },
       changed: () => this.updateCSS()
@@ -169,7 +168,7 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
   }
 
   updateCSS() {
-    // UI Tweaks - Chat - Reduce Chat Viewer List Padding
+    // UI Tweaks - Chat - Reduce padding in Viewer List
     if (this.settings.get("addon.trubbel.ui-tweaks.chat-viewer-list-padding")) {
       this.style.set("viewer-list-padding1", "#community-tab-content > div {padding: 1rem !important;}");
       this.style.set("viewer-list-padding2", ".chatter-list-item {padding: .2rem 0!important;}");

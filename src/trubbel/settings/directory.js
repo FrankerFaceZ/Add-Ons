@@ -1,11 +1,28 @@
 const { createElement } = FrankerFaceZ.utilities.dom;
 
+import { FOLLOWING_CHANNELS_SELECTOR } from "../utils/constants/selectors";
+import GET_FOLLOWS from "../utils/graphql/follows_totalCount.gql";
+
 export class Directory extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
     super(...args);
 
     this.inject("settings");
+    this.inject("i18n");
+    this.inject("site");
     this.inject("site.router");
+
+    // Directory - Following - Show Total Followed Channels
+    this.settings.add("addon.trubbel.directory.total-followed-channels", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Directory >> Following",
+        title: "Show Total Followed Channels",
+        description: "This displays the total number of channels you're following. Which is visible in the [following](https://twitch.tv/directory/following)-pages.",
+        component: "setting-check-box"
+      }
+    });
 
     // Directory - Thumbnails - Enable Video Previews in Directory
     this.settings.add("addon.trubbel.directory.previews", {
@@ -75,7 +92,6 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
   onEnable() {
     this.settings.getChanges("addon.trubbel.directory.previews", () => this.handlePreviews());
     this.router.on(":route", this.checkNavigation, this);
-    this.checkNavigation();
   }
 
   checkNavigation() {
@@ -95,6 +111,39 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
         this.log.info("[Directory Previews] Entering directory page, setting up event listeners");
         this.setupEventListeners();
       }
+    }
+
+    if (this.router?.current?.name === "dir-following" && this.settings.get("addon.trubbel.directory.total-followed-channels")) {
+      this.showTotalFollowedChannels();
+    }
+  }
+
+  async showTotalFollowedChannels() {
+    const tabElement = await this.site.awaitElement(FOLLOWING_CHANNELS_SELECTOR, document.documentElement, 5000);
+    if (tabElement) {
+      // Make sure it doesn't update (if active) on each tab change (Overview, Live, Videos, Categories, Channels)
+      if (!tabElement.textContent.includes("(")) {
+
+        const apollo = this.resolve("site.apollo");
+        if (!apollo) {
+          return null;
+        }
+
+        const result = await apollo.client.query({
+          query: GET_FOLLOWS,
+          variables: {}
+        });
+
+        const totalCount = result?.data?.currentUser?.follows?.totalCount;
+        if (totalCount) {
+          const followCount = this.i18n.formatNumber(totalCount);
+          tabElement.textContent += ` (${followCount})`;
+        }
+      } else {
+        this.log.info("[Show Total Followed Channels] follow count already set");
+      }
+    } else {
+      this.log.warn("[Show Total Followed Channels] unable to find element:", tabElement);
     }
   }
 
