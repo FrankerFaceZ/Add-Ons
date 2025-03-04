@@ -10,14 +10,25 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
     this.inject("settings");
     this.inject("site.router");
 
-    // UI Tweaks - Chat - Reduce Chat Viewer List Padding
+    // UI Tweaks - Chat - Reduce padding in Viewer List
     this.settings.add("addon.trubbel.ui-tweaks.chat-viewer-list-padding", {
       default: false,
       ui: {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > UI Tweaks >> Chat",
-        title: "Reduce Chat Viewer List Padding",
-        description: "Gives the ability to adjust the height of the whisper window drop down.",
+        title: "Reduce padding in Viewer List",
+        component: "setting-check-box"
+      },
+      changed: () => this.updateCSS()
+    });
+    // UI Tweaks - Chat - Show Full Messages /w Expanded Replies
+    this.settings.add("addon.trubbel.ui-tweaks.chat-show-full-message", {
+      default: false,
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > UI Tweaks >> Chat",
+        title: "Show Full Messages /w Expanded Replies",
+        description: "Allows you to see the entire message someone is replying to in chat, instead of it being cut off.\n\n**Note:** Twitch settings needs to be \"**Expanded**\" in \`Chat Settings > Chat Appearance > Replies in Chat > Expanded\`,\n\n& FFZ settings needs to be \"**Twitch (Default)**\" in [Chat > Appearance > Replies](~chat.appearance.replies).",
         component: "setting-check-box"
       },
       changed: () => this.updateCSS()
@@ -157,13 +168,21 @@ export class UITweaks extends FrankerFaceZ.utilities.module.Module {
   }
 
   updateCSS() {
-    // UI Tweaks - Chat - Reduce Chat Viewer List Padding
+    // UI Tweaks - Chat - Reduce padding in Viewer List
     if (this.settings.get("addon.trubbel.ui-tweaks.chat-viewer-list-padding")) {
       this.style.set("viewer-list-padding1", "#community-tab-content > div {padding: 1rem !important;}");
       this.style.set("viewer-list-padding2", ".chatter-list-item {padding: .2rem 0!important;}");
     } else {
       this.style.delete("viewer-list-padding1");
       this.style.delete("viewer-list-padding2");
+    }
+    // UI Tweaks - Chat - Show Full Messages /w Expanded Replies
+    if (this.settings.get("addon.trubbel.ui-tweaks.chat-show-full-message")) {
+      this.style.set("show-full-message", ".chat-line__message-container p[title*=\"@\"] {white-space: break-spaces !important;}");
+      this.style.set("show-full-message-mentioned", ".chat-line__message-container p:has(.reply-line--mentioned) {white-space: break-spaces !important;}");
+    } else {
+      this.style.delete("show-full-message");
+      this.style.delete("show-full-message-mentioned");
     }
     // UI Tweaks - Titles - Show full titles for Stream Tooltips
     if (this.settings.get("addon.trubbel.ui-tweaks.full-side-nav-tooltip")) {
