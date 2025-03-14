@@ -2,6 +2,7 @@ import setTimestamp from "../features/clips-videos/set-timestamp";
 import applyMostRecentVideoTimestamp from "../features/clips-videos/most-recent-video";
 import GET_VIDEO from "../utils/graphql/video_info.gql";
 import { showNotification } from "../utils/create-notification";
+import { formatTime } from "../utils/format";
 
 export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
@@ -327,7 +328,9 @@ export class ClipsVideos extends FrankerFaceZ.utilities.module.Module {
           video.currentTime = segment.offset + segment.duration;
           this.log.info(`[Muted Segments] Skipped segment: ${segment.offset} -> ${segment.offset + segment.duration}`);
           if (this.settings.get("addon.trubbel.vods.skip-segments-notify")) {
-            showNotification("🔇", "Skipped muted segment.");
+            const startTime = formatTime(segment.offset);
+            const endTime = formatTime(segment.offset + segment.duration);
+            showNotification("🔇", `Skipped muted segment: ${startTime} → ${endTime}`);
           }
           break;
         }

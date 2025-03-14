@@ -1,5 +1,47 @@
 const { TranslatableError } = FrankerFaceZ.utilities.object;
-const { createElement, on, off } = FrankerFaceZ.utilities.dom;
+const ffzCreateElement = FrankerFaceZ.utilities.dom.createElement;
+const { on, off } = FrankerFaceZ.utilities.dom;
+
+function createElement(tag, props, ...children) {
+  const SVG_TAGS = [
+    "svg", "g", "path", "circle", "rect", "line", "polygon", "polyline",
+    "ellipse", "text", "tspan", "image", "defs", "linearGradient", "radialGradient",
+    "stop", "filter", "marker", "pattern", "mask", "clipPath", "use"
+  ];
+
+  const isSvg = SVG_TAGS.includes(tag.toLowerCase());
+  if (isSvg) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    if (props) {
+      for (const key in props) {
+        if (props.hasOwnProperty(key)) {
+          if (key === "className") {
+            el.setAttribute("class", props[key]);
+          } else if (key.startsWith("on") && typeof props[key] === "function") {
+            el.addEventListener(key.substring(2).toLowerCase(), props[key]);
+          } else {
+            el.setAttribute(key, props[key]);
+          }
+        }
+      }
+    }
+
+    if (children) {
+      children.flat().forEach(child => {
+        if (child !== null && child !== undefined) {
+          if (typeof child === "string") {
+            el.appendChild(document.createTextNode(child));
+          } else {
+            el.appendChild(child);
+          }
+        }
+      });
+    }
+    return el;
+  } else {
+    return ffzCreateElement(tag, props, ...children);
+  }
+}
 
 export class ChatModeration extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
