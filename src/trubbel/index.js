@@ -6,6 +6,7 @@ import { Directory } from "./settings/directory";
 import { DropsRewards } from "./settings/drops-rewards";
 import { Player } from "./settings/player";
 import { RemoveThings } from "./settings/remove-things";
+import { SideBarPreview } from "./settings/sidebar";
 import { UITweaks } from "./settings/ui-tweaks";
 import { Whispers } from "./settings/whispers";
 
@@ -21,6 +22,7 @@ class Trubbel extends Addon {
 		this.inject(DropsRewards);
 		this.inject(Player);
 		this.inject(RemoveThings);
+		this.inject(SideBarPreview);
 		this.inject(UITweaks);
 		this.inject(Whispers);
 
