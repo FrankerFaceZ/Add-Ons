@@ -1,6 +1,6 @@
 #ffz-mass-ban-tool-modal {
     --width: min(40vw, 128rem);
-    max-width: 40vw;
+    --height: min(85vh, calc(0.85 * var(--width)));
 
     & > header {
         cursor: initial;
@@ -10,8 +10,32 @@
         padding: 0.9rem 1rem 0.9rem 2rem;
     }
 
-    & .ffz--widget button {
-        margin: 0.5rem 0 !important
+    & .ffz-mass-ban-tool-user-count-label {
+        font-size: 1.15rem;
+    }
+
+    & .ffz-mass-ban-tool-user-count {
+        font-weight: bold;
+    }
+
+    & .ffz-mass-ban-tool-followers-import-custom-amount {
+        min-width: 7.5rem;
+        text-align: center;
+    }
+
+    & .ffz-mass-ban-tool-custom-followers-import {
+        margin-top: calc(0.5rem + var(--input-border-width-default) * -1) !important;
+    }
+
+    & .loading .ffz-mass-ban-tool-recent-followers-inputs,
+    & :not(.loading) > .ffz-mass-ban-tool-recent-followers-loading {
+        display: none !important;
+    }
+
+    & .loading .ffz-mass-ban-tool-recent-followers-loading {
+        display: flex !important;
+        line-height: 2rem;
+        color: var(--color-background-button-primary-default);
     }
 
     & .ffz--widget:has(.ffz-mass-ban-tool-ban-reason:disabled) .tw-flex:hover {
