@@ -101,8 +101,8 @@ export class Player extends FrankerFaceZ.utilities.module.Module {
                       this.rateLimiter.addAttempt();
                       this.site.children.player.resetPlayer(this.site.children.player.current);
 
-                      this.log.info(`[Auto Player Reset] ${ERROR_MESSAGES[errorCode]} (Error ${errorCode})`);
-                      showNotification("", `[Auto Player Reset] ${ERROR_MESSAGES[errorCode]} (Error ${errorCode})`, 15000);
+                      this.log.info(`[Auto Player Reset] ${ERROR_MESSAGES[errorCode]} (Error #${errorCode})`);
+                      showNotification("", `[Auto Player Reset] ${ERROR_MESSAGES[errorCode]} (Error #${errorCode})`, 15000);
                     }
                   }
                 }

@@ -1,4 +1,4 @@
-const { createElement } = FrankerFaceZ.utilities.dom;
+const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
 
 import { FOLLOWING_CHANNELS_SELECTOR } from "../utils/constants/selectors";
 import GET_FOLLOWS from "../utils/graphql/follows_totalCount.gql";
@@ -7,10 +7,34 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
     super(...args);
 
+    this.style = new ManagedStyle;
+
     this.inject("settings");
     this.inject("i18n");
     this.inject("site");
+    this.inject("site.fine");
     this.inject("site.router");
+    this.inject("site.elemental");
+
+    // Directory - Following - Show Channel Follow Date
+    this.settings.add("addon.trubbel.directory.show-followage", {
+      default: false,
+      requires: ["context.route.name"],
+      process(ctx, val) {
+        return ctx.get("context.route.name") === "dir-following" ? val : false;
+      },
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Directory >> Following",
+        title: "Show Channel Follow Date",
+        description: "This will display the date you followed a channel in [Followed channels](https://www.twitch.tv/directory/following/channels).",
+        component: "setting-check-box"
+      },
+      changed: () => {
+        this.updateFollowingCards();
+        this.updateCSS();
+      }
+    });
 
     // Directory - Following - Show Total Followed Channels
     this.settings.add("addon.trubbel.directory.total-followed-channels", {
@@ -31,7 +55,7 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > Directory >> Thumbnails",
         title: "Enable Video Previews in Directory",
-        description: "Displays a video preview when hovering over channel thumbnails in directories.\n\n**Note:** If you keep seeing \"Click to unmute\", change permission for player.twitch.tv to allow audio/video autoplay.",
+        description: "Displays a video preview when hovering over channel thumbnails in directories.\n\n**Note:** For this to work properly, make sure your browser has granted **Autoplay** and **Sound** permissions for `player.twitch.tv`.",
         component: "setting-check-box"
       },
       changed: () => this.handlePreviews()
@@ -87,11 +111,22 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
 
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+
+    this.FollowingCard = this.elemental.define(
+      "following-card",
+      ".channel-follow-listing--card",
+      ["dir-following"], null, 0, 0
+    );
   }
 
   onEnable() {
     this.settings.getChanges("addon.trubbel.directory.previews", () => this.handlePreviews());
     this.router.on(":route", this.checkNavigation, this);
+
+    this.FollowingCard.on("mount", this.updateFollowingCard, this);
+    this.FollowingCard.on("mutate", this.updateFollowingCard, this);
+    this.FollowingCard.each(el => this.updateFollowingCard(el));
+    this.updateCSS();
   }
 
   checkNavigation() {
@@ -189,6 +224,12 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
 
   handleMouseEnter(event) {
     if (!this.settings.get("addon.trubbel.directory.previews")) return;
+
+    // Stop Chromium-based browsers console spam
+    if (!event.target || typeof event.target.closest !== "function") {
+      return;
+    }
+
     // Skip thumbnails that are blurred
     if (event.target.closest(".blurred-preview-card-image")) return;
 
@@ -209,6 +250,11 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
   }
 
   handleMouseLeave(event) {
+    // Stop Chromium-based browsers console spam
+    if (!event.target || typeof event.target.closest !== "function") {
+      return;
+    }
+
     const link = event.target.closest("[data-a-target=\"preview-card-image-link\"]");
     if (!link) return;
     if (link.contains(event.relatedTarget)) return;
@@ -239,6 +285,104 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
       this.checkNavigation();
     } else {
       this.cleanupEventListeners();
+    }
+  }
+
+  updateFollowingCards() {
+    this.FollowingCard.each(el => this.updateFollowingCard(el));
+    this.emit(":update-cards");
+  }
+
+  updateFollowingCard(el) {
+    const parent = this.fine.searchParentNode(el, n => n.memoizedProps?.children?.props?.userData?.user);
+    if (!parent) return;
+
+    const props = parent.memoizedProps;
+    return this._updateFollowingCard(el, props, props.children.props.trackingProps);
+  }
+
+  _updateFollowingCard(el, item, tracking) {
+    try {
+      // Check if settings is enabled
+      const showFollowage = this.settings.get("addon.trubbel.directory.show-followage");
+      if (!showFollowage) {
+        this.clearFollowageDate(el);
+        return;
+      }
+
+      // Get user data from props
+      const userData = item.children.props.userData?.user;
+      if (!userData) return;
+
+      // Get followedAt date
+      const followedAt = userData.self?.follower?.followedAt;
+      if (!followedAt) return;
+
+      // Format the date for display
+      const formattedDate = this.formatDate(followedAt);
+
+      // Find the element where we want to append our followage date
+      const usernameElement = el.querySelector(".user-card p[title]");
+      if (!usernameElement) return;
+
+      // Create the followage element
+      el._ffz_followage = (
+        <div
+          className="ffz-followage-date"
+          title={this.i18n.formatDateTime(followedAt, "full")}
+        >
+          Followed {formattedDate}
+        </div>
+      );
+
+      // Insert it right after the username element
+      usernameElement.parentNode.insertBefore(el._ffz_followage, usernameElement.nextSibling);
+
+      // Add attribute to the card for easy reference
+      if (userData.id) {
+        el.setAttribute("data-room-id", userData.id);
+      }
+      if (userData.login) {
+        el.setAttribute("data-room", userData.login);
+      }
+      el.setAttribute("data-followed-at", followedAt);
+    } catch (err) {
+      this.log.error("[Show Channel Follow Date] Error in _updateFollowingCard:", err);
+    }
+  }
+
+  clearFollowageDate(el) {
+    if (el._ffz_followage) {
+      el._ffz_followage.remove();
+      el._ffz_followage = null;
+    }
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  updateCSS() {
+    // Directory - Following - Show Channel Follow Date
+    if (this.settings.get("addon.trubbel.directory.show-followage")) {
+      this.style.set("followage-date", `
+        .ffz-followage-date {
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          color: white;
+          font-size: 1.3rem;
+          line-height: 1.5;
+        }
+      `);
+    } else {
+      this.style.delete("followage-date");
     }
   }
 }
