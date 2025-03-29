@@ -1,0 +1,11 @@
+query MassBanTool_GetRecentFollowers( $login: String!, $first: Int! ) {
+    user( login: $login ) {
+        followers( first: $first, order: DESC ) {
+            edges {
+                node {
+                    displayName
+                }
+            }
+        }
+    }
+}
