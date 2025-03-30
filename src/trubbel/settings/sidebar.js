@@ -46,7 +46,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 1,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Stream Preview Delay",
-        description: "How long to hover before showing the preview (in milliseconds).",
+        description: "How long to hover before showing the preview (in milliseconds). Use `0` for no delay.",
         component: "setting-text-box",
         process(val) {
           const cleanVal = val.toString().replace(/[^\d]/g, "");
@@ -326,10 +326,10 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           // Make sure said stream isn't offline
           if (card.querySelector(".tw-channel-status-indicator")) {
             // Make sure said stream isn't already processed
-            if (!card._ffz_processed) {
+            if (!card._stream_processed) {
 
               // Mark stream as processed
-              card._ffz_processed = true;
+              card._stream_processed = true;
 
               card.addEventListener("mouseenter", () => {
                 if (!this.settings.get("addon.trubbel.sidebar.left-nav-preview")) {
@@ -395,12 +395,12 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
     if (this.previewContainer) return;
 
     this.previewContainer = createElement("div", {
-      className: "ffz-sidebar-preview"
+      className: "trubbel-sidebar-preview"
     });
 
     // Create wrapper for the iframe
     const wrapper = createElement("div", {
-      className: "ffz-sidebar-preview-wrapper"
+      className: "trubbel-sidebar-preview-wrapper"
     });
     this.previewContainer.appendChild(wrapper);
 
@@ -409,31 +409,31 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
     // Add title container
     this.previewTitleContainer = createElement("div", {
-      className: "ffz-sidebar-preview-title"
+      className: "trubbel-sidebar-preview-title"
     });
     this.previewContainer.appendChild(this.previewTitleContainer);
 
     // Add category title container
     this.previewCategoryContainer = createElement("div", {
-      className: "ffz-sidebar-preview-category"
+      className: "trubbel-sidebar-preview-category"
     });
     this.previewContainer.appendChild(this.previewCategoryContainer);
 
     // Add viewer title container
     this.previewViewerContainer = createElement("div", {
-      className: "ffz-sidebar-preview-viewers"
+      className: "trubbel-sidebar-preview-viewers"
     });
     this.previewContainer.appendChild(this.previewViewerContainer);
 
     // Add hype train container
     this.previewHypeTrainContainer = createElement("div", {
-      className: "ffz-sidebar-preview-hypetrain"
+      className: "trubbel-sidebar-preview-hypetrain"
     });
     this.previewContainer.appendChild(this.previewHypeTrainContainer);
 
     // Add guests container
     this.previewGuestsContainer = createElement("div", {
-      className: "ffz-sidebar-preview-guests"
+      className: "trubbel-sidebar-preview-guests"
     });
     this.previewContainer.appendChild(this.previewGuestsContainer);
 
@@ -469,15 +469,15 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
     // Remove any existing size classes
     this.previewContainer.classList.remove(
-      "ffz-sidebar-preview--small",
-      "ffz-sidebar-preview--medium",
-      "ffz-sidebar-preview--large",
-      "ffz-sidebar-preview--xlarge"
+      "trubbel-sidebar-preview--small",
+      "trubbel-sidebar-preview--medium",
+      "trubbel-sidebar-preview--large",
+      "trubbel-sidebar-preview--xlarge"
     );
 
     // Add the new size class
     const size = this.settings.get("addon.trubbel.sidebar.left-nav-preview.size");
-    this.previewContainer.classList.add(`ffz-sidebar-preview--${size}`);
+    this.previewContainer.classList.add(`trubbel-sidebar-preview--${size}`);
   }
 
   showPreview(card) {
@@ -613,21 +613,21 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
           // Create the icon element
           const iconElement = createElement("span", {
-            className: "ffz-hype-train-icon"
+            className: "trubbel-hype-train-icon"
           });
 
           // Determine the type of hype train and apply the appropriate class
           if (hypeTrainData.isGoldenKappaTrain) {
-            iconElement.classList.add("ffz-hype-train-golden");
+            iconElement.classList.add("trubbel-hype-train-golden");
             this.previewHypeTrainContainer.appendChild(iconElement);
             this.previewHypeTrainContainer.appendChild(document.createTextNode(`Golden Kappa Train • Level ${level}`));
           } else if (hypeTrainData.isAllTimeHighTrain) {
-            iconElement.classList.add("ffz-hype-train-alltime");
+            iconElement.classList.add("trubbel-hype-train-alltime");
             this.previewHypeTrainContainer.appendChild(iconElement);
             this.previewHypeTrainContainer.appendChild(document.createTextNode(`All-Time High Train • Level ${level}`));
           } else {
             // Regular hype train
-            iconElement.classList.add("ffz-hype-train-regular");
+            iconElement.classList.add("trubbel-hype-train-regular");
             this.previewHypeTrainContainer.appendChild(iconElement);
             this.previewHypeTrainContainer.appendChild(document.createTextNode(`Hype Train • Level ${level}`));
           }
@@ -663,19 +663,19 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
         // Create the guests list
         const guestsListElement = createElement("div", {
-          className: "ffz-sidebar-preview-guests-list"
+          className: "trubbel-sidebar-preview-guests-list"
         });
 
         // Add each guest
         guests.forEach(guest => {
           // Create guest item container
           const guestItem = createElement("div", {
-            className: "ffz-sidebar-preview-guest-item"
+            className: "trubbel-sidebar-preview-guest-item"
           });
 
           // Create avatar container
           const avatarContainer = createElement("div", {
-            className: "ffz-sidebar-preview-guest-avatar"
+            className: "trubbel-sidebar-preview-guest-avatar"
           });
 
           // Add border-color, using default #9147ff if primaryColorHex is not available
@@ -691,13 +691,17 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
           // Create guest name element
           const nameElement = createElement("div", {
-            className: "ffz-sidebar-preview-guest-name"
+            className: "trubbel-sidebar-preview-guest-name"
           });
-          nameElement.textContent = guest.displayName;
+
+          const displayName = guest.displayName;
+          const login = guest.login;
+          const username = displayName.toLowerCase() !== login ? `${displayName} (${login})` : displayName;
+          nameElement.textContent = username;
 
           // Create viewer count element
           const viewerCountElement = createElement("div", {
-            className: "ffz-sidebar-preview-guest-viewers"
+            className: "trubbel-sidebar-preview-guest-viewers"
           });
 
           // Add viewer count if streaming
@@ -707,7 +711,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
             // Add online indicator
             const indicator = createElement("span", {
-              className: "ffz-sidebar-preview-guest-online-indicator"
+              className: "trubbel-sidebar-preview-guest-online-indicator"
             });
             viewerCountElement.insertBefore(indicator, viewerCountElement.firstChild);
           } else {
@@ -785,7 +789,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
     // Sidebar - Left Navigation - Enable Stream Previews
     if (this.settings.get("addon.trubbel.sidebar.left-nav-preview")) {
       this.style.set("left-nav-preview", `
-        .ffz-sidebar-preview {
+        .trubbel-sidebar-preview {
           position: fixed;
           z-index: 9999;
           background-color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-background")};
@@ -800,23 +804,23 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           flex-direction: column;
           width: auto;
         }
-        .ffz-sidebar-preview.active {
+        .trubbel-sidebar-preview.active {
           opacity: 1;
           visibility: visible;
           pointer-events: auto;
         }
-        .ffz-sidebar-preview-wrapper {
+        .trubbel-sidebar-preview-wrapper {
           width: 100%;
           position: relative;
         }
-        .ffz-sidebar-preview iframe {
+        .trubbel-sidebar-preview iframe {
           width: 100%;
           height: 100%;
           border: 0;
           display: block;
           background-color: black;
         }
-        .ffz-sidebar-preview-title {
+        .trubbel-sidebar-preview-title {
           padding: 6px 8px;
           font-size: 1.3rem;
           font-weight: 600;
@@ -833,7 +837,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           line-height: 1.5;
           max-width: 100%;
         }
-        .ffz-sidebar-preview-category {
+        .trubbel-sidebar-preview-category {
           padding: 4px 8px;
           font-size: 1.2rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text2")};
@@ -849,7 +853,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           line-height: 1.3;
           max-width: 100%;
         }
-        .ffz-sidebar-preview-viewers {
+        .trubbel-sidebar-preview-viewers {
           padding: 4px 8px;
           font-size: 1.2rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text3")};
@@ -865,7 +869,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           line-height: 1.3;
           max-width: 100%;
         }
-        .ffz-sidebar-preview-hypetrain {
+        .trubbel-sidebar-preview-hypetrain {
           padding: 4px 8px;
           font-size: 1.2rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text4")};
@@ -882,60 +886,60 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           max-width: 100%;
         }
         /* Preview size variations */
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-wrapper {
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-wrapper {
           width: 280px;
           height: 158px;
         }
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-wrapper {
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-wrapper {
           width: 320px;
           height: 180px;
         }
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-wrapper {
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-wrapper {
           width: 400px;
           height: 225px;
         }
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-wrapper {
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-wrapper {
           width: 480px;
           height: 270px;
         }
         /* Make sure the width of the preview containers matches the iframe width */
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-title,
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-category,
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-viewers,
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-hypetrain,
-        .ffz-sidebar-preview--small .ffz-sidebar-preview-guests {
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-title,
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-category,
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-viewers,
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-hypetrain,
+        .trubbel-sidebar-preview--small .trubbel-sidebar-preview-guests {
           max-width: 280px;
         }
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-title,
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-category,
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-viewers,
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-hypetrain,
-        .ffz-sidebar-preview--medium .ffz-sidebar-preview-guests {
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-title,
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-category,
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-viewers,
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-hypetrain,
+        .trubbel-sidebar-preview--medium .trubbel-sidebar-preview-guests {
           max-width: 320px;
         }
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-title,
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-category,
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-viewers,
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-hypetrain,
-        .ffz-sidebar-preview--large .ffz-sidebar-preview-guests {
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-title,
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-category,
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-viewers,
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-hypetrain,
+        .trubbel-sidebar-preview--large .trubbel-sidebar-preview-guests {
           max-width: 400px;
         }
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-title,
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-category,
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-viewers,
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-hypetrain,
-        .ffz-sidebar-preview--xlarge .ffz-sidebar-preview-guests {
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-title,
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-category,
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-viewers,
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-hypetrain,
+        .trubbel-sidebar-preview--xlarge .trubbel-sidebar-preview-guests {
           max-width: 480px;
         }
         /* Hype Train Styles */
-        .ffz-hype-train-icon {
+        .trubbel-hype-train-icon {
           display: inline-block;
           vertical-align: middle;
           margin-right: 4px;
           height: 1.3rem;
           width: 1.3rem;
         }
-        .ffz-hype-train-regular {
+        .trubbel-hype-train-regular {
           background: #bf94ff;
           -webkit-mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg);
           mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg);
@@ -944,7 +948,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           -webkit-mask-size: 100%;
           mask-size: 100%;
         }
-        .ffz-hype-train-golden {
+        .trubbel-hype-train-golden {
           background: linear-gradient(180deg, #ffb31a 1.19%, #e0e000);
           -webkit-mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg);
           mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg);
@@ -953,7 +957,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           -webkit-mask-size: 100%;
           mask-size: 100%;
         }
-        .ffz-hype-train-alltime {
+        .trubbel-hype-train-alltime {
           background: linear-gradient(#9147ff, #ff75e6);
           -webkit-mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/trophy.svg);
           mask-image: url(https://static-cdn.jtvnw.net/c3-vg/leftnav/trophy.svg);
@@ -963,7 +967,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           mask-size: 100%;
         }
         /* Guests Container */
-        .ffz-sidebar-preview-guests {
+        .trubbel-sidebar-preview-guests {
           padding: 4px 8px;
           font-size: 1.2rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text5")};
@@ -980,19 +984,19 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           max-width: 100%;
         }
         /* Guests List */
-        .ffz-sidebar-preview-guests-list {
+        .trubbel-sidebar-preview-guests-list {
           display: flex;
           flex-direction: column;
           gap: 8px;
         }
         /* Individual Guest Item */
-        .ffz-sidebar-preview-guest-item {
+        .trubbel-sidebar-preview-guest-item {
           display: flex;
           align-items: center;
           gap: 8px;
         }
         /* Guest Avatar */
-        .ffz-sidebar-preview-guest-avatar {
+        .trubbel-sidebar-preview-guest-avatar {
           width: 16px;
           height: 16px;
           border-radius: 50%;
@@ -1000,7 +1004,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           position: relative;
           box-sizing: content-box;
         }
-        .ffz-sidebar-preview-guest-avatar::after {
+        .trubbel-sidebar-preview-guest-avatar::after {
           content: "";
           position: absolute;
           top: -3px;
@@ -1012,7 +1016,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           z-index: 1;
           border: 0.2rem solid var(--avatar-border-color, #9147ff); /* Use CSS variable with fallback */
         }
-        .ffz-sidebar-preview-guest-avatar img {
+        .trubbel-sidebar-preview-guest-avatar img {
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -1021,13 +1025,13 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           z-index: 0;
         }
         /* Guest Name */
-        .ffz-sidebar-preview-guest-name {
+        .trubbel-sidebar-preview-guest-name {
           flex-grow: 1;
           font-size: 1.1rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text5")};
         }
         /* Guest Viewer Count */
-        .ffz-sidebar-preview-guest-viewers {
+        .trubbel-sidebar-preview-guest-viewers {
           font-size: 1.1rem;
           color: ${this.settings.get("addon.trubbel.sidebar.left-nav-preview.tooltip-text5")};
           display: flex;
@@ -1035,7 +1039,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
           gap: 4px;
         }
         /* Online Indicator */
-        .ffz-sidebar-preview-guest-online-indicator {
+        .trubbel-sidebar-preview-guest-online-indicator {
           display: inline-block;
           width: 8px;
           height: 8px;

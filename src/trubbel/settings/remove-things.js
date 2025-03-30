@@ -2,7 +2,7 @@ const { ManagedStyle } = FrankerFaceZ.utilities.dom;
 const { has } = FrankerFaceZ.utilities.object;
 
 const CLASSES = {
-  "hide-side-nav-for-you": ".side-nav--expanded [aria-label] :is(.side-nav__title):has(p[class*=\"tw-title\"]:first-child)",
+  "hide-side-nav-for-you": ".side-nav--expanded [aria-label] :is(.side-nav__title):has(h2[class*=\"tw-title\"]:first-child)",
   "hide-side-nav-guest-avatar": ".side-nav-card :is(.guest-star-avatar__mini-avatar)",
   "hide-side-nav-guest-number": ".side-nav-card [data-a-target=\"side-nav-card-metadata\"] :is(p):nth-child(2)",
   "hide-side-nav-hype-train": ".side-nav-card-hype-train-bottom",

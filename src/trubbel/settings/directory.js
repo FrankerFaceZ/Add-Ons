@@ -326,9 +326,9 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
       if (!usernameElement) return;
 
       // Create the followage element
-      el._ffz_followage = (
+      el._channel_followage = (
         <div
-          className="ffz-followage-date"
+          className="channel-followage-date"
           title={this.i18n.formatDateTime(followedAt, "full")}
         >
           Followed {formattedDate}
@@ -336,7 +336,7 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
       );
 
       // Insert it right after the username element
-      usernameElement.parentNode.insertBefore(el._ffz_followage, usernameElement.nextSibling);
+      usernameElement.parentNode.insertBefore(el._channel_followage, usernameElement.nextSibling);
 
       // Add attribute to the card for easy reference
       if (userData.id) {
@@ -352,9 +352,9 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
   }
 
   clearFollowageDate(el) {
-    if (el._ffz_followage) {
-      el._ffz_followage.remove();
-      el._ffz_followage = null;
+    if (el._channel_followage) {
+      el._channel_followage.remove();
+      el._channel_followage = null;
     }
   }
 
@@ -372,7 +372,7 @@ export class Directory extends FrankerFaceZ.utilities.module.Module {
     // Directory - Following - Show Channel Follow Date
     if (this.settings.get("addon.trubbel.directory.show-followage")) {
       this.style.set("followage-date", `
-        .ffz-followage-date {
+        .channel-followage-date {
           text-overflow: ellipsis;
           white-space: nowrap;
           overflow: hidden;
