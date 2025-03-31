@@ -317,6 +317,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
   }
 
   updateSidebar(el) {
+    if (!this.settings.get("addon.trubbel.sidebar.left-nav-preview")) return;
     try {
       // Find all streams in left side navigation
       const cards = el.querySelectorAll(".side-nav-card");
@@ -392,6 +393,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
   // Create preview container
   createPreviewContainer() {
+    if (!this.settings.get("addon.trubbel.sidebar.left-nav-preview")) return;
     if (this.previewContainer) return;
 
     this.previewContainer = createElement("div", {
@@ -465,6 +467,7 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
 
   // Update preview size based on settings
   updatePreviewSize() {
+    if (!this.settings.get("addon.trubbel.sidebar.left-nav-preview")) return;
     if (!this.previewContainer) return;
 
     // Remove any existing size classes
