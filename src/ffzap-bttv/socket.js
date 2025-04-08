@@ -140,7 +140,8 @@ export default class Socket {
 		}
 
 		this.emit('broadcast_me', {
-			name: this.parent.site.getUser().login,
+			provider: "twitch",
+			providerId: this.parent.site.getUser().id,
 			channel,
 		});
 	}
