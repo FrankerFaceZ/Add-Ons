@@ -1,0 +1,12 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "ClipsManagerFullscreenButton",
+	"name": "Clips Manager Fullscreen Button",
+	"author": "ArgoWizbang",
+	"description": "Adds a button to enable fullscreen mode to the video player on the Clips Manager page in the Creator Dashboard.",
+	"website": "https://argowizbang.com/ffz-add-on/clips-manager-fullscreen-button/",
+	"created": "2025-04-09T00:13:09.514Z",
+	"updated": "2025-04-09T00:13:09.514Z"
+}
