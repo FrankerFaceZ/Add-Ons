@@ -210,7 +210,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 10,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Background",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -222,7 +223,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 11,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Title",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -234,7 +236,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 12,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Category",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -246,7 +249,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 13,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Viewer Count",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -258,7 +262,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 14,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Hype Train",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -270,7 +275,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 15,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Tooltip Guests",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });
@@ -282,7 +288,8 @@ export class SideBarPreview extends FrankerFaceZ.utilities.module.Module {
         sort: 16,
         path: "Add-Ons > Trubbel\u2019s Utilities > Sidebar >> Left Navigation",
         title: "Border",
-        component: "setting-color-box"
+        component: "setting-color-box",
+				openUp: true
       },
       changed: () => this.updateCSS()
     });

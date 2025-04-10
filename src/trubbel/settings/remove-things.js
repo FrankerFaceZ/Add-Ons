@@ -2,7 +2,9 @@ const { ManagedStyle } = FrankerFaceZ.utilities.dom;
 const { has } = FrankerFaceZ.utilities.object;
 
 const CLASSES = {
+  "hide-stream-chat-header": ".stream-chat-header,.toggle-visibility__right-column--expanded",
   "hide-side-nav-for-you": ".side-nav--expanded [aria-label] :is(.side-nav__title):has(h2[class*=\"tw-title\"]:first-child)",
+  "hide-side-nav-sort-paragraph": "[data-a-target=\"side-nav-header-expanded\"] p",
   "hide-side-nav-guest-avatar": ".side-nav-card :is(.guest-star-avatar__mini-avatar)",
   "hide-side-nav-guest-number": ".side-nav-card [data-a-target=\"side-nav-card-metadata\"] :is(p):nth-child(2)",
   "hide-side-nav-hype-train": ".side-nav-card-hype-train-bottom",
@@ -23,6 +25,18 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
     this.inject("settings");
     this.inject("site.router");
 
+    // Remove/Hide Things - Chat - Remove Stream Chat Header
+    this.settings.add("addon.trubbel.remove-things.chat-stream-chat-header", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Remove/Hide Things >> Chat",
+        title: "Remove Stream Chat Header",
+        description: "**Note:** This also hides the collapse and viewer list buttons.",
+        component: "setting-check-box"
+      },
+      changed: val => this.toggleHide("hide-stream-chat-header", val)
+    });
     // Remove/Hide Things - Left Navigation - Remove the "For You"-text
     this.settings.add("addon.trubbel.remove-things.left-nav-for-you", {
       default: false,
@@ -34,11 +48,22 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
       },
       changed: val => this.toggleHide("hide-side-nav-for-you", val)
     });
+    // Remove/Hide Things - Left Navigation - Remove the "Viewers (High to Low)"-text
+    this.settings.add("addon.trubbel.remove-things.left-nav-sort-paragraph", {
+      default: false,
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Remove/Hide Things >> Left Navigation",
+        title: "Remove the \"Viewers (High to Low)\"-text",
+        component: "setting-check-box"
+      },
+      changed: val => this.toggleHide("hide-side-nav-sort-paragraph", val)
+    });
     // Remove/Hide Things - Left Navigation - Remove the Guest avatars
     this.settings.add("addon.trubbel.remove-things.left-nav-guest-avatar", {
       default: false,
       ui: {
-        sort: 0,
+        sort: 2,
         path: "Add-Ons > Trubbel\u2019s Utilities > Remove/Hide Things >> Left Navigation",
         title: "Remove the Guest avatars",
         component: "setting-check-box"
@@ -49,7 +74,7 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.remove-things.left-nav-guest-number", {
       default: false,
       ui: {
-        sort: 0,
+        sort: 3,
         path: "Add-Ons > Trubbel\u2019s Utilities > Remove/Hide Things >> Left Navigation",
         title: "Remove the Guest +number text",
         component: "setting-check-box"
@@ -60,7 +85,7 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.remove-things.left-nav-hype-train", {
       default: false,
       ui: {
-        sort: 0,
+        sort: 4,
         path: "Add-Ons > Trubbel\u2019s Utilities > Remove/Hide Things >> Left Navigation",
         title: "Remove Hype Train",
         component: "setting-check-box"
@@ -180,7 +205,9 @@ export class RemoveThings extends FrankerFaceZ.utilities.module.Module {
   }
 
   onEnable() {
+    this.toggleHide("hide-stream-chat-header", this.settings.get("addon.trubbel.remove-things.chat-stream-chat-header"));
     this.toggleHide("hide-side-nav-for-you", this.settings.get("addon.trubbel.remove-things.left-nav-for-you"));
+    this.toggleHide("hide-side-nav-sort-paragraph", this.settings.get("addon.trubbel.remove-things.left-nav-sort-paragraph"));
     this.toggleHide("hide-side-nav-guest-avatar", this.settings.get("addon.trubbel.remove-things.left-nav-guest-avatar"));
     this.toggleHide("hide-side-nav-guest-number", this.settings.get("addon.trubbel.remove-things.left-nav-guest-number"));
     this.toggleHide("hide-side-nav-hype-train", this.settings.get("addon.trubbel.remove-things.left-nav-hype-train"));

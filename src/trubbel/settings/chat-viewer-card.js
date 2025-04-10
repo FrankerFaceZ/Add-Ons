@@ -157,7 +157,7 @@ export class ChatViewerCard extends FrankerFaceZ.utilities.module.Module {
 
   checkNavigation() {
     if (!this.settings.get("addon.trubbel.chat.viewer-card")) return;
-    const chatRoutes = this.site.constructor.CHAT_ROUTES;
+    const chatRoutes = this.resolve("site").constructor.CHAT_ROUTES;
 
     if (chatRoutes.includes(this.router?.current?.name)) {
       this.init();
