@@ -1,0 +1,5 @@
+mutation MassTermBlockerTool_BlockTerms( $input: AddChannelBlockedTermInput! ) {
+    addChannelBlockedTerm( input: $input ) {
+        phrases
+    }
+}
