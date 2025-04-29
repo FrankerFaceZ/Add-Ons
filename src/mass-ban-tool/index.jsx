@@ -129,48 +129,60 @@ class MassModerationUtilities extends Addon {
 		return entries.trim().match( /^.*$/gm );
 	}
 
+	entriesProvided( array ) {
+		return array.length > 0 && array[0] !== '';
+	}
+
 	async runBanTool( users, action, reason ) {
 		const usersArray = this.entriesToArray( users );
 
-		this.toolIsRunning = true;
-		
-		for ( const user of usersArray ) {
-			await this.actionUser( user, action, reason );
-		}
+		if ( this.entriesProvided( usersArray ) ) {
+			this.toolIsRunning = true;
+			
+			for ( const user of usersArray ) {
+				await this.actionUser( user, action, reason );
+			}
 
-		this.toolIsRunning = false;
+			this.toolIsRunning = false;
+		} else {
+			this.log.info( 'Aborting run: no usernames were provided.' );
+		}
 	}
 
 	async runTermBlockerTool( terms, privacy ) {
 		const termsArray = this.entriesToArray( terms );
 
-		let isModEditable = true;
+		if ( this.entriesProvided( termsArray ) ) {
+			let isModEditable = true;
 
-		if ( ! this.channelID ) {
-            this.getChannelID();
-        }
-
-		if ( privacy === 'private' ) {
-			isModEditable = false;
-		}
-
-		for ( const term of termsArray ) {
-			const blockTerm = await this.apollo.client.mutate( {
-				mutation:  BLOCK_TERMS,
-				variables: {
-					input: {
-						channelID: this.channelID,
-						isModEditable: isModEditable,
-						phrase: term
-					}
-				}
-			} ).catch( ( err ) => this.log.info( err ) );
-
-			if ( blockTerm .data.addChannelBlockedTerm.length > 0 ) {
-				this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
-			} else {
-				this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
+			if ( ! this.channelID ) {
+				this.getChannelID();
 			}
+
+			if ( privacy === 'private' ) {
+				isModEditable = false;
+			}
+
+			for ( const term of termsArray ) {
+				const blockTerm = await this.apollo.client.mutate( {
+					mutation:  BLOCK_TERMS,
+					variables: {
+						input: {
+							channelID: this.channelID,
+							isModEditable: isModEditable,
+							phrase: term
+						}
+					}
+				} ).catch( ( err ) => this.log.info( err ) );
+
+				if ( blockTerm .data.addChannelBlockedTerm.length > 0 ) {
+					this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
+				} else {
+					this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
+				}
+			}
+		} else {
+			this.log.info( 'Aborting run: no terms/phrases were provided.' );
 		}
 	}
 
@@ -194,8 +206,8 @@ class MassModerationUtilities extends Addon {
 	removeModal() {
 		this.modal.querySelector( '.ffz-mmu-tool-form' ).reset();
 
-		updateEntryCount( this.BanTool );
-		updateEntryCount( this.TermBlocker );
+		updateEntryCount( this, this.BanTool );
+		updateEntryCount( this, this.TermBlocker );
 
 		this.BanTool.toggleBanReasonField( { target: { value: 'ban' } } );
 

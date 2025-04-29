@@ -19,7 +19,7 @@ export class MassTermBlocker {
                         <div class="tw-flex tw-align-items-center">
                             <label for="ffz-mmu-mass-term-blocker-tool-entries-list">Terms List<br /><span class="ffz-mmu-entry-count-label">(Current Term Count: <span id="ffz-mmu-mass-term-blocker-tool-entry-count" class="ffz-mmu-mass-term-blocker-tool-entry-count ffz-mmu-entry-count" >0</span>)</span></label>
 
-                            <textarea id="ffz-mmu-mass-term-blocker-tool-entries-list" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mmu-mass-term-blocker-tool-entries-list ffz-mmu-entries-list" placeholder="Term1&#10;Term2&#10;Term3&#10;Etc." rows="10" onKeyUp={ () => updateEntryCount( this ) }></textarea>
+                            <textarea id="ffz-mmu-mass-term-blocker-tool-entries-list" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mmu-mass-term-blocker-tool-entries-list ffz-mmu-entries-list" placeholder="Term1&#10;Term2&#10;Term3&#10;Etc." rows="10" onKeyUp={ () => updateEntryCount( this.MMU, this ) }></textarea>
                         </div>
 
                         <section class="tw-c-text-alt-2">

@@ -42,7 +42,7 @@ export class MassBanTool {
                                 <div class="tw-flex tw-align-items-center">
                                     <label for="ffz-mmu-mass-ban-tool-entries-list">Users List<br /><span class="ffz-mmu-entry-count-label">(Current User Count: <span id="ffz-mmu-mass-ban-tool-entry-count" class="ffz-mmu-mass-ban-tool-entry-count ffz-mmu-entry-count" >0</span>)</span></label>
 
-                                    <textarea id="ffz-mmu-mass-ban-tool-entries-list" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mmu-mass-ban-tool-entries-list ffz-mmu-entries-list" placeholder="Username1&#10;Username2&#10;Username3&#10;Etc." rows="10" onKeyUp={ () => updateEntryCount( this ) }></textarea>
+                                    <textarea id="ffz-mmu-mass-ban-tool-entries-list" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mmu-mass-ban-tool-entries-list ffz-mmu-entries-list" placeholder="Username1&#10;Username2&#10;Username3&#10;Etc." rows="10" onKeyUp={ () => updateEntryCount( this.MMU, this ) }></textarea>
                                 </div>
 
                                 <section class="tw-c-text-alt-2">

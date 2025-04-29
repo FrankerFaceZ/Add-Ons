@@ -31,6 +31,6 @@ export function addEntryToList( tool, user ) {
     updateEntryCount( tool );
 }
 
-export function updateEntryCount( tool ) {
-    document.getElementById( `ffz-mmu-mass-${tool.toolName}-tool-entry-count` ).textContent = document.getElementById( `ffz-mmu-mass-${tool.toolName}-tool-entry-count` ).textContent = tool.entriesListTextArea.value.trim().split( /[\r\n|\r|\n]/ ).filter( Boolean ).length;
+export function updateEntryCount( MMU, tool ) {
+    MMU.modal.querySelector( `#ffz-mmu-mass-${tool.toolName}-tool-entry-count` ).textContent = tool.entriesListTextArea.value.trim().split( /[\r\n|\r|\n]/ ).filter( Boolean ).length;
 }
