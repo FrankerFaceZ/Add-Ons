@@ -177,6 +177,8 @@ class MassModerationUtilities extends Addon {
 
 				if ( blockTerm .data.addChannelBlockedTerm.length > 0 ) {
 					this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
+
+					await sleep( 350 );
 				} else {
 					this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
 				}

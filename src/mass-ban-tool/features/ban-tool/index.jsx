@@ -125,7 +125,7 @@ export class MassBanTool {
                     </div>
                 );
 
-                fileUploadButton.addEventListener( 'click', () => { openFileSelector( this ) } );
+                fileUploadButton.addEventListener( 'click', () => { openFileSelector( this.MMU, this ) } );
 
                 this.toolContent.querySelector( '.ffz-mmu-mass-ban-tool-upload-field' ).append( fileUploadButton );
         
@@ -161,7 +161,7 @@ export class MassBanTool {
 				} )
 
 				for ( const follower of followers?.data?.user?.followers?.edges ) {
-					addEntryToList( this, follower.node.displayName );
+					addEntryToList( this.MMU, this, follower.node.displayName );
 				}
 			} catch {
                 this.toggleLoadingFollowers();

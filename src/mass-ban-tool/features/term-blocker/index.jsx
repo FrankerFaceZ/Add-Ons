@@ -70,7 +70,7 @@ export class MassTermBlocker {
             </div>
         );
 
-        fileUploadButton.addEventListener( 'click', () => { openFileSelector( this ) } );
+        fileUploadButton.addEventListener( 'click', () => { openFileSelector( this.MMU, this ) } );
 
         this.toolContent.querySelector( '.ffz-mmu-mass-term-blocker-tool-upload-field' ).append( fileUploadButton );
 

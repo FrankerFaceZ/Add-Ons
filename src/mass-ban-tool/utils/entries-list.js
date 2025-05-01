@@ -1,6 +1,6 @@
 const { openFile } = FrankerFaceZ.utilities.dom;
 
-export async function openFileSelector( tool ) {
+export async function openFileSelector( MMU, tool ) {
     const entriesListFile = await openFile( 'text/plain', false );
 
     if ( entriesListFile.type === 'text/plain' ) {
@@ -9,13 +9,13 @@ export async function openFileSelector( tool ) {
                 const entriesListArray = contents.replace( /\r\n/gm, '\n' ).match( /^.*$/gm );
 
                 for ( const entry of entriesListArray ) {
-                    addEntryToList( tool, entry );
+                    addEntryToList( MMU, tool, entry );
                 }
             } );
     }
 }
 
-export function addEntryToList( tool, user ) {
+export function addEntryToList( MMU, tool, user ) {
     if ( tool.entriesListTextArea.value[0] !== tool.entriesListTextArea.value[ tool.entriesListTextArea.value.length - 1 ] && tool.entriesListTextArea.value[ tool.entriesListTextArea.value.length - 1 ] !== '\n' ) {
         tool.entriesListTextArea.value += '\n';
     }
@@ -28,7 +28,7 @@ export function addEntryToList( tool, user ) {
 
     tool.entriesListTextArea.scrollTop = tool.entriesListTextArea.scrollHeight;
 
-    updateEntryCount( tool );
+    updateEntryCount( MMU, tool );
 }
 
 export function updateEntryCount( MMU, tool ) {
