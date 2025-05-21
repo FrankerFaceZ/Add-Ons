@@ -1,48 +1,94 @@
-#ffz-mass-ban-tool-modal {
+.ffz-mmu-modal.ffz-dialog {
     --width: min(40vw, 128rem);
-    --height: min(85vh, calc(0.85 * var(--width)));
+    --height: min(90vh, calc(0.9 * var(--width)));
 
-    & > header {
+    & header {
         cursor: initial;
     }
 
-    & > section {
-        padding: 0.9rem 1rem 0.9rem 2rem;
+    & .ffz--menu-page {
+        display: none;
+    }
+    
+    & .ffz--menu-page.active-tool {
+        display: block;
     }
 
-    & .ffz-mass-ban-tool-user-count-label {
-        font-size: 1.15rem;
-    }
-
-    & .ffz-mass-ban-tool-user-count {
-        font-weight: bold;
-    }
-
-    & .ffz-mass-ban-tool-followers-import-custom-amount {
+    & .ffz-mmu-mass-ban-tool-followers-import-custom-amount {
         min-width: 7.5rem;
         text-align: center;
     }
 
-    & .ffz-mass-ban-tool-custom-followers-import {
-        margin-top: calc(0.5rem + var(--input-border-width-default) * -1) !important;
+    & footer {
+        padding: 0.4rem 1rem 0.4rem 2rem;
+    }
+}
+
+.ffz-mmu-nav {
+    padding: 0.4rem 1rem 0.4rem 0;
+}
+
+.ffz-mmu-nav-menu {
+    list-style: none;
+}
+
+.ffz-mmu-nav-menu-btn {
+    padding: 0.4rem 2rem;
+    font-weight: bold;
+    font-size: 1.5rem;
+
+    &::after {
+        content: "";
+        position: relative;
+        display: block;
+        top: 0.8rem;
+        right: 2rem;
+        width: calc(100% + 4rem);
+        border-bottom: 2px solid transparent;
     }
 
-    & .loading .ffz-mass-ban-tool-recent-followers-inputs,
-    & :not(.loading) > .ffz-mass-ban-tool-recent-followers-loading {
-        display: none !important;
+    &.active-tool {
+        pointer-events: none;
+        text-decoration: none;
+        color: var(--color-text-link);
     }
 
-    & .loading .ffz-mass-ban-tool-recent-followers-loading {
-        display: flex !important;
-        line-height: 2rem;
-        color: var(--color-background-button-primary-default);
+    &.active-tool::after {
+        border-bottom-color: var(--color-text-link);
     }
 
-    & .ffz--widget:has(.ffz-mass-ban-tool-ban-reason:disabled) .tw-flex:hover {
-        cursor: not-allowed;
+    &:hover {
+        color: var(--color-text-link-hover);
     }
+}
 
-    & .ffz-mass-ban-tool-run-btn {
-        text-align: right;
-    }
+.ffz-mmu-entry-count-label {
+    font-size: 1.15rem;
+}
+
+.ffz-mmu-entry-count {
+    font-weight: bold;
+}
+
+.ffz-mmu-mass-ban-tool-custom-followers-import {
+    margin-top: calc(0.5rem + var(--input-border-width-default) * -1) !important;
+}
+
+.loading .ffz-mmu-mass-ban-tool-recent-followers-inputs,
+:not(.loading) > .ffz-mmu-mass-ban-tool-recent-followers-loading {
+    display: none !important;
+}
+
+.ffz--widget:has(.ffz-mmu-mass-ban-tool-ban-reason:disabled) .tw-flex:hover {
+    cursor: not-allowed;
+}
+
+.loading .ffz-mmu-mass-ban-tool-recent-followers-loading {
+    display: flex !important;
+    line-height: 2rem;
+    color: var(--color-background-button-primary-default);
+}
+
+.ffz-mmu-mass-ban-tool-ban-reason:disabled {
+    text-decoration: line-through;
 }

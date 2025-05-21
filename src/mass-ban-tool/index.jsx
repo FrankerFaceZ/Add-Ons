@@ -1,19 +1,25 @@
 'use strict';
 
 import CSS_URL from './style.scss';
-import GET_RECENT_FOLLOWERS from './utils/graphql/recent-followers.gql';
+import { MassBanTool } from './features/ban-tool/';
+import { MassTermBlocker } from './features/term-blocker/';
+import { updateEntryCount } from './utils/entries-list';
+import BLOCK_TERMS from './utils/graphql/block-terms.gql';
 
-const { openFile, createElement } = FrankerFaceZ.utilities.dom,
-	  { sleep }                   = FrankerFaceZ.utilities.object;
+const { createElement }    = FrankerFaceZ.utilities.dom,
+	  { sleep }            = FrankerFaceZ.utilities.object;
 
-class MassBanTool extends Addon {
+class MassModerationUtilities extends Addon {
 	constructor( ...args ) {
 		super( ...args );
+
+		this.BanTool     = new MassBanTool( this ),
+		this.TermBlocker = new MassTermBlocker( this );
 
 		this.massBanToolCSS = document.createElement( 'link' );
 
 		this.massBanToolCSS.rel  = 'stylesheet';
-		this.massBanToolCSS.id   = 'ffz-mass-ban-tool-css';
+		this.massBanToolCSS.id   = 'ffz-mmu-css';
 		this.massBanToolCSS.href = CSS_URL;
 
 		this.toolIsRunning = false;
@@ -21,199 +27,196 @@ class MassBanTool extends Addon {
 		this.inject( 'site.apollo' );
 		this.inject( 'site.chat' );
 		this.inject( 'site.fine' );
+	}
 
+	getChannelName() {
 		this.channelName = this.chat.router.match[1];
 	}
 
-	buildMassBanToolModal() {
-		const modalCloseBtn        = ( <button type="button" class="tw-button-icon tw-mg-x-05" onClick={ () => this.removeMassBanToolModal() }>
-				<span class="tw-button-icon__icon">
-					<figure class="ffz-i-window-close" />
-				</span>
-			</button> ),
-			  buttonClass          = 'tw-pd-x-1 tw-pd-y-05 tw-mg-y-05 tw-mg-r-05 tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-button',
-			  fileUploadBtn        = ( <button type="button" class={buttonClass + ' ffz-mass-ban-tool-file-upload'} onClick={ () => this.openFileSelector() }>
-					<span class="tw-button__icon tw-button__icon--left ffz-i-upload"></span>
-					<span class="tw-button__text">Select File</span>
-				</button> ),
-			  recentFollowersImport = {
-				  five:       ( <button type="button" class={buttonClass + ' ffz-mass-ban-tool-5-followers-import'} onClick={ () => this.importRecentFollowers( 5 ) }><span class="tw-button__text">5</span></button> ),
-				  ten:        ( <button type="button" class={buttonClass + ' ffz-mass-ban-tool-10-followers-import'} onClick={ () => this.importRecentFollowers( 10 ) }><span class="tw-button__text">10</span></button> ),
-				  twentyFive: ( <button type="button" class={buttonClass + ' ffz-mass-ban-tool-25-followers-import'} onClick={ () => this.importRecentFollowers( 25 ) }><span class="tw-button__text">25</span></button> ),
-				  oneHundred: ( <button type="button" class={buttonClass + ' ffz-mass-ban-tool-100-followers-import'} onClick={ () => this.importRecentFollowers( 100 ) }><span class="tw-button__text">100</span></button> ),
-				  custom:     ( <span class="tw-border-l tw-mg-l-1 tw-pd-l-1">
-					  <input type="number" id="ffz-mass-ban-tool-followers-import-custom-amount" name="ffz-mass-ban-tool-followers-import-custom-amount" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mass-ban-tool-followers-import-custom-amount" min="0" max="100" placeholder="Custom" onKeyUp={ ( e ) => {
-							if ( e.key === 'Enter' ) {
-								this.importCustomFollowersAmount( parseInt( document.getElementById( 'ffz-mass-ban-tool-followers-import-custom-amount' ).value ) );
-							}
-						} }/>
+	getChannelID() {
+        this.channelID = Object.keys( this.chat.chat.room_ids )[0];
+    }
 
-					  <button type="button" id="ffz-mass-ban-tool-custom-followers-import" class={buttonClass + ' ffz-mass-ban-tool-custom-followers-import'} onClick={ () => this.importCustomFollowersAmount( parseInt( document.getElementById( 'ffz-mass-ban-tool-followers-import-custom-amount' ).value ) ) }>
-						<span class="tw-button__text">Import</span>
-					  </button>
-				  </span> )
-			  };
+	buildModal() {
+		this.modal = (
+			<div id="ffz-mmu-modal" class="ffz-dialog tw-elevation-3 tw-c-background-alt tw-c-text-base tw-border tw-flex tw-flex-nowrap tw-flex-column ffz-mmu-modal">
+				<header class="tw-c-background-base tw-full-width tw-align-items-center tw-flex tw-flex-nowrap">
+					<h3 class="ffz-i-mass-ban-tool ffz-i-pd-1"><i class="ffz-i-block"></i> Mass Moderation Utilities</h3>
 
-		this.massBanToolModal = ( <div id="ffz-mass-ban-tool-modal" class="ffz-dialog tw-elevation-3 tw-c-background-alt tw-c-text-base tw-border tw-flex tw-flex-nowrap tw-flex-column">
-			<header class="tw-c-background-base tw-full-width tw-align-items-center tw-flex tw-flex-nowrap">
-				<h3 class="ffz-i-mass-ban-tool ffz-i-pd-1"><i class="ffz-i-block"></i> Mass Ban Tool</h3>
+					<div class="tw-flex-grow-1 tw-pd-x-2"></div>
 
-				<div class="tw-flex-grow-1 tw-pd-x-2"></div>
-			</header>
+					<button type="button" class="tw-button-icon tw-mg-x-05" onClick={ () => this.removeModal() }>
+						<span class="tw-button-icon__icon">
+							<figure class="ffz-i-window-close" />
+						</span>
+					</button>
+				</header>
 
-			<section class="tw-border-t tw-full-height tw-full-width tw-flex tw-flex-nowrap tw-overflow-hidden">
-				<div class="scrollable-area tw-flex-grow-1" data-simplebar-auto-hide="true" data-simplebar-scrollbar-min-size="10" data-simplebar="init">
-					<form id="ffz-mass-ban-tool-form" class="ffz-mass-ban-tool-form">
-						<div class="ffz--menu-page">
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz--text-box default">
-									<div class="tw-flex tw-align-items-center">
-										<label for="ffz-mass-ban-tool-users-list">Users List<br /><span class="ffz-mass-ban-tool-user-count-label">(Current User Count: <span id="ffz-mass-ban-tool-user-count" class="ffz-mass-ban-tool-user-count" >0</span>)</span></label>
+				<nav id="ffz-mmu-nav" class="tw-c-background-alt tw-full-width ffz-mmu-nav">
+					<menu id="ffz-mmu-nav-menu" class="tw-align-items-center tw-flex tw-flex-norwap ffz-mmu-nav-menu">
+						<li class="ffz-mmu-nav-menu-item">
+							<button id="ffz-mmu-menu-mass-ban-tool" class="ffz-mmu-nav-menu-btn ffz-mmu-nav-menu-mass-ban-tool" onClick={ () => this.toggleTool( 'ban' ) }>Ban/Unban</button>
+						</li>
 
-										<textarea id="ffz-mass-ban-tool-users-list" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mass-ban-tool-users-list" placeholder="Username1&#10;Username2&#10;Username3&#10;Etc." rows="10" onKeyUp={ () => this.updateUserCount() }></textarea>
-									</div>
+						<li class="tw-border-l ffz-mmu-nav-menu-item">
+							<button id="ffz-mmu-menu-mass-term-blocker-tool" class="ffz-mmu-nav-menu-btn ffz-mmu-nav-menu-mass-term-blocker-tool" onClick={ () => this.toggleTool( 'term-blocker' ) }>Term Blocker</button>
+						</li>
+					</menu>
+				</nav>
 
-									<section class="tw-c-text-alt-2">
-										<div>
-											<p>The list of users you wish to action. List one username per line.</p>
-										</div>
-									</section>
-								</div>
+				<section class="tw-border-t tw-full-height tw-full-width tw-flex tw-flex-nowrap tw-overflow-hidden">
+					<div class="scrollable-area tw-flex-grow-1" data-simplebar-auto-hide="true" data-simplebar-scrollbar-min-size="10" data-simplebar="init">
+						<form id="ffz-mmu-tool-form" class="ffz-mmu-tool-form">
+							<div id="ffz-mmu-tabs" class="ffz-mmu-tabs">
+								{this.BanTool.buildToolContent()}
+
+								{this.TermBlocker.buildToolContent()}
 							</div>
+						</form>
+					</div>
+				</section>
 
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz--select-box">
-									<div class="tw-flex tw-align-items-start ffz-mass-ban-tool-upload-field">
-										<label class="tw-mg-y-05" for="ffz-mass-ban-tool-upload-file">Upload Users List File</label>
-									</div>
-
-									<section class="tw-c-text-alt-2">
-										<div>
-											<p>Optionally you can upload a <code>.txt</code> file here to populate the Users List. Make sure your list consists of one username per line.</p>
-										</div>
-									</section>
-								</div>
-							</div>
-
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz--select-box">
-									<div id="ffz-mass-ban-tool-recent-followers-field" class="tw-flex tw-align-items-start ffz-mass-ban-tool-recent-followers-field">
-										<label class="tw-mg-y-05" for="ffz-mass-ban-tool-recent-followers-import">Recent Followers</label>
-
-										<div class="tw-flex tw-align-items-start ffz-mass-ban-tool-recent-followers-inputs"></div>
-
-										<div class="tw-flex tw-align-items-start tw-pd-y-05 tw-mg-y-05 ffz-mass-ban-tool-recent-followers-loading">
-										<figure class="ffz-i-t-reset loading tw-mg-r-05"></figure> Retrieving recent followers&hellip;
-										</div>
-									</div>
-
-									<section class="tw-c-text-alt-2">
-										<div>
-											<p>Optionally you can automatically import a specific number of the most recent followers of the channel, up to 100.</p>
-										</div>
-									</section>
-								</div>
-							</div>
-
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz--select-box default">
-									<div class="tw-flex tw-align-items-center">
-										<label class="tw-mg-y-05 action-label" for="ffz-mass-ban-tool-unban-action-cb">Action To Take</label>
-
-										<select id="ffz-mass-ban-tool-unban-action-cb" class="tw-border-radius-medium tw-font-size-6 ffz-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05 tw-mg-05 ffz-mass-ban-tool-action" size="0">
-											<option value="ban">Ban</option>
-
-											<option value="unban">Unban</option>
-										</select>
-									</div>
-
-									<section class="tw-c-text-alt-2">
-										<div>
-											<p>Select whether to ban or unban the listed users.</p>
-										</div>
-									</section>
-								</div>
-							</div>
-
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz--text-box default">
-									<div class="tw-flex tw-align-items-center">
-										<label for="ffz-mass-ban-tool-ban-reason">Reason for Ban</label>
-
-										<input id="ffz-mass-ban-tool-ban-reason" class="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 tw-mg-05 ffz-input ffz-mass-ban-tool-ban-reason" type="text" placeholder="Being a troll" />
-									</div>
-
-									<section class="tw-c-text-alt-2">
-										<div>
-											<p>An optional reason for the ban which will be applied to every ban. Not applicable when unbanning.</p>
-										</div>
-									</section>
-								</div>
-							</div>
-
-							<div class="tw-mg-y-05">
-								<div class="ffz--widget ffz-mass-ban-tool-run-btn default">
-									<div class="tw-flex-shrink-0">
-										<button class="tw-button" type="button">
-											<span class="tw-button__text">Run Tool</span>
-										</button>
-									</div>
-								</div>
+				<footer class="tw-c-background-base tw-full-width tw-align-items-center tw-justify-content-end tw-flex tw-flex-nowrap">
+					<div class="tw-mg-y-05">
+						<div class="ffz--widget ffz-mmu-run-tool-btn default">
+							<div class="tw-flex-shrink-0">
+								<button class="tw-button" type="button" onClick={ () => this.runToolConfirmation() }>
+									<span class="tw-button__text">Run Tool</span>
+								</button>
 							</div>
 						</div>
-					</form>
-				</div>
-			</section>
-		</div> );
+					</div>
+				</footer>
+			</div>
+		);
+	}
 
-		/**
-		 * Disable "Ban Reason" field when action is set to "Unban"
-		 */
-		this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-action' )[0].addEventListener( 'change', ( event ) => {
-			this.toggleBanReasonField( event );
-		} );
+	toggleTool( toolName ) {
+		this.removeActiveToolClassName();
 
-		/**
-		 * Add confirmation and run events to "Run Tool" button
-		 */
-		this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-run-btn' )[0].getElementsByClassName( 'tw-button' )[0].addEventListener( 'click', () => {
-			if ( this.toolIsRunning ) {
-				window.alert( 'The tool is currently running. Please wait until it is finished to run it again.' );
-			} else if ( window.confirm( 'Are you absolutely sure you want to run this tool? The process cannot be stopped once started.' ) ) {
-				this.runTool(
-					this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-users-list' )[0].value,
-					this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-action' )[0].value,
-					this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-ban-reason' )[0].value
-				);
+		this.addActiveToolClassName( toolName );
+	}
 
-				this.removeMassBanToolModal();
+	/**
+	 * Add confirmation and run events to "Run Tool" button
+	 */
+	runToolConfirmation() {
+		if ( this.toolIsRunning ) {
+			window.alert( 'The tool is currently running. Please wait until it is finished to run it again.' );
+		} else if ( window.confirm( 'Are you absolutely sure you want to run this tool? The process cannot be stopped once started.' ) ) {
+			switch( this.modal.querySelector( '.ffz--menu-page.active-tool' ).dataset.mmuToolName ) {
+				case 'ban':
+					this.runBanTool(
+						this.modal.querySelector( '.ffz-mmu-mass-ban-tool-entries-list' ).value,
+						this.modal.querySelector( '.ffz-mmu-mass-ban-tool-action' ).value,
+						this.modal.querySelector( '.ffz-mmu-mass-ban-tool-ban-reason' ).value
+					);
+					break;
+				
+				case 'term-blocker':
+					this.runTermBlockerTool(
+						this.modal.querySelector( '.ffz-mmu-mass-term-blocker-tool-entries-list' ).value,
+						this.modal.querySelector( '.ffz-mmu-mass-term-blocker-tool-privacy' ).value
+					);
+					break;
 			}
-		} );
 
-		this.massBanToolModal.getElementsByTagName( 'header' )[0].append( modalCloseBtn );
-
-		for ( const importCount in recentFollowersImport ) {
-			this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-recent-followers-inputs' )[0].append( recentFollowersImport[ importCount ] );
+			this.removeModal();
 		}
-
-		this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-upload-field' )[0].append( fileUploadBtn );
-
-		this.usersListTextarea = this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-users-list' )[0];
 	}
 
-	insertMassBanToolModal() {
-		document.body.append( this.massBanToolModal );
+	entriesToArray( entries ) {
+		return entries.trim().match( /^.*$/gm );
 	}
 
-	removeMassBanToolModal() {
-		this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-form' )[0].reset();
+	entriesProvided( array ) {
+		return array.length > 0 && array[0] !== '';
+	}
 
-		this.updateUserCount();
+	async runBanTool( users, action, reason ) {
+		const usersArray = this.entriesToArray( users );
 
-		this.toggleBanReasonField( { target: { value: 'ban' } } );
+		if ( this.entriesProvided( usersArray ) ) {
+			this.toolIsRunning = true;
+			
+			for ( const user of usersArray ) {
+				await this.actionUser( user, action, reason );
+			}
 
-		if ( document.body.contains( this.massBanToolModal ) ) {
-			document.body.removeChild( this.massBanToolModal );
+			this.toolIsRunning = false;
+		} else {
+			this.log.info( 'Aborting run: no usernames were provided.' );
+		}
+	}
+
+	async runTermBlockerTool( terms, privacy ) {
+		const termsArray = this.entriesToArray( terms );
+
+		if ( this.entriesProvided( termsArray ) ) {
+			let isModEditable = true;
+
+			if ( ! this.channelID ) {
+				this.getChannelID();
+			}
+
+			if ( privacy === 'private' ) {
+				isModEditable = false;
+			}
+
+			for ( const term of termsArray ) {
+				const blockTerm = await this.apollo.client.mutate( {
+					mutation:  BLOCK_TERMS,
+					variables: {
+						input: {
+							channelID: this.channelID,
+							isModEditable: isModEditable,
+							phrase: term
+						}
+					}
+				} ).catch( ( err ) => this.log.info( err ) );
+
+				if ( blockTerm .data.addChannelBlockedTerm.length > 0 ) {
+					this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
+
+					await sleep( 350 );
+				} else {
+					this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
+				}
+			}
+		} else {
+			this.log.info( 'Aborting run: no terms/phrases were provided.' );
+		}
+	}
+
+	addActiveToolClassName( toolName ) {
+		this.modal.querySelector( `#ffz-mmu-mass-${toolName}-tool` ).classList.add( 'active-tool' );
+		this.modal.querySelector( `.ffz-mmu-nav-menu-mass-${toolName}-tool` ).classList.add( 'active-tool' );
+	}
+
+	removeActiveToolClassName() {
+		this.modal.querySelectorAll( '.active-tool' ).forEach( ( el, _i ) => {
+			el.classList.remove( 'active-tool' );
+		} );
+	}
+
+	insertModal( toolName ) {
+		this.addActiveToolClassName( toolName );
+
+		document.body.append( this.modal );
+	}
+
+	removeModal() {
+		this.modal.querySelector( '.ffz-mmu-tool-form' ).reset();
+
+		updateEntryCount( this, this.BanTool );
+		updateEntryCount( this, this.TermBlocker );
+
+		this.BanTool.toggleBanReasonField( { target: { value: 'ban' } } );
+
+		if ( document.body.contains( this.modal ) ) {
+			document.body.removeChild( this.modal );
+
+			this.removeActiveToolClassName();
 		}
 	}
 
@@ -261,8 +264,8 @@ class MassBanTool extends Addon {
 		if ( inst?.childContext && ! root.contains( this.modViewBtn ) ) {
 			this.modBarContainer = root && root.querySelector( '.modview-dock > div:last-child' );
 
-			this.modViewBtn  = ( <div class="tw-relative tw-mg-b-1" onClick={ () => this.insertMassBanToolModal() }>
-				<div id="ffz-mass-ban-tool-btn" class="tw-inline-flex tw-relative ffz-il-tooltip__container">
+			this.modViewBtn  = ( <div class="tw-relative tw-mg-b-1" onClick={ () => this.insertModal( 'ban' ) }>
+				<div id="ffz-mmu-btn" class="tw-inline-flex tw-relative ffz-il-tooltip__container">
 					<button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon ffz-core-button ffz-core-button--border tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative">
 							<div class="tw-align-items-center tw-flex tw-flex-grow-0">
 								<span class="tw-button-icon__icon">
@@ -271,7 +274,7 @@ class MassBanTool extends Addon {
 							</div>
 					</button>
 
-					<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-left">Mass Ban Tool</div>
+					<div class="ffz-il-tooltip ffz-il-tooltip--up ffz-il-tooltip--align-left">Mass Moderation Utilities</div>
 				</div>
 			</div> );
 
@@ -286,106 +289,11 @@ class MassBanTool extends Addon {
 		}
 	}
 
-	async openFileSelector() {
-		const usersListFile     = await openFile( 'text/plain', false );
-
-		if ( usersListFile.type === 'text/plain' ) {
-			usersListFile.text()
-				.then( ( contents ) => {
-					const usersListArray = contents.replace( /\r\n/gm, '\n' ).match( /^.*$/gm );
-
-					for ( const user of usersListArray ) {
-						this.addUserToList( user );
-					}
-				} );
-		}
-	}
-
-	addUserToList( user ) {
-		if ( this.usersListTextarea.value[0] !== this.usersListTextarea.value[ this.usersListTextarea.value.length - 1 ] && this.usersListTextarea.value[ this.usersListTextarea.value.length - 1 ] !== '\n' ) {
-			this.usersListTextarea.value += '\n';
-		}
-
-		this.usersListTextarea.value += user.trim();
-
-		if ( this.usersListTextarea.value[ this.usersListTextarea.value.length - 1 ] !== '\n' ) {
-			this.usersListTextarea.value += '\n';
-		}
-
-		this.usersListTextarea.scrollTop = this.usersListTextarea.scrollHeight;
-
-		this.updateUserCount();
-	}
-
-	async importRecentFollowers( count ) {
-		if ( count >= 1 && count <= 100 ) {
-			this.toggleLoadingFollowers();
-
-			try {
-				if ( ! this.apollo ) {
-					this.log.error( 'Apollo client not resolved.' );
-
-					return;
-				}
-
-				const followers = await this.apollo.client.query( {
-						query: GET_RECENT_FOLLOWERS,
-						variables: {
-							login: this.channelName,
-							first: count
-						}
-				} )
-
-				for ( const follower of followers?.data?.user?.followers?.edges ) {
-					this.addUserToList( follower.node.displayName );
-				}
-			} catch ( error ) {
-				this.log.error( 'Error retrieving recent followers.', error );
-			}
-
-			this.toggleLoadingFollowers();
-		} else {
-			alert( 'Number of recent followers to import must be between 1 and 100.' );
-		}
-	}
-
-	importCustomFollowersAmount( count ) {
-		document.getElementById( 'ffz-mass-ban-tool-followers-import-custom-amount' ).value = '';
-
-		this.importRecentFollowers( count );
-	}
-
-	toggleLoadingFollowers() {
-		document.getElementById( 'ffz-mass-ban-tool-recent-followers-field' ).classList.toggle( 'loading' );
-	}
-
-	updateUserCount() {
-		document.getElementById( 'ffz-mass-ban-tool-user-count' ).textContent = document.getElementById( 'ffz-mass-ban-tool-user-count' ).textContent = this.usersListTextarea.value.trim().split( /[\r\n|\r|\n]/ ).filter( Boolean ).length;
-	}
-
-	toggleBanReasonField( event ) {
-		const massBanToolBanReason = this.massBanToolModal.getElementsByClassName( 'ffz-mass-ban-tool-ban-reason' )[0];
-
-		if ( event.target.value === 'unban' ) {
-			massBanToolBanReason.disabled = true;
-		} else {
-			massBanToolBanReason.disabled = false;
-		}
-	}
-
-	async runTool( users, action, reason ) {
-		const usersArray = users.trim().match( /^.*$/gm );
-
-		this.toolIsRunning = true;
-		
-		for ( const user of usersArray ) {
-			await this.actionUser( user, action, reason );
-		}
-
-		this.toolIsRunning = false;
-	}
-
 	async actionUser( user, action, reason ) {
+		if ( ! this.channelName ) {
+			this.getChannelName();
+		}
+
 		let command = '/' + action + ' ' + user;
 
 		if ( action === 'ban' && reason.trim() !== '' ) {
@@ -405,28 +313,28 @@ class MassBanTool extends Addon {
 	onDisable() {
 		this.removeCSS();
 
-		this.removeMassBanToolModal();
+		this.removeModal();
 
 		this.removeModViewButton();
 
-		this.log.info( 'Mass Ban Tool add-on successfully disabled.' );
+		this.log.info( 'Mass Moderation Utilities add-on successfully disabled.' );
 	}
 
 	onEnable() {
 		if ( this.checkForModView() ) {
-			this.channelName = this.chat.router.match[1];
+			this.getChannelName();
 
 			this.insertCSS();
 
 			this.insertModViewButton();
 
-			this.buildMassBanToolModal();
+			this.buildModal();
 
-			this.log.info( 'Mass Ban Tool add-on successfully enabled.' );
+			this.log.info( 'Mass Moderation Utilies add-on successfully enabled.' );
 		} else {
-			this.log.info( 'Mass Ban Tool not enabled: Not currently in mod view.' );
+			this.log.info( 'Mass Moderation Utilities not enabled: Not currently in mod view.' );
 		}
 	}
 }
 
-MassBanTool.register();
+MassModerationUtilities.register();
