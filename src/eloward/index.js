@@ -66,7 +66,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		if (this.chromeExtensionDetected) {
 			this.log.info('🎭 Chrome extension detected, entering compatibility mode');
-			this.showCompatibilityNotice();
 		}
 
 		// Get current channel and game
@@ -424,30 +423,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				}
 			}
 		}, 10000);
-	}
-
-	showCompatibilityNotice() {
-		const notice = document.createElement('div');
-		notice.style.cssText = `
-			position: fixed; top: 20px; right: 20px; 
-			background: #18181b; color: #fff; padding: 15px 20px; 
-			border-radius: 8px; border: 2px solid #9147ff; 
-			font-family: Inter, Roblox, "Helvetica Neue", Helvetica, Arial, sans-serif; 
-			font-size: 14px; max-width: 350px; z-index: 10000;
-			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-		`;
-		notice.innerHTML = `
-			<strong>🎭 EloWard Compatibility Mode</strong><br>
-			Chrome extension detected - rank badges disabled.<br>
-			<small style="color: #a970ff;">FFZ features (7TV emotes, etc.) remain active.</small>
-		`;
-
-		document.body.appendChild(notice);
-		setTimeout(() => {
-			if (notice.parentNode) {
-				notice.remove();
-			}
-		}, 7000);
 	}
 
 	getCurrentChannel() {
