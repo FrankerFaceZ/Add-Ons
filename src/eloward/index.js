@@ -314,7 +314,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	async fetchRankData(username) {
 		try {
 			const response = await fetch(`${this.config.apiUrl}/ranks/lol/${username.toLowerCase()}`);
-			if (!response.ok) return null;
+			
+			if (response.status === 404) {
+				return null;
+			}
+			
+			if (!response.ok) {
+				return null;
+			}
 
 			const data = await response.json();
 			return {
