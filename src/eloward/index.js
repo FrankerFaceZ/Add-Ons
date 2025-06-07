@@ -9,8 +9,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.inject('chat');
 		this.inject('chat.badges');
 		this.inject('settings');
-		this.inject('site.router');
-		this.inject('site.twitch_data');
+		this.inject('site.fine');
 		this.inject('i18n');
 
 		// Configuration
@@ -23,25 +22,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			maxQueueSize: 10, // Maximum number of pending rank lookups
 		};
 
-		// Supported games
-		this.supportedGames = {
-			'League of Legends': true
-		};
-
 		// State management
 		this.cache = new Map();
 		this.processingQueue = [];
 		this.isProcessing = false;
-		this.isChannelSubscribed = false;
-		this.channelName = null;
-		this.currentGame = null;
+		this.subscribedChannels = new Set();
+		this.activeRooms = new Map(); // roomId -> roomLogin
 		this.chromeExtensionDetected = false;
-		this.gameCheckInterval = null;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.tokenizerActive = false;
 		this.userBadges = new Map();
 
-		// Settings
+		// Settings - Dynamic category detection
 		this.settings.add('eloward.enabled', {
 			default: true,
 			ui: {
@@ -52,62 +44,49 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			},
 			changed: () => this.updateBadges()
 		});
+
+		this.settings.add('eloward.category_detection', {
+			default: 0,
+			requires: ['context.categoryID'],
+			process: ctx => ctx.get('context.categoryID') === '21779', // League of Legends category ID
+			ui: {
+				path: 'Add-Ons >> EloWard Rank Badges',
+				title: 'Category Detection',
+				description: 'Control when rank badges are shown based on the current category.',
+				component: 'setting-select-box',
+				data: [
+					{value: -1, title: 'Disabled'},
+					{value: 0, title: 'Automatic (League of Legends only)'},
+					{value: 1, title: 'Always Enabled'}
+				]
+			}
+		});
 	}
 
 	async onEnable() {
-		this.log.info('🚀 EloWard FFZ Addon: Starting initialization');
+		this.log.info('EloWard FFZ Addon: Starting initialization');
 
 		// Initialize rank badges
 		this.initializeRankBadges();
 
 		// Detect Chrome extension conflict
 		this.detectChromeExtension();
-		this.log.info(`🔍 Chrome extension detection: ${this.chromeExtensionDetected ? 'DETECTED' : 'NOT DETECTED'}`);
-
 		if (this.chromeExtensionDetected) {
-			this.log.info('🎭 Chrome extension detected, entering compatibility mode');
+			this.log.info('Chrome extension detected, entering compatibility mode');
 		}
 
-		// Get current channel and game
-		this.channelName = this.getCurrentChannel();
-		this.log.info(`📺 Channel detected: ${this.channelName || 'NONE'}`);
+		// Set up chat room event listeners
+		this.on('chat:room-add', this.onRoomAdd, this);
+		this.on('chat:room-remove', this.onRoomRemove, this);
 
-		this.currentGame = await this.getGameWithRetries();
-		this.log.info(`🎮 Game detected: ${this.currentGame || 'NONE'}`);
+		// Setup chat tokenizer
+		this.setupChatTokenizer();
 
-		if (!this.channelName) {
-			this.log.info('❌ No channel detected - addon inactive');
-			return;
-		}
-
-		if (!this.isGameSupported(this.currentGame)) {
-			this.log.info(`❌ Game '${this.currentGame || 'unknown'}' is not supported - addon inactive`);
-			return;
-		}
-
-		this.log.info(`✅ Supported game '${this.currentGame}' detected`);
-
-		// Only activate rank badges if Chrome extension is NOT detected
-		if (!this.chromeExtensionDetected) {
-			this.isChannelSubscribed = await this.checkChannelSubscription();
-
-			if (!this.isChannelSubscribed) {
-				this.log.info(`❌ Channel ${this.channelName} is not subscribed - addon inactive`);
-				return;
-			}
-
-			this.log.info(`🛡️ EloWard FFZ Addon: ACTIVE for ${this.channelName}`);
-			this.setupChatTokenizer();
-		} else {
-			this.log.info('🎭 Chrome extension detected - rank badges disabled, FFZ emotes remain active');
-		}
-
-		this.startGameMonitoring();
-		this.log.info('🎉 EloWard FFZ Addon initialization complete');
+		this.log.info('EloWard FFZ Addon initialization complete');
 	}
 
-	getBadgeData(tier, title = null) {
-		const formattedTitle = title || `${tier.charAt(0).toUpperCase() + tier.slice(1)}`;
+	getBadgeData(tier, tooltipExtra = null) {
+		const formattedTitle = `${tier.charAt(0).toUpperCase() + tier.slice(1)}`;
 		return {
 			id: tier,
 			title: formattedTitle,
@@ -120,6 +99,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			},
 			svg: false,
 			click_url: 'https://www.eloward.com/',
+			tooltipExtra: tooltipExtra
 		};
 	}
 
@@ -130,19 +110,29 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	initializeRankBadges() {
 		for (const tier of this.rankTiers) {
 			const badgeId = this.getBadgeId(tier);
-			const badgeData = this.getBadgeData(tier);
+			const badgeData = this.getBadgeData(tier, (user, badge, createElement) => {
+				// Dynamic tooltip that shows current rank info
+				const cachedRank = this.getCachedRank(user.login);
+				if (cachedRank) {
+					const rankText = this.formatRankText(cachedRank);
+					return createElement('div', {
+						className: 'tw-pd-05'
+					}, rankText);
+				}
+				return null;
+			});
 			this.badges.loadBadgeData(badgeId, badgeData);
 		}
-		this.log.info('✅ Rank badges initialized');
 	}
 
 	setupChatTokenizer() {
-		this.chat.addTokenizer({
-			type: 'eloward-ranks',
-			process: this.processMessage.bind(this)
-		});
-		this.tokenizerActive = true;
-		this.log.info('👂 Chat tokenizer setup complete');
+		if (!this.tokenizerActive) {
+			this.chat.addTokenizer({
+				type: 'eloward-ranks',
+				process: this.processMessage.bind(this)
+			});
+			this.tokenizerActive = true;
+		}
 	}
 
 	removeChatTokenizer() {
@@ -152,26 +142,69 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
+	async onRoomAdd(room) {
+		const roomLogin = room.login;
+		const roomId = room.id;
+		
+		this.activeRooms.set(roomId, roomLogin);
+		
+		// Check if this channel is subscribed to EloWard
+		const isSubscribed = await this.checkChannelSubscription(roomLogin);
+		if (isSubscribed) {
+			this.subscribedChannels.add(roomLogin);
+		}
+	}
+
+	onRoomRemove(room) {
+		const roomId = room.id;
+		const roomLogin = this.activeRooms.get(roomId);
+		
+		this.activeRooms.delete(roomId);
+		if (roomLogin) {
+			this.subscribedChannels.delete(roomLogin);
+		}
+	}
+
 	processMessage(tokens, msg) {
-		if (!this.settings.get('eloward.enabled') || !this.isChannelSubscribed) {
+		// Check if addon is enabled
+		if (!this.settings.get('eloward.enabled')) {
+			return tokens;
+		}
+
+		// Check category detection setting
+		const categoryDetection = this.settings.get('eloward.category_detection');
+		if (categoryDetection === -1) {
+			return tokens; // Disabled
+		}
+		if (categoryDetection === 0 && !this.settings.get('eloward.category_detection')) {
+			return tokens; // Auto mode but not League of Legends
+		}
+
+		// Check if Chrome extension is active (skip if so)
+		if (this.chromeExtensionDetected) {
 			return tokens;
 		}
 
 		const user = msg?.user;
 		const username = user?.login;
+		const roomLogin = msg?.roomLogin;
 
-		if (!username) return tokens;
+		if (!username || !roomLogin) return tokens;
 
-		// Increment db_read counter for every rank lookup (cache hit or miss) - matching Chrome extension behavior
-		this.incrementMetric('db_read');
+		// Check if this room's channel is subscribed
+		if (!this.subscribedChannels.has(roomLogin)) {
+			return tokens;
+		}
+
+		// Increment metrics
+		this.incrementMetric('db_read', roomLogin);
 
 		const cachedRank = this.getCachedRank(username);
 		if (cachedRank) {
-			// Increment successful_lookup for cache hits - matching Chrome extension behavior
-			this.incrementMetric('successful_lookup');
+			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
 		} else {
-			this.queueRankLookup(username, user.id);
+			this.queueRankLookup(username, user.id, roomLogin);
 		}
 
 		return tokens;
@@ -184,12 +217,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		let rankText = rankData.tier;
 		
-		// Add division for ranks that have divisions (not Master, Grandmaster, Challenger)
+		// Add division for ranks that have divisions
 		if (rankData.division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankData.tier.toUpperCase())) {
 			rankText += ` ${rankData.division}`;
 		}
 		
-		// Add LP for ranked players (not for Unranked)
+		// Add LP for ranked players
 		if (rankData.tier.toUpperCase() !== 'UNRANKED' && 
 			rankData.leaguePoints !== undefined && 
 			rankData.leaguePoints !== null) {
@@ -212,14 +245,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const enabled = this.settings.get('eloward.enabled');
 
 		if (!enabled) {
-			// Clear all user badges when disabled
 			this.clearUserData();
-			// Also remove badge definitions when disabled
-			this.removeBadges();
 		} else {
-			// Re-initialize badges when re-enabled
-			this.initializeRankBadges();
-			
 			// Re-add badges for all users when re-enabled
 			for (const [userId, badgeInfo] of this.userBadges.entries()) {
 				const ffzUser = this.chat.getUser(userId);
@@ -231,7 +258,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	clearUserData() {
-		// Remove badges from all users - following FFZ addon pattern
+		// Remove badges from all users
 		for(const user of this.chat.iterateUsers()) {
 			user.removeAllBadges('addon.eloward');
 		}
@@ -255,14 +282,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Remove any existing EloWard badges from this user
 		this.removeUserBadges(userId);
 
-		// Update badge data with current rank information (for tooltip)
-		const formattedRankText = this.formatRankText(rankData);
-		const badgeData = this.getBadgeData(tier, formattedRankText);
-
-		// Load/update the badge data in FFZ's system
-		this.badges.loadBadgeData(badgeId, badgeData);
-
-		// Add the badge to the user
+		// Add the badge to the user (tooltip is handled by tooltipExtra function)
 		ffzUser.addBadge('addon.eloward', badgeId);
 
 		// Track this badge assignment
@@ -276,9 +296,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
 	}
 
-	queueRankLookup(username, userId) {
+	queueRankLookup(username, userId, roomLogin) {
 		if (!this.processingQueue.find(item => item.username === username)) {
-			this.processingQueue.push({ username, userId });
+			this.processingQueue.push({ username, userId, roomLogin });
 
 			if (this.processingQueue.length > this.config.maxQueueSize) {
 				this.processingQueue.shift();
@@ -292,16 +312,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (this.isProcessing || this.processingQueue.length === 0) return;
 
 		this.isProcessing = true;
-		const { username, userId } = this.processingQueue.shift();
+		const { username, userId, roomLogin } = this.processingQueue.shift();
 
 		try {
-			// db_read is already incremented in processMessage, so we don't need it here
 			const rankData = await this.fetchRankData(username);
 			if (rankData) {
 				this.setCachedRank(username, rankData);
 				this.addUserBadge(userId, username, rankData);
-				// Increment successful_lookup for API results - matching Chrome extension behavior
-				await this.incrementMetric('successful_lookup');
+				await this.incrementMetric('successful_lookup', roomLogin);
 			}
 		} catch (error) {
 			// Silently handle errors - most are 404s for users without rank data
@@ -381,12 +399,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	detectChromeExtension() {
+		// Check for data attribute on body set by Chrome extension
+		if (document.body.dataset.elowardExtension) {
+			this.chromeExtensionDetected = true;
+			return;
+		}
+
+		// Check for specific DOM elements created by Chrome extension
 		const indicators = [
 			'.eloward-rank-badge',
 			'#eloward-extension-styles',
 			'[data-eloward-processed]',
-			'[data-eloward-badge]',
-			'.eloward-tooltip'
+			'[data-eloward-badge]'
 		];
 
 		for (const selector of indicators) {
@@ -395,263 +419,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				return;
 			}
 		}
-
-		if (window.elowardExtension || window._eloward_chat_observer || document.body.dataset.elowardExtension) {
-			this.chromeExtensionDetected = true;
-		}
 	}
 
-	startGameMonitoring() {
-		this.gameCheckInterval = setInterval(async () => {
-			const newGame = await this.getGameWithRetries(3, 1000);
-
-			if (newGame !== this.currentGame) {
-				const oldGame = this.currentGame;
-				this.currentGame = newGame;
-
-				this.log.info(`🎮 Game changed: ${oldGame || 'unknown'} → ${newGame || 'unknown'}`);
-
-				if (this.isGameSupported(newGame)) {
-					this.log.info(`✅ Supported game '${newGame}' detected - activating addon`);
-
-					if (!this.chromeExtensionDetected) {
-						const subscribed = await this.checkChannelSubscription();
-						this.isChannelSubscribed = subscribed;
-
-						if (subscribed) {
-							this.setupChatTokenizer();
-						}
-					}
-				} else {
-					this.log.info(`❌ Game '${newGame || 'unknown'}' not supported - deactivating addon`);
-					this.isChannelSubscribed = false;
-					this.removeChatTokenizer();
-					this.updateBadges();
-				}
-			}
-		}, 10000);
-	}
-
-	getCurrentChannel() {
-		if (this.resolve('site.router')) {
-			const router = this.resolve('site.router');
-			if (router.current_name === 'user' && router.route?.params?.user) {
-				return router.route.params.user.toLowerCase();
-			}
-		}
-
-		const path = window.location.pathname;
-		const pathSegments = path.split('/');
-
-		if (pathSegments[1] === 'moderator' && pathSegments.length > 2) {
-			return pathSegments[2].toLowerCase();
-		}
-
-		if (pathSegments[1] && pathSegments[1] !== 'oauth2' && !pathSegments[1].includes('auth')) {
-			return pathSegments[1].toLowerCase();
-		}
-
-		return null;
-	}
-
-	logGameDetection(method, game) {
-		this.log.debug(`🎮 Game detected (${method}): ${game}`);
-		return game;
-	}
-
-	getCurrentGame() {
-		try {
-			// Method 1: FFZ API access
-			try {
-				const siteData = this.resolve('site');
-				if (siteData && siteData.getUser) {
-					const currentUser = siteData.getUser();
-					if (currentUser?.broadcastSettings?.game?.displayName) {
-						const game = currentUser.broadcastSettings.game.displayName;
-						return this.logGameDetection('FFZ Site Data', game);
-					}
-				}
-
-				const twitchData = this.resolve('site.twitch_data');
-				if (twitchData) {
-					const channelID = this.settings.get('context.channelID');
-					if (channelID && twitchData.getUser) {
-						twitchData.getUser(channelID).then(userData => {
-							if (userData?.broadcastSettings?.game?.displayName) {
-								const game = userData.broadcastSettings.game.displayName;
-								this.logGameDetection('FFZ Twitch Data', game);
-								this.currentGame = game;
-								return game;
-							}
-						}).catch(() => {/* Ignore errors */});
-					}
-				}
-			} catch (ffzError) {
-				this.log.debug('FFZ API game detection failed:', ffzError);
-			}
-
-			// Method 2: Direct game link
-			const gameLink = document.querySelector('a[data-a-target="stream-game-link"]');
-			if (gameLink && gameLink.textContent) {
-				const game = gameLink.textContent.trim();
-				return this.logGameDetection('Direct Link', game);
-			}
-
-			// Method 3: React Props Access
-			try {
-				const reactElements = document.querySelectorAll('[data-a-target*="stream"], [data-a-target*="game"], .tw-card');
-				for (const element of reactElements) {
-					const reactFiber = element._reactInternalFiber || element._reactInterns ||
-						Object.keys(element).find(key => key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'));
-					if (reactFiber) {
-						const fiber = typeof reactFiber === 'string' ? element[reactFiber] : reactFiber;
-						if (fiber && fiber.memoizedProps) {
-							const props = fiber.memoizedProps;
-							let gameName = null;
-							if (props.stream?.game?.displayName) {
-								gameName = props.stream.game.displayName;
-							} else if (props.stream?.broadcaster?.broadcastSettings?.game?.displayName) {
-								gameName = props.stream.broadcaster.broadcastSettings.game.displayName;
-							} else if (props.metadataRight?.props?.stream?.game?.displayName) {
-								gameName = props.metadataRight.props.stream.game.displayName;
-							} else if (props.tooltipContent?.props?.stream?.content?.game?.displayName) {
-								gameName = props.tooltipContent.props.stream.content.game.displayName;
-							}
-
-							if (gameName) {
-								this.logGameDetection('React Props', gameName);
-								return gameName.trim();
-							}
-						}
-					}
-				}
-			} catch (reactError) {
-				this.log.debug('React data access failed:', reactError);
-			}
-
-			// Method 4: Global State Access
-			try {
-				if (window.__INITIAL_STATE__) {
-					const state = window.__INITIAL_STATE__;
-					if (state.currentChannel?.stream?.game?.displayName) {
-						const game = state.currentChannel.stream.game.displayName;
-						this.logGameDetection('Global State', game);
-						return game;
-					}
-				}
-			} catch (stateError) {
-				this.log.debug('Global state access failed:', stateError);
-			}
-
-			// Method 5: Enhanced DOM Selectors
-			const categorySelectors = [
-				'.side-nav-card__metadata p[title]',
-				'.tw-media-card-meta__subtitle',
-				'[data-a-target="browse-game-title"]',
-				'.tw-card-title',
-				'.game-hover',
-				'[data-test-selector="game-card-title"]',
-				'p[data-a-target="stream-game-link"]'
-			];
-
-			for (const selector of categorySelectors) {
-				const elements = document.querySelectorAll(selector);
-				for (const element of elements) {
-					const text = element.textContent || element.getAttribute('title');
-					if (text && text.trim() && !text.includes('viewer') && !text.includes('follower')) {
-						const game = text.trim();
-						this.logGameDetection('DOM', game);
-						return game;
-					}
-				}
-			}
-
-			// Method 6: Channel Info Container
-			const channelInfoContainer = document.querySelector('[data-a-target="stream-info-card"], .channel-info-content');
-			if (channelInfoContainer) {
-				const gameElements = channelInfoContainer.querySelectorAll('a[href*="/directory/game/"], a[href*="/directory/category/"]');
-				for (const gameElement of gameElements) {
-					const game = gameElement.textContent.trim();
-					if (game) {
-						this.logGameDetection('Channel Info', game);
-						return game;
-					}
-				}
-			}
-
-			// Method 7: URL Parsing
-			if (window.location.pathname.startsWith('/directory/game/') || window.location.pathname.startsWith('/directory/category/')) {
-				const pathSegments = window.location.pathname.split('/');
-				if (pathSegments.length >= 4) {
-					const game = decodeURIComponent(pathSegments[3]);
-					this.logGameDetection('URL', game);
-					return game;
-				}
-			}
-
-			// Method 8: Meta tags
-			const metaGame = document.querySelector('meta[property="og:game"]');
-			if (metaGame && metaGame.getAttribute('content')) {
-				const game = metaGame.getAttribute('content').trim();
-				this.logGameDetection('Meta', game);
-				return game;
-			}
-
-			return null;
-		} catch (error) {
-			this.log.error('Error detecting game:', error);
-			return null;
-		}
-	}
-
-	getGameWithRetries(maxAttempts = 5, interval = 2000) {
-		return new Promise(resolve => {
-			let attempts = 0;
-
-			const tryGetGame = () => {
-				const game = this.getCurrentGame();
-				if (game) {
-					resolve(game);
-				} else if (attempts < maxAttempts) {
-					attempts++;
-					this.log.debug(`🔄 Game detection retry attempt ${attempts}/${maxAttempts}`);
-					setTimeout(tryGetGame, interval);
-				} else {
-					this.log.debug(`❌ Failed to detect game after ${maxAttempts} attempts`);
-					resolve(null);
-				}
-			};
-
-			tryGetGame();
-		});
-	}
-
-	isGameSupported(game) {
-		if (!game) return false;
-
-		if (this.supportedGames[game] === true) {
-			return true;
-		}
-
-		const gameLower = game.toLowerCase();
-		for (const supportedGame of Object.keys(this.supportedGames)) {
-			if (supportedGame.toLowerCase() === gameLower) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	async checkChannelSubscription() {
-		if (!this.channelName) return false;
+	async checkChannelSubscription(channelName) {
+		if (!channelName) return false;
 
 		try {
-			// Normalize the channel name to lowercase for consistency with Chrome extension
-			const normalizedName = this.channelName.toLowerCase();
-			
-			// Increment db_read counter for subscription checks - matching Chrome extension behavior
-			await this.incrementMetric('db_read');
+			const normalizedName = channelName.toLowerCase();
+			await this.incrementMetric('db_read', normalizedName);
 			
 			const response = await fetch(`${this.config.subscriptionUrl}/subscription/verify`, {
 				method: 'POST',
@@ -661,22 +436,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 			if (!response.ok) return false;
 			const data = await response.json();
-			const isSubscribed = !!data.subscribed;
-
-			this.log.info(`${this.channelName} subscription status: ${isSubscribed ? 'ACTIVE ✅' : 'NOT ACTIVE ❌'}`);
-			return isSubscribed;
+			return !!data.subscribed;
 		} catch (error) {
-			// Silently handle subscription check errors to avoid console clutter
 			return false;
 		}
 	}
 
-	async incrementMetric(type) {
-		if (!this.channelName) return;
+	async incrementMetric(type, channelName) {
+		if (!channelName) return;
 
 		try {
-			// Normalize the channel name to lowercase for consistency with Chrome extension  
-			const normalizedName = this.channelName.toLowerCase();
+			const normalizedName = channelName.toLowerCase();
 			
 			await fetch(`${this.config.subscriptionUrl}/metrics/${type}`, {
 				method: 'POST',
@@ -689,34 +459,20 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onDisable() {
-		this.log.info('🛑 EloWard FFZ Addon: Disabling...');
+		this.log.info('EloWard FFZ Addon: Disabling...');
 
-		if (this.gameCheckInterval) {
-			clearInterval(this.gameCheckInterval);
-			this.gameCheckInterval = null;
-		}
+		// Remove event listeners
+		this.off('chat:room-add', this.onRoomAdd);
+		this.off('chat:room-remove', this.onRoomRemove);
 
 		this.removeChatTokenizer();
-
 		this.clearUserData();
-
 		this.cache.clear();
 		this.processingQueue = [];
+		this.subscribedChannels.clear();
+		this.activeRooms.clear();
 
-		this.removeBadges();
-
-		this.log.info('✅ EloWard FFZ Addon: Disabled successfully');
-	}
-
-	removeBadges() {
-		// Remove badge definitions from FFZ - following FFZ addon pattern
-		for (const tier of this.rankTiers) {
-			const badgeId = this.getBadgeId(tier);
-			this.badges.removeBadge(badgeId, false);
-		}
-		
-		// Rebuild badge CSS after removal
-		this.badges.buildBadgeCSS();
+		this.log.info('EloWard FFZ Addon: Disabled successfully');
 	}
 }
 
