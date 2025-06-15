@@ -364,6 +364,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	detectChromeExtension() {
 		// Check for the specific data attribute set by Chrome extension
 		this.chromeExtensionDetected = document.body.getAttribute('data-eloward-chrome-ext') === 'active';
+		
+		if (this.chromeExtensionDetected) {
+			this.log.info('Chrome extension detected - FFZ addon will disable rank badges to avoid conflicts');
+		}
 	}
 
 	async checkChannelSubscription(channelName) {
