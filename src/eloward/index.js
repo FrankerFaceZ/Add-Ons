@@ -362,25 +362,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	detectChromeExtension() {
-		// Check for data attribute on body set by Chrome extension
-		if (document.body.dataset.elowardExtension) {
-			this.chromeExtensionDetected = true;
-			return;
-		}
-
-		// Check for specific DOM elements created by Chrome extension
-		const indicators = [
-			'.eloward-rank-badge',
-			'#eloward-extension-styles',
-			'[data-eloward-processed]'
-		];
-
-		for (const selector of indicators) {
-			if (document.querySelector(selector)) {
-				this.chromeExtensionDetected = true;
-				return;
-			}
-		}
+		// Check for the specific data attribute set by Chrome extension
+		this.chromeExtensionDetected = document.body.getAttribute('data-eloward-chrome-ext') === 'active';
 	}
 
 	async checkChannelSubscription(channelName) {
