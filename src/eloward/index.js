@@ -31,7 +31,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 
-		// Settings - Only keep the main enable/disable setting
+		// Settings - Use dynamic category detection as recommended by SirStendec
 		this.settings.add('eloward.enabled', {
 			default: true,
 			ui: {
@@ -42,6 +42,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			},
 			changed: () => this.updateBadges()
 		});
+
+		// Dynamic category detection setting (as recommended in PR feedback)
+		this.settings.add('eloward.category_detection', {
+			default: 0,
+			requires: ['context.categoryID'],
+			process: ctx => ctx.get('context.categoryID') === '21779', // League of Legends category ID
+			// No UI section means it's automatic only, as suggested in feedback
+		});
 	}
 
 	onEnable() {
@@ -49,23 +57,34 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Initialize rank badges
 		this.initializeRankBadges();
+		this.log.info('Rank badges initialized');
 
 		// Detect Chrome extension conflict
 		this.detectChromeExtension();
+		this.log.info(`Chrome extension detection: ${this.chromeExtensionDetected ? 'DETECTED' : 'NOT DETECTED'}`);
+		
 		if (this.chromeExtensionDetected) {
 			this.log.info('Chrome extension detected, disabling rank badges');
 		}
 
+		// Room-based approach as recommended in PR feedback - no URL fallback needed
+
 		// Set up chat room event listeners
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
+		this.log.info('Chat room event listeners registered');
 
 		// Setup chat tokenizer
 		this.chat.addTokenizer({
 			type: 'eloward-ranks',
 			process: this.processMessage.bind(this)
 		});
+		this.log.info('Chat tokenizer registered');
+		
+		this.log.info('EloWard FFZ Addon initialization complete');
 	}
+
+
 
 	getBadgeData(tier) {
 		return {
@@ -104,15 +123,52 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async onRoomAdd(room) {
-		const roomLogin = room.login;
-		const roomId = room.id;
+		// Try to get room data from different sources
+		let roomLogin, roomId;
 		
-		this.activeRooms.set(roomId, roomLogin);
+		// Try getter properties first (these appear as (...) in the logs)
+		try {
+			roomLogin = room.login;
+			roomId = room.id;
+		} catch (e) {
+			// If getters fail, try other properties
+		}
+		
+		// If getters didn't work, try alternative properties
+		if (!roomLogin) {
+			roomLogin = room._id || room.name || room.channel || room.roomLogin || room.displayName;
+		}
+		
+		if (!roomId) {
+			roomId = room._id || room.roomId || room.channelId;
+		}
+		
+		this.log.info(`Room added: ${roomLogin} (ID: ${roomId})`);
+		
+		// If we still don't have room data, try to access it differently
+		if (!roomLogin) {
+			// Try accessing manager to get room info
+			if (room.manager && room.manager.rooms) {
+				this.log.info('Trying to get room info from manager...');
+				for (const [key, managerRoom] of room.manager.rooms) {
+					this.log.info(`Manager room: ${key} ->`, managerRoom.login);
+				}
+			}
+			
+			this.log.info('No room login found, room object constructor:', room.constructor.name);
+			return;
+		}
+		
+		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
 		// Check if this channel is subscribed to EloWard
+		this.log.info(`Checking subscription for channel: ${roomLogin}`);
 		const isSubscribed = await this.checkChannelSubscription(roomLogin);
+		this.log.info(`Channel ${roomLogin} subscription status: ${isSubscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED'}`);
+		
 		if (isSubscribed) {
 			this.subscribedChannels.add(roomLogin);
+			this.log.info(`Added ${roomLogin} to subscribed channels list`);
 		}
 	}
 
@@ -129,39 +185,56 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	processMessage(tokens, msg) {
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
+			this.log.debug('Addon disabled, skipping message processing');
 			return tokens;
 		}
 
-		// Only enable for League of Legends streams (category ID: 21779)
-		const currentRoom = this.chat.getRoom();
-		if (currentRoom && currentRoom.data && currentRoom.data.game_id !== '21779') {
+		// Use dynamic category detection as recommended in PR feedback
+		if (!this.settings.get('eloward.category_detection')) {
+			this.log.debug('Not League of Legends category, skipping message processing');
 			return tokens;
 		}
 
 		// Skip if Chrome extension is active
 		if (this.chromeExtensionDetected) {
+			this.log.debug('Chrome extension detected, skipping message processing');
 			return tokens;
 		}
 
 		const user = msg?.user;
 		const username = user?.login;
-		const roomLogin = msg?.roomLogin;
+		
+		// Handle multiple rooms and shared chats as recommended in PR feedback
+		let roomLogin = msg?.roomLogin;
+		const roomID = msg?.roomID;
+		const sourceRoomID = msg?.sourceRoomID; // For shared chats
+		
+		this.log.debug(`Message from ${username} - roomLogin: ${roomLogin}, roomID: ${roomID}, sourceRoomID: ${sourceRoomID}`);
 
-		if (!username || !roomLogin) return tokens;
+		if (!username || !roomLogin) {
+			this.log.debug(`Missing user data - username: ${username}, roomLogin: ${roomLogin}`);
+			this.log.debug(`Message object keys:`, Object.keys(msg || {}));
+			return tokens;
+		}
 
 		// Check if this room's channel is subscribed
 		if (!this.subscribedChannels.has(roomLogin)) {
+			this.log.debug(`Channel ${roomLogin} not in subscribed channels list. Subscribed channels: [${Array.from(this.subscribedChannels).join(', ')}]`);
 			return tokens;
 		}
+
+		this.log.debug(`Processing message from ${username} in ${roomLogin}`);
 
 		// Track metrics and process rank lookup
 		this.incrementMetric('db_read', roomLogin);
 
 		const cachedRank = this.getCachedRank(username);
 		if (cachedRank) {
+			this.log.debug(`Found cached rank for ${username}: ${cachedRank.tier}`);
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
 		} else {
+			this.log.debug(`No cached rank for ${username}, queuing lookup`);
 			this.queueRankLookup(username, user.id, roomLogin);
 		}
 
@@ -219,22 +292,32 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	addUserBadge(userId, username, rankData) {
-		if (!rankData?.tier) return;
+		if (!rankData?.tier) {
+			this.log.debug(`No tier data for ${username}, skipping badge assignment`);
+			return;
+		}
 
 		const tier = rankData.tier.toLowerCase();
-		if (!this.rankTiers.has(tier)) return;
+		if (!this.rankTiers.has(tier)) {
+			this.log.debug(`Unknown tier '${tier}' for ${username}, skipping badge assignment`);
+			return;
+		}
 
 		const badgeId = this.getBadgeId(tier);
 		const ffzUser = this.chat.getUser(userId);
 
 		// Check if user already has this badge
-		if (ffzUser.getBadge(badgeId)) return;
+		if (ffzUser.getBadge(badgeId)) {
+			this.log.debug(`User ${username} already has badge ${badgeId}`);
+			return;
+		}
 
 		// Remove any existing EloWard badges from this user
 		this.removeUserBadges(userId);
 
 		// Add the badge to the user
 		ffzUser.addBadge('addon.eloward', badgeId);
+		this.log.info(`Added ${tier} badge to user ${username} (ID: ${userId})`);
 
 		// Track this badge assignment
 		this.userBadges.set(userId, { username, tier, badgeId });
@@ -277,17 +360,21 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async fetchRankData(username) {
+		this.log.debug(`Fetching rank data for ${username}`);
 		const response = await fetch(`${this.config.apiUrl}/ranks/lol/${username.toLowerCase()}`);
 		
 		if (response.status === 404) {
+			this.log.debug(`No rank data found for ${username} (404)`);
 			return null;
 		}
 		
 		if (!response.ok) {
+			this.log.debug(`API error for ${username}: HTTP ${response.status}`);
 			throw new Error(`HTTP ${response.status}`);
 		}
 
 		const data = await response.json();
+		this.log.debug(`Rank data retrieved for ${username}: ${data.rank_tier}`);
 		return {
 			tier: data.rank_tier,
 			division: data.rank_division,
@@ -351,10 +438,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async checkChannelSubscription(channelName) {
-		if (!channelName) return false;
+		if (!channelName) {
+			this.log.debug('No channel name provided for subscription check');
+			return false;
+		}
 
 		try {
 			const normalizedName = channelName.toLowerCase();
+			this.log.debug(`Checking subscription for: ${normalizedName}`);
 			this.incrementMetric('db_read', normalizedName);
 			
 			const response = await fetch(`${this.config.subscriptionUrl}/subscription/verify`, {
@@ -363,10 +454,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				body: JSON.stringify({ channel_name: normalizedName })
 			});
 
-			if (!response.ok) return false;
+			if (!response.ok) {
+				this.log.debug(`Subscription check failed for ${normalizedName}: HTTP ${response.status}`);
+				return false;
+			}
+			
 			const data = await response.json();
-			return !!data.subscribed;
+			const isSubscribed = !!data.subscribed;
+			this.log.debug(`Subscription API response for ${normalizedName}: ${isSubscribed}`);
+			return isSubscribed;
 		} catch (error) {
+			this.log.debug(`Subscription check error for ${channelName}: ${error.message}`);
 			return false;
 		}
 	}
@@ -388,6 +486,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onDisable() {
+		this.log.info('EloWard FFZ Addon: Disabling');
+		
 		// Remove event listeners
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
@@ -401,6 +501,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.processingQueue = [];
 		this.subscribedChannels.clear();
 		this.activeRooms.clear();
+		
+		this.log.info('EloWard FFZ Addon: Disabled');
 	}
 }
 
