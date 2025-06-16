@@ -79,7 +79,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				4: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`
 			},
 			svg: false,
-			click_url: 'https://www.eloward.com/',
 			tooltipExtra: (user, badge, createElement) => {
 				// Dynamic tooltip showing current rank info
 				const cachedRank = this.getCachedRank(user.login);
