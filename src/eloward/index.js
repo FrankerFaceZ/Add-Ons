@@ -9,6 +9,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.inject('chat');
 		this.inject('chat.badges');
 		this.inject('settings');
+		this.inject('site'); // Add site injection for context access
 
 		// Configuration
 		this.config = {
@@ -30,33 +31,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 
-		// Settings - Dynamic category detection following FFZ patterns
+		// Settings - Only keep the main enable/disable setting
 		this.settings.add('eloward.enabled', {
 			default: true,
 			ui: {
 				path: 'Add-Ons >> EloWard Rank Badges',
 				title: 'Enable Rank Badges',
-				description: 'Show League of Legends rank badges in chat.\n\n(Per-badge visibility can be set in [Chat >> Badges > Visibility > Add-Ons](~chat.badges.tabs.visibility))',
+				description: 'Show League of Legends rank badges in chat when streaming League of Legends.\n\n(Per-badge visibility can be set in [Chat >> Badges > Visibility > Add-Ons](~chat.badges.tabs.visibility))',
 				component: 'setting-check-box'
 			},
 			changed: () => this.updateBadges()
-		});
-
-		this.settings.add('eloward.category_detection', {
-			default: 0,
-			requires: ['context.categoryID'],
-			process: ctx => ctx.get('context.categoryID') === '21779', // League of Legends category ID
-			ui: {
-				path: 'Add-Ons >> EloWard Rank Badges',
-				title: 'Category Detection',
-				description: 'Control when rank badges are shown based on the current category.',
-				component: 'setting-select-box',
-				data: [
-					{value: -1, title: 'Disabled'},
-					{value: 0, title: 'Automatic (League of Legends only)'},
-					{value: 1, title: 'Always Enabled'}
-				]
-			}
 		});
 	}
 
@@ -149,13 +133,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return tokens;
 		}
 
-		// Check category detection setting
-		const categoryDetection = this.settings.get('eloward.category_detection');
-		if (categoryDetection === -1) {
-			return tokens; // Disabled
-		}
-		if (categoryDetection === 0 && !this.settings.get('eloward.category_detection')) {
-			return tokens; // Auto mode but not League of Legends
+		// Only enable for League of Legends streams (category ID: 21779)
+		const currentRoom = this.chat.getRoom();
+		if (currentRoom && currentRoom.data && currentRoom.data.game_id !== '21779') {
+			return tokens;
 		}
 
 		// Skip if Chrome extension is active
