@@ -1,5 +1,3 @@
-import Socket from './socket';
-
 /*const GIF_EMOTES_MODE = {
 	DISABLED: 0,
 	STATIC: 1,
@@ -42,22 +40,21 @@ class LirikLIVE extends Addon {
 			},
 		});*/
 
-		this.settings.add('ffzap.liriklive.sub_emoticons', {
-			default: true,
+		// this.settings.add('ffzap.liriklive.sub_emoticons', {
+		// 	default: true,
 
-			ui: {
-				path: 'Add-Ons > Lirik LIVE >> Emotes',
-				title: 'Subscriber Emotes',
-				description: 'Enable to show additional LIRIK LIVE subscriber emotes.',
-				component: 'setting-check-box',
-			},
-		});
+		// 	ui: {
+		// 		path: 'Add-Ons > Lirik LIVE >> Emotes',
+		// 		title: 'Subscriber Emotes',
+		// 		description: 'Enable to show additional LIRIK LIVE subscriber emotes.',
+		// 		component: 'setting-check-box',
+		// 	},
+		// });
 
 		this.chat.context.on('changed:ffzap.liriklive.global_emoticons', this.updateEmotes, this);
 		//this.chat.context.on('changed:ffzap.liriklive.gif_emotes_mode', this.updateEmotes, this);
-		this.chat.context.on('changed:ffzap.liriklive.sub_emoticons', this.updateEmotes, this);
+		// this.chat.context.on('changed:ffzap.liriklive.sub_emoticons', this.updateEmotes, this);
 
-		this.socket = false;
 		this._last_emote_id = 0;
 	}
 
@@ -66,10 +63,11 @@ class LirikLIVE extends Addon {
 
 		this.updateEmotes();
 
-		this.socket = new Socket(this);
+		// Socket functionality disabled because the server isn't active anymore
+		// this.socket = new Socket(this);
 
 		if (this.chat.context.get('ffzap.liriklive.sub_emoticons')) {
-			this.socket.connect();
+			this.socket?.connect();
 		}
 
 		this.on('chat:room-add', this.roomAdd);
@@ -82,11 +80,11 @@ class LirikLIVE extends Addon {
 	}
 
 	roomAdd(room) {
-		this.socket.joinRoom(room.id);
+		this.socket?.joinRoom(room.id);
 	}
 
 	roomRemove(room) {
-		this.socket.leaveRoom(room.id);
+		this.socket?.leaveRoom(room.id);
 	}
 
 	preSendMessage(event) {
@@ -99,7 +97,7 @@ class LirikLIVE extends Addon {
 			return;
 		}
 
-		this.socket.announceMessage(room.id);
+		this.socket?.announceMessage(room.id);
 	}
 
 	updateGlobalEmotes(data) {
