@@ -1,3 +1,24 @@
+.ffz-cmfb-hide-cursor-and-controls {
+    cursor: none;
+
+    & .clips-player-background {
+        opacity: 0;
+    }
+}
+
+.clips-player-container.ffz-cmfb-fullscreen .clips-player-background {
+    background: none;
+}
+
+.clips-player-background > div {
+    z-index: var(--z-index-above);
+}
+
+.ffz-cmfb-fullscreen div:has(+ .ffz-cmfb-clips-player-right-controls) {
+    z-index: calc(var(--z-index-above) - 1);
+    background: linear-gradient(0deg, #000 0, rgba(0, 0, 0, 0.5) 60%, transparent);
+}
+
 .ffz-cmfb-clips-player-right-controls {
     position: absolute;
     bottom: 0 !important;

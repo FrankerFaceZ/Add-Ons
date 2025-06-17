@@ -9,10 +9,11 @@ class ClipsManagerFullscreenButton extends Addon {
         super( ...args );
 
         this.eventListenerCallbacks = {
-            detectClipsManager:   this.detectClipsManager.bind( this ),
-            detectClipRowClick:   this.detectClipRowClick.bind( this ),
-            fullscreenHotkey:     this.fullscreenHotkey.bind( this ),
-            swapFullscreenButton: this.swapFullscreenButton.bind( this )
+            clearCursorTimeout:       this.clearCursorTimeout.bind( this ),
+            detectClipsManager:       this.detectClipsManager.bind( this ),
+            detectClipRowClick:       this.detectClipRowClick.bind( this ),
+            fullscreenHotkey:         this.fullscreenHotkey.bind( this ),
+            onFullscreenchange:       this.onFullscreenchange.bind( this )
         };
 
         this.inject( 'site.router' );
@@ -67,7 +68,7 @@ class ClipsManagerFullscreenButton extends Addon {
 
         this.pageContent?.addEventListener( 'click', this.eventListenerCallbacks.detectClipRowClick );
 
-        document.addEventListener( 'fullscreenchange', this.eventListenerCallbacks.swapFullscreenButton );
+        document.addEventListener( 'fullscreenchange', this.eventListenerCallbacks.onFullscreenchange );
 
         document.addEventListener( 'keypress', this.eventListenerCallbacks.fullscreenHotkey );
 
@@ -81,7 +82,7 @@ class ClipsManagerFullscreenButton extends Addon {
 
         this.pageContent?.removeEventListener( 'click', this.eventListenerCallbacks.detectClipRowClick );
 
-        document.removeEventListener( 'fullscreenchange', this.eventListenerCallbacks.swapFullscreenButton );
+        document.removeEventListener( 'fullscreenchange', this.eventListenerCallbacks.onFullscreenchange );
 
         document.removeEventListener( 'keypress', this.eventListenerCallbacks.fullscreenHotkey );
 
@@ -143,19 +144,52 @@ class ClipsManagerFullscreenButton extends Addon {
         return document.fullscreenElement === this.clipsPlayer;
     }
 
-    swapFullscreenButton( _e ) {
-        const fullscreenSVGPath =  this.fullscreenButton.querySelector( 'path' );
+    onFullscreenchange( _e ) {
+        const fullscreenPlayerClassName = 'ffz-cmfb-fullscreen';
 
-        if (  ! this.playerIsFullscreen() ) {
-            fullscreenSVGPath.replaceWith( this.fullscreenSVGPaths.enter );
+        this.hideCursorClassName = 'ffz-cmfb-hide-cursor-and-controls';
+
+        if ( ! this.playerIsFullscreen() ) {
+            clearTimeout( this.cursorTimerID );
+
+            this.clipsPlayer.removeEventListener( 'mousemove', this.eventListenerCallbacks.clearCursorTimeout );
+
+            document.removeEventListener( 'keydown', this.eventListenerCallbacks.clearCursorTimeout );
+
+            this.clipsPlayer.classList.remove( fullscreenPlayerClassName, this.hideCursorClassName );
+
+            this.swapFullscreenButton( 'enter' );
         } else {
-            fullscreenSVGPath.replaceWith( this.fullscreenSVGPaths.exit );
+            this.clearCursorTimeout();
+
+            this.clipsPlayer.addEventListener( 'mousemove', this.eventListenerCallbacks.clearCursorTimeout );
+
+            document.addEventListener( 'keydown', this.eventListenerCallbacks.clearCursorTimeout );
+    
+            this.clipsPlayer.classList.add( fullscreenPlayerClassName );
+
+            this.swapFullscreenButton( 'exit' );
         }
+    }
+
+    clearCursorTimeout( _e ) {
+        if ( this.cursorTimerID ) {
+            clearTimeout( this.cursorTimerID );
+        }
+
+        this.cursorTimerID = setTimeout( () => {
+            this.clipsPlayer.classList.add( this.hideCursorClassName );
+        }, 5000 );
+
+        this.clipsPlayer.classList.remove( this.hideCursorClassName );
+    }
+
+    swapFullscreenButton( fullscreenStatus ) {
+        this.fullscreenButton.querySelector( 'path' ).replaceWith( this.fullscreenSVGPaths[ fullscreenStatus ] );
     }
 
     fullscreenHotkey( e ) {
         if ( e.key === 'f' ) {
-            this.log.info( e );
             if ( [ 'text', 'search' ].includes( e.target.type ) || document.querySelector( '.ReactModalPortal .ReactModal__Overlay' ) ) {
                 return;
             }
