@@ -27,6 +27,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.isProcessing = false;
 		this.subscribedChannels = new Set();
 		this.activeRooms = new Map(); // roomId -> roomLogin
+		this.lolCategoryRooms = new Set(); // rooms where LoL category is detected
 		this.chromeExtensionDetected = false;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
@@ -150,6 +151,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.log.info(`Room added: ${roomLogin} (ID: ${roomId || 'unknown'})`);
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
+		// Check League of Legends category once per room
+		const isLolCategory = this.settings.get('eloward.category_detection');
+		if (isLolCategory) {
+			this.lolCategoryRooms.add(roomLogin);
+			this.log.info(`League of Legends category detected for room: ${roomLogin}`);
+		} else {
+			this.log.info(`Not League of Legends category for room: ${roomLogin}`);
+		}
+		
 		// Check if this channel is subscribed to EloWard
 		const isSubscribed = await this.checkChannelSubscription(roomLogin);
 		
@@ -168,6 +178,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.activeRooms.delete(roomId);
 		if (roomLogin) {
 			this.subscribedChannels.delete(roomLogin);
+			this.lolCategoryRooms.delete(roomLogin);
 		}
 	}
 
@@ -175,12 +186,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
 			this.log.info('EloWard addon is disabled in settings');
-			return tokens;
-		}
-
-		// Use dynamic category detection as recommended in PR feedback
-		if (!this.settings.get('eloward.category_detection')) {
-			this.log.info('Category detection failed: Not streaming League of Legends');
 			return tokens;
 		}
 
@@ -197,6 +202,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		let roomLogin = msg?.roomLogin;
 
 		if (!username || !roomLogin) {
+			return tokens;
+		}
+
+		// Check if this room has League of Legends category (checked once per room)
+		if (!this.lolCategoryRooms.has(roomLogin)) {
 			return tokens;
 		}
 
@@ -470,6 +480,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.processingQueue = [];
 		this.subscribedChannels.clear();
 		this.activeRooms.clear();
+		this.lolCategoryRooms.clear();
 	}
 }
 
