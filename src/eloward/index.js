@@ -68,12 +68,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.log.info('No Chrome extension conflict detected');
 		}
 
-		// Room-based approach as recommended in PR feedback - no URL fallback needed
-
 		// Set up chat room event listeners
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
 		this.log.info('Chat room event listeners registered');
+
+		// Listen for context changes to re-evaluate category detection
+		this.on('site.context:changed', this.onContextChanged, this);
 
 		// Setup chat tokenizer
 		this.chat.addTokenizer({
@@ -81,6 +82,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			process: this.processMessage.bind(this)
 		});
 		this.log.info('Chat tokenizer registered');
+
+		// Handle existing rooms with proper timing and retries
+		this.initializeExistingRooms();
 		
 		this.log.info('EloWard FFZ Addon: Ready');
 	}
@@ -122,6 +126,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async onRoomAdd(room) {
+		this.log.info(`onRoomAdd called with room:`, room);
+		
 		// Try to get room data from different sources
 		let roomLogin, roomId;
 		
@@ -130,45 +136,45 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			roomLogin = room.login;
 			roomId = room.id;
 		} catch (e) {
-			// If getters fail, try other properties
+			this.log.info(`Error accessing room getters: ${e.message}`);
 		}
 		
 		// If getters didn't work, try alternative properties
 		if (!roomLogin) {
 			roomLogin = room._id || room.name || room.channel || room.roomLogin || room.displayName;
+			this.log.info(`Using fallback room login: ${roomLogin}`);
 		}
 		
 		if (!roomId) {
 			roomId = room._id || room.roomId || room.channelId;
+			this.log.info(`Using fallback room ID: ${roomId}`);
 		}
 		
 		// If we still don't have room data, skip silently
 		if (!roomLogin) {
-			this.log.info(`Room add failed: No room login found`);
+			this.log.info(`Room add failed: No room login found. Available properties:`, Object.keys(room || {}));
 			return;
 		}
 		
-		this.log.info(`Room added: ${roomLogin} (ID: ${roomId || 'unknown'})`);
+		this.log.info(`Processing room: ${roomLogin} (ID: ${roomId || 'unknown'})`);
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		// Check League of Legends category once per room
-		const isLolCategory = this.settings.get('eloward.category_detection');
-		if (isLolCategory) {
-			this.lolCategoryRooms.add(roomLogin);
-			this.log.info(`League of Legends category detected for room: ${roomLogin}`);
-		} else {
-			this.log.info(`Not League of Legends category for room: ${roomLogin}`);
-		}
+		// Check League of Legends category with backup method and retry logic
+		await this.detectAndSetCategoryForRoom(roomLogin);
 		
 		// Check if this channel is subscribed to EloWard
+		this.log.info(`Checking subscription for channel: ${roomLogin}`);
 		const isSubscribed = await this.checkChannelSubscription(roomLogin);
 		
 		if (isSubscribed) {
 			this.subscribedChannels.add(roomLogin);
-			this.log.info(`EloWard active for channel: ${roomLogin}`);
+			this.log.info(`✓ EloWard active for channel: ${roomLogin}`);
 		} else {
-			this.log.info(`Channel ${roomLogin} is not subscribed to EloWard`);
+			this.log.info(`✗ Channel ${roomLogin} is not subscribed to EloWard`);
 		}
+		
+		const finalLolStatus = this.lolCategoryRooms.has(roomLogin);
+		this.log.info(`Room ${roomLogin} setup complete - LoL: ${finalLolStatus}, Subscribed: ${isSubscribed}`);
 	}
 
 	onRoomRemove(room) {
@@ -179,6 +185,119 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (roomLogin) {
 			this.subscribedChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
+		}
+	}
+
+	initializeExistingRooms() {
+		this.log.info('Starting existing room initialization');
+		this.log.info(`Chat system available: ${!!this.chat}`);
+		this.log.info(`Chat iterateRooms method available: ${!!(this.chat && this.chat.iterateRooms)}`);
+		
+		// Try immediately first
+		if (this.tryProcessExistingRooms()) {
+			return;
+		}
+		
+		// If immediate attempt failed, retry with delays
+		this.log.info('Immediate room detection failed, scheduling retries...');
+		let retryCount = 0;
+		const maxRetries = 5;
+		const retryDelays = [100, 250, 500, 1000, 2000]; // Progressive delays
+		
+		const attemptRoomDetection = () => {
+			this.log.info(`Retry attempt ${retryCount + 1}/${maxRetries}`);
+			
+			if (this.tryProcessExistingRooms()) {
+				this.log.info('Room detection successful on retry');
+				return;
+			}
+			
+			retryCount++;
+			if (retryCount < maxRetries) {
+				setTimeout(attemptRoomDetection, retryDelays[retryCount - 1]);
+			} else {
+				this.log.info('All room detection retries exhausted');
+				this.logSystemState();
+			}
+		};
+		
+		setTimeout(attemptRoomDetection, retryDelays[0]);
+	}
+
+	tryProcessExistingRooms() {
+		if (!this.chat) {
+			this.log.info('Chat system not available');
+			return false;
+		}
+		
+		if (!this.chat.iterateRooms) {
+			this.log.info('Chat iterateRooms method not available');
+			return false;
+		}
+		
+		let roomCount = 0;
+		let processedCount = 0;
+		
+		try {
+			for (const room of this.chat.iterateRooms()) {
+				roomCount++;
+				this.log.info(`Found existing room ${roomCount}: ${room?.login || room?.id || 'unknown'}`);
+				
+				// Process room asynchronously to avoid blocking
+				setTimeout(() => {
+					this.onRoomAdd(room);
+					processedCount++;
+					this.log.info(`Processed existing room ${processedCount}/${roomCount}`);
+				}, 10 * roomCount); // Stagger processing
+			}
+			
+			this.log.info(`Found ${roomCount} existing rooms, scheduling processing`);
+			return roomCount > 0;
+			
+		} catch (error) {
+			this.log.info(`Error iterating rooms: ${error.message}`);
+			return false;
+		}
+	}
+
+	logSystemState() {
+		this.log.info('=== EloWard System State Debug ===');
+		this.log.info(`Addon enabled: ${this.settings.get('eloward.enabled')}`);
+		this.log.info(`Chrome extension detected: ${this.chromeExtensionDetected}`);
+		this.log.info(`Active rooms: ${this.activeRooms.size}`);
+		this.log.info(`LoL category rooms: ${this.lolCategoryRooms.size}`);
+		this.log.info(`Subscribed channels: ${this.subscribedChannels.size}`);
+		this.log.info(`Category detection result: ${this.detectLeagueOfLegendsCategory()}`);
+		
+		// Log room details
+		for (const [roomId, roomLogin] of this.activeRooms.entries()) {
+			this.log.info(`Room: ${roomLogin} (${roomId}) - LoL: ${this.lolCategoryRooms.has(roomLogin)}, Subscribed: ${this.subscribedChannels.has(roomLogin)}`);
+		}
+		
+		// Check DOM state
+		const gameLink = document.querySelector('[data-a-target="stream-game-link"]');
+		this.log.info(`Game link found: ${!!gameLink}`);
+		if (gameLink) {
+			this.log.info(`Game text: "${gameLink.textContent?.trim()}"`);
+		}
+		this.log.info('=== End Debug ===');
+	}
+
+	async onContextChanged() {
+		// Re-evaluate category detection for all active rooms when context changes
+		this.log.info('Site context changed, re-evaluating category detection');
+		
+		for (const roomLogin of this.activeRooms.values()) {
+			// Use immediate detection for context changes (DOM should already be loaded)
+			const isLolCategory = this.detectLeagueOfLegendsCategory();
+			
+			if (isLolCategory && !this.lolCategoryRooms.has(roomLogin)) {
+				this.lolCategoryRooms.add(roomLogin);
+				this.log.info(`✓ League of Legends category detected for room: ${roomLogin} (context change)`);
+			} else if (!isLolCategory && this.lolCategoryRooms.has(roomLogin)) {
+				this.lolCategoryRooms.delete(roomLogin);
+				this.log.info(`✗ League of Legends category no longer detected for room: ${roomLogin} (context change)`);
+			}
 		}
 	}
 
@@ -470,6 +589,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Remove event listeners
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
+		this.off('site.context:changed', this.onContextChanged);
 
 		// Remove tokenizer
 		this.chat.removeTokenizer('eloward-ranks');
@@ -481,6 +601,86 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.subscribedChannels.clear();
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
+	}
+
+	async detectAndSetCategoryForRoom(roomLogin) {
+		this.log.info(`Starting category detection for room: ${roomLogin}`);
+		
+		// Try immediate detection first
+		let isLolCategory = this.detectLeagueOfLegendsCategory();
+		this.log.info(`Initial category detection for ${roomLogin}: ${isLolCategory}`);
+		
+		// If immediate detection failed, retry with delays for DOM to load
+		if (!isLolCategory) {
+			this.log.info('Initial detection failed, retrying with delays...');
+			isLolCategory = await this.retryCategoryDetection(roomLogin);
+		}
+		
+		// Set the final result
+		if (isLolCategory) {
+			this.lolCategoryRooms.add(roomLogin);
+			this.log.info(`✓ League of Legends category detected for room: ${roomLogin}`);
+		} else {
+			this.log.info(`✗ Not League of Legends category for room: ${roomLogin}`);
+		}
+		
+		return isLolCategory;
+	}
+
+	async retryCategoryDetection(roomLogin) {
+		const retryDelays = [200, 500, 1000, 2000]; // Wait for DOM to load
+		
+		const tryDetection = async (attemptIndex) => {
+			if (attemptIndex >= retryDelays.length) {
+				this.log.info(`All category detection retries failed for ${roomLogin}`);
+				return false;
+			}
+			
+			await new Promise(resolve => setTimeout(resolve, retryDelays[attemptIndex]));
+			this.log.info(`Category detection retry ${attemptIndex + 1}/${retryDelays.length} for ${roomLogin}`);
+			
+			const isLolCategory = this.detectLeagueOfLegendsCategory();
+			if (isLolCategory) {
+				this.log.info(`Category detected on retry ${attemptIndex + 1} for ${roomLogin}`);
+				return true;
+			}
+			
+			return tryDetection(attemptIndex + 1);
+		};
+		
+		return tryDetection(0);
+	}
+
+	detectLeagueOfLegendsCategory() {
+		// Primary method: FFZ context-based detection
+		const contextDetection = this.settings.get('eloward.category_detection');
+		this.log.info(`FFZ context detection result: ${contextDetection}`);
+		
+		if (contextDetection) {
+			this.log.info('Category detected via FFZ context');
+			return true;
+		}
+
+		// Backup method: DOM-based detection
+		try {
+			const gameLink = document.querySelector('[data-a-target="stream-game-link"]');
+			this.log.info(`Game link element found: ${!!gameLink}`);
+			
+			if (gameLink) {
+				const gameText = gameLink.textContent?.trim();
+				this.log.info(`Game text found: "${gameText}"`);
+				const isLoL = gameText?.toLowerCase() === 'league of legends';
+				this.log.info(`DOM-based LoL detection: ${isLoL}`);
+				return isLoL;
+			} else {
+				this.log.info('No game link element found in DOM');
+			}
+		} catch (error) {
+			this.log.info(`DOM detection error: ${error.message}`);
+		}
+
+		this.log.info('No League of Legends category detected');
+		return false;
 	}
 }
 
