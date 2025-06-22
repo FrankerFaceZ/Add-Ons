@@ -57,11 +57,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Initialize rank badges
 		this.initializeRankBadges();
+		this.log.info('Rank badges initialized');
 
 		// Detect Chrome extension conflict
 		this.detectChromeExtension();
 		if (this.chromeExtensionDetected) {
 			this.log.info('Chrome extension detected, disabling rank badges');
+		} else {
+			this.log.info('No Chrome extension conflict detected');
 		}
 
 		// Room-based approach as recommended in PR feedback - no URL fallback needed
@@ -69,12 +72,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Set up chat room event listeners
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
+		this.log.info('Chat room event listeners registered');
 
 		// Setup chat tokenizer
 		this.chat.addTokenizer({
 			type: 'eloward-ranks',
 			process: this.processMessage.bind(this)
 		});
+		this.log.info('Chat tokenizer registered');
 		
 		this.log.info('EloWard FFZ Addon: Ready');
 	}
@@ -138,9 +143,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		// If we still don't have room data, skip silently
 		if (!roomLogin) {
+			this.log.info(`Room add failed: No room login found`);
 			return;
 		}
 		
+		this.log.info(`Room added: ${roomLogin} (ID: ${roomId || 'unknown'})`);
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
 		// Check if this channel is subscribed to EloWard
@@ -149,6 +156,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (isSubscribed) {
 			this.subscribedChannels.add(roomLogin);
 			this.log.info(`EloWard active for channel: ${roomLogin}`);
+		} else {
+			this.log.info(`Channel ${roomLogin} is not subscribed to EloWard`);
 		}
 	}
 
@@ -165,16 +174,19 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	processMessage(tokens, msg) {
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
+			this.log.info('EloWard addon is disabled in settings');
 			return tokens;
 		}
 
 		// Use dynamic category detection as recommended in PR feedback
 		if (!this.settings.get('eloward.category_detection')) {
+			this.log.info('Category detection failed: Not streaming League of Legends');
 			return tokens;
 		}
 
 		// Skip if Chrome extension is active
 		if (this.chromeExtensionDetected) {
+			this.log.info('Chrome extension detected, skipping rank badges');
 			return tokens;
 		}
 
@@ -190,6 +202,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Check if this room's channel is subscribed
 		if (!this.subscribedChannels.has(roomLogin)) {
+			this.log.info(`Channel ${roomLogin} is not in subscribed channels list`);
 			return tokens;
 		}
 
@@ -397,11 +410,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	async checkChannelSubscription(channelName) {
 		if (!channelName) {
+			this.log.info('Subscription check failed: No channel name provided');
 			return false;
 		}
 
 		try {
 			const normalizedName = channelName.toLowerCase();
+			this.log.info(`Checking subscription for channel: ${normalizedName}`);
 			this.incrementMetric('db_read', normalizedName);
 			
 			const response = await fetch(`${this.config.subscriptionUrl}/subscription/verify`, {
@@ -411,12 +426,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			});
 
 			if (!response.ok) {
+				this.log.info(`Subscription check failed for ${normalizedName}: HTTP ${response.status}`);
 				return false;
 			}
 			
 			const data = await response.json();
-			return !!data.subscribed;
+			const isSubscribed = !!data.subscribed;
+			this.log.info(`Subscription check result for ${normalizedName}: ${isSubscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED'}`);
+			return isSubscribed;
 		} catch (error) {
+			this.log.info(`Subscription check error for ${channelName}: ${error.message}`);
 			return false;
 		}
 	}
