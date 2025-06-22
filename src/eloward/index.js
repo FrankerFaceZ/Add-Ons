@@ -267,18 +267,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.log.info(`Active rooms: ${this.activeRooms.size}`);
 		this.log.info(`LoL category rooms: ${this.lolCategoryRooms.size}`);
 		this.log.info(`Subscribed channels: ${this.subscribedChannels.size}`);
-		this.log.info(`Category detection result: ${this.detectLeagueOfLegendsCategory()}`);
+		this.log.info(`FFZ context category detection: ${this.settings.get('eloward.category_detection')}`);
 		
 		// Log room details
 		for (const [roomId, roomLogin] of this.activeRooms.entries()) {
 			this.log.info(`Room: ${roomLogin} (${roomId}) - LoL: ${this.lolCategoryRooms.has(roomLogin)}, Subscribed: ${this.subscribedChannels.has(roomLogin)}`);
-		}
-		
-		// Check DOM state
-		const gameLink = document.querySelector('[data-a-target="stream-game-link"]');
-		this.log.info(`Game link found: ${!!gameLink}`);
-		if (gameLink) {
-			this.log.info(`Game text: "${gameLink.textContent?.trim()}"`);
 		}
 		this.log.info('=== End Debug ===');
 	}
@@ -652,34 +645,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	detectLeagueOfLegendsCategory() {
-		// Primary method: FFZ context-based detection
+		// FFZ context-based detection using context.categoryID
 		const contextDetection = this.settings.get('eloward.category_detection');
 		this.log.info(`FFZ context detection result: ${contextDetection}`);
 		
 		if (contextDetection) {
-			this.log.info('Category detected via FFZ context');
+			this.log.info('✓ League of Legends category detected via FFZ context');
 			return true;
 		}
 
-		// Backup method: DOM-based detection
-		try {
-			const gameLink = document.querySelector('[data-a-target="stream-game-link"]');
-			this.log.info(`Game link element found: ${!!gameLink}`);
-			
-			if (gameLink) {
-				const gameText = gameLink.textContent?.trim();
-				this.log.info(`Game text found: "${gameText}"`);
-				const isLoL = gameText?.toLowerCase() === 'league of legends';
-				this.log.info(`DOM-based LoL detection: ${isLoL}`);
-				return isLoL;
-			} else {
-				this.log.info('No game link element found in DOM');
-			}
-		} catch (error) {
-			this.log.info(`DOM detection error: ${error.message}`);
-		}
-
-		this.log.info('No League of Legends category detected');
+		this.log.info('✗ League of Legends category not detected via FFZ context');
 		return false;
 	}
 }
