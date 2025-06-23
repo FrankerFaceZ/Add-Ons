@@ -16,15 +16,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			apiUrl: 'https://eloward-viewers-api.unleashai.workers.dev/api',
 			subscriptionUrl: 'https://eloward-subscription-api.unleashai.workers.dev',
 			cacheExpiry: 60 * 60 * 1000, // 1 hour
-			maxCacheSize: 500,
-			rateLimit: 100, // ms between requests
-			maxQueueSize: 10
+			maxCacheSize: 500
 		};
 
 		// State management
 		this.cache = new Map();
-		this.processingQueue = [];
-		this.isProcessing = false;
 		this.subscribedChannels = new Set();
 		this.activeRooms = new Map(); // roomId -> roomLogin
 		this.lolCategoryRooms = new Set(); // rooms where LoL category is detected
@@ -309,10 +305,24 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
 		} else {
-			this.queueRankLookup(username, user.id, roomLogin);
+			// Make direct API call without queuing
+			this.fetchAndProcessRank(username, user.id, roomLogin);
 		}
 
 		return tokens;
+	}
+
+	async fetchAndProcessRank(username, userId, roomLogin) {
+		try {
+			const rankData = await this.fetchRankData(username);
+			if (rankData) {
+				this.setCachedRank(username, rankData);
+				this.addUserBadge(userId, username, rankData);
+				this.incrementMetric('successful_lookup', roomLogin);
+			}
+		} catch (error) {
+			// Silently handle errors - most are 404s for users without rank data
+		}
 	}
 
 	formatRankText(rankData) {
@@ -402,39 +412,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Update chat display for this user
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
-	}
-
-	queueRankLookup(username, userId, roomLogin) {
-		if (!this.processingQueue.find(item => item.username === username)) {
-			this.processingQueue.push({ username, userId, roomLogin });
-
-			if (this.processingQueue.length > this.config.maxQueueSize) {
-				this.processingQueue.shift();
-			}
-
-			this.processQueue();
-		}
-	}
-
-	async processQueue() {
-		if (this.isProcessing || this.processingQueue.length === 0) return;
-
-		this.isProcessing = true;
-		const { username, userId, roomLogin } = this.processingQueue.shift();
-
-		try {
-			const rankData = await this.fetchRankData(username);
-			if (rankData) {
-				this.setCachedRank(username, rankData);
-				this.addUserBadge(userId, username, rankData);
-				this.incrementMetric('successful_lookup', roomLogin);
-			}
-		} catch (error) {
-			// Silently handle errors - most are 404s for users without rank data
-		}
-
-		this.isProcessing = false;
-		setTimeout(() => this.processQueue(), this.config.rateLimit);
 	}
 
 	async fetchRankData(username) {
@@ -570,7 +547,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Clear all data
 		this.clearUserData();
 		this.cache.clear();
-		this.processingQueue = [];
 		this.subscribedChannels.clear();
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
