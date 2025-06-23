@@ -267,7 +267,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	async onContextChanged() {
+	onContextChanged() {
 		// Re-evaluate category detection for all active rooms when context changes
 		for (const roomLogin of this.activeRooms.values()) {
 			// Use immediate detection for context changes (DOM should already be loaded)
@@ -296,7 +296,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const username = user?.login;
 		
 		// Handle multiple rooms and shared chats as recommended in PR feedback
-		let roomLogin = msg?.roomLogin;
+		const roomLogin = msg?.roomLogin;
 
 		if (!username || !roomLogin) {
 			return tokens;
