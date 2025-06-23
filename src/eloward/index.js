@@ -106,14 +106,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	createTooltipHandler(user, badge, createElement) {
 		try {
-			// Safely handle undefined user or user.login
-			if (!user || !user.login) {
-				return null;
-			}
-			
 			const cachedRank = this.getCachedRank(user.login);
-			this.log.info(`Tooltip for ${user.login}: cachedRank =`, cachedRank);
-			
 			if (cachedRank) {
 				// Try creating the full tooltip first
 				const fullTooltip = this.createRankTooltip(cachedRank, createElement);
@@ -123,13 +116,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				
 				// Fallback to simple text tooltip
 				const rankText = this.formatRankText(cachedRank);
-				this.log.info(`Tooltip fallback text for ${user.login}: "${rankText}"`);
 				return createElement('div', {
 					style: 'padding: 4px; font-size: 13px; color: #efeff1;'
 				}, rankText);
 			}
 		} catch (error) {
-			this.log.info(`Tooltip error for ${user?.login || 'unknown'}: ${error.message}`);
+			this.log.info(`Tooltip error for ${user.login}: ${error.message}`);
 		}
 		return null;
 	}
@@ -335,32 +327,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	formatRankText(rankData) {
-		this.log.info('formatRankText input:', rankData);
-		
 		if (!rankData?.tier || rankData.tier.toUpperCase() === 'UNRANKED') {
 			return 'UNRANKED';
 		}
 		
-		let rankText = rankData.tier.toUpperCase(); // Ensure consistent capitalization
-		this.log.info('Base rankText:', rankText);
+		let rankText = rankData.tier;
 		
 		// Add division for ranks that have divisions
 		if (rankData.division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankData.tier.toUpperCase())) {
-			rankText += ` ${rankData.division.toUpperCase()}`;
-			this.log.info('Added division, rankText now:', rankText);
-		} else {
-			this.log.info('No division to add. Division:', rankData.division, 'Tier:', rankData.tier);
+			rankText += ` ${rankData.division}`;
 		}
 		
 		// Add LP for ranked players
 		if (rankData.leaguePoints !== undefined && rankData.leaguePoints !== null) {
 			rankText += ` - ${rankData.leaguePoints} LP`;
-			this.log.info('Added LP, final rankText:', rankText);
-		} else {
-			this.log.info('No LP to add. leaguePoints:', rankData.leaguePoints);
 		}
 		
-		this.log.info('Final formatted rank text:', rankText);
 		return rankText;
 	}
 
