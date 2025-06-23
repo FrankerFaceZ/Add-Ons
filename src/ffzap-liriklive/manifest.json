@@ -1,5 +1,6 @@
 {
 	"enabled": true,
+	"unlisted": true,
 	"targets": [
 		"main",
 		"clips"
@@ -15,5 +16,5 @@
 	"website": "https://ffzap.com/",
 	"settings": "add_ons.lirik_live",
 	"created": "2019-09-12T15:31:59.000Z",
-	"updated": "2021-03-20T22:54:27.213Z"
+	"updated": "2025-06-17T22:15:09.507Z"
 }
