@@ -408,7 +408,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		// Track this badge assignment - IMPORTANT: Store the full rank data here
-		this.userBadges.set(userId, { username, tier, badgeId, rankData: rankData });
+		this.userBadges.set(userId, { username, tier, badgeId, rankData });
 
 		// Update chat display for this user
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
