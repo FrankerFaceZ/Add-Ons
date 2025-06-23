@@ -58,20 +58,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Initialize rank badges
 		this.initializeRankBadges();
-		this.log.info('Rank badges initialized');
 
 		// Detect Chrome extension conflict
 		this.detectChromeExtension();
 		if (this.chromeExtensionDetected) {
 			this.log.info('Chrome extension detected, disabling rank badges');
-		} else {
-			this.log.info('No Chrome extension conflict detected');
 		}
 
 		// Set up chat room event listeners
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
-		this.log.info('Chat room event listeners registered');
 
 		// Listen for context changes to re-evaluate category detection
 		this.on('site.context:changed', this.onContextChanged, this);
@@ -81,7 +77,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			type: 'eloward-ranks',
 			process: this.processMessage.bind(this)
 		});
-		this.log.info('Chat tokenizer registered');
 
 		// Handle existing rooms with proper timing and retries
 		this.initializeExistingRooms();
@@ -126,55 +121,43 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async onRoomAdd(room) {
-		this.log.info(`onRoomAdd called with room:`, room);
-		
 		// Try to get room data from different sources
 		let roomLogin, roomId;
 		
-		// Try getter properties first (these appear as (...) in the logs)
+		// Try getter properties first
 		try {
 			roomLogin = room.login;
 			roomId = room.id;
 		} catch (e) {
-			this.log.info(`Error accessing room getters: ${e.message}`);
+			// Silently handle getter errors
 		}
 		
 		// If getters didn't work, try alternative properties
 		if (!roomLogin) {
 			roomLogin = room._id || room.name || room.channel || room.roomLogin || room.displayName;
-			this.log.info(`Using fallback room login: ${roomLogin}`);
 		}
 		
 		if (!roomId) {
 			roomId = room._id || room.roomId || room.channelId;
-			this.log.info(`Using fallback room ID: ${roomId}`);
 		}
 		
 		// If we still don't have room data, skip silently
 		if (!roomLogin) {
-			this.log.info(`Room add failed: No room login found. Available properties:`, Object.keys(room || {}));
 			return;
 		}
 		
-		this.log.info(`Processing room: ${roomLogin} (ID: ${roomId || 'unknown'})`);
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
 		// Check League of Legends category with backup method and retry logic
 		await this.detectAndSetCategoryForRoom(roomLogin);
 		
 		// Check if this channel is subscribed to EloWard
-		this.log.info(`Checking subscription for channel: ${roomLogin}`);
 		const isSubscribed = await this.checkChannelSubscription(roomLogin);
 		
 		if (isSubscribed) {
 			this.subscribedChannels.add(roomLogin);
-			this.log.info(`✓ EloWard active for channel: ${roomLogin}`);
-		} else {
-			this.log.info(`✗ Channel ${roomLogin} is not subscribed to EloWard`);
+			this.log.info(`EloWard active for channel: ${roomLogin}`);
 		}
-		
-		const finalLolStatus = this.lolCategoryRooms.has(roomLogin);
-		this.log.info(`Room ${roomLogin} setup complete - LoL: ${finalLolStatus}, Subscribed: ${isSubscribed}`);
 	}
 
 	onRoomRemove(room) {
@@ -189,26 +172,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	initializeExistingRooms() {
-		this.log.info('Starting existing room initialization');
-		this.log.info(`Chat system available: ${!!this.chat}`);
-		this.log.info(`Chat iterateRooms method available: ${!!(this.chat && this.chat.iterateRooms)}`);
-		
 		// Try immediately first
 		if (this.tryProcessExistingRooms()) {
 			return;
 		}
 		
 		// If immediate attempt failed, retry with delays
-		this.log.info('Immediate room detection failed, scheduling retries...');
 		let retryCount = 0;
 		const maxRetries = 5;
 		const retryDelays = [100, 250, 500, 1000, 2000]; // Progressive delays
 		
 		const attemptRoomDetection = () => {
-			this.log.info(`Retry attempt ${retryCount + 1}/${maxRetries}`);
-			
 			if (this.tryProcessExistingRooms()) {
-				this.log.info('Room detection successful on retry');
 				return;
 			}
 			
@@ -216,8 +191,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			if (retryCount < maxRetries) {
 				setTimeout(attemptRoomDetection, retryDelays[retryCount - 1]);
 			} else {
-				this.log.info('All room detection retries exhausted');
-				this.logSystemState();
+				this.log.info('Failed to detect existing rooms after retries');
 			}
 		};
 		
@@ -225,33 +199,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	tryProcessExistingRooms() {
-		if (!this.chat) {
-			this.log.info('Chat system not available');
-			return false;
-		}
-		
-		if (!this.chat.iterateRooms) {
-			this.log.info('Chat iterateRooms method not available');
+		if (!this.chat || !this.chat.iterateRooms) {
 			return false;
 		}
 		
 		let roomCount = 0;
-		let processedCount = 0;
 		
 		try {
 			for (const room of this.chat.iterateRooms()) {
 				roomCount++;
-				this.log.info(`Found existing room ${roomCount}: ${room?.login || room?.id || 'unknown'}`);
 				
 				// Process room asynchronously to avoid blocking
 				setTimeout(() => {
 					this.onRoomAdd(room);
-					processedCount++;
-					this.log.info(`Processed existing room ${processedCount}/${roomCount}`);
 				}, 10 * roomCount); // Stagger processing
 			}
 			
-			this.log.info(`Found ${roomCount} existing rooms, scheduling processing`);
 			return roomCount > 0;
 			
 		} catch (error) {
@@ -260,36 +223,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	logSystemState() {
-		this.log.info('=== EloWard System State Debug ===');
-		this.log.info(`Addon enabled: ${this.settings.get('eloward.enabled')}`);
-		this.log.info(`Chrome extension detected: ${this.chromeExtensionDetected}`);
-		this.log.info(`Active rooms: ${this.activeRooms.size}`);
-		this.log.info(`LoL category rooms: ${this.lolCategoryRooms.size}`);
-		this.log.info(`Subscribed channels: ${this.subscribedChannels.size}`);
-		this.log.info(`FFZ context category detection: ${this.settings.get('eloward.category_detection')}`);
-		
-		// Log room details
-		for (const [roomId, roomLogin] of this.activeRooms.entries()) {
-			this.log.info(`Room: ${roomLogin} (${roomId}) - LoL: ${this.lolCategoryRooms.has(roomLogin)}, Subscribed: ${this.subscribedChannels.has(roomLogin)}`);
-		}
-		this.log.info('=== End Debug ===');
-	}
+
 
 	async onContextChanged() {
 		// Re-evaluate category detection for all active rooms when context changes
-		this.log.info('Site context changed, re-evaluating category detection');
-		
 		for (const roomLogin of this.activeRooms.values()) {
 			// Use immediate detection for context changes (DOM should already be loaded)
 			const isLolCategory = this.detectLeagueOfLegendsCategory();
 			
 			if (isLolCategory && !this.lolCategoryRooms.has(roomLogin)) {
 				this.lolCategoryRooms.add(roomLogin);
-				this.log.info(`✓ League of Legends category detected for room: ${roomLogin} (context change)`);
 			} else if (!isLolCategory && this.lolCategoryRooms.has(roomLogin)) {
 				this.lolCategoryRooms.delete(roomLogin);
-				this.log.info(`✗ League of Legends category no longer detected for room: ${roomLogin} (context change)`);
 			}
 		}
 	}
@@ -297,13 +242,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	processMessage(tokens, msg) {
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
-			this.log.info('EloWard addon is disabled in settings');
 			return tokens;
 		}
 
 		// Skip if Chrome extension is active
 		if (this.chromeExtensionDetected) {
-			this.log.info('Chrome extension detected, skipping rank badges');
 			return tokens;
 		}
 
@@ -324,7 +267,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Check if this room's channel is subscribed
 		if (!this.subscribedChannels.has(roomLogin)) {
-			this.log.info(`Channel ${roomLogin} is not in subscribed channels list`);
 			return tokens;
 		}
 
@@ -526,19 +468,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.chromeExtensionDetected = document.body.getAttribute('data-eloward-chrome-ext') === 'active';
 		
 		if (this.chromeExtensionDetected) {
-			this.log.info('Chrome extension detected - FFZ addon will disable rank badges to avoid conflicts');
+			this.log.info('Chrome extension detected, disabling rank badges');
 		}
 	}
 
 	async checkChannelSubscription(channelName) {
 		if (!channelName) {
-			this.log.info('Subscription check failed: No channel name provided');
 			return false;
 		}
 
 		try {
 			const normalizedName = channelName.toLowerCase();
-			this.log.info(`Checking subscription for channel: ${normalizedName}`);
 			this.incrementMetric('db_read', normalizedName);
 			
 			const response = await fetch(`${this.config.subscriptionUrl}/subscription/verify`, {
@@ -548,16 +488,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			});
 
 			if (!response.ok) {
-				this.log.info(`Subscription check failed for ${normalizedName}: HTTP ${response.status}`);
 				return false;
 			}
 			
 			const data = await response.json();
-			const isSubscribed = !!data.subscribed;
-			this.log.info(`Subscription check result for ${normalizedName}: ${isSubscribed ? 'SUBSCRIBED' : 'NOT SUBSCRIBED'}`);
-			return isSubscribed;
+			return !!data.subscribed;
 		} catch (error) {
-			this.log.info(`Subscription check error for ${channelName}: ${error.message}`);
 			return false;
 		}
 	}
@@ -597,44 +533,38 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
-		this.log.info(`Starting category detection for room: ${roomLogin}`);
+		// Wait for FFZ context to be ready (based on observed timing)
+		const initialDelay = 3700; // ~3.7 seconds - when context typically becomes available
+		await new Promise(resolve => setTimeout(resolve, initialDelay));
 		
-		// Try immediate detection first
+		// Try detection after the delay
 		let isLolCategory = this.detectLeagueOfLegendsCategory();
-		this.log.info(`Initial category detection for ${roomLogin}: ${isLolCategory}`);
 		
-		// If immediate detection failed, retry with delays for DOM to load
+		// If still failed, add some light backup retries
 		if (!isLolCategory) {
-			this.log.info('Initial detection failed, retrying with delays...');
-			isLolCategory = await this.retryCategoryDetection(roomLogin);
+			isLolCategory = await this.retryCategoryDetection();
 		}
 		
 		// Set the final result
 		if (isLolCategory) {
 			this.lolCategoryRooms.add(roomLogin);
-			this.log.info(`✓ League of Legends category detected for room: ${roomLogin}`);
-		} else {
-			this.log.info(`✗ Not League of Legends category for room: ${roomLogin}`);
 		}
 		
 		return isLolCategory;
 	}
 
-	async retryCategoryDetection(roomLogin) {
-		const retryDelays = [200, 500, 1000, 2000]; // Wait for DOM to load
+	async retryCategoryDetection() {
+		const retryDelays = [500, 1000]; // Lighter backup retries
 		
 		const tryDetection = async (attemptIndex) => {
 			if (attemptIndex >= retryDelays.length) {
-				this.log.info(`All category detection retries failed for ${roomLogin}`);
 				return false;
 			}
 			
 			await new Promise(resolve => setTimeout(resolve, retryDelays[attemptIndex]));
-			this.log.info(`Category detection retry ${attemptIndex + 1}/${retryDelays.length} for ${roomLogin}`);
 			
 			const isLolCategory = this.detectLeagueOfLegendsCategory();
 			if (isLolCategory) {
-				this.log.info(`Category detected on retry ${attemptIndex + 1} for ${roomLogin}`);
 				return true;
 			}
 			
@@ -647,15 +577,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	detectLeagueOfLegendsCategory() {
 		// FFZ context-based detection using context.categoryID
 		const contextDetection = this.settings.get('eloward.category_detection');
-		this.log.info(`FFZ context detection result: ${contextDetection}`);
-		
-		if (contextDetection) {
-			this.log.info('✓ League of Legends category detected via FFZ context');
-			return true;
-		}
-
-		this.log.info('✗ League of Legends category not detected via FFZ context');
-		return false;
+		return contextDetection;
 	}
 }
 
