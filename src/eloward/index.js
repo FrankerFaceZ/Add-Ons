@@ -106,46 +106,35 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	createTooltipHandler(user, badge, createElement) {
 		try {
-			const cachedRank = this.getCachedRank(user.login);
-			if (cachedRank) {
-				// Try creating the full tooltip first
-				const fullTooltip = this.createRankTooltip(cachedRank, createElement);
-				if (fullTooltip) {
-					return fullTooltip;
-				}
-				
-				// Fallback to simple text tooltip
-				const rankText = this.formatRankText(cachedRank);
-				return createElement('div', {
-					style: 'padding: 4px; font-size: 13px; color: #efeff1;'
-				}, rankText);
-			}
+			const username = user.login || user.user_login;
+			if (!username) return null;
+			
+			const cachedRank = this.getCachedRank(username);
+			if (!cachedRank) return null;
+			
+			return this.createRankTooltip(cachedRank, createElement);
 		} catch (error) {
-			this.log.info(`Tooltip error for ${user.login}: ${error.message}`);
+			return null;
 		}
-		return null;
 	}
 
 	createRankTooltip(rankData, createElement) {
-		if (!rankData || !rankData.tier) return null;
+		if (!rankData?.tier) return null;
 		
 		const tier = rankData.tier.toLowerCase();
 		const rankImageUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`;
 		const rankText = this.formatRankText(rankData);
 		
-		// Create tooltip container with inline styles for better compatibility
 		const container = createElement('div', {
 			style: 'display: flex; align-items: center; gap: 8px; min-width: 120px; padding: 4px;'
 		});
 		
-		// Add rank image
 		const rankImage = createElement('img', {
 			src: rankImageUrl,
 			style: 'width: 24px; height: 24px; flex-shrink: 0;',
 			alt: tier
 		});
 		
-		// Add rank text
 		const rankTextEl = createElement('span', {
 			style: 'font-size: 13px; font-weight: 500; color: #efeff1;'
 		}, rankText);
@@ -331,7 +320,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return 'UNRANKED';
 		}
 		
-		let rankText = rankData.tier;
+		let rankText = rankData.tier.toUpperCase();
 		
 		// Add division for ranks that have divisions
 		if (rankData.division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankData.tier.toUpperCase())) {
@@ -389,19 +378,27 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const badgeId = this.getBadgeId(tier);
 		const ffzUser = this.chat.getUser(userId);
 
+		// Always update the badge data with current rank information for tooltip
+		const formattedRankText = this.formatRankText(rankData);
+		const badgeData = this.getBadgeData(tier);
+		badgeData.title = formattedRankText; // Update title with full rank info
+		
+		// Load/update the badge data in FFZ's system with tooltip support
+		this.badges.loadBadgeData(badgeId, badgeData);
+
 		// Check if user already has this badge
 		if (ffzUser.getBadge(badgeId)) {
-			return;
+			// Even if they have the badge, we updated the data, so continue to store rank data
+		} else {
+			// Remove any existing EloWard badges from this user
+			this.removeUserBadges(userId);
+
+			// Add the badge to the user
+			ffzUser.addBadge('addon.eloward', badgeId);
 		}
 
-		// Remove any existing EloWard badges from this user
-		this.removeUserBadges(userId);
-
-		// Add the badge to the user
-		ffzUser.addBadge('addon.eloward', badgeId);
-
-		// Track this badge assignment
-		this.userBadges.set(userId, { username, tier, badgeId });
+		// Track this badge assignment - IMPORTANT: Store the full rank data here
+		this.userBadges.set(userId, { username, tier, badgeId, rankData: rankData });
 
 		// Update chat display for this user
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
@@ -461,13 +458,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	getCachedRank(username) {
-		const entry = this.cache.get(username.toLowerCase());
+		if (!username) {
+			return null;
+		}
+		
+		const normalizedUsername = username.toLowerCase();
+		const entry = this.cache.get(normalizedUsername);
 		if (entry && (Date.now() - entry.timestamp < this.config.cacheExpiry)) {
 			entry.frequency = (entry.frequency || 0) + 1;
 			return entry.data;
 		}
 		if (entry) {
-			this.cache.delete(username.toLowerCase());
+			this.cache.delete(normalizedUsername);
 		}
 		return null;
 	}
