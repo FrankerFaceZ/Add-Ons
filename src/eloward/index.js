@@ -96,20 +96,72 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				4: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`
 			},
 			svg: false,
-			tooltipExtra: (user, badge, createElement) => {
-				// Dynamic tooltip showing current rank info
-				const cachedRank = this.getCachedRank(user.login);
-				if (cachedRank) {
-					const rankText = this.formatRankText(cachedRank);
-					return createElement('div', { className: 'tw-pd-05' }, rankText);
-				}
-				return null;
-			}
+			tooltipExtra: this.createTooltipHandler.bind(this)
 		};
 	}
 
 	getBadgeId(tier) {
 		return `addon.eloward.rank-${tier}`;
+	}
+
+	createTooltipHandler(user, badge, createElement) {
+		try {
+			// Safely handle undefined user or user.login
+			if (!user || !user.login) {
+				return null;
+			}
+			
+			const cachedRank = this.getCachedRank(user.login);
+			this.log.info(`Tooltip for ${user.login}: cachedRank =`, cachedRank);
+			
+			if (cachedRank) {
+				// Try creating the full tooltip first
+				const fullTooltip = this.createRankTooltip(cachedRank, createElement);
+				if (fullTooltip) {
+					return fullTooltip;
+				}
+				
+				// Fallback to simple text tooltip
+				const rankText = this.formatRankText(cachedRank);
+				this.log.info(`Tooltip fallback text for ${user.login}: "${rankText}"`);
+				return createElement('div', {
+					style: 'padding: 4px; font-size: 13px; color: #efeff1;'
+				}, rankText);
+			}
+		} catch (error) {
+			this.log.info(`Tooltip error for ${user?.login || 'unknown'}: ${error.message}`);
+		}
+		return null;
+	}
+
+	createRankTooltip(rankData, createElement) {
+		if (!rankData || !rankData.tier) return null;
+		
+		const tier = rankData.tier.toLowerCase();
+		const rankImageUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`;
+		const rankText = this.formatRankText(rankData);
+		
+		// Create tooltip container with inline styles for better compatibility
+		const container = createElement('div', {
+			style: 'display: flex; align-items: center; gap: 8px; min-width: 120px; padding: 4px;'
+		});
+		
+		// Add rank image
+		const rankImage = createElement('img', {
+			src: rankImageUrl,
+			style: 'width: 24px; height: 24px; flex-shrink: 0;',
+			alt: tier
+		});
+		
+		// Add rank text
+		const rankTextEl = createElement('span', {
+			style: 'font-size: 13px; font-weight: 500; color: #efeff1;'
+		}, rankText);
+		
+		container.appendChild(rankImage);
+		container.appendChild(rankTextEl);
+		
+		return container;
 	}
 
 	initializeRankBadges() {
@@ -223,8 +275,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-
-
 	async onContextChanged() {
 		// Re-evaluate category detection for all active rooms when context changes
 		for (const roomLogin of this.activeRooms.values()) {
@@ -285,22 +335,32 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	formatRankText(rankData) {
+		this.log.info('formatRankText input:', rankData);
+		
 		if (!rankData?.tier || rankData.tier.toUpperCase() === 'UNRANKED') {
 			return 'UNRANKED';
 		}
 		
-		let rankText = rankData.tier;
+		let rankText = rankData.tier.toUpperCase(); // Ensure consistent capitalization
+		this.log.info('Base rankText:', rankText);
 		
 		// Add division for ranks that have divisions
 		if (rankData.division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankData.tier.toUpperCase())) {
-			rankText += ` ${rankData.division}`;
+			rankText += ` ${rankData.division.toUpperCase()}`;
+			this.log.info('Added division, rankText now:', rankText);
+		} else {
+			this.log.info('No division to add. Division:', rankData.division, 'Tier:', rankData.tier);
 		}
 		
 		// Add LP for ranked players
 		if (rankData.leaguePoints !== undefined && rankData.leaguePoints !== null) {
 			rankText += ` - ${rankData.leaguePoints} LP`;
+			this.log.info('Added LP, final rankText:', rankText);
+		} else {
+			this.log.info('No LP to add. leaguePoints:', rankData.leaguePoints);
 		}
 		
+		this.log.info('Final formatted rank text:', rankText);
 		return rankText;
 	}
 
@@ -533,19 +593,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
-		// Wait for FFZ context to be ready (based on observed timing)
-		const initialDelay = 3700; // ~3.7 seconds - when context typically becomes available
-		await new Promise(resolve => setTimeout(resolve, initialDelay));
+		// Simple consistent delay then detect once
+		await new Promise(resolve => setTimeout(resolve, 4000)); // 4 second delay for reliability
 		
-		// Try detection after the delay
-		let isLolCategory = this.detectLeagueOfLegendsCategory();
-		
-		// If still failed, add some light backup retries
-		if (!isLolCategory) {
-			isLolCategory = await this.retryCategoryDetection();
-		}
-		
-		// Set the final result
+		const isLolCategory = this.detectLeagueOfLegendsCategory();
 		if (isLolCategory) {
 			this.lolCategoryRooms.add(roomLogin);
 		}
@@ -553,31 +604,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return isLolCategory;
 	}
 
-	async retryCategoryDetection() {
-		const retryDelays = [500, 1000]; // Lighter backup retries
-		
-		const tryDetection = async (attemptIndex) => {
-			if (attemptIndex >= retryDelays.length) {
-				return false;
-			}
-			
-			await new Promise(resolve => setTimeout(resolve, retryDelays[attemptIndex]));
-			
-			const isLolCategory = this.detectLeagueOfLegendsCategory();
-			if (isLolCategory) {
-				return true;
-			}
-			
-			return tryDetection(attemptIndex + 1);
-		};
-		
-		return tryDetection(0);
-	}
-
 	detectLeagueOfLegendsCategory() {
-		// FFZ context-based detection using context.categoryID
-		const contextDetection = this.settings.get('eloward.category_detection');
-		return contextDetection;
+		// Single FFZ context-based detection
+		try {
+			const contextDetection = this.settings.get('eloward.category_detection');
+			return !!contextDetection;
+		} catch (error) {
+			return false;
+		}
 	}
 }
 
