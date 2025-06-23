@@ -150,34 +150,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async onRoomAdd(room) {
-		// Try to get room data from different sources
-		let roomLogin, roomId;
+		const roomLogin = room.login;
+		const roomId = room.id;
 		
-		// Try getter properties first
-		try {
-			roomLogin = room.login;
-			roomId = room.id;
-		} catch (e) {
-			// Silently handle getter errors
-		}
-		
-		// If getters didn't work, try alternative properties
-		if (!roomLogin) {
-			roomLogin = room._id || room.name || room.channel || room.roomLogin || room.displayName;
-		}
-		
-		if (!roomId) {
-			roomId = room._id || room.roomId || room.channelId;
-		}
-		
-		// If we still don't have room data, skip silently
 		if (!roomLogin) {
 			return;
 		}
 		
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		// Check League of Legends category with backup method and retry logic
+		// Check League of Legends category
 		await this.detectAndSetCategoryForRoom(roomLogin);
 		
 		// Check if this channel is subscribed to EloWard
@@ -201,35 +183,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	initializeExistingRooms() {
-		// Try immediately first
-		if (this.tryProcessExistingRooms()) {
-			return;
-		}
-		
-		// If immediate attempt failed, retry with delays
-		let retryCount = 0;
-		const maxRetries = 5;
-		const retryDelays = [100, 250, 500, 1000, 2000]; // Progressive delays
-		
-		const attemptRoomDetection = () => {
-			if (this.tryProcessExistingRooms()) {
-				return;
-			}
-			
-			retryCount++;
-			if (retryCount < maxRetries) {
-				setTimeout(attemptRoomDetection, retryDelays[retryCount - 1]);
-			} else {
-				this.log.info('Failed to detect existing rooms after retries');
-			}
-		};
-		
-		setTimeout(attemptRoomDetection, retryDelays[0]);
-	}
-
-	tryProcessExistingRooms() {
 		if (!this.chat || !this.chat.iterateRooms) {
-			return false;
+			return;
 		}
 		
 		let roomCount = 0;
@@ -243,12 +198,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 					this.onRoomAdd(room);
 				}, 10 * roomCount); // Stagger processing
 			}
-			
-			return roomCount > 0;
-			
 		} catch (error) {
 			this.log.info(`Error iterating rooms: ${error.message}`);
-			return false;
 		}
 	}
 
