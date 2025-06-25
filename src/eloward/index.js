@@ -58,9 +58,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	onEnable() {
 		this.log.info('EloWard FFZ Addon: Initializing');
 
-		// Add comprehensive environment detection and logging
-		this.logEnvironmentInfo();
-
 		// Initialize rank badges
 		this.initializeRankBadges();
 
@@ -87,100 +84,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.initializeExistingRooms();
 		
 		this.log.info('EloWard FFZ Addon: Ready');
-	}
-
-	logEnvironmentInfo() {
-		this.log.info('=== EloWard Environment Detection ===');
-		
-		// Basic environment info
-		this.log.info('User Agent:', navigator.userAgent);
-		this.log.info('Current URL:', window.location.href);
-		this.log.info('Is Popout:', window.location.href.includes('popout'));
-		this.log.info('Is OBS Browser:', this.detectOBSBrowser());
-		
-		// FFZ Site context
-		try {
-			const siteContext = this.site?.getContext?.() || {};
-			this.log.info('FFZ Site Context Available:', !!this.site);
-			this.log.info('Site Context Keys:', Object.keys(siteContext));
-			this.log.info('Site Context Values:', siteContext);
-		} catch (error) {
-			this.log.info('Error accessing site context:', error.message);
-		}
-
-		// Check for context.categoryID specifically
-		try {
-			const categoryDetection = this.settings.get('eloward.category_detection');
-			this.log.info('Category Detection Setting Value:', categoryDetection);
-		} catch (error) {
-			this.log.info('Error getting category detection:', error.message);
-		}
-
-		// Check what's available in window.obsstudio (if in OBS)
-		if (typeof window.obsstudio !== 'undefined') {
-			this.log.info('OBS Studio bindings available');
-			this.log.info('OBS Plugin Version:', window.obsstudio.pluginVersion);
-			// Try to get current scene info
-			try {
-				window.obsstudio.getCurrentScene(function(scene) {
-					this.log.info('OBS Current Scene:', scene);
-				}.bind(this));
-			} catch (error) {
-				this.log.info('Error getting OBS scene:', error.message);
-			}
-		}
-
-		// Check DOM for any stream/game info
-		this.logDOMGameInfo();
-
-		this.log.info('=== End Environment Detection ===');
-	}
-
-	detectOBSBrowser() {
-		// Check multiple indicators for OBS browser
-		const indicators = [
-			typeof window.obsstudio !== 'undefined',
-			navigator.userAgent.includes('OBS'),
-			window.location.href.includes('obs'),
-			document.title.includes('OBS')
-		];
-		
-		const isOBS = indicators.some(indicator => indicator);
-		this.log.info('OBS Detection Indicators:', indicators, 'Result:', isOBS);
-		return isOBS;
-	}
-
-	logDOMGameInfo() {
-		// Look for game/category info in the DOM
-		const selectors = [
-			'[data-a-target="stream-game-link"]',
-			'[data-test-selector="stream-info-card-component"]',
-			'.tw-link[href*="/directory/game/"]',
-			'[aria-label*="playing"]',
-			'.stream-info',
-			'[data-target="directory-game"]'
-		];
-
-		this.log.info('Scanning DOM for game information...');
-		selectors.forEach(selector => {
-			try {
-				const elements = document.querySelectorAll(selector);
-				if (elements.length > 0) {
-					this.log.info(`Found ${elements.length} elements for "${selector}"`);
-					elements.forEach((el, index) => {
-						this.log.info(`  [${index}] Text:`, el.textContent?.trim());
-						this.log.info(`  [${index}] Href:`, el.href);
-						this.log.info(`  [${index}] Data attrs:`, Object.fromEntries(
-							Array.from(el.attributes)
-								.filter(attr => attr.name.startsWith('data-'))
-								.map(attr => [attr.name, attr.value])
-						));
-					});
-				}
-			} catch (error) {
-				this.log.info(`Error scanning selector "${selector}":`, error.message);
-			}
-		});
 	}
 
 	getBadgeData(tier) {
@@ -256,27 +159,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const roomLogin = room.login;
 		const roomId = room.id;
 		
-		// Enhanced logging for room detection
-		this.log.info('=== Room Added ===');
-		this.log.info('Room Login:', roomLogin);
-		this.log.info('Room ID:', roomId);
-		this.log.info('Room Object Keys:', Object.keys(room));
-		this.log.info('Full Room Object:', room);
-		
 		if (!roomLogin) {
-			this.log.info('No room login found, skipping');
 			return;
 		}
 		
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		// Check League of Legends category with detailed logging
-		const categoryResult = await this.detectAndSetCategoryForRoom(roomLogin);
-		this.log.info('Category detection result for', roomLogin, ':', categoryResult);
-		
-		// Check if this channel is subscribed to EloWard
+		// Check League of Legends category and subscription status
+		await this.detectAndSetCategoryForRoom(roomLogin);
 		const isSubscribed = await this.checkChannelSubscription(roomLogin);
-		this.log.info('Subscription check for', roomLogin, ':', isSubscribed);
 		
 		if (isSubscribed) {
 			this.subscribedChannels.add(roomLogin);
@@ -335,69 +226,40 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	processMessage(tokens, msg) {
-		// Enhanced logging for message processing
-		this.log.info('=== Processing Message ===');
-		this.log.info('Addon enabled:', this.settings.get('eloward.enabled'));
-		this.log.info('Chrome extension detected:', this.chromeExtensionDetected);
-
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
-			this.log.info('Addon disabled, skipping message');
 			return tokens;
 		}
 
 		// Skip if Chrome extension is active
 		if (this.chromeExtensionDetected) {
-			this.log.info('Chrome extension active, skipping message');
 			return tokens;
 		}
 
 		const user = msg?.user;
 		const username = user?.login;
-		
-		// Handle multiple rooms and shared chats as recommended in PR feedback
 		const roomLogin = msg?.roomLogin;
 
-		this.log.info('Message details - Username:', username, 'Room:', roomLogin);
-		this.log.info('User object keys:', user ? Object.keys(user) : 'No user');
-		this.log.info('Full message object keys:', Object.keys(msg || {}));
-
 		if (!username || !roomLogin) {
-			this.log.info('Missing username or roomLogin, skipping message');
 			return tokens;
 		}
 
-		// Check if this room has League of Legends category (checked once per room)
+		// Check if this room has League of Legends category and is subscribed
 		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
-		this.log.info('Room', roomLogin, 'has LoL category:', hasLoLCategory);
-		this.log.info('Current LoL category rooms:', Array.from(this.lolCategoryRooms));
-
-		if (!hasLoLCategory) {
-			this.log.info('Room not in LoL category, skipping message');
-			return tokens;
-		}
-
-		// Check if this room's channel is subscribed
 		const isSubscribed = this.subscribedChannels.has(roomLogin);
-		this.log.info('Room', roomLogin, 'is subscribed:', isSubscribed);
-		this.log.info('Current subscribed channels:', Array.from(this.subscribedChannels));
 
-		if (!isSubscribed) {
-			this.log.info('Room not subscribed, skipping message');
+		if (!hasLoLCategory || !isSubscribed) {
 			return tokens;
 		}
 
 		// Track metrics and process rank lookup
-		this.log.info('Processing rank lookup for user:', username, 'in room:', roomLogin);
 		this.incrementMetric('db_read', roomLogin);
 
 		const cachedRank = this.getCachedRank(username);
 		if (cachedRank) {
-			this.log.info('Found cached rank for', username, ':', cachedRank);
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
 		} else {
-			this.log.info('No cached rank for', username, ', fetching from API');
 			// Make direct API call without queuing
 			this.fetchAndProcessRank(username, user.id, roomLogin);
 		}
@@ -646,68 +508,47 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
-		this.log.info('=== Category Detection for Room:', roomLogin, '===');
-		
-		// Fixed 5-second delay to let Twitch servers update after stream start
-		const delayMs = 1500;
-		
-		this.log.info('Using 5-second detection delay for', roomLogin);
-		
-		// Wait for delay to let Twitch servers update
+		// Fixed delay to let Twitch servers update after stream start
+		const delayMs = 3000;
 		await new Promise(resolve => setTimeout(resolve, delayMs));
 		
 		// Check manual override first
 		const manualOverride = this.settings.get('eloward.manual_override');
 		if (manualOverride) {
-			this.log.info('Manual override enabled, adding', roomLogin, 'to LoL category rooms');
+			this.log.info(`Manual override enabled, adding ${roomLogin} to LoL category rooms.`);
 			this.lolCategoryRooms.add(roomLogin);
 			return true;
 		}
 		
 		// Use robust API detection
 		const isLolCategory = await this.checkTwitchAPIForLoL(roomLogin);
-		this.log.info('API detection result for', roomLogin, ':', isLolCategory);
 		
 		if (isLolCategory) {
 			this.lolCategoryRooms.add(roomLogin);
-			this.log.info('Added', roomLogin, 'to LoL category rooms via API');
+			this.log.info(`League of Legends category detected via API for channel: ${roomLogin}`);
 		}
 		
 		return isLolCategory;
 	}
 
-
-
-
-
 	async checkTwitchAPIForLoL(channelName) {
 		try {
-			this.log.info('=== Single Robust API Check for:', channelName, '===');
-			
 			// Method 1: GraphQL API (most reliable, works everywhere)
 			const gqlResult = await this.checkGraphQLAPI(channelName);
 			if (gqlResult !== null) {
-				this.log.info('GraphQL API result for', channelName, ':', gqlResult);
 				return gqlResult;
 			}
 			
 			// Method 2: Fallback to our proxy API
-			const proxyResult = await this.checkProxyAPI(channelName);
-			this.log.info('Proxy API result for', channelName, ':', proxyResult);
-			return proxyResult;
-			
+			return await this.checkProxyAPI(channelName);
 		} catch (error) {
-			this.log.info('Error in robust API check for', channelName, ':', error.message);
+			this.log.info(`Error in API check for ${channelName}:`, error.message);
 			return false;
 		}
 	}
 
-
-
 	async checkGraphQLAPI(channelName) {
 		try {
-			this.log.info('Checking GraphQL API for', channelName);
-			
 			// Use Twitch's GraphQL API that powers the web interface
 			const gqlQuery = {
 				query: `
@@ -737,28 +578,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			if (response.ok) {
 				const data = await response.json();
-				this.log.info('GraphQL API response for', channelName, ':', data);
-				
 				const stream = data.data?.user?.stream;
 				if (stream?.game) {
-					const isLoL = stream.game.id === '21779' || stream.game.name === 'League of Legends';
-					this.log.info('GraphQL confirmed LoL status for', channelName, ':', isLoL);
-					return isLoL;
+					return stream.game.id === '21779' || stream.game.name === 'League of Legends';
 				} else {
-					this.log.info('Channel', channelName, 'is not live or has no game set');
+					this.log.info(`Channel ${channelName} is not live or has no game set according to GraphQL API.`);
 					return false;
 				}
 			} else {
-				this.log.info('GraphQL API request failed with status:', response.status);
+				this.log.info(`GraphQL API request for ${channelName} failed with status: ${response.status}`);
 			}
 		} catch (error) {
-			this.log.info('GraphQL API error for', channelName, ':', error.message);
+			this.log.info(`GraphQL API error for ${channelName}:`, error.message);
 		}
 		
-		return null;
+		return null; // Return null on failure to allow fallback
 	}
-
-
 
 	async checkProxyAPI(channelName) {
 		try {
@@ -774,25 +609,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			if (response.ok) {
 				const data = await response.json();
-				this.log.info('Proxy API Response for', channelName, ':', data);
-				
-				// Check if the game is League of Legends (game_id: 21779)
-				if (data.game_id === '21779' || data.game_name === 'League of Legends') {
-					this.log.info('Proxy API confirmed LoL stream for', channelName);
-					return true;
-				}
+				return data.game_id === '21779' || data.game_name === 'League of Legends';
 			} else {
-				this.log.info('Proxy API request failed with status:', response.status);
+				this.log.info(`Proxy API request for ${channelName} failed with status: ${response.status}`);
 			}
 			
 			return false;
 		} catch (error) {
-			this.log.info('Proxy API error:', error.message);
+			this.log.info(`Proxy API error for ${channelName}:`, error.message);
 			return false;
 		}
 	}
-
-
 }
 
 // Register the addon with FFZ
