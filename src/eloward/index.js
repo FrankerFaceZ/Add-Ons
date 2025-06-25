@@ -10,6 +10,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.inject('chat.badges');
 		this.inject('settings');
 		this.inject('site'); // Add site injection for context access
+		this.inject('site.twitch_data'); // Inject twitch_data for getUserGame
 
 		// Configuration
 		this.config = {
@@ -212,8 +213,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.log.info('Site context changed, re-checking categories for all rooms');
 		
 		for (const roomLogin of this.activeRooms.values()) {
-			// Trigger immediate API check since context changed
-			this.checkTwitchAPIForLoL(roomLogin).then(isLoL => {
+			// Trigger immediate check using FFZ's getUserGame since context changed
+			this.checkStreamCategory(roomLogin).then(isLoL => {
 				if (isLoL && !this.lolCategoryRooms.has(roomLogin)) {
 					this.lolCategoryRooms.add(roomLogin);
 					this.log.info('Added', roomLogin, 'to LoL category rooms after context change');
@@ -520,103 +521,36 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return true;
 		}
 		
-		// Use robust API detection
-		const isLolCategory = await this.checkTwitchAPIForLoL(roomLogin);
+		// Use FFZ's getUserGame method for reliable category detection
+		const isLolCategory = await this.checkStreamCategory(roomLogin);
 		
 		if (isLolCategory) {
 			this.lolCategoryRooms.add(roomLogin);
-			this.log.info(`League of Legends category detected via API for channel: ${roomLogin}`);
 		}
 		
 		return isLolCategory;
 	}
 
-	async checkTwitchAPIForLoL(channelName) {
+	async checkStreamCategory(channelName) {
 		try {
-			// Method 1: GraphQL API (most reliable, works everywhere)
-			const gqlResult = await this.checkGraphQLAPI(channelName);
-			if (gqlResult !== null) {
-				return gqlResult;
-			}
+			// Use FFZ's getUserGame method for reliable category detection
+			// This leverages FFZ's caching and data layer as recommended by SirStendec
+			const game = await this.twitch_data.getUserGame(null, channelName);
 			
-			// Method 2: Fallback to our proxy API
-			return await this.checkProxyAPI(channelName);
-		} catch (error) {
-			this.log.info(`Error in API check for ${channelName}:`, error.message);
-			return false;
-		}
-	}
-
-	async checkGraphQLAPI(channelName) {
-		try {
-			// Use Twitch's GraphQL API that powers the web interface
-			const gqlQuery = {
-				query: `
-					query($login: String!) {
-						user(login: $login) {
-							stream {
-								id
-								game {
-									id
-									name
-								}
-							}
-						}
-					}
-				`,
-				variables: { login: channelName }
-			};
-			
-			const response = await fetch('https://gql.twitch.tv/gql', {
-				method: 'POST',
-				headers: {
-					'Client-ID': 'kimne78kx3ncx6brgo4mv6wki5h1ko', // Public web client ID
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(gqlQuery)
-			});
-			
-			if (response.ok) {
-				const data = await response.json();
-				const stream = data.data?.user?.stream;
-				if (stream?.game) {
-					return stream.game.id === '21779' || stream.game.name === 'League of Legends';
-				} else {
-					this.log.info(`Channel ${channelName} is not live or has no game set according to GraphQL API.`);
-					return false;
-				}
+			if (game) {
+				// Check for League of Legends by ID or name
+				const isLoL = game.id === '21779' || 
+					game.name === 'League of Legends' ||
+					game.displayName === 'League of Legends';
+				
+				this.log.info(`Game detected for ${channelName}: ${game.name || game.displayName} (ID: ${game.id})`);
+				return isLoL;
 			} else {
-				this.log.info(`GraphQL API request for ${channelName} failed with status: ${response.status}`);
+				this.log.info(`No game detected for ${channelName} (channel may be offline or no game set)`);
+				return false;
 			}
 		} catch (error) {
-			this.log.info(`GraphQL API error for ${channelName}:`, error.message);
-		}
-		
-		return null; // Return null on failure to allow fallback
-	}
-
-	async checkProxyAPI(channelName) {
-		try {
-			// Use our own API proxy as fallback
-			const proxyAPIUrl = `${this.config.apiUrl}/twitch/stream/${channelName}`;
-			
-			const response = await fetch(proxyAPIUrl, {
-				method: 'GET',
-				headers: {
-					'Accept': 'application/json'
-				}
-			});
-			
-			if (response.ok) {
-				const data = await response.json();
-				return data.game_id === '21779' || data.game_name === 'League of Legends';
-			} else {
-				this.log.info(`Proxy API request for ${channelName} failed with status: ${response.status}`);
-			}
-			
-			return false;
-		} catch (error) {
-			this.log.info(`Proxy API error for ${channelName}:`, error.message);
+			this.log.info(`Error checking game for ${channelName} via FFZ:`, error.message);
 			return false;
 		}
 	}
