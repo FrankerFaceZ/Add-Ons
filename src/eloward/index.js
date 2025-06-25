@@ -52,17 +52,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			changed: () => this.updateBadges()
 		});
 
-		// API detection delay setting
-		this.settings.add('eloward.detection_delay', {
-			default: 5,
-			ui: {
-				path: 'Add-Ons >> EloWard Rank Badges',
-				title: 'Detection Delay (seconds)',
-				description: 'Delay before checking stream category (allows time for Twitch servers to update)',
-				component: 'setting-text-box'
-			}
-		});
-
 
 	}
 
@@ -659,13 +648,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	async detectAndSetCategoryForRoom(roomLogin) {
 		this.log.info('=== Category Detection for Room:', roomLogin, '===');
 		
-		// Get user-configured delay (default 5 seconds)
-		const delaySeconds = parseInt(this.settings.get('eloward.detection_delay'), 10) || 5;
-		const delayMs = delaySeconds * 1000;
+		// Fixed 5-second delay to let Twitch servers update after stream start
+		const delayMs = 3000;
 		
-		this.log.info('Using detection delay of', delaySeconds, 'seconds for', roomLogin);
+		this.log.info('Using 5-second detection delay for', roomLogin);
 		
-		// Wait for the configured delay to let Twitch servers update
+		// Wait for delay to let Twitch servers update
 		await new Promise(resolve => setTimeout(resolve, delayMs));
 		
 		// Check manual override first
