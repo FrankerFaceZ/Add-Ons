@@ -649,7 +649,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.log.info('=== Category Detection for Room:', roomLogin, '===');
 		
 		// Fixed 5-second delay to let Twitch servers update after stream start
-		const delayMs = 3000;
+		const delayMs = 1500;
 		
 		this.log.info('Using 5-second detection delay for', roomLogin);
 		
