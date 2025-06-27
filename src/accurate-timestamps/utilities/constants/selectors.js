@@ -1,0 +1,1 @@
+export const TIMESTAMP_SELECTOR = ".timestamp-metadata__bar + p";

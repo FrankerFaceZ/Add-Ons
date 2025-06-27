@@ -1,0 +1,6 @@
+query AccurateTimestamps_GetClipDate($slug: ID!) {
+	clip(slug: $slug) {
+		id
+		createdAt
+	}
+}
