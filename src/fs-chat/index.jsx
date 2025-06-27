@@ -555,11 +555,14 @@ class FSChat extends Addon {
 				{tip = (<div class="ffz-il-tooltip ffz-il-tooltip--align-right ffz-il-tooltip--up" role="tooltip" />)}
 			</div>);
 
-			const thing = container.querySelector('button[data-a-target="player-fullscreen-button"]');
-			if ( thing ) {
-				container.insertBefore(cont, thing.parentElement);
-			} else
-				container.appendChild(cont);
+			let thing = container.querySelector('button[data-a-target="player-fullscreen-button"]');
+				while(thing?.parentElement && thing.parentElement !== container)
+					thing = thing.parentElement;
+
+				if ( thing?.parentElement === container )
+					container.insertBefore(cont, thing);
+				else
+					container.appendChild(cont);
 
 		} else {
 			icon = cont.querySelector('figure');
