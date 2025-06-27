@@ -1,0 +1,16 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main",
+		"clips"
+	],
+	"name": "Accurate Timestamps",
+	"description": "Display a more accurate timestamp for clips and videos.",
+	"author": "Trubbel",
+	"maintainer": "Trubbel",
+	"version": "1.0.0",
+	"website": "https://twitch.tv/trubbel",
+	"settings": "add_ons.accurate_timestamps",
+	"created": "2025-06-27T21:47:47.611Z"
+}
