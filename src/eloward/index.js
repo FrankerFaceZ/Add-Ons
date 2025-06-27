@@ -59,14 +59,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	onEnable() {
 		this.log.info('EloWard FFZ Addon: Initializing');
 
-		// Initialize rank badges
-		this.initializeRankBadges();
-
-		// Detect Chrome extension conflict
+		// Detect Chrome extension conflict FIRST
 		this.detectChromeExtension();
 		if (this.chromeExtensionDetected) {
-			this.log.info('Chrome extension detected, disabling rank badges');
+			this.log.info('Chrome extension detected, completely disabling FFZ addon for entire session');
+			return; // Exit early - no functionality should be enabled
 		}
+
+		// Initialize rank badges
+		this.initializeRankBadges();
 
 		// Set up chat room event listeners
 		this.on('chat:room-add', this.onRoomAdd, this);
@@ -157,6 +158,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async onRoomAdd(room) {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return;
+		}
+
 		const roomLogin = room.login;
 		const roomId = room.id;
 		
@@ -177,6 +183,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onRoomRemove(room) {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return;
+		}
+
 		const roomId = room.id;
 		const roomLogin = this.activeRooms.get(roomId);
 		
@@ -188,6 +199,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	initializeExistingRooms() {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return;
+		}
+
 		if (!this.chat || !this.chat.iterateRooms) {
 			return;
 		}
@@ -209,6 +225,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onContextChanged() {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return;
+		}
+
 		// Re-evaluate category detection for all active rooms when context changes
 		this.log.info('Site context changed, re-checking categories for all rooms');
 		
@@ -227,13 +248,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	processMessage(tokens, msg) {
-		// Check if addon is enabled
-		if (!this.settings.get('eloward.enabled')) {
+		// Skip if Chrome extension is active (check FIRST)
+		if (this.chromeExtensionDetected) {
 			return tokens;
 		}
 
-		// Skip if Chrome extension is active
-		if (this.chromeExtensionDetected) {
+		// Check if addon is enabled
+		if (!this.settings.get('eloward.enabled')) {
 			return tokens;
 		}
 
@@ -311,6 +332,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	updateBadges() {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return;
+		}
+
 		if (!this.settings.get('eloward.enabled')) {
 			this.clearUserData();
 		} else {
@@ -509,6 +535,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return false;
+		}
+
 		// Fixed delay to let Twitch servers update after stream start
 		const delayMs = 3000;
 		await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -532,6 +563,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async checkStreamCategory(channelName) {
+		// Skip all processing if Chrome extension is detected
+		if (this.chromeExtensionDetected) {
+			return false;
+		}
+
 		try {
 			// Use FFZ's getUserGame method for reliable category detection
 			// This leverages FFZ's caching and data layer as recommended by SirStendec
