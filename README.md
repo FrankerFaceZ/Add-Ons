@@ -21,7 +21,7 @@ other assets.
 5.  Run `pnpm install` within the repository to install dependencies.
 6.  Run `pnpm start` to start the development server.
 7.  In the FrankerFaceZ Control Center, under Add-ons, make sure to enable the
-    setting `Use Local Development Server`.
+    setting `Use Local Development Server`. You need the userscript version of FrankerFaceZ for this option to be available.
 8.  Ensure that your browser will accept the self-signed certificate issued by
     the development server. You can visit https://localhost:8001/ with the
     development server running to see if it works.
