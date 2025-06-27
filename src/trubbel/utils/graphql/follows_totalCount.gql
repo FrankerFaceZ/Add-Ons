@@ -1,8 +1,0 @@
-query Trubbel_GetTotalChannelFollowCount {
-	currentUser {
-		id
-		follows {
-			totalCount
-		}
-	}
-}

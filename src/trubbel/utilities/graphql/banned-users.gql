@@ -1,0 +1,22 @@
+query Trubbel_GetBannedUsers($channelID: ID!, $cursor: Cursor) {
+  user(id: $channelID) {
+    id
+    channel {
+      id
+      bannedUsers(first: 100, after: $cursor) {
+        cursor
+        edges {
+          node {
+            bannedUser {
+              id
+              login
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+        }
+      }
+    }
+  }
+}

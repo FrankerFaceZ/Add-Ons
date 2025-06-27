@@ -1,6 +1,0 @@
-query Trubbel_GetClipDate($slug: ID!) {
-	clip(slug: $slug) {
-		id
-		createdAt
-	}
-}
