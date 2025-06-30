@@ -1,0 +1,15 @@
+query Trubbel_YetAnotherPrimeReminder {
+  currentUser {
+    id
+    hasPrime
+  }
+  user {
+    self {
+      canPrimeSubscribe
+      primeSubCreditBenefit {
+        renewalDate
+        willRenew
+      }
+    }
+  }
+}
