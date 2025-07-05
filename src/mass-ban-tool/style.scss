@@ -1,6 +1,6 @@
 .ffz-mmu-modal.ffz-dialog {
     --width: min(40vw, 128rem);
-    --height: min(90vh, calc(0.9 * var(--width)));
+    --height: min(100vh, calc(0.9 * var(--width)));
 
     & header {
         cursor: initial;
@@ -14,7 +14,7 @@
         display: block;
     }
 
-    & .ffz-mmu-mass-ban-tool-followers-import-custom-amount {
+    & .ffz-mmu-mass-ban-tool-recent-followers-import-custom-amount {
         min-width: 7.5rem;
         text-align: center;
     }
@@ -62,7 +62,13 @@
     }
 }
 
-.ffz-mmu-entry-count-label {
+.ffz-mmu-modal .ffz--widget label {
+    min-width: 8rem;
+    max-width: 10rem;
+    padding-right: 0.5rem;
+}
+
+.ffz-mmu-sub-label {
     font-size: 1.15rem;
 }
 
@@ -70,13 +76,28 @@
     font-weight: bold;
 }
 
-.ffz-mmu-mass-ban-tool-custom-followers-import {
-    margin-top: calc(0.5rem + var(--input-border-width-default) * -1) !important;
+.ffz-mmu-modal .tw-button__text {
+    pointer-events: none;
+}
+
+.ffz-mmu-mass-ban-tool-custom-recent-followers-count-import,
+.ffz-mmu-mass-ban-tool-custom-recent-followers-timestamp-import-button {
+    margin-top: calc(0.25rem + var(--input-border-width-default) * -1) !important;
+}
+
+.ffz-mmu-mass-ban-tool-recent-followers-timestamp-inputs .ffz-input {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
 }
 
 .loading .ffz-mmu-mass-ban-tool-recent-followers-inputs,
 :not(.loading) > .ffz-mmu-mass-ban-tool-recent-followers-loading {
     display: none !important;
+}
+
+.loading.ffz-mmu-mass-ban-tool-recent-followers-count-field,
+.loading.ffz-mmu-mass-ban-tool-recent-followers-timestamp-field {
+    align-items: center !important;
 }
 
 .ffz--widget:has(.ffz-mmu-mass-ban-tool-ban-reason:disabled) .tw-flex:hover {
@@ -85,7 +106,6 @@
 
 .loading .ffz-mmu-mass-ban-tool-recent-followers-loading {
     display: flex !important;
-    line-height: 2rem;
     color: var(--color-background-button-primary-default);
 }
 

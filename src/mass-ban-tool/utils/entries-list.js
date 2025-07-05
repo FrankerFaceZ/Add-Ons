@@ -34,3 +34,21 @@ export function addEntryToList( MMU, tool, user ) {
 export function updateEntryCount( MMU, tool ) {
     MMU.modal.querySelector( `#ffz-mmu-mass-${tool.toolName}-tool-entry-count` ).textContent = tool.entriesListTextArea.value.trim().split( /[\r\n|\r|\n]/ ).filter( Boolean ).length;
 }
+
+export function detectEnterKey( banTool, e ) {
+    const fieldType = e.target.dataset.fieldType;
+
+    if ( e.key === 'Enter' ) {
+        if ( fieldType === 'count' ) {
+            const value = parseInt( document.getElementById( 'ffz-mmu-mass-ban-tool-recent-followers-import-custom-amount' ).value );
+
+            if ( ! isNaN( value ) ) {
+                banTool.importRecentFollowers( e, value );
+            }
+        } else if ( fieldType === 'timestamp' ) {
+            banTool.importRecentFollowers( e, 1000 );
+        }
+
+        e.target.value = '';
+    }
+}

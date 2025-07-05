@@ -1,7 +1,9 @@
-query MassBanTool_GetRecentFollowers( $login: String!, $first: Int! ) {
+query MassBanTool_GetRecentFollowers( $login: String!, $first: Int!, $after: Cursor ) {
     user( login: $login ) {
-        followers( first: $first, order: DESC ) {
+        followers( first: $first, after: $after, order: DESC ) {
             edges {
+                cursor
+                followedAt
                 node {
                     displayName
                 }
