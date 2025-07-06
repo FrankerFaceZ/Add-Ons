@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "ReYohoho Emotes Proxy",
+	"name": "ReYohoho Emotes Proxy",
+	"author": "ReYohoho",
+	"description": "Configure proxy settings for FFZ, BTTV and 7TV emotes",
+	"settings": "add_ons.reyohoho-emotes-proxy",
+	"website": "https://t.me/ReYohoho",
+	"created": "2025-07-06T01:05:13.806Z",
+	"updated": "2025-07-06T02:03:44.354Z"
+}

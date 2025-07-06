@@ -7,6 +7,8 @@ class SevenTVEmotes extends Addon {
 		this.addonID = this.name.replace(/^addon\./, '');
 
 		this.manifest = this.addons.getAddon(this.addonID);
+		
+		this.load_requires = ['addon.reyohoho-emotes-proxy'];
 	}
 
 	async onLoad() {

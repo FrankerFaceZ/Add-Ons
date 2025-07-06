@@ -5,13 +5,42 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		this.inject(User);
 		this.inject(Emotes);
 		this.inject(Cosmetics);
-
-		this.apiBaseURI = 'https://7tv.io/v3';
-		this.eventsBaseURI = 'https://events.7tv.io/v3';
-		this.appBaseURI = 'https://7tv.app';
+		this.inject('settings');
 
 		this.clientPlatform = 'ffz';
 		this.clientVersion = this.parent.manifest.version;
+		
+		this.updateBaseURIs();
+	}
+
+	updateBaseURIs() {
+		const proxySettings = this.resolve('addon.reyohoho-emotes-proxy');
+		const proxyUrl = proxySettings ? proxySettings.getProxyUrl() : null;
+		const isEnabled = proxySettings ? proxySettings.isServiceEnabled('7tv') : false;
+
+		if (proxyUrl && isEnabled) {
+			this.apiBaseURI = `${proxyUrl}https://7tv.io/v3`;
+			this.appBaseURI = `${proxyUrl}https://7tv.app`;
+		} else {
+			this.apiBaseURI = 'https://7tv.io/v3';
+			this.appBaseURI = 'https://7tv.app';
+		}
+		
+		this.eventsBaseURI = 'https://events.7tv.io/v3';
+	}
+
+	onEnable() {
+		this.settings.on('changed:addon.reyohoho-emotes-proxy.enabled', () => {
+			this.updateBaseURIs();
+		});
+		
+		this.settings.on('changed:addon.reyohoho-emotes-proxy.proxy-url', () => {
+			this.updateBaseURIs();
+		});
+		
+		this.settings.on('changed:addon.reyohoho-emotes-proxy.services', () => {
+			this.updateBaseURIs();
+		});
 	}
 
 	makeRequest(route, options = {}, skip_cache = false) {

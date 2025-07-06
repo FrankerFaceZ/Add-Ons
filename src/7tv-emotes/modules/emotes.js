@@ -77,6 +77,19 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		this.on('settings:changed:addon.seventv_emotes.channel_emotes', () => this.updateChannelSets());
 		this.on('settings:changed:addon.seventv_emotes.unlisted_emotes', () => this.updateChannelSets());
 
+		this.on('settings:changed:addon.reyohoho-emotes-proxy.enabled', () => {
+			this.updateGlobalEmotes();
+			this.updateChannelSets();
+		});
+		this.on('settings:changed:addon.reyohoho-emotes-proxy.proxy-url', () => {
+			this.updateGlobalEmotes();
+			this.updateChannelSets();
+		});
+		this.on('settings:changed:addon.reyohoho-emotes-proxy.services', () => {
+			this.updateGlobalEmotes();
+			this.updateChannelSets();
+		});
+
 		this.on('chat:room-add', channel => this.updateChannelSet(channel));
 		this.on('chat:room-remove', channel => this.setChannelSet(channel, null));
 
@@ -333,15 +346,18 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const formatEmoteVersions = emote.data.host.files.filter((value => value.format === format));
 		if (!formatEmoteVersions.length) return null;
 
+		const proxySettings = this.resolve('addon.reyohoho-emotes-proxy');
+		const proxyEmoteHostUrl = proxySettings ? proxySettings.applyProxy(emoteHostUrl, '7tv') : emoteHostUrl;
+
 		const emoteUrls = formatEmoteVersions.reduce((acc, value, key) => {
-			acc[key + 1] = `${emoteHostUrl}/${value.name}`;
+			acc[key + 1] = `${proxyEmoteHostUrl}/${value.name}`;
 			return acc;
 		}, {});
 
 		let staticEmoteUrls;
 		if (emote.data.animated) {
 			staticEmoteUrls = formatEmoteVersions.reduce((acc, value, key) => {
-				acc[key + 1] = `${emoteHostUrl}/${value.static_name}`;
+				acc[key + 1] = `${proxyEmoteHostUrl}/${value.static_name}`;
 				return acc;
 			}, {});
 		}
