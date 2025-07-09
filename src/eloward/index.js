@@ -15,7 +15,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Configuration
 		this.config = {
 			apiUrl: 'https://eloward-viewers-api.unleashai.workers.dev/api',
-			subscriptionUrl: 'https://eloward-subscription-api.unleashai.workers.dev',
+			subscriptionUrl: 'https://eloward-users.unleashai.workers.dev',
 			cacheExpiry: 60 * 60 * 1000, // 1 hour
 			maxCacheSize: 500
 		};
