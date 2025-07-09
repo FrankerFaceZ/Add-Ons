@@ -1,12 +1,12 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"short_name": "MassModUtils",
 	"name": "Mass Moderation Utilities",
 	"author": "ArgoWizbang",
 	"description": "A tool for mass banning/unbanning users or blocking terms/phrases via mod view in channels that you moderate or own.\n\nThe button to open the tool can be found in the mod dock on the bottom left section of the mod view page.",
 	"website": "https://argowizbang.com/ffz-add-on/mass-ban-tool/",
 	"created": "2025-01-31T05:34:58.994Z",
-	"updated": "2025-07-05T21:18:02.816Z"
+	"updated": "2025-07-09T23:58:56.097Z"
 }
