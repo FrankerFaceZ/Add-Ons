@@ -1,6 +1,6 @@
 mutation Trubbel_ClaimDrops($input: ClaimDropRewardsInput!) {
   claimDropRewards(input: $input) {
-    id
+    dropInstanceID
     status
   }
 }
