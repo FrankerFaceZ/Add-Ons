@@ -15,14 +15,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Configuration
 		this.config = {
 			apiUrl: 'https://eloward-ranks.unleashai.workers.dev/api',
-			subscriptionUrl: 'https://eloward-users.unleashai.workers.dev',
+			channelUrl: 'https://eloward-users.unleashai.workers.dev',
 			cacheExpiry: 60 * 60 * 1000, // 1 hour
 			maxCacheSize: 500
 		};
 
 		// State management
 		this.cache = new Map();
-		this.subscribedChannels = new Set();
+		this.enabledChannels = new Set();
 		this.activeRooms = new Map(); // roomId -> roomLogin
 		this.lolCategoryRooms = new Set(); // rooms where LoL category is detected
 		this.chromeExtensionDetected = false;
@@ -172,12 +172,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		// Check League of Legends category and subscription status
+		// Check League of Legends category and channel enabled status
 		await this.detectAndSetCategoryForRoom(roomLogin);
-		const isSubscribed = await this.checkChannelSubscription(roomLogin);
+		const isEnabled = await this.checkChannelEnabled(roomLogin);
 		
-		if (isSubscribed) {
-			this.subscribedChannels.add(roomLogin);
+		if (isEnabled) {
+			this.enabledChannels.add(roomLogin);
 			this.log.info(`EloWard active for channel: ${roomLogin}`);
 		}
 	}
@@ -188,7 +188,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.activeRooms.delete(roomId);
 		if (roomLogin) {
-			this.subscribedChannels.delete(roomLogin);
+			this.enabledChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
 		}
 	}
@@ -246,11 +246,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return tokens;
 		}
 
-		// Check if this room has League of Legends category and is subscribed
+		// Check if this room has League of Legends category and channel is enabled
 		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
-		const isSubscribed = this.subscribedChannels.has(roomLogin);
+		const isEnabled = this.enabledChannels.has(roomLogin);
 
-		if (!hasLoLCategory || !isSubscribed) {
+		if (!hasLoLCategory || !isEnabled) {
 			return tokens;
 		}
 
@@ -443,7 +443,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 
 
-	async checkChannelSubscription(channelName) {
+	async checkChannelEnabled(channelName) {
 		if (!channelName) {
 			return false;
 		}
@@ -452,7 +452,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const normalizedName = channelName.toLowerCase();
 			this.incrementMetric('db_read', normalizedName);
 			
-			const response = await fetch(`${this.config.subscriptionUrl}/subscription/verify`, {
+			const response = await fetch(`${this.config.channelUrl}/channel/verify`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ channel_name: normalizedName })
@@ -463,7 +463,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 			
 			const data = await response.json();
-			return !!data.subscribed;
+			return !!data.enabled;
 		} catch (error) {
 			return false;
 		}
@@ -475,7 +475,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		try {
 			const normalizedName = channelName.toLowerCase();
 			
-			await fetch(`${this.config.subscriptionUrl}/metrics/${type}`, {
+			await fetch(`${this.config.channelUrl}/metrics/${type}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ channel_name: normalizedName })
@@ -497,7 +497,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Clear all data
 		this.clearUserData();
 		this.cache.clear();
-		this.subscribedChannels.clear();
+		this.enabledChannels.clear();
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
 	}
