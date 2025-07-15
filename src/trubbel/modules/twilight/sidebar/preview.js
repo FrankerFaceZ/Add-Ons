@@ -74,49 +74,47 @@ export class SidebarPreview {
       const cards = el.querySelectorAll(".side-nav-card");
       if (cards.length > 0) {
         for (const card of cards) {
-          if (card.querySelector(".tw-channel-status-indicator")) {
-            if (!card._stream_processed) {
-              card._stream_processed = true;
+          if (!card._stream_processed) {
+            card._stream_processed = true;
 
-              const mouseEnterHandler = () => {
-                if (!this.parent.settings.get("addon.trubbel.overall.sidebar-preview")) {
-                  this.parent.log.info("[Sidebar Preview] Preview disabled in settings");
-                  return;
-                }
+            const mouseEnterHandler = () => {
+              if (!this.parent.settings.get("addon.trubbel.overall.sidebar-preview")) {
+                this.parent.log.info("[Sidebar Preview] Preview disabled in settings");
+                return;
+              }
 
-                if (this.hoverTimeout) {
-                  clearTimeout(this.hoverTimeout);
-                }
+              if (this.hoverTimeout) {
+                clearTimeout(this.hoverTimeout);
+              }
 
-                const delay = this.parent.settings.get("addon.trubbel.overall.sidebar-preview-delay");
-                this.parent.log.info(`[Sidebar Preview] Setting hover timeout with delay: ${delay}ms`);
+              const delay = this.parent.settings.get("addon.trubbel.overall.sidebar-preview-delay");
+              this.parent.log.info(`[Sidebar Preview] Setting hover timeout with delay: ${delay}ms`);
 
-                if (delay > 0) {
-                  this.hoverTimeout = setTimeout(() => {
-                    this.showPreview(card);
-                  }, delay);
-                } else {
+              if (delay > 0) {
+                this.hoverTimeout = setTimeout(() => {
                   this.showPreview(card);
-                }
-              };
+                }, delay);
+              } else {
+                this.showPreview(card);
+              }
+            };
 
-              const mouseLeaveHandler = () => {
-                this.parent.log.info("[Sidebar Preview] Card mouseleave");
+            const mouseLeaveHandler = () => {
+              this.parent.log.info("[Sidebar Preview] Card mouseleave");
 
-                if (this.hoverTimeout) {
-                  clearTimeout(this.hoverTimeout);
-                  this.hoverTimeout = null;
-                }
+              if (this.hoverTimeout) {
+                clearTimeout(this.hoverTimeout);
+                this.hoverTimeout = null;
+              }
 
-                this.hidePreview();
-              };
+              this.hidePreview();
+            };
 
-              card._mouseEnterHandler = mouseEnterHandler;
-              card._mouseLeaveHandler = mouseLeaveHandler;
+            card._mouseEnterHandler = mouseEnterHandler;
+            card._mouseLeaveHandler = mouseLeaveHandler;
 
-              on(card, "mouseenter", mouseEnterHandler);
-              on(card, "mouseleave", mouseLeaveHandler);
-            }
+            on(card, "mouseenter", mouseEnterHandler);
+            on(card, "mouseleave", mouseLeaveHandler);
           }
         }
       }
