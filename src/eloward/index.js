@@ -22,7 +22,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// State management
 		this.cache = new Map();
-		this.enabledChannels = new Set();
+		this.activeChannels = new Set();
 		this.activeRooms = new Map(); // roomId -> roomLogin
 		this.lolCategoryRooms = new Set(); // rooms where LoL category is detected
 		this.chromeExtensionDetected = false;
@@ -172,12 +172,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		// Check League of Legends category and channel enabled status
+		// Check League of Legends category and channel active status
 		await this.detectAndSetCategoryForRoom(roomLogin);
-		const isEnabled = await this.checkChannelEnabled(roomLogin);
+		const isActive = await this.checkChannelActive(roomLogin);
 		
-		if (isEnabled) {
-			this.enabledChannels.add(roomLogin);
+		if (isActive) {
+			this.activeChannels.add(roomLogin);
 			this.log.info(`EloWard active for channel: ${roomLogin}`);
 		}
 	}
@@ -188,7 +188,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.activeRooms.delete(roomId);
 		if (roomLogin) {
-			this.enabledChannels.delete(roomLogin);
+			this.activeChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
 		}
 	}
@@ -246,11 +246,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return tokens;
 		}
 
-		// Check if this room has League of Legends category and channel is enabled
+		// Check if this room has League of Legends category and channel is active
 		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
-		const isEnabled = this.enabledChannels.has(roomLogin);
+		const isActive = this.activeChannels.has(roomLogin);
 
-		if (!hasLoLCategory || !isEnabled) {
+		if (!hasLoLCategory || !isActive) {
 			return tokens;
 		}
 
@@ -443,7 +443,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 
 
-	async checkChannelEnabled(channelName) {
+	async checkChannelActive(channelName) {
 		if (!channelName) {
 			return false;
 		}
@@ -463,7 +463,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 			
 			const data = await response.json();
-			return !!data.enabled;
+			return !!data.active;
 		} catch (error) {
 			return false;
 		}
@@ -497,7 +497,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Clear all data
 		this.clearUserData();
 		this.cache.clear();
-		this.enabledChannels.clear();
+		this.activeChannels.clear();
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
 	}
