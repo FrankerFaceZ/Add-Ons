@@ -452,7 +452,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const normalizedName = channelName.toLowerCase();
 			this.incrementMetric('db_read', normalizedName);
 			
-			const response = await fetch(`${this.config.channelUrl}/channel/verify`, {
+			const response = await fetch(`${this.config.channelUrl}/channelstatus/verify`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ channel_name: normalizedName })
