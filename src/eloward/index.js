@@ -28,6 +28,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.chromeExtensionDetected = false;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
+		
 
 		// Settings - Use dynamic category detection as recommended by SirStendec
 		this.settings.add('eloward.enabled', {
@@ -179,6 +180,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (isActive) {
 			this.activeChannels.add(roomLogin);
 			this.log.info(`EloWard active for channel: ${roomLogin}`);
+			
+			// Process existing users in chat when room becomes active
+			this.processExistingChatUsers(room, roomLogin);
 		}
 	}
 
@@ -213,20 +217,79 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.log.info(`Error iterating rooms: ${error.message}`);
 		}
 	}
+	
+	async processExistingChatUsers(room, roomLogin) {
+		
+		// Check if this room has League of Legends category and channel is active
+		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
+		const isActive = this.activeChannels.has(roomLogin);
+
+		if (!hasLoLCategory || !isActive) {
+			return;
+		}
+		
+		// Get all users currently visible in chat
+		const chatUsers = this.getChatUsers(room);
+		
+		// Process each user for rank badges
+		for (const user of chatUsers) {
+			const username = user.login;
+			const userId = user.id;
+			
+			if (!username || !userId) continue;
+			
+			// Skip if already processed or has badge
+			if (this.userBadges.has(userId)) {
+				continue;
+			}
+			
+			const cachedRank = this.getCachedRank(username);
+			if (cachedRank) {
+				this.addUserBadge(userId, username, cachedRank);
+			} else {
+				// Small delay to avoid overwhelming the API
+				setTimeout(() => {
+					this.fetchRankData(username).then(rankData => {
+						if (rankData) {
+							this.setCachedRank(username, rankData);
+							this.addUserBadge(userId, username, rankData);
+							this.incrementMetric('successful_lookup', roomLogin);
+						}
+					}).catch(() => {});
+				}, Math.random() * 100); // Random delay 0-100ms
+			}
+		}
+	}
+	
+	getChatUsers(room) {
+		const users = [];
+		
+		try {
+			// Try to get users from the room's user list
+			if (room && room.users) {
+				for (const user of room.users.values()) {
+					if (user.login && user.id) {
+						users.push(user);
+					}
+				}
+			}
+		} catch (error) {
+			// Ignore errors when getting chat users
+		}
+		
+		return users;
+	}
 
 	onContextChanged() {
 		// Re-evaluate category detection for all active rooms when context changes
-		this.log.info('Site context changed, re-checking categories for all rooms');
 		
 		for (const roomLogin of this.activeRooms.values()) {
 			// Trigger immediate check using FFZ's getUserGame since context changed
 			this.checkStreamCategory(roomLogin).then(isLoL => {
 				if (isLoL && !this.lolCategoryRooms.has(roomLogin)) {
 					this.lolCategoryRooms.add(roomLogin);
-					this.log.info('Added', roomLogin, 'to LoL category rooms after context change');
 				} else if (!isLoL && this.lolCategoryRooms.has(roomLogin)) {
 					this.lolCategoryRooms.delete(roomLogin);
-					this.log.info('Removed', roomLogin, 'from LoL category rooms after context change');
 				}
 			});
 		}
@@ -246,6 +309,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return tokens;
 		}
 
+
 		// Check if this room has League of Legends category and channel is active
 		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
 		const isActive = this.activeChannels.has(roomLogin);
@@ -262,25 +326,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
 		} else {
-			// Make direct API call without queuing
-			this.fetchAndProcessRank(username, user.id, roomLogin);
+			this.fetchRankData(username).then(rankData => {
+				if (rankData) {
+					this.setCachedRank(username, rankData);
+					this.addUserBadge(user.id, username, rankData);
+					this.incrementMetric('successful_lookup', roomLogin);
+				}
+			}).catch(() => {});
 		}
 
 		return tokens;
 	}
 
-	async fetchAndProcessRank(username, userId, roomLogin) {
-		try {
-			const rankData = await this.fetchRankData(username);
-			if (rankData) {
-				this.setCachedRank(username, rankData);
-				this.addUserBadge(userId, username, rankData);
-				this.incrementMetric('successful_lookup', roomLogin);
-			}
-		} catch (error) {
-			// Silently handle errors - most are 404s for users without rank data
-		}
-	}
 
 	formatRankText(rankData) {
 		if (!rankData?.tier || rankData.tier.toUpperCase() === 'UNRANKED') {
@@ -345,6 +402,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const badgeId = this.getBadgeId(tier);
 		const ffzUser = this.chat.getUser(userId);
 
+		// Check if user already has the same badge to avoid unnecessary operations
+		const existing = this.userBadges.get(userId);
+		if (existing && existing.badgeId === badgeId) {
+			return;
+		}
+
+
 		// Always update the badge data with current rank information for tooltip
 		const formattedRankText = this.formatRankText(rankData);
 		const badgeData = this.getBadgeData(tier);
@@ -353,16 +417,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Load/update the badge data in FFZ's system with tooltip support
 		this.badges.loadBadgeData(badgeId, badgeData);
 
-		// Check if user already has this badge
-		if (ffzUser.getBadge(badgeId)) {
-			// Even if they have the badge, we updated the data, so continue to store rank data
-		} else {
-			// Remove any existing EloWard badges from this user
+		// Only remove existing badges if they're different
+		if (existing && existing.badgeId !== badgeId) {
 			this.removeUserBadges(userId);
-
-			// Add the badge to the user
-			ffzUser.addBadge('addon.eloward', badgeId);
 		}
+
+		// Always add the badge to ensure it's properly attached
+		ffzUser.addBadge('addon.eloward', badgeId);
 
 		// Track this badge assignment - IMPORTANT: Store the full rank data here
 		this.userBadges.set(userId, { username, tier, badgeId, rankData });
