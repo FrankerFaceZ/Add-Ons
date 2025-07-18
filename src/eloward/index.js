@@ -28,6 +28,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.chromeExtensionDetected = false;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
+		this.badgeStyleElement = null;
 		
 
 		// Settings - Use dynamic category detection as recommended by SirStendec
@@ -71,6 +72,23 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			// Exit immediately - no functionality should be enabled
 			return;
 		}
+
+		// Inject custom CSS for larger badges
+		this.badgeStyleElement = document.createElement('style');
+		this.badgeStyleElement.id = 'eloward-badge-styles';
+		this.badgeStyleElement.textContent = `
+			.ffz-badge[data-badge^="addon.eloward.rank-"] {
+				width: 24px !important;
+				height: 24px !important;
+				margin: 0 2px 0 1px !important;
+				padding: 0 !important;
+				background-size: contain !important;
+				vertical-align: middle !important;
+				position: relative;
+				top: 0px;
+			}
+		`;
+		document.head.appendChild(this.badgeStyleElement);
 
 		// Initialize rank badges
 		this.initializeRankBadges();
@@ -136,17 +154,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const rankText = this.formatRankText(rankData);
 		
 		const container = createElement('div', {
-			style: 'display: flex; align-items: center; gap: 8px; min-width: 120px; padding: 4px;'
+			style: 'display: flex; align-items: center; gap: 8px; min-width: 150px; padding: 4px;'
 		});
 		
 		const rankImage = createElement('img', {
 			src: rankImageUrl,
-			style: 'width: 24px; height: 24px; flex-shrink: 0;',
+			style: 'width: 32px; height: 32px; flex-shrink: 0;',
 			alt: tier
 		});
 		
 		const rankTextEl = createElement('span', {
-			style: 'font-size: 13px; font-weight: 500; color: #efeff1;'
+			style: 'font-size: 14px; font-weight: 500; color: #efeff1;'
 		}, rankText);
 		
 		container.appendChild(rankImage);
@@ -547,6 +565,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onDisable() {
+		// Remove custom CSS
+		if (this.badgeStyleElement) {
+			this.badgeStyleElement.remove();
+			this.badgeStyleElement = null;
+		}
+
 		// Remove event listeners
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
