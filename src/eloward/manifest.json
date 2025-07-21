@@ -2,12 +2,12 @@
     "enabled": true,
     "requires": [],
 
-    "version": "1.0.1",
+    "version": "1.1.1",
 
     "short_name": "EloWard",
     "name": "EloWard (Streamer)",
     "author": "EloWard Team",
-    "description": "Displays League of Legends rank badges in Twitch chat for subscribed streamers. IMPORTANT: This addon is designed solely for use by streamers to view rank badges in the OBS chat dock. All twitch viewers should use the EloWard Chrome extension. View website for more information.",
+    "description": "Displays League of Legends rank badges in Twitch chat for subscribed streamers with optimized 7TV compatibility. IMPORTANT: This addon is designed solely for use by streamers to view rank badges in the OBS chat dock. All twitch viewers should use the EloWard Chrome extension. View website for more information.",
 
     "website": "https://www.eloward.com"
 } 
