@@ -611,7 +611,7 @@ export class Appearance extends FrankerFaceZ.utilities.module.Module {
     if (this.settings.get("addon.trubbel.appearance.hide.stories")) {
       this.style.set("hide-stories-left-nav-expanded", "#side-nav [class*=\"storiesLeftNavSection--\"] { display: none !important; }");
       this.style.set("hide-stories-left-nav-collapsed", "#side-nav :is([style]) :has([class*=\"storiesLeftNavSectionCollapsedButton--\"]) { display: none !important; }");
-      this.style.set("hide-stories-following-page", "div[class^=\"Layout-sc-\"]:has(> [data-simplebar=\"init\"] > .simplebar-scroll-content > .simplebar-content[style] h2.sr-only) { display: none !important; }");
+      this.style.set("hide-stories-following-page", "div[class^=\"Layout-sc-\"]:has(> .scrollable-area[style] > div[style] > h2.sr-only) { display: none !important; }");
     } else {
       this.style.delete("hide-stories-left-nav-expanded");
       this.style.delete("hide-stories-left-nav-collapsed");
