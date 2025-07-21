@@ -30,6 +30,21 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.userBadges = new Map();
 		this.badgeStyleElement = null;
 		
+		// Rank-specific styling configurations
+		this.rankStyles = {
+			iron: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			bronze: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			silver: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			gold: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			platinum: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			emerald: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			diamond: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			master: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			grandmaster: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			challenger: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			unranked: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' }
+		};
+		
 
 		// Settings - Use dynamic category detection as recommended by SirStendec
 		this.settings.add('eloward.enabled', {
@@ -73,21 +88,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		// Inject custom CSS for larger badges
+		// Inject custom CSS for rank-specific badges
 		this.badgeStyleElement = document.createElement('style');
 		this.badgeStyleElement.id = 'eloward-badge-styles';
-		this.badgeStyleElement.textContent = `
-			.ffz-badge[data-badge^="addon.eloward.rank-"] {
-				width: 24px !important;
-				height: 24px !important;
-				margin: 0 2px 0 1px !important;
-				padding: 0 !important;
-				background-size: contain !important;
-				vertical-align: middle !important;
-				position: relative;
-				top: 0px;
-			}
-		`;
+		this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
 		document.head.appendChild(this.badgeStyleElement);
 
 		// Initialize rank badges
@@ -110,6 +114,42 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.initializeExistingRooms();
 		
 		this.log.info('EloWard FFZ Addon: Ready');
+	}
+
+	generateRankSpecificCSS() {
+		let css = '';
+		
+		// Generate CSS for each rank tier
+		for (const tier of this.rankTiers) {
+			const styles = this.rankStyles[tier];
+			if (styles) {
+				css += `
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
+						width: ${styles.width} !important;
+						height: ${styles.height} !important;
+						margin: ${styles.margin} !important;
+						padding: ${styles.padding} !important;
+						background-size: contain !important;
+						vertical-align: middle !important;
+						position: relative;
+						top: ${styles.top} !important;
+					}
+				`;
+			}
+		}
+		
+		return css;
+	}
+
+	updateRankStyles(tier, styles) {
+		if (this.rankStyles[tier]) {
+			Object.assign(this.rankStyles[tier], styles);
+			
+			// Update the CSS if the style element exists
+			if (this.badgeStyleElement) {
+				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
+			}
+		}
 	}
 
 	getBadgeData(tier) {
