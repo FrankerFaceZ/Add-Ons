@@ -323,9 +323,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const users = [];
 		
 		try {
-			// Try to get users from the room's user list
-			if (room && room.users) {
-				for (const user of room.users.values()) {
+			// Use FFZ's recommended approach instead of accessing room.users directly
+			if (room && room.iterateUsers) {
+				for (const user of room.iterateUsers()) {
 					if (user.login && user.id) {
 						users.push(user);
 					}
