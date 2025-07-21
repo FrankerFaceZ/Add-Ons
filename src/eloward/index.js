@@ -32,10 +32,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		// Rank-specific styling configurations
 		this.rankStyles = {
-			iron: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
+			iron: { width: '24px', height: '24px', margin: '0 0px 0 -4px', padding: '0', top: '-4px' },
 			bronze: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
 			silver: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			gold: { width: '24px', height: '24px', margin: '0 0px 0 -4px', padding: '0', top: '-1.5px' },
+			gold: { width: '24px', height: '24px', margin: '-4px 0px 0 -4px'},
 			platinum: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
 			emerald: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
 			diamond: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
