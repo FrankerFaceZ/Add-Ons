@@ -169,15 +169,59 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.messageObserver = null;
 		}
 
-		// Only set up direct observer for 7TV mode
-		if (this.chatMode !== 'seventv' || !this.sevenTVDetected) {
-			return;
-		}
+		// Process existing messages for all modes
+		this.processExistingMessages();
 
+		// Set up direct observer only for 7TV mode
+		if (this.chatMode === 'seventv' && this.sevenTVDetected) {
+			this.setupSevenTVObserver();
+		}
+	}
+
+	processExistingMessages() {
 		// Find chat container
 		const chatContainer = this.findChatContainer();
 		if (!chatContainer) {
-			this.log.info(`❌ No chat container found for message observer`);
+			this.log.info(`❌ No chat container found for processing existing messages`);
+			return;
+		}
+
+		// Define selectors based on chat mode
+		let messageSelectors;
+		if (this.chatMode === 'seventv') {
+			messageSelectors = ['.seventv-message', '.chat-line__message', '.chat-line'];
+		} else {
+			messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
+		}
+
+		// Process existing messages
+		try {
+			const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
+			let processed = 0;
+			
+			for (const message of existingMessages) {
+				if (!this.processedMessages.has(message)) {
+					if (this.chatMode === 'seventv') {
+						this.processDirectMessage(message);
+					} else {
+						this.processStandardMessage(message);
+					}
+					processed++;
+				}
+			}
+			
+			if (processed > 0) {
+				this.log.info(`📝 Processed ${processed} existing messages in ${this.chatMode} mode`);
+			}
+		} catch (error) {
+			this.log.info(`❌ Error processing existing messages:`, error);
+		}
+	}
+
+	setupSevenTVObserver() {
+		// Find chat container
+		const chatContainer = this.findChatContainer();
+		if (!chatContainer) {
 			return;
 		}
 
@@ -187,25 +231,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			'.chat-line__message',
 			'.chat-line'
 		];
-
-		// Process existing messages
-		try {
-			const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
-			let processed = 0;
-			
-			for (const message of existingMessages) {
-				if (!this.processedMessages.has(message)) {
-					this.processDirectMessage(message);
-					processed++;
-				}
-			}
-			
-			if (processed > 0) {
-				this.log.info(`📝 Processed ${processed} existing messages in 7TV mode`);
-			}
-		} catch (error) {
-			this.log.info(`❌ Error processing existing messages:`, error);
-		}
 
 		// Set up mutation observer for new messages
 		this.messageObserver = new MutationObserver((mutations) => {
@@ -335,6 +360,101 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 					this.addSevenTVBadge(messageElement, usernameElement, rankData);
 				}
 			}).catch(() => {});
+		}
+	}
+
+	processStandardMessage(messageElement) {
+		if (!messageElement) return;
+
+		// Mark message as processed to avoid duplicates
+		this.processedMessages.add(messageElement);
+
+		// Extract username from standard Twitch message
+		const usernameSelectors = [
+			'.chat-author__display-name',
+			'[data-a-target="chat-message-username"]',
+			'.chat-line__username'
+		];
+
+		let username = null;
+		let usernameElement = null;
+
+		for (const selector of usernameSelectors) {
+			usernameElement = messageElement.querySelector(selector);
+			if (usernameElement) {
+				username = usernameElement.textContent?.trim();
+				if (username) {
+					break;
+				}
+			}
+		}
+
+		if (!username) {
+			return; // No username found
+		}
+
+		// Get current room/channel name
+		const currentChannel = this.getCurrentChannelName();
+		if (!currentChannel) {
+			return;
+		}
+
+		// Check if this room has League of Legends category and channel is active
+		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
+		const isActive = this.activeChannels.has(currentChannel);
+
+		if (!hasLoLCategory || !isActive) {
+			return;
+		}
+
+		// Check if badge already exists (for FFZ mode, check FFZ badges)
+		if (messageElement.querySelector('.eloward-rank-badge') || 
+			messageElement.querySelector('.ffz-badge[data-badge*="addon.eloward"]')) {
+			return;
+		}
+
+		// Track metrics and process rank lookup
+		this.incrementMetric('db_read', currentChannel);
+
+		const cachedRank = this.getCachedRank(username);
+		if (cachedRank) {
+			this.incrementMetric('successful_lookup', currentChannel);
+			// For standard mode, we need to find the user ID to use FFZ badges
+			this.addStandardModeBadge(messageElement, username, cachedRank);
+		} else {
+			this.fetchRankData(username).then(rankData => {
+				if (rankData) {
+					this.setCachedRank(username, rankData);
+					this.incrementMetric('successful_lookup', currentChannel);
+					this.addStandardModeBadge(messageElement, username, rankData);
+				}
+			}).catch(() => {});
+		}
+	}
+
+	addStandardModeBadge(messageElement, username, rankData) {
+		// For standard mode, we need to get the user ID to use FFZ's badge system
+		// Try to extract user ID from message element attributes
+		const userId = messageElement.getAttribute('data-user-id') || 
+			messageElement.querySelector('[data-user-id]')?.getAttribute('data-user-id');
+
+		if (userId) {
+			// Use the standard addUserBadge method which will use FFZ badges
+			this.addUserBadge(userId, username, rankData);
+		} else {
+			// Fallback: try to find user in FFZ's user list
+			try {
+				for (const room of this.chat.iterateRooms()) {
+					for (const user of room.iterateUsers()) {
+						if (user.login && user.login.toLowerCase() === username.toLowerCase()) {
+							this.addUserBadge(user.id, username, rankData);
+							return;
+						}
+					}
+				}
+			} catch (error) {
+				// If we can't find the user, we can't add the badge
+			}
 		}
 	}
 
