@@ -320,7 +320,7 @@ export class PrimeReminder {
     if (this.crownElement && this.crownElement.parentNode) {
       this.crownElement.parentNode.removeChild(this.crownElement);
       this.crownElement = null;
-      this.emit("tooltips:cleanup");
+      this.parent.emit("tooltips:cleanup");
     }
   }
 
