@@ -141,7 +141,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Single fallback detection for late-loading extensions
 		setTimeout(() => {
 			this.performFallbackChatModeDetection();
-		}, 15000);
+		}, 3000);
 	}
 
 	performFallbackChatModeDetection() {
@@ -426,8 +426,34 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	getCurrentChannelName() {
 		// Get channel name from URL
 		const pathname = window.location.pathname;
-		const match = pathname.match(/^\/([^/]+)/);
-		return match ? match[1].toLowerCase() : null;
+		
+		// Handle popout chat URLs: /popout/:userName/chat
+		const popoutMatch = pathname.match(/^\/popout\/([^/]+)\/chat/);
+		if (popoutMatch) {
+			return popoutMatch[1].toLowerCase();
+		}
+		
+		// Handle dashboard popout chat URLs: /popout/u/:userName/stream-manager/chat
+		const dashPopoutMatch = pathname.match(/^\/popout\/u\/([^/]+)\/stream-manager\/chat/);
+		if (dashPopoutMatch) {
+			return dashPopoutMatch[1].toLowerCase();
+		}
+		
+		// Handle embed chat URLs: /embed/:userName/chat
+		const embedMatch = pathname.match(/^\/embed\/([^/]+)\/chat/);
+		if (embedMatch) {
+			return embedMatch[1].toLowerCase();
+		}
+		
+		// Handle moderator popout chat URLs: /popout/moderator/:userName/chat
+		const modPopoutMatch = pathname.match(/^\/popout\/moderator\/([^/]+)\/chat/);
+		if (modPopoutMatch) {
+			return modPopoutMatch[1].toLowerCase();
+		}
+		
+		// Handle normal URLs: /:userName
+		const normalMatch = pathname.match(/^\/([^/]+)/);
+		return normalMatch ? normalMatch[1].toLowerCase() : null;
 	}
 
 	detectChatMode() {
