@@ -182,7 +182,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Find chat container
 		const chatContainer = this.findChatContainer();
 		if (!chatContainer) {
-			this.log.info(`❌ No chat container found for processing existing messages`);
 			return;
 		}
 
@@ -195,26 +194,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		// Process existing messages
-		try {
-			const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
-			let processed = 0;
-			
-			for (const message of existingMessages) {
-				if (!this.processedMessages.has(message)) {
-					if (this.chatMode === 'seventv') {
-						this.processDirectMessage(message);
-					} else {
-						this.processStandardMessage(message);
-					}
-					processed++;
+		const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
+		
+		for (const message of existingMessages) {
+			if (!this.processedMessages.has(message)) {
+				if (this.chatMode === 'seventv') {
+					this.processDirectMessage(message);
+				} else {
+					this.processStandardMessage(message);
 				}
 			}
-			
-			if (processed > 0) {
-				this.log.info(`📝 Processed ${processed} existing messages in ${this.chatMode} mode`);
-			}
-		} catch (error) {
-			this.log.info(`❌ Error processing existing messages:`, error);
 		}
 	}
 
@@ -237,33 +226,29 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			// Only process if we have active channels
 			if (this.activeChannels.size === 0) return;
 
-			try {
-				for (const mutation of mutations) {
-					if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-						for (const node of mutation.addedNodes) {
-							if (node.nodeType === Node.ELEMENT_NODE) {
-								// Check if it's a message or contains messages
-								const isMessage = messageSelectors.some(selector => 
-									node.matches && node.matches(selector)
-								);
-								
-								if (isMessage && !this.processedMessages.has(node)) {
-									this.processDirectMessage(node);
-								} else {
-									// Check for messages within the added node
-									const messages = node.querySelectorAll(messageSelectors.join(', '));
-									for (const message of messages) {
-										if (!this.processedMessages.has(message)) {
-											this.processDirectMessage(message);
-										}
+			for (const mutation of mutations) {
+				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+					for (const node of mutation.addedNodes) {
+						if (node.nodeType === Node.ELEMENT_NODE) {
+							// Check if it's a message or contains messages
+							const isMessage = messageSelectors.some(selector => 
+								node.matches && node.matches(selector)
+							);
+							
+							if (isMessage && !this.processedMessages.has(node)) {
+								this.processDirectMessage(node);
+							} else {
+								// Check for messages within the added node
+								const messages = node.querySelectorAll(messageSelectors.join(', '));
+								for (const message of messages) {
+									if (!this.processedMessages.has(message)) {
+										this.processDirectMessage(message);
 									}
 								}
 							}
 						}
 					}
 				}
-			} catch (error) {
-				this.log.info(`❌ Error in mutation observer:`, error);
 			}
 		});
 
@@ -276,18 +261,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	findChatContainer() {
-		// Use the proven working selector first
+		// Use the proven working selector
 		const container = document.querySelector('.chat-list--default');
 		if (container) {
 			return container;
 		}
 
-		// Fallback: look for any message and find its container
-		const anyMessage = document.querySelector('.seventv-message, .chat-line__message, .chat-line');
+		// Fallback for edge cases: find container from any existing message
+		const anyMessage = document.querySelector('.chat-line__message, .chat-line');
 		if (anyMessage) {
-			const fallbackContainer = anyMessage.closest('[role="log"]') || 
-				anyMessage.closest('.chat-list--default') || 
-				anyMessage.parentElement;
+			const fallbackContainer = anyMessage.closest('[role="log"]') || anyMessage.parentElement;
 			if (fallbackContainer && fallbackContainer !== document.body) {
 				return fallbackContainer;
 			}
@@ -302,28 +285,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Mark message as processed to avoid duplicates
 		this.processedMessages.add(messageElement);
 
-		// Extract username from message
-		const usernameSelectors = [
-			'.seventv-chat-user-username',
-			'.chat-author__display-name',
-			'[data-a-target="chat-message-username"]'
-		];
-
-		let username = null;
-		let usernameElement = null;
-
-		for (const selector of usernameSelectors) {
-			usernameElement = messageElement.querySelector(selector);
-			if (usernameElement) {
-				username = usernameElement.textContent?.trim();
-				if (username) {
-					break;
-				}
-			}
+		// Extract username from 7TV message (use most robust selector)
+		const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
+		if (!usernameElement) {
+			return;
 		}
 
+		const username = usernameElement.textContent?.trim();
 		if (!username) {
-			return; // No username found
+			return;
 		}
 
 		// Get current room/channel name
@@ -369,15 +339,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Mark message as processed to avoid duplicates
 		this.processedMessages.add(messageElement);
 
-		// Extract username from standard Twitch message
+		// Extract username from standard Twitch message (fallback selectors for existing messages)
 		const usernameSelectors = [
-			'.chat-author__display-name',
-			'[data-a-target="chat-message-username"]',
-			'.chat-line__username'
+			'[data-a-target="chat-message-username"]', // Primary robust selector
+			'.chat-author__display-name', // Fallback for existing messages
+			'.chat-line__username' // Additional fallback
 		];
 
-		let username = null;
 		let usernameElement = null;
+		let username = null;
 
 		for (const selector of usernameSelectors) {
 			usernameElement = messageElement.querySelector(selector);
@@ -390,7 +360,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		if (!username) {
-			return; // No username found
+			return;
 		}
 
 		// Get current room/channel name
@@ -433,8 +403,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	addStandardModeBadge(messageElement, username, rankData) {
-		// For standard mode, we need to get the user ID to use FFZ's badge system
-		// Try to extract user ID from message element attributes
+		// For standard mode, extract user ID from message element attributes
 		const userId = messageElement.getAttribute('data-user-id') || 
 			messageElement.querySelector('[data-user-id]')?.getAttribute('data-user-id');
 
@@ -442,36 +411,23 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			// Use the standard addUserBadge method which will use FFZ badges
 			this.addUserBadge(userId, username, rankData);
 		} else {
-			// Fallback: try to find user in FFZ's user list
-			try {
-				for (const room of this.chat.iterateRooms()) {
-					for (const user of room.iterateUsers()) {
-						if (user.login && user.login.toLowerCase() === username.toLowerCase()) {
-							this.addUserBadge(user.id, username, rankData);
-							return;
-						}
+			// Fallback for existing messages: find user in FFZ's user list
+			for (const room of this.chat.iterateRooms()) {
+				for (const user of room.iterateUsers()) {
+					if (user.login && user.login.toLowerCase() === username.toLowerCase()) {
+						this.addUserBadge(user.id, username, rankData);
+						return;
 					}
 				}
-			} catch (error) {
-				// If we can't find the user, we can't add the badge
 			}
 		}
 	}
 
 	getCurrentChannelName() {
-		// Try to get channel name from URL or other sources
+		// Get channel name from URL
 		const pathname = window.location.pathname;
 		const match = pathname.match(/^\/([^/]+)/);
-		if (match) {
-			return match[1].toLowerCase();
-		}
-
-		// Fallback: try to get from active rooms
-		if (this.activeRooms.size > 0) {
-			return Array.from(this.activeRooms.values())[0];
-		}
-
-		return null;
+		return match ? match[1].toLowerCase() : null;
 	}
 
 	detectChatMode() {
@@ -680,19 +636,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 		
-		let roomCount = 0;
-		
-		try {
-			for (const room of this.chat.iterateRooms()) {
-				roomCount++;
-				
-				// Process room asynchronously to avoid blocking
-				setTimeout(() => {
-					this.onRoomAdd(room);
-				}, 10 * roomCount); // Stagger processing
-			}
-		} catch (error) {
-			this.log.info(`Error iterating rooms: ${error.message}`);
+		for (const room of this.chat.iterateRooms()) {
+			this.onRoomAdd(room);
 		}
 	}
 	
@@ -713,16 +658,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			if (cachedRank) {
 				this.addUserBadge(userId, username, cachedRank);
 			} else {
-				// Small delay to avoid overwhelming the API
-				setTimeout(() => {
-					this.fetchRankData(username).then(rankData => {
-						if (rankData) {
-							this.setCachedRank(username, rankData);
-							this.addUserBadge(userId, username, rankData);
-							this.incrementMetric('successful_lookup', roomLogin);
-						}
-					}).catch(() => {});
-				}, Math.random() * 100); // Random delay 0-100ms
+				this.fetchRankData(username).then(rankData => {
+					if (rankData) {
+						this.setCachedRank(username, rankData);
+						this.addUserBadge(userId, username, rankData);
+						this.incrementMetric('successful_lookup', roomLogin);
+					}
+				}).catch(() => {});
 			}
 		}
 	}
@@ -730,17 +672,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	getChatUsers(room) {
 		const users = [];
 		
-		try {
-			// Use FFZ's recommended approach instead of accessing room.users directly
-			if (room && room.iterateUsers) {
-				for (const user of room.iterateUsers()) {
-					if (user.login && user.id) {
-						users.push(user);
-					}
+		// Use FFZ's recommended approach
+		if (room && room.iterateUsers) {
+			for (const user of room.iterateUsers()) {
+				if (user.login && user.id) {
+					users.push(user);
 				}
 			}
-		} catch (error) {
-			// Ignore errors when getting chat users
 		}
 		
 		return users;
@@ -1075,10 +1013,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
-		// Fixed delay to let Twitch servers update after stream start
-		const delayMs = 3000;
-		await new Promise(resolve => setTimeout(resolve, delayMs));
-		
 		// Check manual override first
 		const manualOverride = this.settings.get('eloward.manual_override');
 		if (manualOverride) {
@@ -1087,7 +1021,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return true;
 		}
 		
-		// Use FFZ's getUserGame method for reliable category detection
+		// Check stream category
 		const isLolCategory = await this.checkStreamCategory(roomLogin);
 		
 		if (isLolCategory) {
