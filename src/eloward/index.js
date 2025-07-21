@@ -33,6 +33,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.sevenTVDetected = false;
 		this.messageObserver = null; // For direct message observation in 7TV mode
 		this.processedMessages = new Set(); // Track processed messages to avoid duplicates
+		this.initializationFinalized = false; // Track if we've completed full initialization
 		
 		// Rank-specific styling configurations
 		this.rankStyles = {
@@ -92,10 +93,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		// Detect chat mode (7TV, FFZ, Standard)
-		this.detectChatMode();
+		// Basic infrastructure setup only
+		this.initializeBasicInfrastructure();
 
-		// Inject custom CSS for rank-specific badges
+		// Set up chat room event listeners (these will handle activation logic)
+		this.on('chat:room-add', this.onRoomAdd, this);
+		this.on('chat:room-remove', this.onRoomRemove, this);
+
+		// Listen for context changes to re-evaluate category detection
+		this.on('site.context:changed', this.onContextChanged, this);
+
+		// Handle existing rooms - this will trigger the real initialization when appropriate
+		this.initializeExistingRooms();
+	}
+
+	initializeBasicInfrastructure() {
+		// Inject custom CSS for rank-specific badges (basic setup, no chat mode detection yet)
 		this.badgeStyleElement = document.createElement('style');
 		this.badgeStyleElement.id = 'eloward-badge-styles';
 		this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
@@ -104,63 +117,52 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Initialize rank badges
 		this.initializeRankBadges();
 
-		// Set up chat room event listeners
-		this.on('chat:room-add', this.onRoomAdd, this);
-		this.on('chat:room-remove', this.onRoomRemove, this);
-
-		// Listen for context changes to re-evaluate category detection
-		this.on('site.context:changed', this.onContextChanged, this);
-
-		// Setup chat tokenizer
+		// Setup chat tokenizer (for non-7TV modes)
 		this.chat.addTokenizer({
 			type: 'eloward-ranks',
 			process: this.processMessage.bind(this)
 		});
-
-		// Set up direct message observer for 7TV compatibility
-		this.setupMessageObserver();
-
-		// Handle existing rooms with proper timing and retries
-		this.initializeExistingRooms();
-		
-		// Set up periodic chat mode re-detection (7TV might load after FFZ)
-		this.setupPeriodicChatModeDetection();
-		
-		this.log.info('EloWard FFZ Addon: Ready');
 	}
 
-	setupPeriodicChatModeDetection() {
-		// Check for chat mode changes every 5 seconds for the first minute
-		let detectionCount = 0;
-		const maxDetections = 12; // 12 * 5 seconds = 1 minute
+	finalizeInitialization() {
+		// This gets called AFTER we know the channel is streaming LoL and is active
+		this.log.info('EloWard FFZ Addon: Ready');
+
+		// NOW detect chat mode and set up observers
+		this.detectChatMode();
+
+		// Regenerate CSS now that we know the chat mode
+		if (this.badgeStyleElement) {
+			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
+		}
+
+		this.setupMessageObserver();
+
+		// Single fallback detection for late-loading extensions
+		setTimeout(() => {
+			this.performFallbackChatModeDetection();
+		}, 15000);
+	}
+
+	performFallbackChatModeDetection() {
+		const previousMode = this.chatMode;
+		this.detectChatMode();
 		
-		const detectionInterval = setInterval(() => {
-			detectionCount++;
+		// Only act if mode actually changed to 7TV
+		if (previousMode !== this.chatMode && this.chatMode === 'seventv') {
+			this.log.info(`Late 7TV detection - switching from ${previousMode} to ${this.chatMode}`);
 			
-			const previousMode = this.chatMode;
-			this.detectChatMode();
-			
-			// If mode changed to 7TV, regenerate styles and update existing badges
-			if (previousMode !== this.chatMode && this.chatMode === 'seventv') {
-				this.log.info(`Chat mode changed from ${previousMode} to ${this.chatMode} - updating styles`);
-				
-				// Regenerate CSS with 7TV styles
-				if (this.badgeStyleElement) {
-					this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-				}
-				
-				// Update existing user badges to use 7TV system
-				this.convertExistingBadgesToSevenTV();
-				
-				// Restart message observer for new mode
-				this.setupMessageObserver();
+			// Regenerate CSS with 7TV styles
+			if (this.badgeStyleElement) {
+				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
 			}
 			
-			// Stop after 1 minute or if we've detected 7TV
-			if (detectionCount >= maxDetections || this.sevenTVDetected) {
-				clearInterval(detectionInterval);
-			}
-		}, 5000);
+			// Update existing user badges to use 7TV system
+			this.convertExistingBadgesToSevenTV();
+			
+			// Set up message observer for 7TV mode
+			this.setupMessageObserver();
+		}
 	}
 
 	setupMessageObserver() {
@@ -449,38 +451,42 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Add 7TV-specific styles if 7TV is detected
 		if (this.sevenTVDetected) {
-			css += `
-				.seventv-chat-badge.eloward-rank-badge.seventv-integration {
-					display: inline-block;
-					width: 28px !important;
-					height: 28px !important;
-					margin: 0 4px 0 0 !important;
-					vertical-align: middle;
-					position: relative;
-					border-radius: 4px;
-					overflow: hidden;
-				}
-
-				.seventv-badge-img {
-					width: 100% !important;
-					height: 100% !important;
-					object-fit: contain;
-				}
-
-				.seventv-chat-user-badge-list {
-					display: inline-flex;
-					align-items: center;
-					gap: 4px;
-					margin-right: 8px;
-				}
-
-				.seventv-chat-user-badge-list .eloward-rank-badge {
-					cursor: pointer;
-				}
-			`;
+			css += this.getSevenTVStyles();
 		}
 		
 		return css;
+	}
+
+	getSevenTVStyles() {
+		return `
+			.seventv-chat-badge.eloward-rank-badge.seventv-integration {
+				display: inline-block;
+				width: 28px !important;
+				height: 28px !important;
+				margin: 0 4px 0 0 !important;
+				vertical-align: middle;
+				position: relative;
+				border-radius: 4px;
+				overflow: hidden;
+			}
+
+			.seventv-badge-img {
+				width: 100% !important;
+				height: 100% !important;
+				object-fit: contain;
+			}
+
+			.seventv-chat-user-badge-list {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				margin-right: 8px;
+			}
+
+			.seventv-chat-user-badge-list .eloward-rank-badge {
+				cursor: pointer;
+			}
+		`;
 	}
 
 	updateRankStyles(tier, styles) {
@@ -580,6 +586,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (isActive) {
 			this.activeChannels.add(roomLogin);
 			this.log.info(`EloWard active for channel: ${roomLogin}`);
+			
+			// Finalize initialization on first active channel
+			if (!this.initializationFinalized) {
+				this.initializationFinalized = true;
+				this.finalizeInitialization();
+			}
 			
 			// Process existing users in chat when room becomes active
 			this.processExistingChatUsers(room, roomLogin);
