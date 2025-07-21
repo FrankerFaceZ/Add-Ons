@@ -1,7 +1,7 @@
 import { BUTTON_CLASS } from '../../utils/constants/css-classes';
 import { FILE_UPLOAD_BUTTON } from '../../components/file-upload-button';
 import { retrievingRecentFollowers } from '../../components/retrieving-recent-followers';
-import { isValidDate } from '../../utils/date.js';
+import { getLocaleString, isValidDate } from '../../utils/date.js';
 import { openFileSelector, addEntryToList, updateEntryCount, detectEnterKey } from '../../utils/entries-list.js';
 import GET_RECENT_FOLLOWERS from '../../utils/graphql/recent-followers.gql';
 
@@ -211,8 +211,8 @@ export class MassBanTool {
                 selectedTime.before.setTime( currentDate );
             }
 
-            stats.first  = selectedTime.after.toLocaleString();
-            stats.second = selectedTime.before.toLocaleString();
+            stats.first  = getLocaleString( selectedTime?.after );
+            stats.second = getLocaleString( selectedTime?.before );
         }
 
         switch ( true ) {
@@ -277,7 +277,7 @@ export class MassBanTool {
                     let followedAt = new Date ( follower.followedAt );
 
                     // Before time not working? Always selecting all 100
-                    if ( fieldType === 'timestamp' && ( ( selectedTime.after !== null && followedAt < selectedTime.after ) || ( selectedTime.before !== null && followedAt > selectedTime.before ) ) || followersList.includes( follower.node.displayName ) ) {
+                    if ( fieldType === 'timestamp' && ( ( selectedTime.after !== null && followedAt < selectedTime.after ) || ( selectedTime.before !== null && followedAt > selectedTime.before ) ) || followedAt < timeLimit || followersList.includes( follower.node.displayName ) ) {
                         count = gqlCount;
                         break;
                     }
@@ -318,8 +318,13 @@ export class MassBanTool {
             stat2 = document.getElementById( idPrefix + '-stat-before' );
         }
 
-        stat1.textContent = stats.first;
-        stat2.textContent = stats.second;
+        if ( stats?.first ) {
+            stat1.textContent = stats.first;
+        }
+
+        if ( stats?.second ) {
+            stat2.textContent = stats.second;
+        }
     }
 
     toggleLoadingFollowers( fieldType ) {
