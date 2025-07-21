@@ -34,7 +34,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.rankStyles = {
 			iron: { width: '28px', height: '28px', margin: '0 -2px 7.5px -6px'},
 			bronze: { width: '26px', height: '26px', margin: '0 -1.5px 6px -5px'},
-			silver: { width: '24px', height: '24px', margin: '0 2px 0 1px'},
+			silver: { width: '24px', height: '24px', margin: '0 0px 6px -4.5px'},
 			gold: { width: '24px', height: '24px', margin: '0 0px 4px -4px'},
 			platinum: { width: '24px', height: '24px', margin: '0 2px 0 1px'},
 			emerald: { width: '24px', height: '24px', margin: '0 2px 0 1px'},
