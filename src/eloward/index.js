@@ -157,9 +157,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
 			}
 			
-			// Update existing user badges to use 7TV system
-			this.convertExistingBadgesToSevenTV();
-			
 			// Set up message observer for 7TV mode
 			this.setupMessageObserver();
 		}
@@ -357,74 +354,34 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return null;
 	}
 
-	convertExistingBadgesToSevenTV() {
-		// Convert existing FFZ badges to 7TV badges for better compatibility
-		for (const [userId, badgeInfo] of this.userBadges.entries()) {
-			if (badgeInfo.rankData) {
-				// Remove FFZ badge and add 7TV badge
-				const ffzUser = this.chat.getUser(userId);
-				if (ffzUser && badgeInfo.badgeId) {
-					ffzUser.removeBadge('addon.eloward', badgeInfo.badgeId);
-				}
-				
-				// Add 7TV badge
-				this.addSevenTVBadgeToExistingMessages(userId, badgeInfo.username, badgeInfo.rankData);
-			}
-		}
-	}
-
 	detectChatMode() {
 		// Check for 7TV elements in the DOM
-		const sevenTVSelectors = [
-			'.seventv-message',
-			'.seventv-chat-user',
-			'[data-seventv]',
-			'.seventv-paint',
-			'.seventv-chat-user-badge-list'
-		];
+		const has7TVElements = !!(
+			document.querySelector('.seventv-message') ||
+			document.querySelector('.seventv-chat-user') ||
+			document.querySelector('[data-seventv]') ||
+			document.querySelector('.seventv-paint')
+		);
 
-		let sevenTVFound = [];
-		sevenTVSelectors.forEach(selector => {
-			const elements = document.querySelectorAll(selector);
-			if (elements.length > 0) {
-				sevenTVFound.push(`${selector}: ${elements.length}`);
-			}
-		});
-
-		const has7TVElements = sevenTVFound.length > 0;
-
-		// Check for specific FFZ elements (beyond just this addon)
-		const ffzSelectors = [
-			'.ffz-message-line',
-			'.ffz-chat-line',
-			'[data-ffz-component]',
-			'.ffz-addon'
-		];
-
-		let ffzFound = [];
-		ffzSelectors.forEach(selector => {
-			const elements = document.querySelectorAll(selector);
-			if (elements.length > 0) {
-				ffzFound.push(`${selector}: ${elements.length}`);
-			}
-		});
-
-		const hasFFZElements = ffzFound.length > 0;
+		// Check for specific FFZ elements
+		const hasFFZElements = !!(
+			document.querySelector('.ffz-message-line') ||
+			document.querySelector('.ffz-chat-line') ||
+			document.querySelector('[data-ffz-component]')
+		);
 
 		// Determine chat mode
 		if (has7TVElements) {
 			this.chatMode = 'seventv';
 			this.sevenTVDetected = true;
-			this.log.info(`🎭 7TV elements found: [${sevenTVFound.join(', ')}]`);
+			this.log.info(`Chat mode detected: SEVENTV`);
 		} else if (hasFFZElements) {
 			this.chatMode = 'ffz';
-			this.log.info(`🔧 FFZ elements found: [${ffzFound.join(', ')}]`);
+			this.log.info(`Chat mode detected: FFZ`);
 		} else {
 			this.chatMode = 'standard';
-			this.log.info(`📺 No extension elements found - using standard mode`);
+			this.log.info(`Chat mode detected: STANDARD`);
 		}
-
-		this.log.info(`Chat mode detected: ${this.chatMode.toUpperCase()}`);
 	}
 
 	generateRankSpecificCSS() {
@@ -487,17 +444,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				cursor: pointer;
 			}
 		`;
-	}
-
-	updateRankStyles(tier, styles) {
-		if (this.rankStyles[tier]) {
-			Object.assign(this.rankStyles[tier], styles);
-			
-			// Update the CSS if the style element exists
-			if (this.badgeStyleElement) {
-				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-			}
-		}
 	}
 
 	getBadgeData(tier) {
@@ -631,15 +577,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 	
 	async processExistingChatUsers(room, roomLogin) {
-		
-		// Check if this room has League of Legends category and channel is active
-		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
-		const isActive = this.activeChannels.has(roomLogin);
-
-		if (!hasLoLCategory || !isActive) {
-			return;
-		}
-		
 		// Get all users currently visible in chat
 		const chatUsers = this.getChatUsers(room);
 		
@@ -648,10 +585,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const username = user.login;
 			const userId = user.id;
 			
-			if (!username || !userId) continue;
-			
-			// Skip if already processed or has badge
-			if (this.userBadges.has(userId)) {
+			if (!username || !userId || this.userBadges.has(userId)) {
 				continue;
 			}
 			
@@ -694,16 +628,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	onContextChanged() {
 		// Re-evaluate category detection for all active rooms when context changes
-		
 		for (const roomLogin of this.activeRooms.values()) {
-			// Trigger immediate check using FFZ's getUserGame since context changed
 			this.checkStreamCategory(roomLogin).then(isLoL => {
-				if (isLoL && !this.lolCategoryRooms.has(roomLogin)) {
+				if (isLoL) {
 					this.lolCategoryRooms.add(roomLogin);
-				} else if (!isLoL && this.lolCategoryRooms.has(roomLogin)) {
+				} else {
 					this.lolCategoryRooms.delete(roomLogin);
 				}
-			});
+			}).catch(() => {});
 		}
 	}
 
@@ -736,48 +668,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (cachedRank) {
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
-			
-			// For 7TV mode, also handle direct message processing
-			if (this.chatMode === 'seventv' && this.sevenTVDetected) {
-				setTimeout(() => {
-					this.processSevenTVMessage(username, cachedRank);
-				}, 100); // Small delay to allow DOM update
-			}
 		} else {
 			this.fetchRankData(username).then(rankData => {
 				if (rankData) {
 					this.setCachedRank(username, rankData);
 					this.addUserBadge(user.id, username, rankData);
 					this.incrementMetric('successful_lookup', roomLogin);
-					
-					// For 7TV mode, also handle direct message processing
-					if (this.chatMode === 'seventv' && this.sevenTVDetected) {
-						setTimeout(() => {
-							this.processSevenTVMessage(username, rankData);
-						}, 100); // Small delay to allow DOM update
-					}
 				}
 			}).catch(() => {});
 		}
 
 		return tokens;
 	}
-
-	processSevenTVMessage(username, rankData) {
-		// Find recent messages from this user that might not have badges yet
-		const recentMessages = document.querySelectorAll('.seventv-chat-user');
-		
-		recentMessages.forEach(messageElement => {
-			const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
-			if (usernameElement && 
-				usernameElement.textContent?.trim().toLowerCase() === username.toLowerCase() &&
-				!messageElement.querySelector('.eloward-rank-badge')) {
-				
-				this.addSevenTVBadge(messageElement, usernameElement, rankData);
-			}
-		});
-	}
-
 
 	formatRankText(rankData) {
 		if (!rankData?.tier || rankData.tier.toUpperCase() === 'UNRANKED') {
@@ -893,45 +795,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	addSevenTVBadgeToExistingMessages(userId, username, rankData) {
-		// Find all existing messages from this user and add 7TV badges
-		const messageSelectors = [
-			`.seventv-message`,
-			`.seventv-chat-user`,
-			`[data-user-id="${userId}"]`,
-			`[data-username="${username}"]`
-		];
-
-		// Try each selector to find user messages
-		for (const selector of messageSelectors) {
-			const messages = document.querySelectorAll(selector);
-			
-			messages.forEach(messageElement => {
-				// Verify this is the right user
-				const messageUsername = this.extractUsernameFromMessage(messageElement, username);
-				if (messageUsername && messageUsername.toLowerCase() === username.toLowerCase()) {
-					const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
-					if (usernameElement && !messageElement.querySelector('.eloward-rank-badge')) {
-						this.addSevenTVBadge(messageElement, usernameElement, rankData);
-					}
-				}
-			});
-		}
-	}
-
-	extractUsernameFromMessage(messageElement, expectedUsername) {
-		// Try various methods to extract username from message element
-		const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
-		if (usernameElement) {
-			return usernameElement.textContent?.trim();
-		}
-
-		// Fallback methods
-		const dataUsername = messageElement.getAttribute('data-username');
-		if (dataUsername) {
-			return dataUsername;
-		}
-
-		return expectedUsername; // Fallback to expected username
+		// Simple approach: find recent messages from this user and add badges
+		const userMessages = document.querySelectorAll('.seventv-chat-user');
+		
+		userMessages.forEach(messageElement => {
+			const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
+			if (usernameElement && 
+				usernameElement.textContent?.trim().toLowerCase() === username.toLowerCase() &&
+				!messageElement.querySelector('.eloward-rank-badge')) {
+				
+				this.addSevenTVBadge(messageElement, usernameElement, rankData);
+			}
+		});
 	}
 
 	async fetchRankData(username) {
@@ -963,7 +838,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const normalizedUsername = username.toLowerCase();
 		const entry = this.cache.get(normalizedUsername);
 		if (entry && (Date.now() - entry.timestamp < this.config.cacheExpiry)) {
-			entry.frequency = (entry.frequency || 0) + 1;
 			return entry.data;
 		}
 		if (entry) {
@@ -975,33 +849,31 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	setCachedRank(username, data) {
 		this.cache.set(username.toLowerCase(), {
 			data,
-			timestamp: Date.now(),
-			frequency: 1
+			timestamp: Date.now()
 		});
 
+		// Simple eviction when cache is too large
 		if (this.cache.size > this.config.maxCacheSize) {
-			this.evictLFU();
+			this.evictOldEntries();
 		}
 	}
 
-	evictLFU() {
-		let lowestFrequency = Infinity;
-		let userToEvict = null;
-
+	evictOldEntries() {
+		// Remove expired entries first
+		const now = Date.now();
 		for (const [key, entry] of this.cache.entries()) {
-			if (entry.timestamp && (Date.now() - entry.timestamp > this.config.cacheExpiry)) {
+			if (entry.timestamp && (now - entry.timestamp > this.config.cacheExpiry)) {
 				this.cache.delete(key);
-				continue;
-			}
-
-			if (entry.frequency < lowestFrequency) {
-				lowestFrequency = entry.frequency;
-				userToEvict = key;
 			}
 		}
 
-		if (userToEvict) {
-			this.cache.delete(userToEvict);
+		// If still too large, remove oldest entries
+		if (this.cache.size > this.config.maxCacheSize) {
+			const entries = Array.from(this.cache.entries())
+				.sort((a, b) => a[1].timestamp - b[1].timestamp);
+			
+			const toRemove = entries.slice(0, entries.length - this.config.maxCacheSize + 50);
+			toRemove.forEach(([key]) => this.cache.delete(key));
 		}
 	}
 
