@@ -32,17 +32,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		// Rank-specific styling configurations
 		this.rankStyles = {
-			iron: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			bronze: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			silver: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			gold: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			platinum: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			emerald: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			diamond: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			master: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			grandmaster: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			challenger: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' },
-			unranked: { width: '24px', height: '24px', margin: '0 2px 0 1px', padding: '0', top: '0px' }
+			iron: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			bronze: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			silver: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			gold: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '-2px' },
+			platinum: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			emerald: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			diamond: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			master: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			grandmaster: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			challenger: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' },
+			unranked: { width: '24px', height: '24px', margin: '0 2px', padding: '0', top: '0px' }
 		};
 		
 
