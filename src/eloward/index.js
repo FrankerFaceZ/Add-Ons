@@ -59,7 +59,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			gold: { width: '24px', height: '24px', margin: '0px -7px 0px -3px'},
 			platinum: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
 			emerald: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
-			diamond: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
+			diamond: { width: '24px', height: '24px', margin: '0px -3px 0px 1px'},
 			master: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
 			grandmaster: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
 			challenger: { width: '24px', height: '24px', margin: '0px -7px 5px -3px'},
