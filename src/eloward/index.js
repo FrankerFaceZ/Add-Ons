@@ -35,7 +35,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.processedMessages = new Set(); // Track processed messages to avoid duplicates
 		this.initializationFinalized = false; // Track if we've completed full initialization
 		
-		// Rank-specific styling configurations
+		// Rank-specific styling configurations for FFZ badges
 		this.rankStyles = {
 			iron: { width: '28px', height: '28px', margin: '0 -2px 7.5px -6px'},
 			bronze: { width: '26px', height: '26px', margin: '0 -1.5px 6px -5px'},
@@ -48,6 +48,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			grandmaster: { width: '24px', height: '24px', margin: '0 3px 2px -1px'},
 			challenger: { width: '24px', height: '24px', margin: '0 3px 1px -1px'},
 			unranked: { width: '24px', height: '24px', margin: '0 -0.2px 2.5px -3.5px'}
+		};
+
+		// 7TV-specific styling configurations (different layout system)
+		// Note: These can be customized independently from FFZ styling
+		this.rankStyles7TV = {
+			iron: { width: '28px', height: '28px', margin: '0 4px 0 0'},
+			bronze: { width: '26px', height: '26px', margin: '0 4px 0 0'},
+			silver: { width: '24px', height: '24px', margin: '0 4px 0 0'},
+			gold: { width: '24px', height: '24px', margin: '0 4px 0 0'},
+			platinum: { width: '24px', height: '24px', margin: '0 4px 0 0'},
+			emerald: { width: '24px', height: '24px', margin: '0 4px 0 0'},
+			diamond: { width: '24px', height: '24px', margin: '0 5px 0 0'},
+			master: { width: '24px', height: '24px', margin: '0 5px 0 0'},
+			grandmaster: { width: '24px', height: '24px', margin: '0 6px 0 0'},
+			challenger: { width: '24px', height: '24px', margin: '0 6px 0 0'},
+			unranked: { width: '28px', height: '28px', margin: '1px -6px 0 -2px'}
 		};
 		
 
@@ -159,6 +175,39 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			// Set up message observer for 7TV mode
 			this.setupMessageObserver();
+		}
+	}
+
+	performChannelSwitchFallbackDetection() {
+		// Only perform fallback detection if we have active channels
+		if (this.activeChannels.size === 0) {
+			return;
+		}
+		
+		// Store current mode before re-detection
+		const currentMode = this.chatMode;
+		this.log.info(`Channel switch fallback detection starting - current mode: ${currentMode}`);
+		
+		this.detectChatMode();
+		
+		// Only act if mode actually changed, especially to 7TV
+		if (currentMode !== this.chatMode) {
+			this.log.info(`Channel switch fallback detection - switching from ${currentMode} to ${this.chatMode}`);
+			
+			// Regenerate CSS with correct styles
+			if (this.badgeStyleElement) {
+				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
+			}
+			
+			// Reset and setup message observer for the correct mode
+			this.setupMessageObserver();
+			
+			// If we switched to 7TV, we might need to process existing messages
+			if (this.chatMode === 'seventv' && currentMode !== 'seventv') {
+				this.processExistingMessages();
+			}
+		} else {
+			this.log.info(`Channel switch fallback detection - mode unchanged: ${this.chatMode}`);
 		}
 	}
 
@@ -457,12 +506,19 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	detectChatMode() {
-		// Check for 7TV elements in the DOM
+		// Check for 7TV elements in the DOM (more comprehensive check)
 		const has7TVElements = !!(
 			document.querySelector('.seventv-message') ||
 			document.querySelector('.seventv-chat-user') ||
 			document.querySelector('[data-seventv]') ||
-			document.querySelector('.seventv-paint')
+			document.querySelector('.seventv-paint') ||
+			document.querySelector('.seventv-chat-user-username') ||
+			document.querySelector('.seventv-chat-badge') ||
+			document.querySelector('.seventv-emote') ||
+			// Check for 7TV extension presence in the page
+			window.SevenTV ||
+			document.querySelector('script[src*="seventv"]') ||
+			document.querySelector('link[href*="seventv"]')
 		);
 
 		// Check for specific FFZ elements
@@ -471,6 +527,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			document.querySelector('.ffz-chat-line') ||
 			document.querySelector('[data-ffz-component]')
 		);
+
+		// Store previous mode for comparison
+		const previousMode = this.chatMode;
 
 		// Determine chat mode
 		if (has7TVElements) {
@@ -481,8 +540,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.chatMode = 'ffz';
 			this.log.info(`Chat mode detected: FFZ`);
 		} else {
-			this.chatMode = 'standard';
-			this.log.info(`Chat mode detected: STANDARD`);
+			// If we previously detected 7TV but can't find elements now,
+			// preserve 7TV mode (elements might be temporarily missing during transitions)
+			if (previousMode === 'seventv' && this.sevenTVDetected) {
+				this.log.info(`Chat mode: Preserving SEVENTV mode (elements temporarily missing)`);
+				// Keep existing mode
+			} else {
+				this.chatMode = 'standard';
+				this.log.info(`Chat mode detected: STANDARD`);
+			}
 		}
 	}
 
@@ -521,9 +587,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			/* Base 7TV badge styling */
 			.seventv-chat-badge.eloward-rank-badge.seventv-integration {
 				display: inline-block;
-				width: 28px !important;
-				height: 28px !important;
-				margin: 0 4px 0 0 !important;
 				vertical-align: middle;
 				position: relative;
 				border-radius: 4px;
@@ -548,8 +611,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			/* Responsive sizing for different chat widths */
 			@media (max-width: 400px) {
 				.seventv-chat-badge.eloward-rank-badge.seventv-integration {
-					width: 24px !important;
-					height: 24px !important;
+					width: 20px !important;
+					height: 20px !important;
 					margin: 0 2px 0 0 !important;
 				}
 			}
@@ -568,16 +631,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Add rank-specific styles for 7TV mode
 		for (const tier of this.rankTiers) {
-			const styles = this.rankStyles[tier];
+			const styles = this.rankStyles7TV[tier];
 			if (styles) {
-				// Convert FFZ styles to 7TV-compatible styles
+				// Use 7TV-specific styling values
 				const tv7Width = styles.width;
 				const tv7Height = styles.height;
+				const tv7Margin = styles.margin;
 				
 				css += `
 					.seventv-chat-badge.eloward-rank-badge.seventv-integration[data-rank="${tier}"] {
 						width: ${tv7Width} !important;
 						height: ${tv7Height} !important;
+						margin: ${tv7Margin} !important;
 					}
 				`;
 			}
@@ -708,6 +773,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		// Reset and setup message observer for the new channel
 		this.setupMessageObserver();
+		
+		// Add fallback detection for channel switches (7TV might load late)
+		setTimeout(() => {
+			this.performChannelSwitchFallbackDetection();
+		}, 1500);
 		
 		this.log.info(`Reset EloWard state for new channel in ${this.chatMode} mode`);
 	}
