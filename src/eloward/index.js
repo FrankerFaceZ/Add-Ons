@@ -497,8 +497,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			.seventv-chat-user-badge-list {
 				display: inline-flex;
 				align-items: center;
-				gap: 4px;
-				margin-right: 8px;
+				gap: 0px;
+				margin-right: 0px;
 			}
 
 			@media (max-width: 400px) {
