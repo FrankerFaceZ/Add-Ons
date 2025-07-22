@@ -639,11 +639,32 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			if (!this.initializationFinalized) {
 				this.initializationFinalized = true;
 				this.finalizeInitialization();
+			} else {
+				// For subsequent channels, we need to reset 7TV state and set up observer for new channel
+				this.resetForNewChannel();
 			}
 			
 			// Process existing users in chat when room becomes active
 			this.processExistingChatUsers(room, roomLogin);
 		}
+	}
+
+	resetForNewChannel() {
+		// Clear processed messages from previous channel
+		this.processedMessages.clear();
+		
+		// Re-detect chat mode in case it changed
+		this.detectChatMode();
+		
+		// Regenerate CSS in case chat mode changed
+		if (this.badgeStyleElement) {
+			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
+		}
+		
+		// Reset and setup message observer for the new channel
+		this.setupMessageObserver();
+		
+		this.log.info(`Reset EloWard state for new channel in ${this.chatMode} mode`);
 	}
 
 	onRoomRemove(room) {
@@ -654,6 +675,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (roomLogin) {
 			this.activeChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
+			
+			// Clear processed messages when leaving a channel
+			this.processedMessages.clear();
+			
+			// Clean up 7TV badges from DOM when leaving channel
+			if (this.sevenTVDetected) {
+				document.querySelectorAll('.eloward-rank-badge.seventv-integration').forEach(badge => {
+					badge.remove();
+				});
+			}
 		}
 	}
 
@@ -726,6 +757,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	processMessage(tokens, msg) {
 		// Check if addon is enabled
 		if (!this.settings.get('eloward.enabled')) {
+			return tokens;
+		}
+
+		// Skip FFZ tokenizer processing in 7TV mode since we use direct DOM manipulation
+		if (this.chatMode === 'seventv' && this.sevenTVDetected) {
 			return tokens;
 		}
 
