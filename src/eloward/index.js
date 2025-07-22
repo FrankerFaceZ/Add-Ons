@@ -517,7 +517,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	getSevenTVStyles() {
-		return `
+		let css = `
+			/* Base 7TV badge styling */
 			.seventv-chat-badge.eloward-rank-badge.seventv-integration {
 				display: inline-block;
 				width: 28px !important;
@@ -529,12 +530,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				overflow: hidden;
 			}
 
-			.seventv-badge-img {
+			/* Image styling */
+			.seventv-badge-img, .eloward-badge-img {
 				width: 100% !important;
 				height: 100% !important;
 				object-fit: contain;
 			}
 
+			/* Badge list container */
 			.seventv-chat-user-badge-list {
 				display: inline-flex;
 				align-items: center;
@@ -542,10 +545,52 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				margin-right: 8px;
 			}
 
-			.seventv-chat-user-badge-list .eloward-rank-badge {
-				cursor: pointer;
+			/* Responsive sizing for different chat widths */
+			@media (max-width: 400px) {
+				.seventv-chat-badge.eloward-rank-badge.seventv-integration {
+					width: 24px !important;
+					height: 24px !important;
+					margin: 0 2px 0 0 !important;
+				}
+			}
+
+			/* Dark theme integration (7TV compatible) */
+			.tw-root--theme-dark .seventv-chat-badge.eloward-rank-badge.seventv-integration {
+				filter: brightness(0.95);
+			}
+
+			/* Light theme integration */
+			.tw-root--theme-light .seventv-chat-badge.eloward-rank-badge.seventv-integration {
+				filter: brightness(1.05) contrast(1.1);
+			}
+
+			/* Rank-specific 7TV styling */`;
+
+		// Add rank-specific styles for 7TV mode
+		for (const tier of this.rankTiers) {
+			const styles = this.rankStyles[tier];
+			if (styles) {
+				// Convert FFZ styles to 7TV-compatible styles
+				const tv7Width = styles.width;
+				const tv7Height = styles.height;
+				
+				css += `
+					.seventv-chat-badge.eloward-rank-badge.seventv-integration[data-rank="${tier}"] {
+						width: ${tv7Width} !important;
+						height: ${tv7Height} !important;
+					}
+				`;
+			}
+		}
+
+		css += `
+			/* Integration with 7TV's badge spacing */
+			.seventv-chat-user .seventv-chat-user-badge-list + .seventv-chat-user-username {
+				margin-left: 4px;
 			}
 		`;
+		
+		return css;
 	}
 
 	getBadgeData(tier) {
@@ -1164,8 +1209,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		badge.appendChild(img);
 		
-		// Setup tooltip data
-		badge.dataset.rank = rankData.tier;
+		// Setup tooltip data and rank-specific attributes
+		badge.dataset.rank = rankData.tier.toLowerCase();
 		badge.dataset.division = rankData.division || '';
 		badge.dataset.lp = rankData.leaguePoints !== undefined && rankData.leaguePoints !== null ? 
 			rankData.leaguePoints.toString() : '';
@@ -1173,6 +1218,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		badgeList.appendChild(badge);
 	}
+
+
 }
 
 // Register the addon with FFZ
