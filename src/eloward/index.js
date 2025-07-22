@@ -54,15 +54,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Note: These can be customized independently from FFZ styling
 		this.rankStyles7TV = {
 			iron: { width: '32px', height: '32px', margin: '0px -7px 5px -3px'},
-			bronze: { width: '26px', height: '26px', margin: '0px -7px 5px -3px'},	
-			silver: { width: '24px', height: '24px', margin: '0 4px 0 0'},
-			gold: { width: '24px', height: '24px', margin: '0 4px 0 0'},
-			platinum: { width: '24px', height: '24px', margin: '0 4px 0 0'},
-			emerald: { width: '24px', height: '24px', margin: '0 4px 0 0'},
-			diamond: { width: '24px', height: '24px', margin: '0 5px 0 0'},
-			master: { width: '24px', height: '24px', margin: '0 5px 0 0'},
-			grandmaster: { width: '24px', height: '24px', margin: '0 6px 0 0'},
-			challenger: { width: '24px', height: '24px', margin: '0 6px 0 0'},
+			bronze: { width: '30px', height: '30px', margin: '0px -7px 4px -3px'},	
+			silver: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			gold: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			platinum: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			emerald: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			diamond: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			master: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			grandmaster: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
+			challenger: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
 			unranked: { width: '28px', height: '28px', margin: '1px -6px 0 -2px'}
 		};
 		
