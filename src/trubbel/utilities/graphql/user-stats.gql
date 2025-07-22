@@ -1,0 +1,15 @@
+query Trubbel_GetUserStats(
+  $includeFollows: Boolean = false
+) {
+  currentUser {
+    ...FollowsFragment @include(if: $includeFollows)
+    __typename
+  }
+}
+
+fragment FollowsFragment on User {
+  follows {
+    totalCount
+    __typename
+  }
+}

@@ -1,43 +1,30 @@
-import { ChatCommands } from "./settings/chat-commands";
-import { ChatModeration } from "./settings/chat-moderation";
-import { ChatViewerCard } from "./settings/chat-viewer-card";
-import { ClipsVideos } from "./settings/clips-videos";
+import { Appearance } from "./settings/appearance";
+import { Channel } from "./settings/channel";
 import { Directory } from "./settings/directory";
-import { DropsRewards } from "./settings/drops-rewards";
-import { Player } from "./settings/player";
-import { RemoveThings } from "./settings/remove-things";
-import { SideBarPreview } from "./settings/sidebar";
-import { UITweaks } from "./settings/ui-tweaks";
-import { Whispers } from "./settings/whispers";
+import { Inventory } from "./settings/inventory";
+import { Overall } from "./settings/overall";
 
 class Trubbel extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.inject(ChatCommands);
-		this.inject(ChatModeration);
-		this.inject(ChatViewerCard);
-		this.inject(ClipsVideos);
+		this.inject(Appearance);
+		this.inject(Channel);
 		this.inject(Directory);
-		this.inject(DropsRewards);
-		this.inject(Player);
-		this.inject(RemoveThings);
-		this.inject(SideBarPreview);
-		this.inject(UITweaks);
-		this.inject(Whispers);
+		this.inject(Inventory);
+		this.inject(Overall);
 
 		this.inject("chat");
-		this.inject("chat.badges");
 
 		this.loadDevBadge();
 	}
 
 	async loadDevBadge() {
-		this.badges.loadBadgeData("addon.trubbel-devbadge", {
+		this.chat.badges.loadBadgeData("addon.trubbel-devbadge", {
 			addon: "trubbel",
 			id: "addon.trubbel-devbadge",
 			base_id: "addon.trubbel-devbadge",
-			title: "Trubbel\u2019s Utilities\nDeveloper",
+			title: "Trubbel\u2019s Utilities\nAdd-On Developer",
 			slot: 666,
 			color: "transparent",
 			image: "https://i.imgur.com/8TRjfOx.png",
