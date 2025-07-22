@@ -653,6 +653,82 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			.seventv-chat-user .seventv-chat-user-badge-list + .seventv-chat-user-username {
 				margin-left: 4px;
 			}
+
+			/* 7TV Tooltip styling - matches standard version */
+			.eloward-7tv-tooltip {
+				position: absolute;
+				z-index: 99999;
+				pointer-events: none;
+				transform: translate(-50%, -100%);
+				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif;
+				padding: 8px;
+				border-radius: 8px;
+				text-align: center;
+				border: none;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+				margin-top: -8px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 6px;
+			}
+
+			.eloward-7tv-tooltip-badge {
+				width: 90px;
+				height: 90px;
+				object-fit: contain;
+				display: block;
+			}
+
+			.eloward-7tv-tooltip-text {
+				font-size: 13px;
+				font-weight: 600;
+				line-height: 1.2;
+				white-space: nowrap;
+			}
+
+			.eloward-7tv-tooltip::after {
+				content: "";
+				position: absolute;
+				bottom: -4px;
+				left: 50%;
+				margin-left: -4px;
+				border-width: 4px 4px 0 4px;
+				border-style: solid;
+			}
+
+			/* Theme-specific tooltip colors for 7TV */
+			html.tw-root--theme-dark .eloward-7tv-tooltip,
+			.tw-root--theme-dark .eloward-7tv-tooltip,
+			body[data-a-theme="dark"] .eloward-7tv-tooltip,
+			body.dark-theme .eloward-7tv-tooltip {
+				color: #0e0e10;
+				background-color: white;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+			}
+
+			html.tw-root--theme-dark .eloward-7tv-tooltip::after,
+			.tw-root--theme-dark .eloward-7tv-tooltip::after,
+			body[data-a-theme="dark"] .eloward-7tv-tooltip::after,
+			body.dark-theme .eloward-7tv-tooltip::after {
+				border-color: white transparent transparent transparent;
+			}
+
+			html.tw-root--theme-light .eloward-7tv-tooltip,
+			.tw-root--theme-light .eloward-7tv-tooltip,
+			body[data-a-theme="light"] .eloward-7tv-tooltip,
+			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-7tv-tooltip {
+				color: #efeff1;
+				background-color: #0e0e10;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+			}
+
+			html.tw-root--theme-light .eloward-7tv-tooltip::after,
+			.tw-root--theme-light .eloward-7tv-tooltip::after,
+			body[data-a-theme="light"] .eloward-7tv-tooltip::after,
+			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-7tv-tooltip::after {
+				border-color: #0e0e10 transparent transparent transparent;
+			}
 		`;
 		
 		return css;
@@ -762,6 +838,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	resetForNewChannel() {
 		// Clear processed messages from previous channel
 		this.processedMessages.clear();
+		
+		// Clean up any active tooltips
+		this.hideSevenTVTooltip();
 		
 		// Re-detect chat mode in case it changed
 		this.detectChatMode();
@@ -974,6 +1053,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			});
 		}
 		
+		// Clean up any active tooltips
+		this.hideSevenTVTooltip();
+		
 		this.userBadges.clear();
 		this.processedMessages.clear();
 	}
@@ -1172,6 +1254,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.messageObserver = null;
 		}
 
+		// Clean up any active 7TV tooltips
+		this.hideSevenTVTooltip();
+
 		// Remove event listeners
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
@@ -1286,9 +1371,56 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			rankData.leaguePoints.toString() : '';
 		badge.dataset.username = rankData.summonerName || '';
 		
+		// Add hover tooltip functionality
+		badge.addEventListener('mouseenter', (e) => this.showSevenTVTooltip(e, rankData));
+		badge.addEventListener('mouseleave', () => this.hideSevenTVTooltip());
+		
 		badgeList.appendChild(badge);
 	}
 
+	showSevenTVTooltip(event, rankData) {
+		// Remove any existing tooltip
+		this.hideSevenTVTooltip();
+		
+		if (!rankData?.tier) return;
+		
+		// Create tooltip element
+		const tooltip = document.createElement('div');
+		tooltip.className = 'eloward-7tv-tooltip';
+		tooltip.id = 'eloward-7tv-tooltip-active';
+		
+		// Create badge image
+		const tooltipBadge = document.createElement('img');
+		tooltipBadge.className = 'eloward-7tv-tooltip-badge';
+		tooltipBadge.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
+		tooltipBadge.alt = 'Rank Badge';
+		
+		// Create text content
+		const tooltipText = document.createElement('div');
+		tooltipText.className = 'eloward-7tv-tooltip-text';
+		tooltipText.textContent = this.formatRankText(rankData);
+		
+		// Assemble tooltip
+		tooltip.appendChild(tooltipBadge);
+		tooltip.appendChild(tooltipText);
+		
+		// Position tooltip - match standard version positioning
+		const rect = event.target.getBoundingClientRect();
+		const badgeCenter = rect.left + (rect.width / 2);
+		
+		tooltip.style.left = `${badgeCenter}px`;
+		tooltip.style.top = `${rect.top - 5}px`;
+		
+		// Add to DOM and show immediately
+		document.body.appendChild(tooltip);
+	}
+
+	hideSevenTVTooltip() {
+		const existingTooltip = document.getElementById('eloward-7tv-tooltip-active');
+		if (existingTooltip && existingTooltip.parentNode) {
+			existingTooltip.remove();
+		}
+	}
 
 }
 
