@@ -141,7 +141,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Single fallback detection for late-loading extensions
 		setTimeout(() => {
 			this.performFallbackChatModeDetection();
-		}, 5000);
+		}, 2500);
 	}
 
 	performFallbackChatModeDetection() {
