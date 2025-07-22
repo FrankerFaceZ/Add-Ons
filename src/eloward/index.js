@@ -676,14 +676,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.activeChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
 			
-			// Clear processed messages when leaving a channel
-			this.processedMessages.clear();
-			
-			// Clean up 7TV badges from DOM when leaving channel
-			if (this.sevenTVDetected) {
-				document.querySelectorAll('.eloward-rank-badge.seventv-integration').forEach(badge => {
-					badge.remove();
-				});
+			// Only clear state if no active channels remain
+			if (this.activeChannels.size === 0) {
+				// Clear processed messages when leaving all channels
+				this.processedMessages.clear();
+				
+				// Clean up 7TV badges from DOM when leaving all channels
+				if (this.sevenTVDetected) {
+					document.querySelectorAll('.eloward-rank-badge.seventv-integration').forEach(badge => {
+						badge.remove();
+					});
+				}
 			}
 		}
 	}
