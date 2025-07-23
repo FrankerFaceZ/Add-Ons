@@ -31,17 +31,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.initializationFinalized = false;
 		
 		this.rankStyles = {
-			iron: { width: '28px', height: '28px', margin: '0 -2px 7.5px -6px'},
-			bronze: { width: '26px', height: '26px', margin: '0 -1.5px 6px -5px'},
-			silver: { width: '24px', height: '24px', margin: '0 0px 6px -4.5px'},
-			gold: { width: '24px', height: '24px', margin: '0 0px 4px -4px'},
-			platinum: { width: '24px', height: '24px', margin: '0 0.5px 3.5px -3.5px'},
-			emerald: { width: '24px', height: '24px', margin: '0 1px 3px -3px'},
-			diamond: { width: '24px', height: '24px', margin: '0 3px 4px -1px'},
-			master: { width: '24px', height: '24px', margin: '0 3px 3px -1px'},
-			grandmaster: { width: '24px', height: '24px', margin: '0 3px 2px -1px'},
-			challenger: { width: '24px', height: '24px', margin: '0 3px 1px -1px'},
-			unranked: { width: '24px', height: '24px', margin: '0 -0.2px 2.5px -3.5px'}
+			iron: { width: '20px', height: '20px', margin: '0 -2px 0 -6px'},
+			bronze: { width: '18px', height: '18px', margin: '0 -1.5px 0 -5px'},
+			silver: { width: '16px', height: '16px', margin: '0 0px 0 -4.5px'},
+			gold: { width: '16px', height: '16px', margin: '0 0px 0 -4px'},
+			platinum: { width: '16px', height: '16px', margin: '0 0.5px 0 -3.5px'},
+			emerald: { width: '16px', height: '16px', margin: '0 1px 0 -3px'},
+			diamond: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
+			master: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
+			grandmaster: { width: '14px', height: '14px', margin: '0 3px 0 -1px'},
+			challenger: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
+			unranked: { width: '16px', height: '16px', margin: '0 -0.2px 0 -3.5px'}
 		};
 
 		this.rankStyles7TV = {
@@ -611,6 +611,19 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 						margin: ${styles.margin} !important;
 						background-size: contain !important;
 						vertical-align: middle !important;
+						overflow: visible !important;
+						position: relative !important;
+					}
+					
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] img {
+						width: 18px !important;
+						height: 18px !important;
+						object-fit: none !important;
+						object-position: center !important;
+						position: absolute !important;
+						top: 50% !important;
+						left: 50% !important;
+						transform: translate(-50%, -50%) !important;
 					}
 				`;
 			}
