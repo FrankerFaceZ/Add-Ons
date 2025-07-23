@@ -45,17 +45,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		};
 
 		this.rankStyles7TV = {
-			iron: { width: '28px', height: '28px', margin: '0px -7px 5px -3px'},
-			bronze: { width: '26px', height: '26px', margin: '0px -7px 3px -3px'},	
-			silver: { width: '24px', height: '24px', margin: '0px -7px 2px -3px'},
-			gold: { width: '24px', height: '24px', margin: '0px -7px 0px -3px'},
-			platinum: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
-			emerald: { width: '24px', height: '24px', margin: '2px -5px 0px -1px'},
-			diamond: { width: '24px', height: '24px', margin: '0px -3px 0px 1px'},
-			master: { width: '24px', height: '24px', margin: '2px -3px 0px 1px'},
-			grandmaster: { width: '22px', height: '22px', margin: '3px -3px 0px 1px'},
-			challenger: { width: '24px', height: '24px', margin: '2px -1px 0px 3px'},
-			unranked: { width: '24px', height: '24px', margin: '1px -7px 0px -3px'}
+			iron: { width: '20px', height: '20px', margin: '0px -9px 0px -3px'},
+			bronze: { width: '18px', height: '18px', margin: '0px -8px 0px -1px'},	
+			silver: { width: '16px', height: '16px', margin: '0px -7px 0px -3px'},
+			gold: { width: '16px', height: '16px', margin: '0px -7px 0px -3px'},
+			platinum: { width: '16px', height: '16px', margin: '0px -5px 0px -1px'},
+			emerald: { width: '16px', height: '16px', margin: '0px -5px 0px -1px'},
+			diamond: { width: '16px', height: '16px', margin: '0px -4px 0px 2px'},
+			master: { width: '16px', height: '16px', margin: '0px -3px 0px 1px'},
+			grandmaster: { width: '14px', height: '14px', margin: '0px -3px 0px 1px'},
+			challenger: { width: '16px', height: '16px', margin: '0px -1px 0px 3px'},
+			unranked: { width: '16px', height: '16px', margin: '0px -7px 0px 0px'}
 		};
 
 		this.settings.add('eloward.enabled', {
@@ -168,6 +168,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		if (this.chatMode === 'seventv' && this.sevenTVDetected) {
 			this.setupSevenTVObserver();
+		} else {
+			this.setupStandardObserver();
 		}
 	}
 
@@ -186,14 +188,113 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
 		
+		// Collect unique usernames and their message elements (batch processing)
+		const userMessageMap = new Map();
+		
 		for (const message of existingMessages) {
-			if (!this.processedMessages.has(message)) {
-				if (this.chatMode === 'seventv') {
-					this.processDirectMessage(message);
-				} else {
-					this.processStandardMessage(message);
-				}
+			if (this.processedMessages.has(message)) continue;
+			
+			// Find username element using current chat mode selectors
+			let usernameElement = null;
+			let usernameSelectors;
+			
+			if (this.chatMode === 'seventv') {
+				usernameSelectors = ['.seventv-chat-user-username'];
+			} else {
+				usernameSelectors = [
+					'[data-a-target="chat-message-username"]',
+					'.chat-author__display-name',
+					'.chat-line__username'
+				];
 			}
+			
+			for (const selector of usernameSelectors) {
+				usernameElement = message.querySelector(selector);
+				if (usernameElement) break;
+			}
+			
+			if (!usernameElement) continue;
+			
+			const username = usernameElement.textContent?.trim().toLowerCase();
+			if (!username) continue;
+			
+			// Skip if already has badge
+			if (message.querySelector('.eloward-rank-badge')) continue;
+			
+			this.processedMessages.add(message);
+			
+			if (!userMessageMap.has(username)) {
+				userMessageMap.set(username, []);
+			}
+			userMessageMap.get(username).push({
+				messageElement: message,
+				usernameElement: usernameElement
+			});
+		}
+		
+		// Process each unique username (batch processing)
+		if (userMessageMap.size > 0) {
+			this.processUsernamesBatch(userMessageMap);
+		}
+	}
+
+	processUsernamesBatch(userMessageMap) {
+		const currentChannel = this.getCurrentChannelName();
+		if (!currentChannel) return;
+
+		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
+		const isActive = this.activeChannels.has(currentChannel);
+
+		if (!hasLoLCategory || !isActive) {
+			return;
+		}
+
+		// First, apply cached ranks immediately and collect users needing fetch
+		const usersNeedingFetch = new Set();
+		
+		for (const [username, messageData] of userMessageMap.entries()) {
+			const cachedRank = this.getCachedRank(username);
+			
+			if (cachedRank) {
+				// Apply rank to all messages for this user immediately
+				this.applyRankToAllUserMessages(username, messageData, cachedRank);
+				this.incrementMetric('successful_lookup', currentChannel);
+			} else {
+				usersNeedingFetch.add(username);
+			}
+			
+			// Increment db_read metric once per user (not per message)
+			this.incrementMetric('db_read', currentChannel);
+		}
+		
+		// Fetch ranks for users not in cache
+		if (usersNeedingFetch.size > 0) {
+			this.fetchRanksForUsers(usersNeedingFetch, userMessageMap, currentChannel);
+		}
+	}
+
+	applyRankToAllUserMessages(username, messageData, rankData) {
+		messageData.forEach(({ messageElement, usernameElement }) => {
+			if (this.chatMode === 'seventv') {
+				this.addSevenTVBadge(messageElement, usernameElement, rankData);
+			} else {
+				this.addStandardModeBadge(messageElement, username, rankData);
+			}
+		});
+	}
+
+	fetchRanksForUsers(usersNeedingFetch, userMessageMap, currentChannel) {
+		// Fetch ranks for each user
+		for (const username of usersNeedingFetch) {
+			const messageData = userMessageMap.get(username);
+			
+			this.fetchRankData(username).then(rankData => {
+				if (rankData) {
+					this.setCachedRank(username, rankData);
+					this.applyRankToAllUserMessages(username, messageData, rankData);
+					this.incrementMetric('successful_lookup', currentChannel);
+				}
+			}).catch(() => {});
 		}
 	}
 
@@ -221,12 +322,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 							);
 							
 							if (isMessage && !this.processedMessages.has(node)) {
-								this.processDirectMessage(node);
+								this.processNewMessage(node);
 							} else {
 								const messages = node.querySelectorAll(messageSelectors.join(', '));
 								for (const message of messages) {
 									if (!this.processedMessages.has(message)) {
-										this.processDirectMessage(message);
+										this.processNewMessage(message);
 									}
 								}
 							}
@@ -239,6 +340,163 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.messageObserver.observe(chatContainer, {
 			childList: true,
 			subtree: true
+		});
+	}
+
+	setupStandardObserver() {
+		const chatContainer = this.findChatContainer();
+		if (!chatContainer) {
+			return;
+		}
+
+		const messageSelectors = [
+			'.chat-line__message',
+			'.chat-line',
+			'[data-a-target="chat-line-message"]'
+		];
+
+		this.messageObserver = new MutationObserver((mutations) => {
+			if (this.activeChannels.size === 0) return;
+
+			for (const mutation of mutations) {
+				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+					for (const node of mutation.addedNodes) {
+						if (node.nodeType === Node.ELEMENT_NODE) {
+							const isMessage = messageSelectors.some(selector => 
+								node.matches && node.matches(selector)
+							);
+							
+							if (isMessage && !this.processedMessages.has(node)) {
+								this.processNewMessage(node);
+							} else {
+								const messages = node.querySelectorAll(messageSelectors.join(', '));
+								for (const message of messages) {
+									if (!this.processedMessages.has(message)) {
+										this.processNewMessage(message);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		});
+
+		this.messageObserver.observe(chatContainer, {
+			childList: true,
+			subtree: true
+		});
+	}
+
+	processNewMessage(messageElement) {
+		if (!messageElement || this.processedMessages.has(messageElement)) return;
+
+		this.processedMessages.add(messageElement);
+
+		// Find username element using current chat mode selectors
+		let usernameElement = null;
+		let usernameSelectors;
+		
+		if (this.chatMode === 'seventv') {
+			usernameSelectors = ['.seventv-chat-user-username'];
+		} else {
+			usernameSelectors = [
+				'[data-a-target="chat-message-username"]',
+				'.chat-author__display-name',
+				'.chat-line__username'
+			];
+		}
+		
+		for (const selector of usernameSelectors) {
+			usernameElement = messageElement.querySelector(selector);
+			if (usernameElement) break;
+		}
+
+		if (!usernameElement) return;
+
+		const username = usernameElement.textContent?.trim().toLowerCase();
+		if (!username) return;
+
+		const currentChannel = this.getCurrentChannelName();
+		if (!currentChannel) return;
+
+		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
+		const isActive = this.activeChannels.has(currentChannel);
+
+		if (!hasLoLCategory || !isActive) return;
+
+		// Skip if already has badge
+		if (messageElement.querySelector('.eloward-rank-badge')) return;
+
+		this.incrementMetric('db_read', currentChannel);
+
+		const cachedRank = this.getCachedRank(username);
+		if (cachedRank) {
+			this.incrementMetric('successful_lookup', currentChannel);
+			if (this.chatMode === 'seventv') {
+				this.addSevenTVBadge(messageElement, usernameElement, cachedRank);
+			} else {
+				this.addStandardModeBadge(messageElement, username, cachedRank);
+			}
+			
+			// Apply to all other messages from this user in chat
+			this.applyRankToAllUserMessagesInChat(username, cachedRank);
+		} else {
+			this.fetchRankData(username).then(rankData => {
+				if (rankData) {
+					this.setCachedRank(username, rankData);
+					this.incrementMetric('successful_lookup', currentChannel);
+					
+					// Apply to all messages from this user in chat (including the current one)
+					this.applyRankToAllUserMessagesInChat(username, rankData);
+				}
+			}).catch(() => {});
+		}
+	}
+
+	applyRankToAllUserMessagesInChat(username, rankData) {
+		const currentChannel = this.getCurrentChannelName();
+		if (!currentChannel) return;
+
+		let messageSelectors;
+		let usernameSelectors;
+		
+		if (this.chatMode === 'seventv') {
+			messageSelectors = ['.seventv-message', '.chat-line__message', '.chat-line'];
+			usernameSelectors = ['.seventv-chat-user-username'];
+		} else {
+			messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
+			usernameSelectors = [
+				'[data-a-target="chat-message-username"]',
+				'.chat-author__display-name',
+				'.chat-line__username'
+			];
+		}
+
+		// Find all messages in the current chat
+		const allMessages = document.querySelectorAll(messageSelectors.join(', '));
+		
+		allMessages.forEach(messageElement => {
+			// Skip if already has badge
+			if (messageElement.querySelector('.eloward-rank-badge')) return;
+			
+			// Find username element
+			let usernameElement = null;
+			for (const selector of usernameSelectors) {
+				usernameElement = messageElement.querySelector(selector);
+				if (usernameElement) break;
+			}
+			
+			if (!usernameElement) return;
+			
+			const messageUsername = usernameElement.textContent?.trim().toLowerCase();
+			if (messageUsername === username) {
+				if (this.chatMode === 'seventv') {
+					this.addSevenTVBadge(messageElement, usernameElement, rankData);
+				} else {
+					this.addStandardModeBadge(messageElement, username, rankData);
+				}
+			}
 		});
 	}
 
@@ -257,116 +515,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		return null;
-	}
-
-	processDirectMessage(messageElement) {
-		if (!messageElement) return;
-
-		this.processedMessages.add(messageElement);
-
-		const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
-		if (!usernameElement) {
-			return;
-		}
-
-		const username = usernameElement.textContent?.trim();
-		if (!username) {
-			return;
-		}
-
-		const currentChannel = this.getCurrentChannelName();
-		if (!currentChannel) {
-			return;
-		}
-
-		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
-		const isActive = this.activeChannels.has(currentChannel);
-
-		if (!hasLoLCategory || !isActive) {
-			return;
-		}
-
-		if (messageElement.querySelector('.eloward-rank-badge')) {
-			return;
-		}
-
-		this.incrementMetric('db_read', currentChannel);
-
-		const cachedRank = this.getCachedRank(username);
-		if (cachedRank) {
-			this.incrementMetric('successful_lookup', currentChannel);
-			this.addSevenTVBadge(messageElement, usernameElement, cachedRank);
-		} else {
-			this.fetchRankData(username).then(rankData => {
-				if (rankData) {
-					this.setCachedRank(username, rankData);
-					this.incrementMetric('successful_lookup', currentChannel);
-					this.addSevenTVBadge(messageElement, usernameElement, rankData);
-				}
-			}).catch(() => {});
-		}
-	}
-
-	processStandardMessage(messageElement) {
-		if (!messageElement) return;
-
-		this.processedMessages.add(messageElement);
-
-		const usernameSelectors = [
-			'[data-a-target="chat-message-username"]',
-			'.chat-author__display-name',
-			'.chat-line__username'
-		];
-
-		let usernameElement = null;
-		let username = null;
-
-		for (const selector of usernameSelectors) {
-			usernameElement = messageElement.querySelector(selector);
-			if (usernameElement) {
-				username = usernameElement.textContent?.trim();
-				if (username) {
-					break;
-				}
-			}
-		}
-
-		if (!username) {
-			return;
-		}
-
-		const currentChannel = this.getCurrentChannelName();
-		if (!currentChannel) {
-			return;
-		}
-
-		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
-		const isActive = this.activeChannels.has(currentChannel);
-
-		if (!hasLoLCategory || !isActive) {
-			return;
-		}
-
-		if (messageElement.querySelector('.eloward-rank-badge') || 
-			messageElement.querySelector('.ffz-badge[data-badge*="addon.eloward"]')) {
-			return;
-		}
-
-		this.incrementMetric('db_read', currentChannel);
-
-		const cachedRank = this.getCachedRank(username);
-		if (cachedRank) {
-			this.incrementMetric('successful_lookup', currentChannel);
-			this.addStandardModeBadge(messageElement, username, cachedRank);
-		} else {
-			this.fetchRankData(username).then(rankData => {
-				if (rankData) {
-					this.setCachedRank(username, rankData);
-					this.incrementMetric('successful_lookup', currentChannel);
-					this.addStandardModeBadge(messageElement, username, rankData);
-				}
-			}).catch(() => {});
-		}
 	}
 
 	addStandardModeBadge(messageElement, username, rankData) {
@@ -461,11 +609,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 						width: ${styles.width} !important;
 						height: ${styles.height} !important;
 						margin: ${styles.margin} !important;
-						padding: ${styles.padding} !important;
 						background-size: contain !important;
 						vertical-align: middle !important;
-						position: relative;
-						top: ${styles.top} !important;
 					}
 				`;
 			}
@@ -484,37 +629,21 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				display: inline-block;
 				vertical-align: middle;
 				position: relative;
-				border-radius: 4px;
-				overflow: hidden;
+				border-radius: 0px;
+				overflow: visible;
+				margin-left: 2px;
+				margin-right: 3px;
 			}
 
 			.seventv-badge-img, .eloward-badge-img {
-				width: 100% !important;
-				height: 100% !important;
-				object-fit: contain;
-			}
-
-			.seventv-chat-user-badge-list {
-				display: inline-flex;
-				align-items: center;
-				gap: 0px;
-				margin-right: 0px;
-			}
-
-			@media (max-width: 400px) {
-				.seventv-chat-badge.eloward-rank-badge.seventv-integration {
-					width: 20px !important;
-					height: 20px !important;
-					margin: 0 2px 0 0 !important;
-				}
-			}
-
-			.tw-root--theme-dark .seventv-chat-badge.eloward-rank-badge.seventv-integration {
-				filter: brightness(0.95);
-			}
-
-			.tw-root--theme-light .seventv-chat-badge.eloward-rank-badge.seventv-integration {
-				filter: brightness(1.05) contrast(1.1);
+				width: 18px !important;
+				height: 18px !important;
+				object-fit: none;
+				object-position: center;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
 			}
 		`;
 
@@ -532,10 +661,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		css += `
-			.seventv-chat-user .seventv-chat-user-badge-list + .seventv-chat-user-username {
-				margin-left: 4px;
-			}
-
 			.eloward-7tv-tooltip {
 				position: absolute;
 				z-index: 99999;
@@ -839,12 +964,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (cachedRank) {
 			this.incrementMetric('successful_lookup', roomLogin);
 			this.addUserBadge(user.id, username, cachedRank);
+			
+			// Apply to all other messages from this user in chat
+			this.applyRankToAllUserMessagesInChat(username.toLowerCase(), cachedRank);
 		} else {
 			this.fetchRankData(username).then(rankData => {
 				if (rankData) {
 					this.setCachedRank(username, rankData);
 					this.addUserBadge(user.id, username, rankData);
 					this.incrementMetric('successful_lookup', roomLogin);
+					
+					// Apply to all messages from this user in chat
+					this.applyRankToAllUserMessagesInChat(username.toLowerCase(), rankData);
 				}
 			}).catch(() => {});
 		}
