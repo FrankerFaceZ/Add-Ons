@@ -520,12 +520,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		const badge = this.createBadgeElement(rankData);
 		
-		// Add click event prevention to prevent propagation to username
-		badge.addEventListener('click', (e) => {
-			e.stopPropagation();
-			e.preventDefault();
-		}, true);
-		
 		try {
 			if (insertionPoint.before && insertionPoint.container.contains(insertionPoint.before)) {
 				insertionPoint.container.insertBefore(badge, insertionPoint.before);
@@ -562,12 +556,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		badge.appendChild(img);
 		badge.addEventListener('mouseenter', (e) => this.showTooltip(e, rankData));
 		badge.addEventListener('mouseleave', () => this.hideTooltip());
-		
-		// Add click event prevention to prevent propagation to username
-		badge.addEventListener('click', (e) => {
-			e.stopPropagation();
-			e.preventDefault();
-		}, true);
 		
 		return badge;
 	}
@@ -1508,12 +1496,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		badge.appendChild(img);
 		badge.addEventListener('mouseenter', (e) => this.showSevenTVTooltip(e, rankData));
 		badge.addEventListener('mouseleave', () => this.hideSevenTVTooltip());
-		
-		// Add click event prevention to prevent propagation to username
-		badge.addEventListener('click', (e) => {
-			e.stopPropagation();
-			e.preventDefault();
-		}, true);
 		
 		badgeList.appendChild(badge);
 	}
