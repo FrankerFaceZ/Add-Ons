@@ -520,6 +520,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		const badge = this.createBadgeElement(rankData);
 		
+		// Add click event prevention to prevent propagation to username
+		badge.addEventListener('click', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+		}, true);
+		
 		try {
 			if (insertionPoint.before && insertionPoint.container.contains(insertionPoint.before)) {
 				insertionPoint.container.insertBefore(badge, insertionPoint.before);
@@ -557,14 +563,51 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		badge.addEventListener('mouseenter', (e) => this.showTooltip(e, rankData));
 		badge.addEventListener('mouseleave', () => this.hideTooltip());
 		
+		// Add click event prevention to prevent propagation to username
+		badge.addEventListener('click', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+		}, true);
+		
 		return badge;
 	}
 
 	findBadgeInsertionPoint(messageContainer) {
-		// Look for username element first
+		// First, look for existing badge container like chrome extension uses
+		let badgeContainer = messageContainer.querySelector('.chat-line__message--badges');
+		
+		if (badgeContainer) {
+			return { container: badgeContainer, before: null };
+		}
+		
+		// If no badge container exists, create one in the same structure as chrome extension
+		// Look for the message container structure
+		const messageContainerChild = messageContainer.querySelector('.chat-line__message-container');
+		
+		if (messageContainerChild) {
+			// Create the badge container as a sibling to username, not parent
+			badgeContainer = document.createElement('span');
+			badgeContainer.className = 'chat-line__message--badges';
+			
+			// Insert the badge container before the username container
+			const usernameContainer = messageContainerChild.querySelector('.chat-line__username') || 
+									messageContainerChild.querySelector('[data-a-target="chat-message-username"]') ||
+									messageContainerChild.querySelector('.chat-author__display-name');
+			
+			if (usernameContainer) {
+				messageContainerChild.insertBefore(badgeContainer, usernameContainer);
+			} else {
+				// Insert at the beginning of message container
+				messageContainerChild.insertBefore(badgeContainer, messageContainerChild.firstChild);
+			}
+			
+			return { container: badgeContainer, before: null };
+		}
+		
+		// Fallback: look for username and create badge container as sibling
 		const usernameSelectors = [
 			'[data-a-target="chat-message-username"]',
-			'.chat-author__display-name',
+			'.chat-author__display-name', 
 			'.chat-line__username'
 		];
 
@@ -574,22 +617,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			if (usernameElement) break;
 		}
 
-		if (!usernameElement) {
-			return { container: null, before: null };
-		}
-		
-		const authorContainer = usernameElement.closest('.chat-author');
-		if (authorContainer && messageContainer.contains(authorContainer)) {
-			return { container: authorContainer, before: usernameElement };
-		}
-		
-		const parent = usernameElement.parentElement;
-		if (parent && messageContainer.contains(parent)) {
-			return { container: parent, before: usernameElement };
-		}
-		
-		if (messageContainer) {
-			return { container: messageContainer, before: messageContainer.firstElementChild };
+		if (usernameElement) {
+			const parent = usernameElement.parentElement;
+			if (parent && messageContainer.contains(parent)) {
+				// Create badge container as sibling to username
+				badgeContainer = document.createElement('span');
+				badgeContainer.className = 'chat-line__message--badges';
+				parent.insertBefore(badgeContainer, usernameElement);
+				return { container: badgeContainer, before: null };
+			}
 		}
 		
 		return { container: null, before: null };
@@ -1472,6 +1508,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		badge.appendChild(img);
 		badge.addEventListener('mouseenter', (e) => this.showSevenTVTooltip(e, rankData));
 		badge.addEventListener('mouseleave', () => this.hideSevenTVTooltip());
+		
+		// Add click event prevention to prevent propagation to username
+		badge.addEventListener('click', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+		}, true);
 		
 		badgeList.appendChild(badge);
 	}
