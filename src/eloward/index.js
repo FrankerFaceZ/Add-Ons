@@ -512,28 +512,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		// Find the insertion point using chrome extension's approach
+		// Find or create proper badge container - no fallbacks to username insertion
 		const insertionPoint = this.findBadgeInsertionPoint(messageElement);
 		if (!insertionPoint.container) {
+			console.warn('EloWard FFZ: Could not find or create badge container for message');
 			return;
 		}
 
 		const badge = this.createBadgeElement(rankData);
-		
-		try {
-			if (insertionPoint.before && insertionPoint.container.contains(insertionPoint.before)) {
-				insertionPoint.container.insertBefore(badge, insertionPoint.before);
-			} else {
-				insertionPoint.container.appendChild(badge);
-			}
-		} catch (error) {
-			try {
-				messageElement.insertAdjacentElement('afterbegin', badge);
-			} catch (fallbackError) {
-				// Insertion failed, skip badge creation
-				console.warn('EloWard: Failed to insert badge');
-			}
-		}
+		insertionPoint.container.appendChild(badge);
 	}
 
 	createBadgeElement(rankData) {
@@ -616,7 +603,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 		}
 		
-		return { container: null, before: null };
+		// Last resort: create container at message level - this should always succeed
+		badgeContainer = document.createElement('span');
+		badgeContainer.className = 'chat-line__message--badges';
+		messageContainer.insertBefore(badgeContainer, messageContainer.firstChild);
+		return { container: badgeContainer, before: null };
 	}
 
 
