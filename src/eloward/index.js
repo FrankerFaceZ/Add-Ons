@@ -29,33 +29,21 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.messageObserver = null;
 		this.processedMessages = new Set();
 		this.initializationFinalized = false;
-		
-		this.rankStyles = {
-			iron: { width: '20px', height: '20px', margin: '0 -2px 0 -6px'},
-			bronze: { width: '18px', height: '18px', margin: '0 -1.5px 0 -5px'},
-			silver: { width: '16px', height: '16px', margin: '0 0px 0 -4.5px'},
-			gold: { width: '16px', height: '16px', margin: '0 0px 0 -4px'},
-			platinum: { width: '16px', height: '16px', margin: '0 0.5px 0 -3.5px'},
-			emerald: { width: '16px', height: '16px', margin: '0 1px 0 -3px'},
-			diamond: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
-			master: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
-			grandmaster: { width: '14px', height: '14px', margin: '0 3px 0 -1px'},
-			challenger: { width: '16px', height: '16px', margin: '0 3px 0 -1px'},
-			unranked: { width: '16px', height: '16px', margin: '0 -0.2px 0 -3.5px'}
-		};
+		this.tooltipElement = null;
 
-		this.rankStyles7TV = {
-			iron: { width: '20px', height: '20px', margin: '0px -9px 0px -3px'},
-			bronze: { width: '18px', height: '18px', margin: '0px -8px 0px -1px'},	
-			silver: { width: '16px', height: '16px', margin: '0px -7px 0px -3px'},
-			gold: { width: '16px', height: '16px', margin: '0px -7px 0px -3px'},
-			platinum: { width: '16px', height: '16px', margin: '0px -5px 0px -1px'},
-			emerald: { width: '16px', height: '16px', margin: '0px -5px 0px -1px'},
-			diamond: { width: '16px', height: '16px', margin: '0px -4px 0px 2px'},
-			master: { width: '16px', height: '16px', margin: '0px -3px 0px 1px'},
-			grandmaster: { width: '14px', height: '14px', margin: '0px -3px 0px 1px'},
-			challenger: { width: '16px', height: '16px', margin: '0px -1px 0px 3px'},
-			unranked: { width: '16px', height: '16px', margin: '0px -7px 0px 0px'}
+		// Chrome extension rank transform data for precise styling
+		this.chromeExtensionTransforms = {
+			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-2.5px', left: '2.5px' } },
+			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-2.5px', left: '2.5px' } },
+			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1.5px', left: '2.5px' } },
+			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1.5px', left: '4px' } },
+			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '0px', left: '1px' }, seventvMargin: { right: '-0.5px', left: '4px' } },
+			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1px', left: '3.5px' } },
+			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', standardMargin: { right: '2px', left: '2px' }, seventvMargin: { right: '0.5px', left: '5px' } },
+			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '1.5px', left: '1.5px' }, seventvMargin: { right: '-0.5px', left: '4.5px' } },
+			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '1px', left: '1px' }, seventvMargin: { right: '-1px', left: '3.5px' } },
+			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '2.5px', left: '2.5px' }, seventvMargin: { right: '0.5px', left: '6px' } },
+			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '-1.5px', left: '-1.5px' }, seventvMargin: { right: '-3px', left: '1.5px' } }
 		};
 
 		this.settings.add('eloward.enabled', {
@@ -518,6 +506,99 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	addStandardModeBadge(messageElement, username, rankData) {
+		if (!rankData?.tier) {
+			return;
+		}
+
+		// Find the insertion point using chrome extension's approach
+		const insertionPoint = this.findBadgeInsertionPoint(messageElement);
+		if (!insertionPoint.container) {
+			// Fallback to FFZ badge system
+			this.addFallbackFFZBadge(messageElement, username, rankData);
+			return;
+		}
+
+		const badge = this.createBadgeElement(rankData);
+		
+		try {
+			if (insertionPoint.before && insertionPoint.container.contains(insertionPoint.before)) {
+				insertionPoint.container.insertBefore(badge, insertionPoint.before);
+			} else {
+				insertionPoint.container.appendChild(badge);
+			}
+		} catch (error) {
+			try {
+				messageElement.insertAdjacentElement('afterbegin', badge);
+			} catch (fallbackError) {
+				// Final fallback to FFZ system
+				this.addFallbackFFZBadge(messageElement, username, rankData);
+			}
+		}
+	}
+
+	createBadgeElement(rankData) {
+		const badge = document.createElement('span');
+		badge.className = 'eloward-rank-badge';
+		badge.dataset.rankText = this.formatRankText(rankData);
+		badge.dataset.rank = rankData.tier.toLowerCase();
+		badge.dataset.division = rankData.division || '';
+		badge.dataset.lp = rankData.leaguePoints !== undefined && rankData.leaguePoints !== null ? 
+						  rankData.leaguePoints.toString() : '';
+		badge.dataset.username = rankData.summonerName || '';
+		
+		const img = document.createElement('img');
+		img.alt = rankData.tier;
+		img.className = 'eloward-badge-img';
+		img.width = 24;
+		img.height = 24;
+		img.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
+		
+		badge.appendChild(img);
+		badge.addEventListener('mouseenter', (e) => this.showTooltip(e, rankData));
+		badge.addEventListener('mouseleave', () => this.hideTooltip());
+		
+		return badge;
+	}
+
+	findBadgeInsertionPoint(messageContainer) {
+		// Look for username element first
+		const usernameSelectors = [
+			'[data-a-target="chat-message-username"]',
+			'.chat-author__display-name',
+			'.chat-line__username'
+		];
+
+		let usernameElement = null;
+		for (const selector of usernameSelectors) {
+			usernameElement = messageContainer.querySelector(selector);
+			if (usernameElement) break;
+		}
+
+		if (!usernameElement) {
+			return { container: null, before: null };
+		}
+		
+		const authorContainer = usernameElement.closest('.chat-author');
+		if (authorContainer && messageContainer.contains(authorContainer)) {
+			return { container: authorContainer, before: usernameElement };
+		}
+		
+		const parent = usernameElement.parentElement;
+		if (parent && messageContainer.contains(parent)) {
+			return { container: parent, before: usernameElement };
+		}
+		
+		if (messageContainer) {
+			return { container: messageContainer, before: messageContainer.firstElementChild };
+		}
+		
+		return { container: null, before: null };
+	}
+
+	addFallbackFFZBadge(messageElement, username, rankData) {
+		// Ensure message container is positioned for absolute badge positioning
+		messageElement.style.position = 'relative';
+		
 		const userId = messageElement.getAttribute('data-user-id') || 
 			messageElement.querySelector('[data-user-id]')?.getAttribute('data-user-id');
 
@@ -599,31 +680,123 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	generateRankSpecificCSS() {
-		let css = '';
-		
+		let css = `
+			/* Standard mode badge container styling */
+			.eloward-rank-badge {
+				display: inline-flex !important;
+				justify-content: center !important;
+				align-items: center !important;
+				vertical-align: middle !important;
+				cursor: pointer !important;
+				transform: translateY(-5px) !important;
+				transition: none !important;
+				width: 20px !important;
+				height: 20px !important;
+				box-sizing: content-box !important;
+				-webkit-user-select: none !important;
+				user-select: none !important;
+				-webkit-touch-callout: none !important;
+				position: relative !important;
+				overflow: visible !important;
+			}
+
+			/* 7TV mode badge container styling */
+			.seventv-chat-badge.eloward-rank-badge {
+				display: inline-flex !important;
+				justify-content: center !important;
+				align-items: center !important;
+				vertical-align: middle !important;
+				cursor: pointer !important;
+				transform: translateY(-3px) !important;
+				transition: none !important;
+				width: 20px !important;
+				height: 20px !important;
+				box-sizing: content-box !important;
+				-webkit-user-select: none !important;
+				user-select: none !important;
+				-webkit-touch-callout: none !important;
+				position: relative !important;
+				overflow: visible !important;
+			}
+
+			/* Single badge positioning fix for 7TV when no other badges exist */
+			.seventv-chat-badge.eloward-rank-badge.eloward-single-badge {
+				transform: translateY(1px) !important;
+			}
+
+			/* Universal image styling within containers */
+			.eloward-rank-badge img,
+			.seventv-chat-badge.eloward-rank-badge img {
+				display: block !important;
+				width: 100% !important;
+				height: 100% !important;
+				object-fit: cover !important;
+				transform-origin: center !important;
+				position: absolute !important;
+				top: 50% !important;
+				left: 50% !important;
+			}
+
+			/* FFZ badge styling overrides */
+			.ffz-badge[data-badge*="addon.eloward.rank-"] {
+				display: inline-flex !important;
+				justify-content: center !important;
+				align-items: center !important;
+				vertical-align: middle !important;
+				cursor: pointer !important;
+				transform: translateY(-5px) !important;
+				transition: none !important;
+				width: 20px !important;
+				height: 20px !important;
+				box-sizing: content-box !important;
+				-webkit-user-select: none !important;
+				user-select: none !important;
+				-webkit-touch-callout: none !important;
+				position: relative !important;
+				overflow: visible !important;
+			}
+
+			.ffz-badge[data-badge*="addon.eloward.rank-"] img {
+				display: block !important;
+				width: 100% !important;
+				height: 100% !important;
+				object-fit: cover !important;
+				transform-origin: center !important;
+				position: absolute !important;
+				top: 50% !important;
+				left: 50% !important;
+			}
+		`;
+
+		// Add rank-specific image positioning with chrome extension precision
+		const rankTransforms = this.chromeExtensionTransforms;
+
 		for (const tier of this.rankTiers) {
-			const styles = this.rankStyles[tier];
-			if (styles) {
+			const transform = rankTransforms[tier];
+			if (transform) {
+				// Image transforms
 				css += `
-					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
-						width: ${styles.width} !important;
-						height: ${styles.height} !important;
-						margin: ${styles.margin} !important;
-						background-size: contain !important;
-						vertical-align: middle !important;
-						overflow: visible !important;
-						position: relative !important;
-					}
-					
+					.eloward-rank-badge img[alt="${tier.toUpperCase()}"],
+					.seventv-chat-badge.eloward-rank-badge img[alt="${tier.toUpperCase()}"],
 					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] img {
-						width: 18px !important;
-						height: 18px !important;
-						object-fit: none !important;
-						object-position: center !important;
-						position: absolute !important;
-						top: 50% !important;
-						left: 50% !important;
-						transform: translate(-50%, -50%) !important;
+						transform: translate(-50%, -50%) scale(${transform.scale}) ${transform.translate} !important;
+					}
+				`;
+
+				// Standard mode margins
+				css += `
+					.eloward-rank-badge:has(img[alt="${tier.toUpperCase()}"]),
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
+						margin-right: ${transform.standardMargin.right} !important;
+						margin-left: ${transform.standardMargin.left} !important;
+					}
+				`;
+
+				// 7TV mode margins
+				css += `
+					.seventv-chat-badge.eloward-rank-badge:has(img[alt="${tier.toUpperCase()}"]) {
+						margin-right: ${transform.seventvMargin.right} !important;
+						margin-left: ${transform.seventvMargin.left} !important;
 					}
 				`;
 			}
@@ -633,45 +806,178 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			css += this.getSevenTVStyles();
 		}
 		
+		// Theme-based filters (matching chrome extension)
+		css += `
+			.tw-root--theme-dark .seventv-chat-badge.eloward-rank-badge {
+				filter: brightness(0.95) !important;
+			}
+
+			.tw-root--theme-light .seventv-chat-badge.eloward-rank-badge {
+				filter: brightness(1.05) contrast(1.1) !important;
+			}
+
+			.tw-root--theme-dark .eloward-rank-badge {
+				filter: brightness(0.95) !important;
+			}
+
+			.tw-root--theme-light .eloward-rank-badge {
+				filter: brightness(1.05) contrast(1.1) !important;
+			}
+		`;
+
+		// Responsive design for small screens
+		css += `
+			@media (max-width: 400px) {
+				.seventv-chat-badge.eloward-rank-badge {
+					width: 20px !important;
+					height: 20px !important;
+					margin: 0 2px 0 0 !important;
+				}
+				
+				.eloward-rank-badge {
+					width: 20px !important;
+					height: 20px !important;
+					margin: 0 2px 0 0 !important;
+				}
+			}
+		`;
+		
+		// Ensure chat containers can accommodate absolute positioning
+		css += `
+			.chat-line, .chat-line__message, .seventv-message, .ffz-message-line {
+				position: relative !important;
+			}
+			
+			.chat-author, .seventv-chat-user, .ffz-chat-user {
+				position: relative !important;
+			}
+
+			/* 7TV Integration Base */
+			.seventv-chat-user-badge-list {
+				display: inline-flex !important;
+				align-items: center !important;
+				gap: 0px !important;
+				margin-right: 0px !important;
+			}
+
+			/* Username spacing for 7TV */
+			.seventv-chat-user .seventv-chat-user-badge-list + .seventv-chat-user-username {
+				margin-left: 2px !important;
+			}
+
+			/* Additional polish for badge positioning */
+			.chat-line .eloward-rank-badge {
+				vertical-align: text-bottom !important;
+			}
+
+			.chat-author .eloward-rank-badge {
+				vertical-align: middle !important;
+			}
+		`;
+		
+		// Add comprehensive tooltip styling from chrome extension
+		css += `
+			/* Standard mode tooltips */
+			.eloward-tooltip {
+				position: absolute !important;
+				z-index: 99999 !important;
+				pointer-events: none !important;
+				transform: translate(-50%, -100%) !important;
+				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+				padding: 8px !important;
+				border-radius: 8px !important;
+				opacity: 0 !important;
+				visibility: hidden !important;
+				text-align: center !important;
+				border: none !important;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+				margin-top: -8px !important;
+				display: flex !important;
+				flex-direction: column !important;
+				align-items: center !important;
+				gap: 6px !important;
+				background-color: #0e0e10 !important;
+				color: #efeff1 !important;
+			}
+
+			.eloward-tooltip.visible {
+				opacity: 1 !important;
+				visibility: visible !important;
+			}
+
+			.eloward-tooltip-badge {
+				width: 90px !important;
+				height: 90px !important;
+				object-fit: contain !important;
+				display: block !important;
+			}
+
+			.eloward-tooltip-text {
+				font-size: 13px !important;
+				font-weight: 600 !important;
+				line-height: 1.2 !important;
+				white-space: nowrap !important;
+			}
+
+			.eloward-tooltip::after {
+				content: "" !important;
+				position: absolute !important;
+				bottom: -4px !important;
+				left: 50% !important;
+				margin-left: -4px !important;
+				border-width: 4px 4px 0 4px !important;
+				border-style: solid !important;
+				border-color: #0e0e10 transparent transparent transparent !important;
+			}
+
+			/* Dark theme tooltip adjustments */
+			html.tw-root--theme-dark .eloward-tooltip,
+			.tw-root--theme-dark .eloward-tooltip,
+			body[data-a-theme="dark"] .eloward-tooltip,
+			body.dark-theme .eloward-tooltip {
+				background-color: white !important;
+				color: #0e0e10 !important;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+			}
+
+			html.tw-root--theme-dark .eloward-tooltip::after,
+			.tw-root--theme-dark .eloward-tooltip::after,
+			body[data-a-theme="dark"] .eloward-tooltip::after,
+			body.dark-theme .eloward-tooltip::after {
+				border-color: white transparent transparent transparent !important;
+			}
+
+			/* Light theme tooltip adjustments */
+			html.tw-root--theme-light .eloward-tooltip,
+			.tw-root--theme-light .eloward-tooltip,
+			body[data-a-theme="light"] .eloward-tooltip,
+			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-tooltip {
+				background-color: #0e0e10 !important;
+				color: #efeff1 !important;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+			}
+
+			html.tw-root--theme-light .eloward-tooltip::after,
+			.tw-root--theme-light .eloward-tooltip::after,
+			body[data-a-theme="light"] .eloward-tooltip::after,
+			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-tooltip::after {
+				border-color: #0e0e10 transparent transparent transparent !important;
+			}
+		`;
+		
 		return css;
 	}
 
 	getSevenTVStyles() {
 		let css = `
-			.seventv-chat-badge.eloward-rank-badge.seventv-integration {
-				display: inline-block;
-				vertical-align: middle;
-				position: relative;
-				border-radius: 0px;
-				overflow: visible;
-				margin-left: 2px;
-				margin-right: 3px;
-			}
-
-			.seventv-badge-img, .eloward-badge-img {
-				width: 18px !important;
-				height: 18px !important;
-				object-fit: none;
-				object-position: center;
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
+			/* 7TV specific badge list styling */
+			.seventv-chat-user-badge-list {
+				display: inline-flex !important;
+				align-items: center !important;
+				gap: 0px !important;
+				margin-right: 0px !important;
 			}
 		`;
-
-		for (const tier of this.rankTiers) {
-			const styles = this.rankStyles7TV[tier];
-			if (styles) {
-				css += `
-					.seventv-chat-badge.eloward-rank-badge.seventv-integration[data-rank="${tier}"] {
-						width: ${styles.width} !important;
-						height: ${styles.height} !important;
-						margin: ${styles.margin} !important;
-					}
-				`;
-			}
-		}
 
 		css += `
 			.eloward-7tv-tooltip {
@@ -1222,7 +1528,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.messageObserver = null;
 		}
 
+		if (this.tooltipElement) {
+			this.tooltipElement.remove();
+			this.tooltipElement = null;
+		}
+
 		this.hideSevenTVTooltip();
+		this.hideTooltip();
 
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
@@ -1280,6 +1592,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		let badgeList = messageContainer.querySelector('.seventv-chat-user-badge-list');
+		let badgeListWasEmpty = false;
 		
 		if (!badgeList) {
 			const chatUser = messageContainer.querySelector('.seventv-chat-user');
@@ -1289,13 +1602,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			badgeList = document.createElement('span');
 			badgeList.className = 'seventv-chat-user-badge-list';
+			badgeListWasEmpty = true;
 			
-			const username = chatUser.querySelector('.seventv-chat-user-username');
-			if (username) {
-				chatUser.insertBefore(badgeList, username);
+			const usernameEl = chatUser.querySelector('.seventv-chat-user-username');
+			if (usernameEl) {
+				chatUser.insertBefore(badgeList, usernameEl);
 			} else {
 				chatUser.insertBefore(badgeList, chatUser.firstChild);
 			}
+		} else {
+			// Check if badge list only contains non-badge elements or is empty
+			const existingBadges = badgeList.querySelectorAll('.seventv-chat-badge:not(.eloward-rank-badge)');
+			badgeListWasEmpty = existingBadges.length === 0;
 		}
 
 		if (badgeList.querySelector('.eloward-rank-badge')) {
@@ -1303,22 +1621,28 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 		
 		const badge = document.createElement('div');
-		badge.className = 'seventv-chat-badge eloward-rank-badge seventv-integration';
+		badge.className = 'seventv-chat-badge eloward-rank-badge';
+		
+		// If this is the only badge, adjust positioning to align with username
+		if (badgeListWasEmpty) {
+			badge.classList.add('eloward-single-badge');
+		}
+		
 		badge.dataset.rankText = this.formatRankText(rankData);
-		
-		const img = document.createElement('img');
-		img.alt = rankData.tier;
-		img.className = 'eloward-badge-img seventv-badge-img';
-		img.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
-		
-		badge.appendChild(img);
-		
 		badge.dataset.rank = rankData.tier.toLowerCase();
 		badge.dataset.division = rankData.division || '';
 		badge.dataset.lp = rankData.leaguePoints !== undefined && rankData.leaguePoints !== null ? 
 			rankData.leaguePoints.toString() : '';
 		badge.dataset.username = rankData.summonerName || '';
 		
+		const img = document.createElement('img');
+		img.alt = rankData.tier;
+		img.className = 'eloward-badge-img';
+		img.width = 24;
+		img.height = 24;
+		img.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
+		
+		badge.appendChild(img);
 		badge.addEventListener('mouseenter', (e) => this.showSevenTVTooltip(e, rankData));
 		badge.addEventListener('mouseleave', () => this.hideSevenTVTooltip());
 		
@@ -1359,6 +1683,77 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const existingTooltip = document.getElementById('eloward-7tv-tooltip-active');
 		if (existingTooltip && existingTooltip.parentNode) {
 			existingTooltip.remove();
+		}
+	}
+
+	showTooltip(event, rankData) {
+		this.hideTooltip();
+		
+		if (!rankData?.tier) return;
+		
+		if (!this.tooltipElement) {
+			this.tooltipElement = document.createElement('div');
+			this.tooltipElement.className = 'eloward-tooltip';
+			document.body.appendChild(this.tooltipElement);
+		}
+		
+		const badge = event.currentTarget;
+		const rankTier = badge.dataset.rank || 'UNRANKED';
+		const division = badge.dataset.division || '';
+		let lp = badge.dataset.lp || '';
+		
+		if (lp && !isNaN(Number(lp))) {
+			lp = Number(lp).toString();
+		}
+		
+		this.tooltipElement.innerHTML = '';
+		
+		const tooltipBadge = document.createElement('img');
+		tooltipBadge.className = 'eloward-tooltip-badge';
+		
+		const originalImg = badge.querySelector('img');
+		if (originalImg && originalImg.src) {
+			tooltipBadge.src = originalImg.src;
+			tooltipBadge.alt = 'Rank Badge';
+		}
+		
+		this.tooltipElement.appendChild(tooltipBadge);
+		
+		const tooltipText = document.createElement('div');
+		tooltipText.className = 'eloward-tooltip-text';
+		
+		if (!rankTier || rankTier.toUpperCase() === 'UNRANKED') {
+			tooltipText.textContent = 'Unranked';
+		} else {
+			let formattedTier = rankTier.toLowerCase();
+			formattedTier = formattedTier.charAt(0).toUpperCase() + formattedTier.slice(1);
+			
+			let rankText = formattedTier;
+			
+			if (division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankTier.toUpperCase())) {
+				rankText += ' ' + division;
+			}
+			
+			if (lp !== undefined && lp !== null && lp !== '') {
+				rankText += ' - ' + lp + ' LP';
+			}
+			
+			tooltipText.textContent = rankText;
+		}
+		
+		this.tooltipElement.appendChild(tooltipText);
+		
+		const rect = badge.getBoundingClientRect();
+		const badgeCenter = rect.left + (rect.width / 2);
+		
+		this.tooltipElement.style.left = `${badgeCenter}px`;
+		this.tooltipElement.style.top = `${rect.top - 5}px`;
+		this.tooltipElement.classList.add('visible');
+	}
+
+	hideTooltip() {
+		if (this.tooltipElement && this.tooltipElement.classList.contains('visible')) {
+			this.tooltipElement.classList.remove('visible');
 		}
 	}
 }
