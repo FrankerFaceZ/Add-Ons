@@ -68,18 +68,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onEnable() {
-		console.log('🚀 EloWard FFZ: Starting addon initialization...');
 		
 		const chromeExtDetectedBody = document.body?.getAttribute('data-eloward-chrome-ext') === 'active';
 		const chromeExtDetectedHtml = document.documentElement?.getAttribute('data-eloward-chrome-ext') === 'active';
 		
 		if (chromeExtDetectedBody || chromeExtDetectedHtml) {
 			this.chromeExtensionDetected = true;
-			console.log('🔌 EloWard FFZ: Chrome extension detected - FFZ addon disabled for this session');
 			return;
 		}
 
-		console.log('🔌 EloWard FFZ: No Chrome extension detected - proceeding with FFZ addon');
 		this.initializeBasicInfrastructure();
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
@@ -393,7 +390,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Find or create proper badge container - no fallbacks to username insertion
 		const insertionPoint = this.findBadgeInsertionPoint(messageElement);
 		if (!insertionPoint.container) {
-			console.warn('EloWard FFZ: Could not find or create badge container for message');
 			return;
 		}
 
@@ -729,7 +725,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		if (isActive && hasLoLCategory) {
 			this.activeChannels.add(roomLogin);
-			console.log(`🚀 EloWard FFZ: Addon active for ${roomLogin}`);
 			
 			if (!this.initializationFinalized) {
 				this.initializationFinalized = true;
@@ -740,9 +735,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			this.processExistingChatUsers(room, roomLogin);
 		} else if (!hasLoLCategory) {
-			console.log(`🚀 EloWard FFZ: Addon not active - unsupported game for ${roomLogin}`);
 		} else if (!isActive) {
-			console.log(`🚀 EloWard FFZ: Addon not active - channel ${roomLogin} not subscribed`);
 		}
 	}
 
@@ -979,16 +972,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			});
 
 			if (!response.ok) {
-				console.log(`❌ EloWard FFZ: Channel ${channelName} is not active`);
 				return false;
 			}
 			
 			const data = await response.json();
 			const isActive = !!data.active;
-			console.log(`${isActive ? '✅' : '❌'} EloWard FFZ: Channel ${channelName} is ${isActive ? 'active' : 'not active'}`);
 			return isActive;
 		} catch (error) {
-			console.log(`❌ EloWard FFZ: Channel ${channelName} check failed - ${error.message}`);
 			return false;
 		}
 	}
@@ -1067,14 +1057,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 					game.name === 'League of Legends' ||
 					game.displayName === 'League of Legends';
 				
-				console.log(`🎮 EloWard FFZ: Game category detected - ${gameName} (${isLoL ? 'supported' : 'not supported'})`);
 				return isLoL;
 			} else {
-				console.log(`🎮 EloWard FFZ: Game category detected - Not streaming`);
 				return false;
 			}
 		} catch (error) {
-			console.log(`🎮 EloWard FFZ: Game category check failed - ${error.message}`);
 			return false;
 		}
 	}
