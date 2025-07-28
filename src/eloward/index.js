@@ -23,10 +23,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 		this.badgeStyleElement = null;
-		this.messageObserver = null;
-		this.processedMessages = new Set();
-		this.initializationFinalized = false;
-		this.tooltipElement = null;
 
 
 		this.settings.add('eloward.enabled', {
@@ -55,9 +51,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	onEnable() {
 		this.log.info('🚀 EloWard: Starting initialization...');
 		this.initializeBasicInfrastructure();
+		this.initializeRankBadges();
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
 		this.on('site.context:changed', this.onContextChanged, this);
+		
+		// Setup chat tokenizer instead of MutationObserver
+		this.chat.addTokenizer({
+			type: 'eloward-ranks',
+			process: this.processMessage.bind(this)
+		});
+		
 		this.initializeExistingRooms();
 	}
 
@@ -66,397 +70,126 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.badgeStyleElement.id = 'eloward-badge-styles';
 		this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
 		document.head.appendChild(this.badgeStyleElement);
-
 	}
 
-	finalizeInitialization() {
-
-		if (this.badgeStyleElement) {
-			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-		}
-
-		this.setupMessageObserver();
-
+	getBadgeData(tier) {
+		return {
+			id: tier,
+			title: `${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+			slot: 1,
+			image: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
+			urls: {
+				1: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
+				2: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
+				4: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`
+			},
+			svg: false,
+			tooltipExtra: this.createTooltipHandler.bind(this)
+		};
 	}
 
-
-
-	setupMessageObserver() {
-		if (this.messageObserver) {
-			this.messageObserver.disconnect();
-			this.messageObserver = null;
-		}
-
-		this.processExistingMessages();
-
-		this.setupObserver();
+	getBadgeId(tier) {
+		return `addon.eloward.rank-${tier}`;
 	}
 
-	processExistingMessages() {
-		const chatContainer = this.findChatContainer();
-		if (!chatContainer) {
-			return;
+	createTooltipHandler(user, _badge, createElement) {
+		try {
+			const username = user.login || user.user_login;
+			if (!username) return null;
+			
+			const cachedRank = this.getCachedRank(username);
+			if (!cachedRank) return null;
+			
+			return this.createRankTooltip(cachedRank, createElement);
+		} catch (error) {
+			return null;
 		}
+	}
 
-		let messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
-
-		const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
+	createRankTooltip(rankData, createElement) {
+		if (!rankData?.tier) return null;
 		
-		// Collect unique usernames and their message elements (batch processing)
-		const userMessageMap = new Map();
+		const tier = rankData.tier.toLowerCase();
+		const rankImageUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`;
+		const rankText = this.formatRankText(rankData);
 		
-		for (const message of existingMessages) {
-			if (this.processedMessages.has(message)) continue;
-			
-			// Find username element
-			let usernameElement = null;
-			let usernameSelectors = [
-				'[data-a-target="chat-message-username"]',
-				'.chat-author__display-name',
-				'.chat-line__username'
-			];
-			
-			for (const selector of usernameSelectors) {
-				usernameElement = message.querySelector(selector);
-				if (usernameElement) break;
-			}
-			
-			if (!usernameElement) continue;
-			
-			const username = usernameElement.textContent?.trim().toLowerCase();
-			if (!username) continue;
-			
-			// Skip if already has badge
-			if (message.querySelector('.eloward-rank-badge')) continue;
-			
-			this.processedMessages.add(message);
-			
-			if (!userMessageMap.has(username)) {
-				userMessageMap.set(username, []);
-			}
-			userMessageMap.get(username).push({
-				messageElement: message,
-				usernameElement: usernameElement
-			});
-		}
+		const container = createElement('div', {
+			style: 'display: flex; align-items: center; gap: 8px; min-width: 120px; padding: 4px;'
+		});
 		
-		// Process each unique username (batch processing)
-		if (userMessageMap.size > 0) {
-			this.processUsernamesBatch(userMessageMap);
+		const rankImage = createElement('img', {
+			src: rankImageUrl,
+			style: 'width: 24px; height: 24px; flex-shrink: 0;',
+			alt: tier
+		});
+		
+		const rankTextEl = createElement('span', {
+			style: 'font-size: 13px; font-weight: 500; color: #efeff1;'
+		}, rankText);
+		
+		container.appendChild(rankImage);
+		container.appendChild(rankTextEl);
+		
+		return container;
+	}
+
+	initializeRankBadges() {
+		for (const tier of this.rankTiers) {
+			const badgeId = this.getBadgeId(tier);
+			const badgeData = this.getBadgeData(tier);
+			this.badges.loadBadgeData(badgeId, badgeData);
 		}
 	}
 
-	processUsernamesBatch(userMessageMap) {
-		const currentChannel = this.getCurrentChannelName();
-		if (!currentChannel) return;
+	processMessage(tokens, msg) {
+		// Check if addon is enabled
+		if (!this.settings.get('eloward.enabled')) {
+			return tokens;
+		}
 
-		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
-		const isActive = this.activeChannels.has(currentChannel);
+		const user = msg?.user;
+		const username = user?.login;
+		const roomLogin = msg?.roomLogin;
+
+		if (!username || !roomLogin) {
+			return tokens;
+		}
+
+		// Check if this room has League of Legends category and channel is active
+		const hasLoLCategory = this.lolCategoryRooms.has(roomLogin);
+		const isActive = this.activeChannels.has(roomLogin);
 
 		if (!hasLoLCategory || !isActive) {
-			return;
+			return tokens;
 		}
 
-		// First, apply cached ranks immediately and collect users needing fetch
-		const usersNeedingFetch = new Set();
-		
-		for (const [username, messageData] of userMessageMap.entries()) {
-			const cachedRank = this.getCachedRank(username);
-			
-			if (cachedRank) {
-				// Apply rank to all messages for this user immediately
-				this.applyRankToAllUserMessages(username, messageData, cachedRank);
-				this.incrementMetric('successful_lookup', currentChannel);
-			} else {
-				usersNeedingFetch.add(username);
-			}
-			
-			// Increment db_read metric once per user (not per message)
-			this.incrementMetric('db_read', currentChannel);
-		}
-		
-		// Fetch ranks for users not in cache
-		if (usersNeedingFetch.size > 0) {
-			this.fetchRanksForUsers(usersNeedingFetch, userMessageMap, currentChannel);
-		}
-	}
-
-	applyRankToAllUserMessages(username, messageData, rankData) {
-		messageData.forEach(({ messageElement, usernameElement }) => {
-			this.addBadge(messageElement, username, rankData);
-		});
-	}
-
-	fetchRanksForUsers(usersNeedingFetch, userMessageMap, currentChannel) {
-		// Fetch ranks for each user
-		for (const username of usersNeedingFetch) {
-			const messageData = userMessageMap.get(username);
-			
-			this.fetchRankData(username).then(rankData => {
-				if (rankData) {
-					this.setCachedRank(username, rankData);
-					this.applyRankToAllUserMessages(username, messageData, rankData);
-					this.incrementMetric('successful_lookup', currentChannel);
-				}
-			}).catch(() => {});
-		}
-	}
-
-
-	setupObserver() {
-		const chatContainer = this.findChatContainer();
-		if (!chatContainer) {
-			return;
-		}
-
-		const messageSelectors = [
-			'.chat-line__message',
-			'.chat-line',
-			'[data-a-target="chat-line-message"]'
-		];
-
-		this.messageObserver = new MutationObserver((mutations) => {
-			if (this.activeChannels.size === 0) return;
-
-			for (const mutation of mutations) {
-				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-					for (const node of mutation.addedNodes) {
-						if (node.nodeType === Node.ELEMENT_NODE) {
-							const isMessage = messageSelectors.some(selector => 
-								node.matches && node.matches(selector)
-							);
-							
-							if (isMessage && !this.processedMessages.has(node)) {
-								this.processNewMessage(node);
-							} else {
-								const messages = node.querySelectorAll(messageSelectors.join(', '));
-								for (const message of messages) {
-									if (!this.processedMessages.has(message)) {
-										this.processNewMessage(message);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		});
-
-		this.messageObserver.observe(chatContainer, {
-			childList: true,
-			subtree: true
-		});
-	}
-
-	processNewMessage(messageElement) {
-		if (!messageElement || this.processedMessages.has(messageElement)) return;
-
-		this.processedMessages.add(messageElement);
-
-		// Find username element
-		let usernameElement = null;
-		let usernameSelectors = [
-			'[data-a-target="chat-message-username"]',
-			'.chat-author__display-name',
-			'.chat-line__username'
-		];
-		
-		for (const selector of usernameSelectors) {
-			usernameElement = messageElement.querySelector(selector);
-			if (usernameElement) break;
-		}
-
-		if (!usernameElement) return;
-
-		const username = usernameElement.textContent?.trim().toLowerCase();
-		if (!username) return;
-
-		const currentChannel = this.getCurrentChannelName();
-		if (!currentChannel) return;
-
-		const hasLoLCategory = this.lolCategoryRooms.has(currentChannel);
-		const isActive = this.activeChannels.has(currentChannel);
-
-		if (!hasLoLCategory || !isActive) return;
-
-		// Skip if already has badge
-		if (messageElement.querySelector('.eloward-rank-badge')) return;
-
-		this.incrementMetric('db_read', currentChannel);
+		// Track metrics and process rank lookup
+		this.incrementMetric('db_read', roomLogin);
 
 		const cachedRank = this.getCachedRank(username);
 		if (cachedRank) {
-			this.incrementMetric('successful_lookup', currentChannel);
-			this.addBadge(messageElement, username, cachedRank);
-			
-			// Apply to all other messages from this user in chat
-			this.applyRankToAllUserMessagesInChat(username, cachedRank);
+			this.incrementMetric('successful_lookup', roomLogin);
+			this.addUserBadge(user.id, username, cachedRank);
 		} else {
-			this.fetchRankData(username).then(rankData => {
-				if (rankData) {
-					this.setCachedRank(username, rankData);
-					this.incrementMetric('successful_lookup', currentChannel);
-					
-					// Apply to all messages from this user in chat (including the current one)
-					this.applyRankToAllUserMessagesInChat(username, rankData);
-				}
-			}).catch(() => {});
+			// Make direct API call without queuing
+			this.fetchAndProcessRank(username, user.id, roomLogin);
 		}
+
+		return tokens;
 	}
 
-	applyRankToAllUserMessagesInChat(username, rankData) {
-		const currentChannel = this.getCurrentChannelName();
-		if (!currentChannel) return;
-
-		let messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
-		let usernameSelectors = [
-			'[data-a-target="chat-message-username"]',
-			'.chat-author__display-name',
-			'.chat-line__username'
-		];
-
-		// Find all messages in the current chat
-		const allMessages = document.querySelectorAll(messageSelectors.join(', '));
-		
-		allMessages.forEach(messageElement => {
-			// Skip if already has badge
-			if (messageElement.querySelector('.eloward-rank-badge')) return;
-			
-			// Find username element
-			let usernameElement = null;
-			for (const selector of usernameSelectors) {
-				usernameElement = messageElement.querySelector(selector);
-				if (usernameElement) break;
+	async fetchAndProcessRank(username, userId, roomLogin) {
+		try {
+			const rankData = await this.fetchRankData(username);
+			if (rankData) {
+				this.setCachedRank(username, rankData);
+				this.addUserBadge(userId, username, rankData);
+				this.incrementMetric('successful_lookup', roomLogin);
 			}
-			
-			if (!usernameElement) return;
-			
-			const messageUsername = usernameElement.textContent?.trim().toLowerCase();
-			if (messageUsername === username) {
-				this.addBadge(messageElement, username, rankData);
-			}
-		});
+		} catch (error) {
+			// Silently handle errors - most are 404s for users without rank data
+		}
 	}
-
-	findChatContainer() {
-		const container = document.querySelector('.chat-list--default');
-		if (container) {
-			return container;
-		}
-
-		const anyMessage = document.querySelector('.chat-line__message, .chat-line');
-		if (anyMessage) {
-			const fallbackContainer = anyMessage.closest('[role="log"]') || anyMessage.parentElement;
-			if (fallbackContainer && fallbackContainer !== document.body) {
-				return fallbackContainer;
-			}
-		}
-
-		return null;
-	}
-
-	addBadge(messageElement, username, rankData) {
-		if (!rankData?.tier) {
-			return;
-		}
-
-		// Find or create proper badge container - no fallbacks to username insertion
-		const insertionPoint = this.findBadgeInsertionPoint(messageElement);
-		if (!insertionPoint.container) {
-			return;
-		}
-
-		const badge = this.createBadgeElement(rankData);
-		insertionPoint.container.appendChild(badge);
-	}
-
-	createBadgeElement(rankData) {
-		const badge = document.createElement('span');
-		badge.className = 'eloward-rank-badge';
-		badge.dataset.rankText = this.formatRankText(rankData);
-		badge.dataset.rank = rankData.tier.toLowerCase();
-		badge.dataset.division = rankData.division || '';
-		badge.dataset.lp = rankData.leaguePoints !== undefined && rankData.leaguePoints !== null ? 
-						  rankData.leaguePoints.toString() : '';
-		badge.dataset.username = rankData.summonerName || '';
-		
-		const img = document.createElement('img');
-		img.alt = rankData.tier;
-		img.className = 'eloward-badge-img';
-		img.width = 24;
-		img.height = 24;
-		img.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
-		
-		badge.appendChild(img);
-		badge.addEventListener('mouseenter', (e) => this.showTooltip(e, rankData));
-		badge.addEventListener('mouseleave', () => this.hideTooltip());
-		
-		return badge;
-	}
-
-	findBadgeInsertionPoint(messageContainer) {
-		// First, look for existing badge container like chrome extension uses
-		let badgeContainer = messageContainer.querySelector('.chat-line__message--badges');
-		
-		if (badgeContainer) {
-			return { container: badgeContainer, before: null };
-		}
-		
-		// If no badge container exists, create one in the same structure as chrome extension
-		// Look for the message container structure
-		const messageContainerChild = messageContainer.querySelector('.chat-line__message-container');
-		
-		if (messageContainerChild) {
-			// Create the badge container as a sibling to username, not parent
-			badgeContainer = document.createElement('span');
-			badgeContainer.className = 'chat-line__message--badges';
-			
-			// Insert the badge container before the username container
-			const usernameContainer = messageContainerChild.querySelector('.chat-line__username') || 
-									messageContainerChild.querySelector('[data-a-target="chat-message-username"]') ||
-									messageContainerChild.querySelector('.chat-author__display-name');
-			
-			if (usernameContainer) {
-				messageContainerChild.insertBefore(badgeContainer, usernameContainer);
-			} else {
-				// Insert at the beginning of message container
-				messageContainerChild.insertBefore(badgeContainer, messageContainerChild.firstChild);
-			}
-			
-			return { container: badgeContainer, before: null };
-		}
-		
-		// Fallback: look for username and create badge container as sibling
-		const usernameSelectors = [
-			'[data-a-target="chat-message-username"]',
-			'.chat-author__display-name', 
-			'.chat-line__username'
-		];
-
-		let usernameElement = null;
-		for (const selector of usernameSelectors) {
-			usernameElement = messageContainer.querySelector(selector);
-			if (usernameElement) break;
-		}
-
-		if (usernameElement) {
-			const parent = usernameElement.parentElement;
-			if (parent && messageContainer.contains(parent)) {
-				// Create badge container as sibling to username
-				badgeContainer = document.createElement('span');
-				badgeContainer.className = 'chat-line__message--badges';
-				parent.insertBefore(badgeContainer, usernameElement);
-				return { container: badgeContainer, before: null };
-			}
-		}
-		
-		// Last resort: create container at message level - this should always succeed
-		badgeContainer = document.createElement('span');
-		badgeContainer.className = 'chat-line__message--badges';
-		messageContainer.insertBefore(badgeContainer, messageContainer.firstChild);
-		return { container: badgeContainer, before: null };
-	}
-
 
 	getCurrentChannelName() {
 		const pathname = window.location.pathname;
@@ -488,83 +221,63 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	generateRankSpecificCSS() {
 		let css = `
-			/* Badge container styling */
-			.eloward-rank-badge {
+			/* EloWard rank badge styling overrides for FFZ badges */
+			.ffz-badge[data-badge^="addon.eloward.rank-"] {
 				display: inline-flex !important;
 				justify-content: center !important;
 				align-items: center !important;
-				vertical-align: middle !important;
-				cursor: pointer !important;
-				transform: translateY(-5px) !important;
-				transition: none !important;
 				width: 20px !important;
 				height: 20px !important;
-				box-sizing: content-box !important;
-				-webkit-user-select: none !important;
-				user-select: none !important;
-				-webkit-touch-callout: none !important;
+				min-width: 20px !important;
+				margin: 0 .3rem .2rem 0 !important;
+				background-size: contain !important;
+				background-repeat: no-repeat !important;
+				background-position: center !important;
+				transform: translateY(-5px) !important;
 				position: relative !important;
-				overflow: visible !important;
-			}
-
-			/* Universal image styling within containers */
-			.eloward-rank-badge img {
-				display: block !important;
-				width: 100% !important;
-				height: 100% !important;
-				object-fit: cover !important;
-				transform-origin: center !important;
-				position: absolute !important;
-				top: 50% !important;
-				left: 50% !important;
+				vertical-align: middle !important;
+				cursor: pointer !important;
 			}
 
 		`;
 
-		// Add rank-specific image positioning
+		// Add rank-specific styling for FFZ badges
 		const rankTransforms = {
-			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
-			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
-			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
-			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
-			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
-			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
-			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
-			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
-			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
+			iron: { scale: '1.15', translate: 'translateY(-2px)', margin: { right: '0.3rem', left: '0' } },
+			bronze: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
+			silver: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
+			gold: { scale: '1.12', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
+			platinum: { scale: '1.12', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '1px' } },
+			emerald: { scale: '1.13', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
+			diamond: { scale: '1.13', translate: 'translateY(-1px)', margin: { right: '0.5rem', left: '2px' } },
+			master: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.45rem', left: '1.5px' } },
+			grandmaster: { scale: '1.05', translate: 'translateY(0px)', margin: { right: '0.4rem', left: '1px' } },
+			challenger: { scale: '1.12', translate: 'translateY(0px)', margin: { right: '0.55rem', left: '2.5px' } },
+			unranked: { scale: '1.0', translate: 'translateY(0px)', margin: { right: '0.15rem', left: '-1.5px' } }
 		};
 
 		for (const tier of this.rankTiers) {
 			const transform = rankTransforms[tier];
 			if (transform) {
-				// Image transforms
+				// Badge-specific transforms
 				css += `
-					.eloward-rank-badge img[alt="${tier.toUpperCase()}"] {
-						transform: translate(-50%, -50%) scale(${transform.scale}) ${transform.translate} !important;
-					}
-				`;
-
-				// Badge margins
-				css += `
-					.eloward-rank-badge:has(img[alt="${tier.toUpperCase()}"]) {
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
+						transform: ${transform.translate} scale(${transform.scale}) !important;
 						margin-right: ${transform.margin.right} !important;
 						margin-left: ${transform.margin.left} !important;
 					}
 				`;
-
 			}
 		}
 
 		
 		// Theme-based filters (matching chrome extension)
 		css += `
-			.tw-root--theme-dark .eloward-rank-badge {
+			.tw-root--theme-dark .ffz-badge[data-badge^="addon.eloward.rank-"] {
 				filter: brightness(0.95) !important;
 			}
 
-			.tw-root--theme-light .eloward-rank-badge {
+			.tw-root--theme-light .ffz-badge[data-badge^="addon.eloward.rank-"] {
 				filter: brightness(1.05) contrast(1.1) !important;
 			}
 		`;
@@ -572,121 +285,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Responsive design for small screens
 		css += `
 			@media (max-width: 400px) {
-				.eloward-rank-badge {
-					width: 20px !important;
-					height: 20px !important;
-					margin: 0 2px 0 0 !important;
+				.ffz-badge[data-badge^="addon.eloward.rank-"] {
+					width: 18px !important;
+					height: 18px !important;
+					min-width: 18px !important;
+					margin-right: 0.2rem !important;
 				}
-			}
-		`;
-		
-		// Ensure chat containers can accommodate absolute positioning
-		css += `
-			.chat-line, .chat-line__message {
-				position: relative !important;
-			}
-			
-			.chat-author {
-				position: relative !important;
-			}
-
-			/* Additional polish for badge positioning */
-			.chat-line .eloward-rank-badge {
-				vertical-align: text-bottom !important;
-			}
-
-			.chat-author .eloward-rank-badge {
-				vertical-align: middle !important;
-			}
-		`;
-		
-		// Add comprehensive tooltip styling
-		css += `
-			/* Tooltips */
-			.eloward-tooltip {
-				position: absolute !important;
-				z-index: 99999 !important;
-				pointer-events: none !important;
-				transform: translate(-50%, -100%) !important;
-				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-				padding: 8px !important;
-				border-radius: 8px !important;
-				opacity: 0 !important;
-				visibility: hidden !important;
-				text-align: center !important;
-				border: none !important;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-				margin-top: -8px !important;
-				display: flex !important;
-				flex-direction: column !important;
-				align-items: center !important;
-				gap: 6px !important;
-				background-color: #0e0e10 !important;
-				color: #efeff1 !important;
-			}
-
-			.eloward-tooltip.visible {
-				opacity: 1 !important;
-				visibility: visible !important;
-			}
-
-			.eloward-tooltip-badge {
-				width: 90px !important;
-				height: 90px !important;
-				object-fit: contain !important;
-				display: block !important;
-			}
-
-			.eloward-tooltip-text {
-				font-size: 13px !important;
-				font-weight: 600 !important;
-				line-height: 1.2 !important;
-				white-space: nowrap !important;
-			}
-
-			.eloward-tooltip::after {
-				content: "" !important;
-				position: absolute !important;
-				bottom: -4px !important;
-				left: 50% !important;
-				margin-left: -4px !important;
-				border-width: 4px 4px 0 4px !important;
-				border-style: solid !important;
-				border-color: #0e0e10 transparent transparent transparent !important;
-			}
-
-			/* Dark theme tooltip adjustments */
-			html.tw-root--theme-dark .eloward-tooltip,
-			.tw-root--theme-dark .eloward-tooltip,
-			body[data-a-theme="dark"] .eloward-tooltip,
-			body.dark-theme .eloward-tooltip {
-				background-color: white !important;
-				color: #0e0e10 !important;
-				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
-			}
-
-			html.tw-root--theme-dark .eloward-tooltip::after,
-			.tw-root--theme-dark .eloward-tooltip::after,
-			body[data-a-theme="dark"] .eloward-tooltip::after,
-			body.dark-theme .eloward-tooltip::after {
-				border-color: white transparent transparent transparent !important;
-			}
-
-			/* Light theme tooltip adjustments */
-			html.tw-root--theme-light .eloward-tooltip,
-			.tw-root--theme-light .eloward-tooltip,
-			body[data-a-theme="light"] .eloward-tooltip,
-			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-tooltip {
-				background-color: #0e0e10 !important;
-				color: #efeff1 !important;
-				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
-			}
-
-			html.tw-root--theme-light .eloward-tooltip::after,
-			.tw-root--theme-light .eloward-tooltip::after,
-			body[data-a-theme="light"] .eloward-tooltip::after,
-			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-tooltip::after {
-				border-color: #0e0e10 transparent transparent transparent !important;
 			}
 		`;
 		
@@ -705,34 +309,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.activeRooms.set(roomId || roomLogin, roomLogin);
 		
-		const hasLoLCategory = await this.detectAndSetCategoryForRoom(roomLogin);
-		const isActive = await this.checkChannelActive(roomLogin);
+		// Check League of Legends category and channel enabled status
+		await this.detectAndSetCategoryForRoom(roomLogin);
+		const isEnabled = await this.checkChannelActive(roomLogin);
 		
-		if (isActive && hasLoLCategory) {
+		if (isEnabled) {
 			this.activeChannels.add(roomLogin);
 			this.log.info(`🎉 EloWard: Addon enabled for ${roomLogin} - ready to show rank badges!`);
-			
-			if (!this.initializationFinalized) {
-				this.initializationFinalized = true;
-				this.finalizeInitialization();
-			} else {
-				this.resetForNewChannel();
-			}
-			
-			this.processExistingChatUsers(room, roomLogin);
 		}
-	}
-
-	resetForNewChannel() {
-		this.processedMessages.clear();
-		this.hideTooltip();
-		
-		if (this.badgeStyleElement) {
-			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-		}
-		
-		this.setupMessageObserver();
-		
 	}
 
 	onRoomRemove(room) {
@@ -743,10 +327,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (roomLogin) {
 			this.activeChannels.delete(roomLogin);
 			this.lolCategoryRooms.delete(roomLogin);
-			
-			if (this.activeChannels.size === 0) {
-				this.processedMessages.clear();
-			}
 		}
 	}
 
@@ -759,45 +339,52 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.onRoomAdd(room);
 		}
 	}
-	
-	async processExistingChatUsers(room, roomLogin) {
-		const chatUsers = this.getChatUsers(room);
-		
-		for (const user of chatUsers) {
-			const username = user.login;
-			const userId = user.id;
-			
-			if (!username || !userId || this.userBadges.has(userId)) {
-				continue;
-			}
-			
-			const cachedRank = this.getCachedRank(username);
-			if (cachedRank) {
-				this.addUserBadge(userId, username, cachedRank);
-			} else {
-				this.fetchRankData(username).then(rankData => {
-					if (rankData) {
-						this.setCachedRank(username, rankData);
-						this.addUserBadge(userId, username, rankData);
-						this.incrementMetric('successful_lookup', roomLogin);
-					}
-				}).catch(() => {});
-			}
+	removeUserBadges(userId) {
+		const existing = this.userBadges.get(userId);
+		if (existing) {
+			const ffzUser = this.chat.getUser(userId);
+			ffzUser.removeBadge('addon.eloward', existing.badgeId);
+			this.userBadges.delete(userId);
 		}
 	}
-	
-	getChatUsers(room) {
-		const users = [];
-		
-		if (room && room.iterateUsers) {
-			for (const user of room.iterateUsers()) {
-				if (user.login && user.id) {
-					users.push(user);
-				}
-			}
+
+	addUserBadge(userId, username, rankData) {
+		if (!rankData?.tier) {
+			return;
 		}
+
+		const tier = rankData.tier.toLowerCase();
+		if (!this.rankTiers.has(tier)) {
+			return;
+		}
+
+		const badgeId = this.getBadgeId(tier);
+		const ffzUser = this.chat.getUser(userId);
+
+		// Always update the badge data with current rank information for tooltip
+		const formattedRankText = this.formatRankText(rankData);
+		const badgeData = this.getBadgeData(tier);
+		badgeData.title = formattedRankText; // Update title with full rank info
 		
-		return users;
+		// Load/update the badge data in FFZ's system with tooltip support
+		this.badges.loadBadgeData(badgeId, badgeData);
+
+		// Check if user already has this badge
+		if (ffzUser.getBadge(badgeId)) {
+			// Even if they have the badge, we updated the data, so continue to store rank data
+		} else {
+			// Remove any existing EloWard badges from this user
+			this.removeUserBadges(userId);
+
+			// Add the badge to the user
+			ffzUser.addBadge('addon.eloward', badgeId);
+		}
+
+		// Track this badge assignment - IMPORTANT: Store the full rank data here
+		this.userBadges.set(userId, { username, tier, badgeId, rankData });
+
+		// Update chat display for this user
+		this.emit('chat:update-lines-by-user', userId, username, false, true);
 	}
 
 	onContextChanged() {
@@ -834,35 +421,22 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	updateBadges() {
 		if (!this.settings.get('eloward.enabled')) {
 			this.clearUserData();
+		} else {
+			// Re-add badges for all users when re-enabled
+			for (const [userId, badgeInfo] of this.userBadges.entries()) {
+				const ffzUser = this.chat.getUser(userId);
+				ffzUser.addBadge('addon.eloward', badgeInfo.badgeId);
+			}
 		}
-		// For direct DOM badges, update lines for consistency
 		this.emit('chat:update-lines');
 	}
 
 	clearUserData() {
-		// Remove direct DOM badges
-		document.querySelectorAll('.eloward-rank-badge').forEach(badge => {
-			badge.remove();
-		});
-		
-		this.hideTooltip();
+		// Remove badges from all users
+		for(const user of this.chat.iterateUsers()) {
+			user.removeAllBadges('addon.eloward');
+		}
 		this.userBadges.clear();
-		this.processedMessages.clear();
-	}
-
-	addUserBadge(userId, username, rankData) {
-		if (!rankData?.tier) {
-			return;
-		}
-
-		const tier = rankData.tier.toLowerCase();
-		if (!this.rankTiers.has(tier)) {
-			return;
-		}
-
-		// Badges are added directly through DOM manipulation in addBadge
-		// This method maintains user badge tracking for FFZ integration
-		this.userBadges.set(userId, { username, tier, rankData });
 	}
 
 
@@ -988,29 +562,20 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.badgeStyleElement = null;
 		}
 
-		if (this.messageObserver) {
-			this.messageObserver.disconnect();
-			this.messageObserver = null;
-		}
-
-		if (this.tooltipElement) {
-			this.tooltipElement.remove();
-			this.tooltipElement = null;
-		}
-
-		this.hideTooltip();
-
+		// Remove event listeners
 		this.off('chat:room-add', this.onRoomAdd);
 		this.off('chat:room-remove', this.onRoomRemove);
 		this.off('site.context:changed', this.onContextChanged);
 
+		// Remove tokenizer
+		this.chat.removeTokenizer('eloward-ranks');
 
+		// Clear all data
 		this.clearUserData();
 		this.cache.clear();
 		this.activeChannels.clear();
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
-		
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
@@ -1055,77 +620,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-
-	showTooltip(event, rankData) {
-		this.hideTooltip();
-		
-		if (!rankData?.tier) return;
-		
-		if (!this.tooltipElement) {
-			this.tooltipElement = document.createElement('div');
-			this.tooltipElement.className = 'eloward-tooltip';
-			document.body.appendChild(this.tooltipElement);
-		}
-		
-		const badge = event.currentTarget;
-		const rankTier = badge.dataset.rank || 'UNRANKED';
-		const division = badge.dataset.division || '';
-		let lp = badge.dataset.lp || '';
-		
-		if (lp && !isNaN(Number(lp))) {
-			lp = Number(lp).toString();
-		}
-		
-		this.tooltipElement.innerHTML = '';
-		
-		const tooltipBadge = document.createElement('img');
-		tooltipBadge.className = 'eloward-tooltip-badge';
-		
-		const originalImg = badge.querySelector('img');
-		if (originalImg && originalImg.src) {
-			tooltipBadge.src = originalImg.src;
-			tooltipBadge.alt = 'Rank Badge';
-		}
-		
-		this.tooltipElement.appendChild(tooltipBadge);
-		
-		const tooltipText = document.createElement('div');
-		tooltipText.className = 'eloward-tooltip-text';
-		
-		if (!rankTier || rankTier.toUpperCase() === 'UNRANKED') {
-			tooltipText.textContent = 'Unranked';
-		} else {
-			let formattedTier = rankTier.toLowerCase();
-			formattedTier = formattedTier.charAt(0).toUpperCase() + formattedTier.slice(1);
-			
-			let rankText = formattedTier;
-			
-			if (division && !['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(rankTier.toUpperCase())) {
-				rankText += ' ' + division;
-			}
-			
-			if (lp !== undefined && lp !== null && lp !== '') {
-				rankText += ' - ' + lp + ' LP';
-			}
-			
-			tooltipText.textContent = rankText;
-		}
-		
-		this.tooltipElement.appendChild(tooltipText);
-		
-		const rect = badge.getBoundingClientRect();
-		const badgeCenter = rect.left + (rect.width / 2);
-		
-		this.tooltipElement.style.left = `${badgeCenter}px`;
-		this.tooltipElement.style.top = `${rect.top - 5}px`;
-		this.tooltipElement.classList.add('visible');
-	}
-
-	hideTooltip() {
-		if (this.tooltipElement && this.tooltipElement.classList.contains('visible')) {
-			this.tooltipElement.classList.remove('visible');
-		}
-	}
 }
 
 EloWardFFZAddon.register();
