@@ -53,7 +53,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onEnable() {
-		console.log('🚀 EloWard: Starting initialization...');
+		this.log.info('🚀 EloWard: Starting initialization...');
 		this.initializeBasicInfrastructure();
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
@@ -67,10 +67,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
 		document.head.appendChild(this.badgeStyleElement);
 
-		this.chat.addTokenizer({
-			type: 'eloward-ranks',
-			process: this.processMessage.bind(this)
-		});
 	}
 
 	finalizeInitialization() {
@@ -714,7 +710,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		if (isActive && hasLoLCategory) {
 			this.activeChannels.add(roomLogin);
-			console.log(`🎉 EloWard: Addon enabled for ${roomLogin} - ready to show rank badges!`);
+			this.log.info(`🎉 EloWard: Addon enabled for ${roomLogin} - ready to show rank badges!`);
 			
 			if (!this.initializationFinalized) {
 				this.initializationFinalized = true;
@@ -816,13 +812,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	processMessage(tokens, msg) {
-		if (!this.settings.get('eloward.enabled')) {
-			return tokens;
-		}
-
-		return tokens;
-	}
 
 	formatRankText(rankData) {
 		if (!rankData?.tier || rankData.tier.toUpperCase() === 'UNRANKED') {
@@ -965,14 +954,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const isActive = !!data.active;
 			
 			if (isActive) {
-				console.log(`✅ EloWard: Channel ${channelName} is active and registered`);
+				this.log.info(`✅ EloWard: Channel ${channelName} is active and registered`);
 			} else {
-				console.log(`❌ EloWard: Channel ${channelName} is not active`);
+				this.log.info(`❌ EloWard: Channel ${channelName} is not active`);
 			}
 			
 			return isActive;
 		} catch (error) {
-			console.log(`⚠️ EloWard: Failed to check status for ${channelName}`);
+			this.log.warn(`⚠️ EloWard: Failed to check status for ${channelName}`);
 			return false;
 		}
 	}
@@ -1015,7 +1004,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.off('chat:room-remove', this.onRoomRemove);
 		this.off('site.context:changed', this.onContextChanged);
 
-		this.chat.removeTokenizer('eloward-ranks');
 
 		this.clearUserData();
 		this.cache.clear();
@@ -1052,14 +1040,14 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 					game.displayName === 'League of Legends';
 				
 				if (isLoL) {
-					console.log(`🎮 EloWard: League of Legends detected for ${channelName}`);
+					this.log.info(`🎮 EloWard: League of Legends detected for ${channelName}`);
 				} else {
-					console.log(`🎯 EloWard: Different game detected for ${channelName}: ${gameName}`);
+					this.log.info(`🎯 EloWard: Different game detected for ${channelName}: ${gameName}`);
 				}
 				
 				return isLoL;
 			} else {
-				console.log(`❓ EloWard: No game category found for ${channelName}`);
+				this.log.info(`❓ EloWard: No game category found for ${channelName}`);
 				return false;
 			}
 		} catch (error) {
