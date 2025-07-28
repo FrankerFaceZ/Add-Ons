@@ -20,7 +20,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.activeChannels = new Set();
 		this.activeRooms = new Map();
 		this.lolCategoryRooms = new Set();
-		this.chromeExtensionDetected = false;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 		this.badgeStyleElement = null;
@@ -29,20 +28,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.initializationFinalized = false;
 		this.tooltipElement = null;
 
-		// Chrome extension rank transform data for precise styling
-		this.chromeExtensionTransforms = {
-			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
-			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
-			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
-			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
-			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
-			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
-			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
-			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
-			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
-		};
 
 		this.settings.add('eloward.enabled', {
 			default: true,
@@ -68,15 +53,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onEnable() {
-		
-		const chromeExtDetectedBody = document.body?.getAttribute('data-eloward-chrome-ext') === 'active';
-		const chromeExtDetectedHtml = document.documentElement?.getAttribute('data-eloward-chrome-ext') === 'active';
-		
-		if (chromeExtDetectedBody || chromeExtDetectedHtml) {
-			this.chromeExtensionDetected = true;
-			return;
-		}
-
 		this.initializeBasicInfrastructure();
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
@@ -548,8 +524,20 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		`;
 
-		// Add rank-specific image positioning with chrome extension precision
-		const rankTransforms = this.chromeExtensionTransforms;
+		// Add rank-specific image positioning
+		const rankTransforms = {
+			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
+			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
+			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
+			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
+			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
+			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
+			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
+			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
+			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
+		};
 
 		for (const tier of this.rankTiers) {
 			const transform = rankTransforms[tier];
