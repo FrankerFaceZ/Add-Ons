@@ -76,7 +76,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return {
 			id: tier,
 			title: `${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
-			slot: 1,
+			slot: 99, // High slot number to ensure it appears rightmost (closest to username)
 			image: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
 			urls: {
 				1: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
@@ -221,7 +221,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	generateRankSpecificCSS() {
 		let css = `
-			/* EloWard rank badge styling overrides for FFZ badges */
+			/* EloWard rank badge styling overrides for FFZ badges - matching original implementation */
 			.ffz-badge[data-badge^="addon.eloward.rank-"] {
 				display: inline-flex !important;
 				justify-content: center !important;
@@ -237,32 +237,38 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				position: relative !important;
 				vertical-align: middle !important;
 				cursor: pointer !important;
+				transition: none !important;
+				box-sizing: content-box !important;
+				-webkit-user-select: none !important;
+				user-select: none !important;
+				-webkit-touch-callout: none !important;
+				overflow: visible !important;
 			}
 
 		`;
 
-		// Add rank-specific styling for FFZ badges
+		// Add rank-specific styling for FFZ badges - matching original exact positioning
 		const rankTransforms = {
-			iron: { scale: '1.15', translate: 'translateY(-2px)', margin: { right: '0.3rem', left: '0' } },
-			bronze: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
-			silver: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
-			gold: { scale: '1.12', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
-			platinum: { scale: '1.12', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '1px' } },
-			emerald: { scale: '1.13', translate: 'translateY(-1px)', margin: { right: '0.3rem', left: '0' } },
-			diamond: { scale: '1.13', translate: 'translateY(-1px)', margin: { right: '0.5rem', left: '2px' } },
-			master: { scale: '1.1', translate: 'translateY(-1px)', margin: { right: '0.45rem', left: '1.5px' } },
-			grandmaster: { scale: '1.05', translate: 'translateY(0px)', margin: { right: '0.4rem', left: '1px' } },
-			challenger: { scale: '1.12', translate: 'translateY(0px)', margin: { right: '0.55rem', left: '2.5px' } },
-			unranked: { scale: '1.0', translate: 'translateY(0px)', margin: { right: '0.15rem', left: '-1.5px' } }
+			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
+			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
+			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
+			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
+			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
+			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
+			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
+			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
+			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
 		};
 
 		for (const tier of this.rankTiers) {
 			const transform = rankTransforms[tier];
 			if (transform) {
-				// Badge-specific transforms
+				// Badge-specific transforms with original exact positioning
 				css += `
 					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
-						transform: ${transform.translate} scale(${transform.scale}) !important;
+						transform: translateY(-5px) scale(${transform.scale}) ${transform.translate} !important;
 						margin-right: ${transform.margin.right} !important;
 						margin-left: ${transform.margin.left} !important;
 					}
