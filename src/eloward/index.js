@@ -53,6 +53,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onEnable() {
+		console.log('🚀 EloWard: Starting initialization...');
 		this.initializeBasicInfrastructure();
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
@@ -713,6 +714,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		if (isActive && hasLoLCategory) {
 			this.activeChannels.add(roomLogin);
+			console.log(`🎉 EloWard: Addon enabled for ${roomLogin} - ready to show rank badges!`);
 			
 			if (!this.initializationFinalized) {
 				this.initializationFinalized = true;
@@ -722,8 +724,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 			
 			this.processExistingChatUsers(room, roomLogin);
-		} else if (!hasLoLCategory) {
-		} else if (!isActive) {
 		}
 	}
 
@@ -821,8 +821,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return tokens;
 		}
 
-		// All badge processing is now handled through DOM manipulation in message observers
-		// This tokenizer is kept for compatibility but doesn't need to process badges anymore
 		return tokens;
 	}
 
@@ -874,7 +872,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 
 		// Badges are added directly through DOM manipulation in addBadge
-		// This method is kept for compatibility with the existing badge system
+		// This method maintains user badge tracking for FFZ integration
 		this.userBadges.set(userId, { username, tier, rankData });
 	}
 
@@ -965,8 +963,16 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			const data = await response.json();
 			const isActive = !!data.active;
+			
+			if (isActive) {
+				console.log(`✅ EloWard: Channel ${channelName} is active and registered`);
+			} else {
+				console.log(`❌ EloWard: Channel ${channelName} is not active`);
+			}
+			
 			return isActive;
 		} catch (error) {
+			console.log(`⚠️ EloWard: Failed to check status for ${channelName}`);
 			return false;
 		}
 	}
@@ -1045,8 +1051,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 					game.name === 'League of Legends' ||
 					game.displayName === 'League of Legends';
 				
+				if (isLoL) {
+					console.log(`🎮 EloWard: League of Legends detected for ${channelName}`);
+				} else {
+					console.log(`🎯 EloWard: Different game detected for ${channelName}: ${gameName}`);
+				}
+				
 				return isLoL;
 			} else {
+				console.log(`❓ EloWard: No game category found for ${channelName}`);
 				return false;
 			}
 		} catch (error) {
