@@ -249,17 +249,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Add rank-specific styling for FFZ badges - matching original exact positioning
 		const rankTransforms = {
-			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
-			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
-			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
-			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
-			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
-			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
-			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
-			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
-			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
-			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
+			iron: { scale: '1.3', translate: 'translate(-1.5px, 1.5px)', margin: { right: '0px', left: '0px' } },
+			bronze: { scale: '1.2', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
+			silver: { scale: '1.2', translate: 'translate(-1.5px, 2.5px)', margin: { right: '0px', left: '0px' } },
+			gold: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
+			platinum: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '0px', left: '1px' } },
+			emerald: { scale: '1.23', translate: 'translate(-1.5px, 4px)', margin: { right: '0px', left: '0px' } },
+			diamond: { scale: '1.23', translate: 'translate(-1.5px, 3.25px)', margin: { right: '2px', left: '2px' } },
+			master: { scale: '1.2', translate: 'translate(-1.5px, 4px)', margin: { right: '1.5px', left: '1.5px' } },
+			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4.5px)', margin: { right: '1px', left: '1px' } },
+			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4.5px)', margin: { right: '2.5px', left: '2.5px' } },
+			unranked: { scale: '1.0', translate: 'translate(-1.5px, 5px)', margin: { right: '-1.5px', left: '-1.5px' } }
 		};
 
 		for (const tier of this.rankTiers) {
