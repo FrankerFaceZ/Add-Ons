@@ -24,8 +24,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 		this.badgeStyleElement = null;
-		this.chatMode = 'standard';
-		this.sevenTVDetected = false;
 		this.messageObserver = null;
 		this.processedMessages = new Set();
 		this.initializationFinalized = false;
@@ -33,17 +31,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		// Chrome extension rank transform data for precise styling
 		this.chromeExtensionTransforms = {
-			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-2.5px', left: '2.5px' } },
-			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-2.5px', left: '2.5px' } },
-			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1.5px', left: '2.5px' } },
-			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1.5px', left: '4px' } },
-			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '0px', left: '1px' }, seventvMargin: { right: '-0.5px', left: '4px' } },
-			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '0px', left: '0px' }, seventvMargin: { right: '-1px', left: '3.5px' } },
-			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', standardMargin: { right: '2px', left: '2px' }, seventvMargin: { right: '0.5px', left: '5px' } },
-			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', standardMargin: { right: '1.5px', left: '1.5px' }, seventvMargin: { right: '-0.5px', left: '4.5px' } },
-			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '1px', left: '1px' }, seventvMargin: { right: '-1px', left: '3.5px' } },
-			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '2.5px', left: '2.5px' }, seventvMargin: { right: '0.5px', left: '6px' } },
-			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', standardMargin: { right: '-1.5px', left: '-1.5px' }, seventvMargin: { right: '-3px', left: '1.5px' } }
+			iron: { scale: '1.3', translate: 'translate(-1.5px, 1px)', margin: { right: '0px', left: '0px' } },
+			bronze: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			silver: { scale: '1.2', translate: 'translate(-1.5px, 2px)', margin: { right: '0px', left: '0px' } },
+			gold: { scale: '1.22', translate: 'translate(-1.5px, 3px)', margin: { right: '0px', left: '0px' } },
+			platinum: { scale: '1.22', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '1px' } },
+			emerald: { scale: '1.23', translate: 'translate(-1.5px, 3.5px)', margin: { right: '0px', left: '0px' } },
+			diamond: { scale: '1.23', translate: 'translate(-1.5px, 2.5px)', margin: { right: '2px', left: '2px' } },
+			master: { scale: '1.2', translate: 'translate(-1.5px, 3.5px)', margin: { right: '1.5px', left: '1.5px' } },
+			grandmaster: { scale: '1.1', translate: 'translate(-1.5px, 4px)', margin: { right: '1px', left: '1px' } },
+			challenger: { scale: '1.22', translate: 'translate(-1.5px, 4px)', margin: { right: '2.5px', left: '2.5px' } },
+			unranked: { scale: '1.0', translate: 'translate(-1.5px, 4px)', margin: { right: '-1.5px', left: '-1.5px' } }
 		};
 
 		this.settings.add('eloward.enabled', {
@@ -102,7 +100,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	finalizeInitialization() {
-		this.detectChatMode();
 
 		if (this.badgeStyleElement) {
 			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
@@ -110,43 +107,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		this.setupMessageObserver();
 
-		setTimeout(() => {
-			this.performFallbackChatModeDetection();
-		}, 2500);
 	}
 
-	performFallbackChatModeDetection() {
-		const previousMode = this.chatMode;
-		this.detectChatMode();
-		
-		if (previousMode !== this.chatMode && this.chatMode === 'seventv') {
-			if (this.badgeStyleElement) {
-				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-			}
-			this.setupMessageObserver();
-		}
-	}
 
-	performChannelSwitchFallbackDetection() {
-		if (this.activeChannels.size === 0) {
-			return;
-		}
-		
-		const currentMode = this.chatMode;
-		this.detectChatMode();
-		
-		if (currentMode !== this.chatMode) {
-			if (this.badgeStyleElement) {
-				this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
-			}
-			
-			this.setupMessageObserver();
-			
-			if (this.chatMode === 'seventv' && currentMode !== 'seventv') {
-				this.processExistingMessages();
-			}
-		}
-	}
 
 	setupMessageObserver() {
 		if (this.messageObserver) {
@@ -156,11 +119,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		this.processExistingMessages();
 
-		if (this.chatMode === 'seventv' && this.sevenTVDetected) {
-			this.setupSevenTVObserver();
-		} else {
-			this.setupStandardObserver();
-		}
+		this.setupObserver();
 	}
 
 	processExistingMessages() {
@@ -169,12 +128,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		let messageSelectors;
-		if (this.chatMode === 'seventv') {
-			messageSelectors = ['.seventv-message', '.chat-line__message', '.chat-line'];
-		} else {
-			messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
-		}
+		let messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
 
 		const existingMessages = chatContainer.querySelectorAll(messageSelectors.join(', '));
 		
@@ -184,19 +138,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		for (const message of existingMessages) {
 			if (this.processedMessages.has(message)) continue;
 			
-			// Find username element using current chat mode selectors
+			// Find username element
 			let usernameElement = null;
-			let usernameSelectors;
-			
-			if (this.chatMode === 'seventv') {
-				usernameSelectors = ['.seventv-chat-user-username'];
-			} else {
-				usernameSelectors = [
-					'[data-a-target="chat-message-username"]',
-					'.chat-author__display-name',
-					'.chat-line__username'
-				];
-			}
+			let usernameSelectors = [
+				'[data-a-target="chat-message-username"]',
+				'.chat-author__display-name',
+				'.chat-line__username'
+			];
 			
 			for (const selector of usernameSelectors) {
 				usernameElement = message.querySelector(selector);
@@ -265,11 +213,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	applyRankToAllUserMessages(username, messageData, rankData) {
 		messageData.forEach(({ messageElement, usernameElement }) => {
-			if (this.chatMode === 'seventv') {
-				this.addSevenTVBadge(messageElement, usernameElement, rankData);
-			} else {
-				this.addStandardModeBadge(messageElement, username, rankData);
-			}
+			this.addBadge(messageElement, username, rankData);
 		});
 	}
 
@@ -288,52 +232,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	setupSevenTVObserver() {
-		const chatContainer = this.findChatContainer();
-		if (!chatContainer) {
-			return;
-		}
 
-		const messageSelectors = [
-			'.seventv-message',
-			'.chat-line__message',
-			'.chat-line'
-		];
-
-		this.messageObserver = new MutationObserver((mutations) => {
-			if (this.activeChannels.size === 0) return;
-
-			for (const mutation of mutations) {
-				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-					for (const node of mutation.addedNodes) {
-						if (node.nodeType === Node.ELEMENT_NODE) {
-							const isMessage = messageSelectors.some(selector => 
-								node.matches && node.matches(selector)
-							);
-							
-							if (isMessage && !this.processedMessages.has(node)) {
-								this.processNewMessage(node);
-							} else {
-								const messages = node.querySelectorAll(messageSelectors.join(', '));
-								for (const message of messages) {
-									if (!this.processedMessages.has(message)) {
-										this.processNewMessage(message);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		});
-
-		this.messageObserver.observe(chatContainer, {
-			childList: true,
-			subtree: true
-		});
-	}
-
-	setupStandardObserver() {
+	setupObserver() {
 		const chatContainer = this.findChatContainer();
 		if (!chatContainer) {
 			return;
@@ -383,19 +283,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 		this.processedMessages.add(messageElement);
 
-		// Find username element using current chat mode selectors
+		// Find username element
 		let usernameElement = null;
-		let usernameSelectors;
-		
-		if (this.chatMode === 'seventv') {
-			usernameSelectors = ['.seventv-chat-user-username'];
-		} else {
-			usernameSelectors = [
-				'[data-a-target="chat-message-username"]',
-				'.chat-author__display-name',
-				'.chat-line__username'
-			];
-		}
+		let usernameSelectors = [
+			'[data-a-target="chat-message-username"]',
+			'.chat-author__display-name',
+			'.chat-line__username'
+		];
 		
 		for (const selector of usernameSelectors) {
 			usernameElement = messageElement.querySelector(selector);
@@ -423,11 +317,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const cachedRank = this.getCachedRank(username);
 		if (cachedRank) {
 			this.incrementMetric('successful_lookup', currentChannel);
-			if (this.chatMode === 'seventv') {
-				this.addSevenTVBadge(messageElement, usernameElement, cachedRank);
-			} else {
-				this.addStandardModeBadge(messageElement, username, cachedRank);
-			}
+			this.addBadge(messageElement, username, cachedRank);
 			
 			// Apply to all other messages from this user in chat
 			this.applyRankToAllUserMessagesInChat(username, cachedRank);
@@ -448,20 +338,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const currentChannel = this.getCurrentChannelName();
 		if (!currentChannel) return;
 
-		let messageSelectors;
-		let usernameSelectors;
-		
-		if (this.chatMode === 'seventv') {
-			messageSelectors = ['.seventv-message', '.chat-line__message', '.chat-line'];
-			usernameSelectors = ['.seventv-chat-user-username'];
-		} else {
-			messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
-			usernameSelectors = [
-				'[data-a-target="chat-message-username"]',
-				'.chat-author__display-name',
-				'.chat-line__username'
-			];
-		}
+		let messageSelectors = ['.chat-line__message', '.chat-line', '[data-a-target="chat-line-message"]'];
+		let usernameSelectors = [
+			'[data-a-target="chat-message-username"]',
+			'.chat-author__display-name',
+			'.chat-line__username'
+		];
 
 		// Find all messages in the current chat
 		const allMessages = document.querySelectorAll(messageSelectors.join(', '));
@@ -481,11 +363,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			const messageUsername = usernameElement.textContent?.trim().toLowerCase();
 			if (messageUsername === username) {
-				if (this.chatMode === 'seventv') {
-					this.addSevenTVBadge(messageElement, usernameElement, rankData);
-				} else {
-					this.addStandardModeBadge(messageElement, username, rankData);
-				}
+				this.addBadge(messageElement, username, rankData);
 			}
 		});
 	}
@@ -507,7 +385,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return null;
 	}
 
-	addStandardModeBadge(messageElement, username, rankData) {
+	addBadge(messageElement, username, rankData) {
 		if (!rankData?.tier) {
 			return;
 		}
@@ -638,51 +516,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return normalMatch ? normalMatch[1].toLowerCase() : null;
 	}
 
-	detectChatMode() {
-		const has7TVElements = !!(
-			document.querySelector('.seventv-message') ||
-			document.querySelector('.seventv-chat-user') ||
-			document.querySelector('[data-seventv]') ||
-			document.querySelector('.seventv-paint') ||
-			document.querySelector('.seventv-chat-user-username') ||
-			document.querySelector('.seventv-chat-badge') ||
-			document.querySelector('.seventv-emote') ||
-			window.SevenTV ||
-			document.querySelector('script[src*="seventv"]') ||
-			document.querySelector('link[href*="seventv"]')
-		);
-
-		const hasFFZElements = !!(
-			document.querySelector('.ffz-message-line') ||
-			document.querySelector('.ffz-chat-line') ||
-			document.querySelector('[data-ffz-component]')
-		);
-
-		const previousMode = this.chatMode;
-
-		if (has7TVElements) {
-			this.chatMode = 'seventv';
-			this.sevenTVDetected = true;
-		} else if (hasFFZElements) {
-			this.chatMode = 'ffz';
-		} else {
-			if (previousMode === 'seventv' && this.sevenTVDetected) {
-				// Keep existing mode
-			} else {
-				this.chatMode = 'standard';
-			}
-		}
-
-		if (!this.initializationFinalized) {
-			console.log(`💬 EloWard FFZ: Chat mode detected - ${this.chatMode}`);
-		} else if (this.chatMode !== previousMode) {
-			console.log(`💬 EloWard FFZ: Chat mode switched to - ${this.chatMode}`);
-		}
-	}
 
 	generateRankSpecificCSS() {
 		let css = `
-			/* Standard mode badge container styling */
+			/* Badge container styling */
 			.eloward-rank-badge {
 				display: inline-flex !important;
 				justify-content: center !important;
@@ -701,33 +538,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				overflow: visible !important;
 			}
 
-			/* 7TV mode badge container styling */
-			.seventv-chat-badge.eloward-rank-badge {
-				display: inline-flex !important;
-				justify-content: center !important;
-				align-items: center !important;
-				vertical-align: middle !important;
-				cursor: pointer !important;
-				transform: translateY(-3px) !important;
-				transition: none !important;
-				width: 20px !important;
-				height: 20px !important;
-				box-sizing: content-box !important;
-				-webkit-user-select: none !important;
-				user-select: none !important;
-				-webkit-touch-callout: none !important;
-				position: relative !important;
-				overflow: visible !important;
-			}
-
-			/* Single badge positioning fix for 7TV when no other badges exist */
-			.seventv-chat-badge.eloward-rank-badge.eloward-single-badge {
-				transform: translateY(1px) !important;
-			}
-
 			/* Universal image styling within containers */
-			.eloward-rank-badge img,
-			.seventv-chat-badge.eloward-rank-badge img {
+			.eloward-rank-badge img {
 				display: block !important;
 				width: 100% !important;
 				height: 100% !important;
@@ -748,44 +560,25 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			if (transform) {
 				// Image transforms
 				css += `
-					.eloward-rank-badge img[alt="${tier.toUpperCase()}"],
-					.seventv-chat-badge.eloward-rank-badge img[alt="${tier.toUpperCase()}"] {
+					.eloward-rank-badge img[alt="${tier.toUpperCase()}"] {
 						transform: translate(-50%, -50%) scale(${transform.scale}) ${transform.translate} !important;
 					}
 				`;
 
-				// Standard mode margins
+				// Badge margins
 				css += `
 					.eloward-rank-badge:has(img[alt="${tier.toUpperCase()}"]) {
-						margin-right: ${transform.standardMargin.right} !important;
-						margin-left: ${transform.standardMargin.left} !important;
+						margin-right: ${transform.margin.right} !important;
+						margin-left: ${transform.margin.left} !important;
 					}
 				`;
 
-				// 7TV mode margins
-				css += `
-					.seventv-chat-badge.eloward-rank-badge:has(img[alt="${tier.toUpperCase()}"]) {
-						margin-right: ${transform.seventvMargin.right} !important;
-						margin-left: ${transform.seventvMargin.left} !important;
-					}
-				`;
 			}
 		}
 
-		if (this.sevenTVDetected) {
-			css += this.getSevenTVStyles();
-		}
 		
 		// Theme-based filters (matching chrome extension)
 		css += `
-			.tw-root--theme-dark .seventv-chat-badge.eloward-rank-badge {
-				filter: brightness(0.95) !important;
-			}
-
-			.tw-root--theme-light .seventv-chat-badge.eloward-rank-badge {
-				filter: brightness(1.05) contrast(1.1) !important;
-			}
-
 			.tw-root--theme-dark .eloward-rank-badge {
 				filter: brightness(0.95) !important;
 			}
@@ -798,12 +591,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		// Responsive design for small screens
 		css += `
 			@media (max-width: 400px) {
-				.seventv-chat-badge.eloward-rank-badge {
-					width: 20px !important;
-					height: 20px !important;
-					margin: 0 2px 0 0 !important;
-				}
-				
 				.eloward-rank-badge {
 					width: 20px !important;
 					height: 20px !important;
@@ -814,25 +601,12 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		// Ensure chat containers can accommodate absolute positioning
 		css += `
-			.chat-line, .chat-line__message, .seventv-message, .ffz-message-line {
+			.chat-line, .chat-line__message {
 				position: relative !important;
 			}
 			
-			.chat-author, .seventv-chat-user, .ffz-chat-user {
+			.chat-author {
 				position: relative !important;
-			}
-
-			/* 7TV Integration Base */
-			.seventv-chat-user-badge-list {
-				display: inline-flex !important;
-				align-items: center !important;
-				gap: 0px !important;
-				margin-right: 0px !important;
-			}
-
-			/* Username spacing for 7TV */
-			.seventv-chat-user .seventv-chat-user-badge-list + .seventv-chat-user-username {
-				margin-left: 2px !important;
 			}
 
 			/* Additional polish for badge positioning */
@@ -845,9 +619,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 		`;
 		
-		// Add comprehensive tooltip styling from chrome extension
+		// Add comprehensive tooltip styling
 		css += `
-			/* Standard mode tooltips */
+			/* Tooltips */
 			.eloward-tooltip {
 				position: absolute !important;
 				z-index: 99999 !important;
@@ -938,95 +712,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return css;
 	}
 
-	getSevenTVStyles() {
-		let css = `
-			/* 7TV specific badge list styling */
-			.seventv-chat-user-badge-list {
-				display: inline-flex !important;
-				align-items: center !important;
-				gap: 0px !important;
-				margin-right: 0px !important;
-			}
-		`;
-
-		css += `
-			.eloward-7tv-tooltip {
-				position: absolute;
-				z-index: 99999;
-				pointer-events: none;
-				transform: translate(-50%, -100%);
-				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif;
-				padding: 8px;
-				border-radius: 8px;
-				text-align: center;
-				border: none;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-				margin-top: -8px;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 6px;
-			}
-
-			.eloward-7tv-tooltip-badge {
-				width: 90px;
-				height: 90px;
-				object-fit: contain;
-				display: block;
-			}
-
-			.eloward-7tv-tooltip-text {
-				font-size: 13px;
-				font-weight: 600;
-				line-height: 1.2;
-				white-space: nowrap;
-			}
-
-			.eloward-7tv-tooltip::after {
-				content: "";
-				position: absolute;
-				bottom: -4px;
-				left: 50%;
-				margin-left: -4px;
-				border-width: 4px 4px 0 4px;
-				border-style: solid;
-			}
-
-			html.tw-root--theme-dark .eloward-7tv-tooltip,
-			.tw-root--theme-dark .eloward-7tv-tooltip,
-			body[data-a-theme="dark"] .eloward-7tv-tooltip,
-			body.dark-theme .eloward-7tv-tooltip {
-				color: #0e0e10;
-				background-color: white;
-				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-			}
-
-			html.tw-root--theme-dark .eloward-7tv-tooltip::after,
-			.tw-root--theme-dark .eloward-7tv-tooltip::after,
-			body[data-a-theme="dark"] .eloward-7tv-tooltip::after,
-			body.dark-theme .eloward-7tv-tooltip::after {
-				border-color: white transparent transparent transparent;
-			}
-
-			html.tw-root--theme-light .eloward-7tv-tooltip,
-			.tw-root--theme-light .eloward-7tv-tooltip,
-			body[data-a-theme="light"] .eloward-7tv-tooltip,
-			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-7tv-tooltip {
-				color: #efeff1;
-				background-color: #0e0e10;
-				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-			}
-
-			html.tw-root--theme-light .eloward-7tv-tooltip::after,
-			.tw-root--theme-light .eloward-7tv-tooltip::after,
-			body[data-a-theme="light"] .eloward-7tv-tooltip::after,
-			body:not(.dark-theme):not([data-a-theme="dark"]) .eloward-7tv-tooltip::after {
-				border-color: #0e0e10 transparent transparent transparent;
-			}
-		`;
-		
-		return css;
-	}
 
 
 	async onRoomAdd(room) {
@@ -1044,7 +729,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		if (isActive && hasLoLCategory) {
 			this.activeChannels.add(roomLogin);
-			console.log(`🚀 EloWard FFZ: Addon active for ${roomLogin} (${this.chatMode} mode)`);
+			console.log(`🚀 EloWard FFZ: Addon active for ${roomLogin}`);
 			
 			if (!this.initializationFinalized) {
 				this.initializationFinalized = true;
@@ -1063,8 +748,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	resetForNewChannel() {
 		this.processedMessages.clear();
-		this.hideSevenTVTooltip();
-		this.detectChatMode();
+		this.hideTooltip();
 		
 		if (this.badgeStyleElement) {
 			this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
@@ -1072,9 +756,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		this.setupMessageObserver();
 		
-		setTimeout(() => {
-			this.performChannelSwitchFallbackDetection();
-		}, 1500);
 	}
 
 	onRoomRemove(room) {
@@ -1088,12 +769,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			
 			if (this.activeChannels.size === 0) {
 				this.processedMessages.clear();
-				
-				if (this.sevenTVDetected) {
-					document.querySelectorAll('.eloward-rank-badge.seventv-integration').forEach(badge => {
-						badge.remove();
-					});
-				}
 			}
 		}
 	}
@@ -1192,7 +867,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		if (!this.settings.get('eloward.enabled')) {
 			this.clearUserData();
 		}
-		// For direct DOM badges, no need to update FFZ badge system
+		// For direct DOM badges, update lines for consistency
 		this.emit('chat:update-lines');
 	}
 
@@ -1202,7 +877,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			badge.remove();
 		});
 		
-		this.hideSevenTVTooltip();
 		this.hideTooltip();
 		this.userBadges.clear();
 		this.processedMessages.clear();
@@ -1218,31 +892,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		// Only use SevenTV direct DOM approach for chat modes that need it
-		if (this.chatMode === 'seventv' && this.sevenTVDetected) {
-			this.addSevenTVBadgeToExistingMessages(userId, username, rankData);
-			this.userBadges.set(userId, { username, tier, rankData });
-			return;
-		}
-
-		// For standard mode, badges are added directly through DOM manipulation in addStandardModeBadge
-		// This method is kept for compatibility but doesn't create FFZ badges anymore
+		// Badges are added directly through DOM manipulation in addBadge
+		// This method is kept for compatibility with the existing badge system
 		this.userBadges.set(userId, { username, tier, rankData });
 	}
 
-	addSevenTVBadgeToExistingMessages(userId, username, rankData) {
-		const userMessages = document.querySelectorAll('.seventv-chat-user');
-		
-		userMessages.forEach(messageElement => {
-			const usernameElement = messageElement.querySelector('.seventv-chat-user-username');
-			if (usernameElement && 
-				usernameElement.textContent?.trim().toLowerCase() === username.toLowerCase() &&
-				!messageElement.querySelector('.eloward-rank-badge')) {
-				
-				this.addSevenTVBadge(messageElement, usernameElement, rankData);
-			}
-		});
-	}
 
 	async fetchRankData(username) {
 		const response = await fetch(`${this.config.apiUrl}/ranks/lol/${username.toLowerCase()}`);
@@ -1371,7 +1025,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			this.tooltipElement = null;
 		}
 
-		this.hideSevenTVTooltip();
 		this.hideTooltip();
 
 		this.off('chat:room-add', this.onRoomAdd);
@@ -1386,8 +1039,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.activeRooms.clear();
 		this.lolCategoryRooms.clear();
 		
-		this.chatMode = 'standard';
-		this.sevenTVDetected = false;
 	}
 
 	async detectAndSetCategoryForRoom(roomLogin) {
@@ -1428,105 +1079,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	addSevenTVBadge(messageContainer, usernameElement, rankData) {
-		if (!rankData?.tier || !this.sevenTVDetected) {
-			return;
-		}
-
-		let badgeList = messageContainer.querySelector('.seventv-chat-user-badge-list');
-		let badgeListWasEmpty = false;
-		
-		if (!badgeList) {
-			const chatUser = messageContainer.querySelector('.seventv-chat-user');
-			if (!chatUser) {
-				return;
-			}
-			
-			badgeList = document.createElement('span');
-			badgeList.className = 'seventv-chat-user-badge-list';
-			badgeListWasEmpty = true;
-			
-			const usernameEl = chatUser.querySelector('.seventv-chat-user-username');
-			if (usernameEl) {
-				chatUser.insertBefore(badgeList, usernameEl);
-			} else {
-				chatUser.insertBefore(badgeList, chatUser.firstChild);
-			}
-		} else {
-			// Check if badge list only contains non-badge elements or is empty
-			const existingBadges = badgeList.querySelectorAll('.seventv-chat-badge:not(.eloward-rank-badge)');
-			badgeListWasEmpty = existingBadges.length === 0;
-		}
-
-		if (badgeList.querySelector('.eloward-rank-badge')) {
-			return;
-		}
-		
-		const badge = document.createElement('div');
-		badge.className = 'seventv-chat-badge eloward-rank-badge';
-		
-		// If this is the only badge, adjust positioning to align with username
-		if (badgeListWasEmpty) {
-			badge.classList.add('eloward-single-badge');
-		}
-		
-		badge.dataset.rankText = this.formatRankText(rankData);
-		badge.dataset.rank = rankData.tier.toLowerCase();
-		badge.dataset.division = rankData.division || '';
-		badge.dataset.lp = rankData.leaguePoints !== undefined && rankData.leaguePoints !== null ? 
-			rankData.leaguePoints.toString() : '';
-		badge.dataset.username = rankData.summonerName || '';
-		
-		const img = document.createElement('img');
-		img.alt = rankData.tier;
-		img.className = 'eloward-badge-img';
-		img.width = 24;
-		img.height = 24;
-		img.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
-		
-		badge.appendChild(img);
-		badge.addEventListener('mouseenter', (e) => this.showSevenTVTooltip(e, rankData));
-		badge.addEventListener('mouseleave', () => this.hideSevenTVTooltip());
-		
-		badgeList.appendChild(badge);
-	}
-
-	showSevenTVTooltip(event, rankData) {
-		this.hideSevenTVTooltip();
-		
-		if (!rankData?.tier) return;
-		
-		const tooltip = document.createElement('div');
-		tooltip.className = 'eloward-7tv-tooltip';
-		tooltip.id = 'eloward-7tv-tooltip-active';
-		
-		const tooltipBadge = document.createElement('img');
-		tooltipBadge.className = 'eloward-7tv-tooltip-badge';
-		tooltipBadge.src = `https://eloward-cdn.unleashai.workers.dev/lol/${rankData.tier.toLowerCase()}.png`;
-		tooltipBadge.alt = 'Rank Badge';
-		
-		const tooltipText = document.createElement('div');
-		tooltipText.className = 'eloward-7tv-tooltip-text';
-		tooltipText.textContent = this.formatRankText(rankData);
-		
-		tooltip.appendChild(tooltipBadge);
-		tooltip.appendChild(tooltipText);
-		
-		const rect = event.target.getBoundingClientRect();
-		const badgeCenter = rect.left + (rect.width / 2);
-		
-		tooltip.style.left = `${badgeCenter}px`;
-		tooltip.style.top = `${rect.top - 5}px`;
-		
-		document.body.appendChild(tooltip);
-	}
-
-	hideSevenTVTooltip() {
-		const existingTooltip = document.getElementById('eloward-7tv-tooltip-active');
-		if (existingTooltip && existingTooltip.parentNode) {
-			existingTooltip.remove();
-		}
-	}
 
 	showTooltip(event, rankData) {
 		this.hideTooltip();
