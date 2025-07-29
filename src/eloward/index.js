@@ -19,6 +19,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.activeChannels = new Set();
 		this.activeRooms = new Map();
 		this.lolCategoryRooms = new Set();
+		this.chromeExtensionDetected = false;
 		this.rankTiers = new Set(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger', 'unranked']);
 		this.userBadges = new Map();
 		this.badgeStyleElement = null;
@@ -49,6 +50,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	onEnable() {
 		this.log.info('🚀 EloWard: Starting initialization...');
+		
+		const chromeExtDetectedBody = document.body?.getAttribute('data-eloward-chrome-ext') === 'active';
+		const chromeExtDetectedHtml = document.documentElement?.getAttribute('data-eloward-chrome-ext') === 'active';
+		
+		if (chromeExtDetectedBody || chromeExtDetectedHtml) {
+			this.chromeExtensionDetected = true;
+			this.log.info('🔌 EloWard: Chrome extension detected - FFZ addon disabled for this session');
+			return;
+		}
+
+		this.log.info('🔌 EloWard: No Chrome extension detected - proceeding with FFZ addon');
 		this.initializeBasicInfrastructure();
 		this.initializeRankBadges();
 		this.on('chat:room-add', this.onRoomAdd, this);
