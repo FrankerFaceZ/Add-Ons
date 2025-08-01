@@ -254,7 +254,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return normalMatch ? normalMatch[1].toLowerCase() : null;
 	}
 
-
 	generateRankSpecificCSS() {
 		let css = `
 			.ffz-badge[data-badge^="addon.eloward.rank-"] {
