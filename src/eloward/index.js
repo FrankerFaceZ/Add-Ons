@@ -15,6 +15,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			maxCacheSize: 500
 		};
 
+		// Region mapping for op.gg URLs
+		this.regionMapping = {
+			'na1': 'na', 'euw1': 'euw', 'eun1': 'eune', 'kr': 'kr', 'br1': 'br',
+			'jp1': 'jp', 'la1': 'lan', 'la2': 'las', 'oc1': 'oce', 'tr1': 'tr',
+			'ru': 'ru', 'me1': 'me', 'sea': 'sg', 'tw2': 'tw', 'vn2': 'vn'
+		};
+
 		this.cache = new Map();
 		this.activeChannels = new Set();
 		this.activeRooms = new Map();
@@ -94,7 +101,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				4: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`
 			},
 			svg: false,
-			tooltipExtra: this.createTooltipHandler.bind(this)
+			tooltipExtra: this.createTooltipHandler.bind(this),
+			click_handler: this.handleBadgeClick.bind(this)
 		};
 	}
 
@@ -141,6 +149,28 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		container.appendChild(rankTextEl);
 		
 		return container;
+	}
+
+	// eslint-disable-next-line no-unused-vars
+	handleBadgeClick(_user_id, user_login, _room_id, _room_login, _badge_data, _event) {
+		try {
+			if (!user_login) return null;
+			
+			const cachedRank = this.getCachedRank(user_login);
+			if (!cachedRank?.summonerName || !cachedRank?.region) return null;
+			
+			const opGGRegion = this.regionMapping[cachedRank.region];
+			if (!opGGRegion) return null;
+			
+			const encodedName = encodeURIComponent(cachedRank.summonerName.split('#')[0]);
+			const tagLine = cachedRank.summonerName.split('#')[1] || cachedRank.region.toUpperCase();
+			const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
+			
+			return opGGUrl;
+		} catch (error) {
+			console.warn('EloWard: Error handling badge click:', error);
+			return null;
+		}
 	}
 
 	initializeRankBadges() {
@@ -478,7 +508,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			tier: data.rank_tier,
 			division: data.rank_division,
 			leaguePoints: data.lp,
-			summonerName: data.riot_id
+			summonerName: data.riot_id,
+			region: data.region
 		};
 	}
 
