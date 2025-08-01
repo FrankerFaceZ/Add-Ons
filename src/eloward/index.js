@@ -93,7 +93,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		return {
 			id: tier,
 			title: `${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
-			slot: 99,
+			slot: 777,
 			image: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
 			urls: {
 				1: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
