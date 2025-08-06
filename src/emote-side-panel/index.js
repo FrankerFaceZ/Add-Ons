@@ -30,7 +30,9 @@ class EmoteSidePanel extends Addon {
 	updatePadding() {
 		// Had some problems changing the chat width, so for now i'll leave it fixed
 		const padding = (this.emotes.length > 0) ? 50 : 50;
-		this.getContainer().querySelector(".simplebar-content").style.setProperty('padding-right', padding + 'px');
+		let el = this.getContainer().querySelector('.simplebar-content');
+		if (!el) el = this.getContainer().querySelector('.chat-scrollable-area__message-container');
+		if (el) el.style.setProperty('padding-right', padding + 'px');
 	}
 
 	updateCount(emote) {
