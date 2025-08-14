@@ -147,6 +147,28 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
+	// eslint-disable-next-line no-unused-vars
+	handleBadgeClick(_user_id, user_login, _room_id, _room_login, _badge_data, _event) {
+		try {
+			if (!user_login) return null;
+			
+			const cachedRank = this.getCachedRank(user_login);
+			if (!cachedRank?.summonerName || !cachedRank?.region) return null;
+			
+			const opGGRegion = this.regionMapping[cachedRank.region];
+			if (!opGGRegion) return null;
+			
+			const encodedName = encodeURIComponent(cachedRank.summonerName.split('#')[0]);
+			const tagLine = cachedRank.summonerName.split('#')[1] || cachedRank.region.toUpperCase();
+			const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
+			
+			return opGGUrl;
+		} catch (error) {
+			console.warn('EloWard: Error handling badge click:', error);
+			return null;
+		}
+	}
+
 	initializeRankBadges() {
 		for (const tier of this.rankTiers) {
 			const badgeId = this.getBadgeId(tier);

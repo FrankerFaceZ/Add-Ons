@@ -24,19 +24,19 @@ const MORE_RERENDER_SETTINGS = [
 
 export default class Logic extends Addon {
 
-    constructor(...args) {
-        super(...args);
+	constructor(...args) {
+		super(...args);
 
-        this.inject('chat');
-        this.inject('chat.overrides');
-        this.inject('settings');
-        this.inject('i18n');
-        this.injectAs('site_chat', 'site.chat');
-        this.inject('site.fine');
+		this.inject('chat');
+		this.inject('chat.overrides');
+		this.inject('settings');
+		this.inject('i18n');
+		this.injectAs('site_chat', 'site.chat');
+		this.inject('site.fine');
 
-        this.ChatScroller = this.fine.define('chat-scroller');
+		this.ChatScroller = this.fine.define('chat-scroller');
 
-        this.prattle = [];
+		this.prattle = [];
 		this.pending = [];
 
 		this.scrollback_limit = 20;
@@ -47,36 +47,36 @@ export default class Logic extends Addon {
 
 		this.performUpdate = this.performUpdate.bind(this);
 		this.onClickUndelete = this.onClickUndelete.bind(this);
-    }
+	}
 
-    addNotice(message) {
-        this.addPrattle({
-            type: this.site_chat?.chat_types?.Notice ?? 31,
-            message: message
-        });
-    }
+	addNotice(message) {
+		this.addPrattle({
+			type: this.site_chat?.chat_types?.Notice ?? 31,
+			message: message
+		});
+	}
 
-    rebuildTester() {
-        const rules = this.chat.context.get('pn.rules');
-        if ( ! rules || ! rules.length ) {
-            this.tester = null;
-            return;
-        }
+	rebuildTester() {
+		const rules = this.chat.context.get('pn.rules');
+		if ( ! rules || ! rules.length ) {
+			this.tester = null;
+			return;
+		}
 
-        this.tester = createTester(rules, this.parent.rules);
-    }
+		this.tester = createTester(rules, this.parent.rules);
+	}
 
-    onEnable() {
-        this.on('chat:receive-message', this.handleMessage, this);
+	onEnable() {
+		this.on('chat:receive-message', this.handleMessage, this);
 		this.on('chat:mod-user', this.handleMod, this);
 		this.on('chat:clear-chat', this.handleClear, this);
 		this.on('site.router:route', this.handleNavigate, this);
 		this.on('i18n:update', this.updateTranslation, this);
 
-        this.rebuildTester();
-        this.updateConstants();
+		this.rebuildTester();
+		this.updateConstants();
 
-        this.chat.context.on('changed:pn.rules', this.rebuildTester, this);
+		this.chat.context.on('changed:pn.rules', this.rebuildTester, this);
 
 		this.chat.context.on('changed:pn.scrollback', this.updateConstants, this);
 		this.chat.context.on('changed:chat.scroller.hover-delay', this.updateConstants, this);
@@ -101,25 +101,25 @@ export default class Logic extends Addon {
 		this.ChatScroller.on('mount', this.checkContainer, this);
 		this.ChatScroller.on('update', this.checkContainer, this);
 
-        this.handleNavigate();
-    }
+		this.handleNavigate();
+	}
 
-    updateConstants() {
-        this.scrollback_limit = this.chat.context.get('pn.scrollback');
-        this.pause_delay = this.chat.context.get('chat.scroller.hover-delay');
-    }
+	updateConstants() {
+		this.scrollback_limit = this.chat.context.get('pn.scrollback');
+		this.pause_delay = this.chat.context.get('chat.scroller.hover-delay');
+	}
 
-    onDisable() {
+	onDisable() {
 		for(const setting of RERENDER_SETTINGS)
 			this.chat.context.off(`changed:${setting}`, this.rerenderLines, this);
 
 		for(const setting of MORE_RERENDER_SETTINGS)
 			this.chat.context.off(`changed:${setting}`, this.rerenderLines, this);
 
-        this.chat.context.off('changed:pn.rules', this.rebuildTester, this);
+		this.chat.context.off('changed:pn.rules', this.rebuildTester, this);
 
-        this.chat.context.off('changed:pn.scrollback', this.updateConstants, this);
-        this.chat.context.off('changed:chat.scroller.hover-delay', this.updateConstants, this);
+		this.chat.context.off('changed:pn.scrollback', this.updateConstants, this);
+		this.chat.context.off('changed:chat.scroller.hover-delay', this.updateConstants, this);
 
 		this.chat.context.off('changed:pn.active-position', this.updateContainer, this);
 		this.chat.context.off('changed:pn.active-size', this.updateContainer, this);
@@ -131,20 +131,20 @@ export default class Logic extends Addon {
 
 		if ( this._outside_timer ) {
 			clearTimeout(this._outside_timer);
-            this._outside_timer = null;
-        }
+			this._outside_timer = null;
+		}
 
 		this.off('chat:receive-message', this.handleMessage, this);
 		this.off('chat:mod-user', this.handleMod, this);
 		this.off('chat:clear-chat', this.handleClear, this);
-        this.off('site.router:route', this.handleNavigate, this);
-        this.off('i18n:update', this.updateTranslation, this);
+		this.off('site.router:route', this.handleNavigate, this);
+		this.off('i18n:update', this.updateTranslation, this);
 
 		this.ChatScroller.off('mount', this.checkContainer, this);
 		this.ChatScroller.off('update', this.checkContainer, this);
 	}
 
-    rerenderLines() {
+	rerenderLines() {
 		if ( ! this.cont )
 			return;
 
@@ -162,8 +162,7 @@ export default class Logic extends Addon {
 	getContainer() {
 		if ( ! this.container ) {
 			this.container = (<div
-				class="ffz-pn--list chat-list--other font-scale--default"
-				data-simplebar
+				class="ffz-scrollable scrollable-area simplebar-content ffz-pn--list chat-list--other font-scale--default"
 			>
 				{this.cont = <div role="log" />}
 				<div class="ffz-pn--pause-notice">
@@ -360,15 +359,15 @@ export default class Logic extends Addon {
 		}
 	}
 
-    handleNavigate() {
-        // Clear everything but send a message.
-        this.pending = [];
-        this.prattle = [];
-        if ( this.cont )
-            this.cont.innerHTML = '';
+	handleNavigate() {
+		// Clear everything but send a message.
+		this.pending = [];
+		this.prattle = [];
+		if ( this.cont )
+			this.cont.innerHTML = '';
 
-        this.addNotice(this.i18n.t('addon.pn.welcome', 'Welcome to the field of prattle.'));
-    }
+		this.addNotice(this.i18n.t('addon.pn.welcome', 'Welcome to the field of prattle.'));
+	}
 
 	handleClear() {
 		// Just clear everything.
@@ -378,7 +377,7 @@ export default class Logic extends Addon {
 		if ( this.cont )
 			this.cont.innerHTML = '';
 
-        this.addNotice(this.i18n.t('addon.pn.cleared', 'Chat was cleared'));
+		this.addNotice(this.i18n.t('addon.pn.cleared', 'Chat was cleared'));
 	}
 
 	addPrattle(msg) {
@@ -390,7 +389,7 @@ export default class Logic extends Addon {
 	}
 
 	renderSharedChatPill(msg) {
-		let style = this.chat.context.get('pn.shared-chat.style') ?? 0;
+		const style = this.chat.context.get('pn.shared-chat.style') ?? 0;
 		if ( ! style )
 			return null;
 
@@ -426,21 +425,21 @@ export default class Logic extends Addon {
 	}
 
 	renderLine(msg) {
-        let line;
+		let line;
 
-        let room = msg.roomLogin ? msg.roomLogin : msg.channel ? msg.channel.slice(1) : undefined,
-            room_id = msg.roomId;
+		let room = msg.roomLogin ? msg.roomLogin : msg.channel ? msg.channel.slice(1) : undefined,
+			room_id = msg.roomId;
 
-        if ( ! room && room_id ) {
-            const r = this.chat.getRoom(room_id, null, true);
-            if ( r && r.login )
-                room = msg.roomLogin = r.login;
+		if ( ! room && room_id ) {
+			const r = this.chat.getRoom(room_id, null, true);
+			if ( r && r.login )
+				room = msg.roomLogin = r.login;
 
-        } else if ( ! room_id && room ) {
-            const r = this.chat.getRoom(null, room, true);
-            if ( r && r.id )
-                room_id = msg.roomId = r.id;
-        }
+		} else if ( ! room_id && room ) {
+			const r = this.chat.getRoom(null, room, true);
+			if ( r && r.id )
+				room_id = msg.roomId = r.id;
+		}
 
 		const source_id = msg.sourceRoomID,
 			source = source_id && this.site_chat.shared_room_data?.get?.(source_id),
@@ -449,38 +448,38 @@ export default class Logic extends Addon {
 				? { id: room_id, login: room }
 				: { id: source_id, login: source?.login };
 
-        if ( msg.type && msg.type === this.site_chat.chat_types?.Notice ) {
-            line = (<div
-                class="chat-line__status"
-                data-room={room}
-                data-room-id={room_id}
-            >
-                { msg.message }
-            </div>)
+		if ( msg.type && msg.type === this.site_chat.chat_types?.Notice ) {
+			line = (<div
+				class="chat-line__status"
+				data-room={room}
+				data-room-id={room_id}
+			>
+				{ msg.message }
+			</div>)
 
-        } else  {
-            const is_action = msg.messageType === this.site_chat.message_types?.Action,
-                action_style = is_action ? this.chat.context.get('chat.me-style') : 0,
-                action_italic = action_style >= 2,
-                action_color = action_style === 1 || action_style === 3,
+		} else  {
+			const is_action = msg.messageType === this.site_chat.message_types?.Action,
+				action_style = is_action ? this.chat.context.get('chat.me-style') : 0,
+				action_italic = action_style >= 2,
+				action_color = action_style === 1 || action_style === 3,
 
-                raw_color = this.overrides.getColor(msg.user.id) || msg.user.color,
-                color = this.site_chat.colors.process(raw_color),
+				raw_color = this.overrides.getColor(msg.user.id) || msg.user.color,
+				color = this.site_chat.colors.process(raw_color),
 
-                bg_css = msg.mentioned && msg.mention_color ? this.site_chat.inverse_colors.process(msg.mention_color) : null;
+				bg_css = msg.mentioned && msg.mention_color ? this.site_chat.inverse_colors.process(msg.mention_color) : null;
 
-            const username = this.chat.formatUser(msg.user, createElement),
+			const username = this.chat.formatUser(msg.user, createElement),
 				override_name = this.overrides.getName(msg.user.id);
 
-            const show_reasons = this.chat.context.get('pn.show-reason');
+			const show_reasons = this.chat.context.get('pn.show-reason');
 
-            let reasons = null;
-            if ( show_reasons && msg.prattle_reasons )
-                reasons = `[${msg.prattle_score}=${msg.prattle_reasons.join(', ')}]`;
+			let reasons = null;
+			if ( show_reasons && msg.prattle_reasons )
+				reasons = `[${msg.prattle_score}=${msg.prattle_reasons.join(', ')}]`;
 
-            const reason_el = reasons ? (<span class="pn--reasons tw-pd-l-05 tw-c-text-alt-2">
-                { reasons }
-            </span>) : null;
+			const reason_el = reasons ? (<span class="pn--reasons tw-pd-l-05 tw-c-text-alt-2">
+				{ reasons }
+			</span>) : null;
 
 			let user_class = msg.ffz_user_class;
 			if ( user_class instanceof Set )
@@ -502,21 +501,21 @@ export default class Logic extends Addon {
 			if ( msg.ffz_user_style )
 				Object.assign(user_props.style, msg.ffz_user_style);
 
-            line = (<div
-                class={`chat-line__message${msg.deleted ? ' ffz--deleted-message' : ''}${msg.mentioned ? ' ffz-mentioned' : ''}${bg_css ? ' ffz-custom-color' : ''}`}
-                data-room={source_room.login}
-                data-room-id={source_room.id}
-                data-user={msg.user.login}
-                data-user-id={msg.user.id}
+			line = (<div
+				class={`chat-line__message${msg.deleted ? ' ffz--deleted-message' : ''}${msg.mentioned ? ' ffz-mentioned' : ''}${bg_css ? ' ffz-custom-color' : ''}`}
+				data-room={source_room.login}
+				data-room-id={source_room.id}
+				data-user={msg.user.login}
+				data-user-id={msg.user.id}
 				style={{backgroundColor: bg_css}}
-            >
+			>
 				{source ? this.renderSharedChatPill(msg) : null}
-                {this.chat.context.get('pn.timestamps') ? (<span class="chat-line__timestamp">
-                    { this.chat.formatTime(msg.timestamp) }
-                </span>) : null}
-                {this.chat.context.get('pn.show-badges') ? (<span class="chat-line__message--badges">
-                    { this.chat.badges.render(msg, createElement) }
-                </span>) : null}
+				{this.chat.context.get('pn.timestamps') ? (<span class="chat-line__timestamp">
+					{ this.chat.formatTime(msg.timestamp) }
+				</span>) : null}
+				{this.chat.context.get('pn.show-badges') ? (<span class="chat-line__message--badges">
+					{ this.chat.badges.render(msg, createElement) }
+				</span>) : null}
 				{createElement('span', user_props, override_name
 					? [
 						<span class="chat-author__display_name">{ override_name }</span>,
@@ -524,31 +523,31 @@ export default class Logic extends Addon {
 					]
 					: username
 				)}
-                <span aria-hidden="true">
-                    {is_action && ! action_italic ? ' ' : ': '}
-                </span>
-                <span
-                    class={`message ${action_italic ? 'chat-line__message-body--italicized' : ''}`}
-                    style={action_color ? {color} : null}
-                >
-                    { msg.deleted ?
-                        <a href="" onClick={this.onClickUndelete}>
-                            {this.i18n.t('chat.message-deleted', '<message deleted>')}
-                        </a> :
-                        this.chat.renderTokens(msg.ffz_tokens, createElement)
-                    }
-                </span>
-                {reason_el}
-            </div>);
-        }
+				<span aria-hidden="true">
+					{is_action && ! action_italic ? ' ' : ': '}
+				</span>
+				<span
+					class={`message ${action_italic ? 'chat-line__message-body--italicized' : ''}`}
+					style={action_color ? {color} : null}
+				>
+					{ msg.deleted ?
+						<a href="" onClick={this.onClickUndelete}>
+							{this.i18n.t('chat.message-deleted', '<message deleted>')}
+						</a> :
+						this.chat.renderTokens(msg.ffz_tokens, createElement)
+					}
+				</span>
+				{reason_el}
+			</div>);
+		}
 
-        if (line) {
-            line.message = msg;
+		if (line) {
+			line.message = msg;
 
-            if ( msg.prattle_line )
-                msg.prattle_line.replaceWith(line);
-            msg.prattle_line = line;
-        }
+			if ( msg.prattle_line )
+				msg.prattle_line.replaceWith(line);
+			msg.prattle_line = line;
+		}
 
 		return line;
 	}
@@ -581,7 +580,7 @@ export default class Logic extends Addon {
 		const pending = this.pending;
 		this.pending = [];
 
-		const scroller = this.cont?.parentElement?.parentElement;
+		const scroller = this.cont?.parentElement;
 
 		for(const msg of pending) {
 			if ( msg.deleted || msg.ffz_removed )
