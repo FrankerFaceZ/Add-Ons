@@ -106,49 +106,45 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		};
 	}
 
-	getBadgeId(tier) {
-		return `addon.eloward.rank-${tier}`;
-	}
+	getBadgeId(tier) { return `addon.eloward.rank-${tier}`; }
 
-	createTooltipHandler(user, _badge, createElement) {
+	createTooltipHandler(user) {
 		try {
 			const username = user.login || user.user_login;
 			if (!username) return null;
-			
 			const cachedRank = this.getCachedRank(username);
 			if (!cachedRank) return null;
-			
-			return this.createRankTooltip(cachedRank, createElement);
-		} catch (error) {
+			const rankText = this.formatRankText(cachedRank);
+			const regionLine = this.getDisplayRegion(cachedRank.region);
+			// Only append rank when region is present so we don't duplicate rank (title already rank when no region)
+			return regionLine && rankText ? `\n${rankText}` : null;
+		} catch (_) {
 			return null;
 		}
 	}
 
-	createRankTooltip(rankData, createElement) {
-		if (!rankData?.tier) return null;
-		
-		const tier = rankData.tier.toLowerCase();
-		const rankImageUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`;
-		const rankText = this.formatRankText(rankData);
-		
-		const container = createElement('div', {
-			style: 'display: flex; align-items: center; gap: 8px; min-width: 120px; padding: 4px;'
-		});
-		
-		const rankImage = createElement('img', {
-			src: rankImageUrl,
-			style: 'width: 24px; height: 24px; flex-shrink: 0;',
-			alt: tier
-		});
-		
-		const rankTextEl = createElement('span', {
-			style: 'font-size: 13px; font-weight: 500; color: #efeff1;'
-		}, rankText);
-		
-		container.appendChild(rankImage);
-		container.appendChild(rankTextEl);
-		
-		return container;
+	// Removed DOM tooltip builder; we rely on FFZ tooltipExtra (string) for robust cross-theme tooltips
+
+	// eslint-disable-next-line no-unused-vars
+	handleBadgeClick(_user_id, user_login, _room_id, _room_login, _badge_data, _event) {
+		try {
+			if (!user_login) return null;
+			
+			const cachedRank = this.getCachedRank(user_login);
+			if (!cachedRank?.summonerName || !cachedRank?.region) return null;
+			
+			const opGGRegion = this.regionMapping[cachedRank.region];
+			if (!opGGRegion) return null;
+			
+			const encodedName = encodeURIComponent(cachedRank.summonerName.split('#')[0]);
+			const tagLine = cachedRank.summonerName.split('#')[1] || cachedRank.region.toUpperCase();
+			const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
+			
+			return opGGUrl;
+		} catch (error) {
+			console.warn('EloWard: Error handling badge click:', error);
+			return null;
+		}
 	}
 
 	// eslint-disable-next-line no-unused-vars
@@ -427,8 +423,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const ffzUser = this.chat.getUser(userId);
 
 		const formattedRankText = this.formatRankText(rankData);
+		const regionDisplay = this.getDisplayRegion(rankData.region);
 		const badgeData = this.getBadgeData(tier);
-		badgeData.title = formattedRankText;
+		// Set title to region if available; otherwise show rank as title
+		badgeData.title = regionDisplay || formattedRankText;
 		
 		this.badges.loadBadgeData(badgeId, badgeData);
 
@@ -469,6 +467,19 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 		
 		return rankText;
+	}
+
+	getDisplayRegion(regionCode) {
+		if (!regionCode) return null;
+		const code = String(regionCode).toLowerCase();
+		const display = {
+			'na1': 'NA', 'br1': 'BR', 'la1': 'LAN', 'la2': 'LAS', 'oc1': 'OCE',
+			'euw1': 'EUW', 'eun1': 'EUNE', 'tr1': 'TR', 'ru': 'RU', 'kr': 'KR', 'jp1': 'JP',
+			'me1': 'ME', 'ph2': 'PH', 'sg2': 'SG', 'th2': 'TH', 'tw2': 'TW', 'vn2': 'VN',
+			'sea': 'SEA',
+			'americas': 'NA', 'europe': 'EU', 'asia': 'ASIA'
+		};
+		return display[code] || code.toUpperCase();
 	}
 
 	updateBadges() {
