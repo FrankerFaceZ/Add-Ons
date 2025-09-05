@@ -89,16 +89,20 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		document.head.appendChild(this.badgeStyleElement);
 	}
 
-	getBadgeData(tier) {
+	getBadgeData(tier, isPremium = false) {
+		const extension = isPremium ? '.webp' : '.png';
+		const suffix = isPremium ? '_premium' : '';
+		const badgeUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}${suffix}${extension}`;
+		
 		return {
 			id: tier,
 			title: `${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
 			slot: 777,
-			image: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
+			image: badgeUrl,
 			urls: {
-				1: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
-				2: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`,
-				4: `https://eloward-cdn.unleashai.workers.dev/lol/${tier}.png`
+				1: badgeUrl,
+				2: badgeUrl,
+				4: badgeUrl
 			},
 			svg: false,
 			tooltipExtra: this.createTooltipHandler.bind(this),
@@ -106,7 +110,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		};
 	}
 
-	getBadgeId(tier) { return `addon.eloward.rank-${tier}`; }
+	getBadgeId(tier, isPremium = false) { 
+		const suffix = isPremium ? '-premium' : '';
+		return `addon.eloward.rank-${tier}${suffix}`;
+	}
 
 	createTooltipHandler(user) {
 		try {
@@ -147,33 +154,18 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		}
 	}
 
-	// eslint-disable-next-line no-unused-vars
-	handleBadgeClick(_user_id, user_login, _room_id, _room_login, _badge_data, _event) {
-		try {
-			if (!user_login) return null;
-			
-			const cachedRank = this.getCachedRank(user_login);
-			if (!cachedRank?.summonerName || !cachedRank?.region) return null;
-			
-			const opGGRegion = this.regionMapping[cachedRank.region];
-			if (!opGGRegion) return null;
-			
-			const encodedName = encodeURIComponent(cachedRank.summonerName.split('#')[0]);
-			const tagLine = cachedRank.summonerName.split('#')[1] || cachedRank.region.toUpperCase();
-			const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
-			
-			return opGGUrl;
-		} catch (error) {
-			console.warn('EloWard: Error handling badge click:', error);
-			return null;
-		}
-	}
-
 	initializeRankBadges() {
+		// Initialize both regular and premium badges for all tiers
 		for (const tier of this.rankTiers) {
-			const badgeId = this.getBadgeId(tier);
-			const badgeData = this.getBadgeData(tier);
-			this.badges.loadBadgeData(badgeId, badgeData);
+			// Regular badge
+			const regularBadgeId = this.getBadgeId(tier, false);
+			const regularBadgeData = this.getBadgeData(tier, false);
+			this.badges.loadBadgeData(regularBadgeId, regularBadgeData);
+			
+			// Premium badge
+			const premiumBadgeId = this.getBadgeId(tier, true);
+			const premiumBadgeData = this.getBadgeData(tier, true);
+			this.badges.loadBadgeData(premiumBadgeId, premiumBadgeData);
 		}
 	}
 
@@ -295,7 +287,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const transform = rankTransforms[tier];
 			if (transform) {
 				css += `
-					.ffz-badge[data-badge="addon.eloward.rank-${tier}"] {
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}"],
+					.ffz-badge[data-badge="addon.eloward.rank-${tier}-premium"] {
 						transform: translateY(-5px) scale(${transform.scale}) ${transform.translate} !important;
 						margin-right: ${transform.margin.right} !important;
 						margin-left: ${transform.margin.left} !important;
@@ -419,12 +412,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		const badgeId = this.getBadgeId(tier);
+		const isPremium = rankData.plus_active || false;
+		const badgeId = this.getBadgeId(tier, isPremium);
 		const ffzUser = this.chat.getUser(userId);
 
 		const formattedRankText = this.formatRankText(rankData);
 		const regionDisplay = this.getDisplayRegion(rankData.region);
-		const badgeData = this.getBadgeData(tier);
+		const badgeData = this.getBadgeData(tier, isPremium);
 		// Set title to region if available; otherwise show rank as title
 		badgeData.title = regionDisplay || formattedRankText;
 		
@@ -435,7 +429,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			ffzUser.addBadge('addon.eloward', badgeId);
 		}
 
-		this.userBadges.set(userId, { username, tier, badgeId, rankData });
+		this.userBadges.set(userId, { username, tier, badgeId, rankData, isPremium });
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
 	}
 
@@ -519,7 +513,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			division: data.rank_division,
 			leaguePoints: data.lp,
 			summonerName: data.riot_id,
-			region: data.region
+			region: data.region,
+			plus_active: data.plus_active || false
 		};
 	}
 
