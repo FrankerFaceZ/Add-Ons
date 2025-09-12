@@ -89,9 +89,9 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		document.head.appendChild(this.badgeStyleElement);
 	}
 
-	getBadgeData(tier, isPremium = false) {
-		const extension = isPremium ? '.webp' : '.png';
-		const suffix = isPremium ? '_premium' : '';
+	getBadgeData(tier, isAnimated = false) {
+		const extension = isAnimated ? '.webp' : '.png';
+		const suffix = isAnimated ? '_premium' : '';
 		const badgeUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}${suffix}${extension}`;
 		
 		return {
@@ -110,8 +110,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		};
 	}
 
-	getBadgeId(tier, isPremium = false) { 
-		const suffix = isPremium ? '-premium' : '';
+	getBadgeId(tier, isAnimated = false) { 
+		const suffix = isAnimated ? '-premium' : '';
 		return `addon.eloward.rank-${tier}${suffix}`;
 	}
 
@@ -155,17 +155,17 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	initializeRankBadges() {
-		// Initialize both regular and premium badges for all tiers
+		// Initialize both static and animated badges for all tiers
 		for (const tier of this.rankTiers) {
-			// Regular badge
-			const regularBadgeId = this.getBadgeId(tier, false);
-			const regularBadgeData = this.getBadgeData(tier, false);
-			this.badges.loadBadgeData(regularBadgeId, regularBadgeData);
+			// Static badge
+			const staticBadgeId = this.getBadgeId(tier, false);
+			const staticBadgeData = this.getBadgeData(tier, false);
+			this.badges.loadBadgeData(staticBadgeId, staticBadgeData);
 			
-			// Premium badge
-			const premiumBadgeId = this.getBadgeId(tier, true);
-			const premiumBadgeData = this.getBadgeData(tier, true);
-			this.badges.loadBadgeData(premiumBadgeId, premiumBadgeData);
+			// Animated badge
+			const animatedBadgeId = this.getBadgeId(tier, true);
+			const animatedBadgeData = this.getBadgeData(tier, true);
+			this.badges.loadBadgeData(animatedBadgeId, animatedBadgeData);
 		}
 	}
 
@@ -412,13 +412,13 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		const isPremium = rankData.animate_badge || false;
-		const badgeId = this.getBadgeId(tier, isPremium);
+		const isAnimated = rankData.animate_badge || false;
+		const badgeId = this.getBadgeId(tier, isAnimated);
 		const ffzUser = this.chat.getUser(userId);
 
 		const formattedRankText = this.formatRankText(rankData);
 		const regionDisplay = this.getDisplayRegion(rankData.region);
-		const badgeData = this.getBadgeData(tier, isPremium);
+		const badgeData = this.getBadgeData(tier, isAnimated);
 		// Set title to region if available; otherwise show rank as title
 		badgeData.title = regionDisplay || formattedRankText;
 		
@@ -429,7 +429,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			ffzUser.addBadge('addon.eloward', badgeId);
 		}
 
-		this.userBadges.set(userId, { username, tier, badgeId, rankData, isPremium });
+		this.userBadges.set(userId, { username, tier, badgeId, rankData, isAnimated });
 		this.emit('chat:update-lines-by-user', userId, username, false, true);
 	}
 
