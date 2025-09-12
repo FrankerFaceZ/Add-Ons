@@ -412,7 +412,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		const isPremium = rankData.plus_active || false;
+		const isPremium = rankData.animate_badge || false;
 		const badgeId = this.getBadgeId(tier, isPremium);
 		const ffzUser = this.chat.getUser(userId);
 
@@ -514,7 +514,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			leaguePoints: data.lp,
 			summonerName: data.riot_id,
 			region: data.region,
-			plus_active: data.plus_active || false
+			animate_badge: data.animate_badge || false
 		};
 	}
 
