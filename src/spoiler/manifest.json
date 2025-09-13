@@ -1,0 +1,13 @@
+{
+    "enabled": false,
+    "requires": [],
+
+    "version": "1.0.0",
+
+    "short_name": "spoiler_hidden",
+    "name": "Spoiler Hider",
+    "author": "TheDaChicken",
+    "description": "Allows for users in chat to spoil messages using || similar to markdown! Useful for playing games spoiler free!",
+
+    "website": "https://www.thedachicken.com"
+}
