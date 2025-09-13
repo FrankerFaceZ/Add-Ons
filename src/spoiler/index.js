@@ -1,4 +1,3 @@
-// Add-Ons should contain a class that extends Addon.
 class SpoilerHider extends Addon {
 	constructor(...args) {
 		super(...args);
@@ -135,14 +134,8 @@ class SpoilerHider extends Addon {
 		return [i, null]
 	}
 
-	// onLoad is called when the module is being loaded, prior to
-	// being enabled. If this method returns a Promise, FFZ will
-	// wait for the promise to resolve before considering the
-	// module as loaded.
 	async onLoad() {
-		// We don't actually need to do anything here, but if
-		// we did, we'd already have guaranteed access to the
-		// metadata module because of the earlier "load_requires"
+
 	}
 
 	onEnable() {
