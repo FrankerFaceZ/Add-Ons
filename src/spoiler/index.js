@@ -33,8 +33,8 @@ class SpoilerHider extends Addon {
 			process(tokens, msg) {
 				let i = 0;
 
-				// Is there a better way of doing this?
-				// To prevent Twitch interface by showing spoiler, this overrides message body. 
+				// FIXME: Is there a better way of doing this? I don't think modifying msg object here is valid
+				// This is meant to prevent Twitch by showing the message, this overrides message body.
 				if (msg.reply)
 				{
 					const replyText = msg.reply.parentMessageBody;
@@ -46,15 +46,6 @@ class SpoilerHider extends Addon {
 					}
 				}
 
-				if (msg.messageBody)
-				{
-					const [_, startPos] = outerThis.findSpoilerTag([{type: "text", text: msg.messageBody}]);
-					if (startPos != null)
-					{
-						msg.messageBody = "(spoiler)";
-					}
-				}
-				
 				while (i < tokens.length)
 				{
 					// first find start of spoiler tag
@@ -62,6 +53,9 @@ class SpoilerHider extends Addon {
 					if (startPos == null)
 						break;
 
+					if (msg.messageBody)
+						msg.messageBody = "(spoiler)";
+				
 					const token = tokens[startIndex];
 
 					const visibleText = token.text.substring(0, startPos);
