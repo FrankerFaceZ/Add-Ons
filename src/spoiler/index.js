@@ -21,8 +21,6 @@ class SpoilerHider extends Addon {
 					}} onClick={
 					() => {
 						token.revealed = !token.revealed;
-						console.log('Token onClick reveal: ', token)
-
 						// FIXME: is there anyways to render clicks in replies by messageId?
 						//outerThis.emit("chat:update-line", token.message.id, false);
 						outerThis.emit("chat:rerender-lines");
