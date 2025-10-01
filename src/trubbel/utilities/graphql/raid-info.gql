@@ -1,0 +1,25 @@
+query Trubbel_GetRaidStreamInfo($login: String!) {
+  user(login: $login) {
+    id
+    login
+    stream {
+      id
+      type
+      createdAt
+      viewersCount
+      previewImageURL(width: 0, height: 0)
+      contentClassificationLabels {
+        id
+        localizedName
+        __typename
+      }
+      game {
+        id
+        name
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

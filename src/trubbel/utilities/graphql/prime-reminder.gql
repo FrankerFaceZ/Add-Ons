@@ -4,6 +4,7 @@ query Trubbel_YetAnotherPrimeReminder {
     hasPrime
   }
   user {
+    id
     self {
       canPrimeSubscribe
       primeSubCreditBenefit {
