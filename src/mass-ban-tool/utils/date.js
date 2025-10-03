@@ -9,3 +9,7 @@ export function getLocaleString( date ) {
         return '---';
     }
 }
+
+export function padDateString( value ) {
+    return value.padStart( 2, 0 );
+}

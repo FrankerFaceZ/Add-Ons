@@ -125,6 +125,13 @@ class MassModerationUtilities extends Addon {
 		}
 	}
 
+	addChatNotice( channelName, message ) {
+		this.chat.addNotice( channelName, {
+			message: message,
+			icon:    new URL( 'https://cdn2.frankerfacez.com/static/addons/mass-ban-tool/logo.png' )
+		} );
+	}
+
 	entriesToArray( entries ) {
 		return entries.trim().match( /^.*$/gm );
 	}
@@ -134,16 +141,23 @@ class MassModerationUtilities extends Addon {
 	}
 
 	async runBanTool( users, action, reason ) {
-		const usersArray = this.entriesToArray( users );
+		const usersArray = this.entriesToArray( users ),
+			  toolActionCap = action.charAt( 0 ).toUpperCase() + action.slice( 1 );
 
 		if ( this.entriesProvided( usersArray ) ) {
 			this.toolIsRunning = true;
+
+			this.addChatNotice( this.channelName, 'Mass ' + toolActionCap + ' tool has started running.' );
 			
 			for ( const user of usersArray ) {
 				await this.actionUser( user, action, reason );
 			}
 
 			this.toolIsRunning = false;
+
+			await sleep( 1000 );
+
+			this.addChatNotice( this.channelName, 'Mass ' + toolActionCap + ' tool has completed its run.' );
 		} else {
 			this.log.info( 'Aborting run: no usernames were provided.' );
 		}
@@ -163,26 +177,19 @@ class MassModerationUtilities extends Addon {
 				isModEditable = false;
 			}
 
+			this.toolIsRunning = true;
+
+			this.addChatNotice( this.channelName, 'Mass Term Blocker tool has started running.' );
+
 			for ( const term of termsArray ) {
-				const blockTerm = await this.apollo.client.mutate( {
-					mutation:  BLOCK_TERMS,
-					variables: {
-						input: {
-							channelID: this.channelID,
-							isModEditable: isModEditable,
-							phrase: term
-						}
-					}
-				} ).catch( ( err ) => this.log.info( err ) );
-
-				if ( blockTerm .data.addChannelBlockedTerm.length > 0 ) {
-					this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
-
-					await sleep( 350 );
-				} else {
-					this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
-				}
+				await this.actionTerm( term, isModEditable );
 			}
+
+			this.toolIsRunning = false;
+
+			await sleep( 1000 );
+
+			this.addChatNotice( this.channelName, 'Mass Term Blocker tool has completed its run.' );
 		} else {
 			this.log.info( 'Aborting run: no terms/phrases were provided.' );
 		}
@@ -308,6 +315,27 @@ class MassModerationUtilities extends Addon {
 		 * to avoid hitting that limit
 		 */
 		await sleep( 350 );
+	}
+
+	async actionTerm( term, isModEditable ) {
+		const blockTerm = await this.apollo.client.mutate( {
+			  mutation:  BLOCK_TERMS,
+			  variables: {
+				input: {
+					channelID: this.channelID,
+					isModEditable: isModEditable,
+					phrase: term
+				}
+			  }
+			} ).catch( ( err ) => this.log.info( err ) );
+
+			if ( blockTerm.data.addChannelBlockedTerm.length > 0 ) {
+				this.log.info( `Term/phrase "${blockTerm.data.addChannelBlockedTerm.phrases[0]}" successfully blocked.` );
+
+				await sleep( 350 );
+			} else {
+				this.log.info( `Term/phrase ${term} failed to be blocked. Did you accidentally set the Privacy to "Private" in a channel that you don't own? If so, that's most likely the cause of this issue. Moderators are only able to block terms publicly.` );
+			}
 	}
 
 	onDisable() {
