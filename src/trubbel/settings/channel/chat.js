@@ -165,6 +165,10 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     // Channel - Chat - Moderation - Enable right-click context menu
     this.settings.add("addon.trubbel.channel.chat.moderation.context", {
       default: false,
+      requires: ["context.moderator"],
+      process(ctx, val) {
+        return ctx.get("context.moderator") ? val : false;
+      },
       ui: {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Moderation",
