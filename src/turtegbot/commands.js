@@ -72,7 +72,7 @@ export class Commands extends FrankerFaceZ.utilities.module.Module {
     }
 
     getCommands() {
-        if (this.commands.length < 1 || !this.settings.get('addon.turtegbot.commands.enabled') || this.parent.roomId === undefined) return;
+        if (this.commands.length < 1 || !this.settings.get('addon.turtegbot.commands.enabled') || !this.parent.roomId) return;
 
         return this.commands.map(cmd => {
             if ((cmd.requiredGlobalPower == null || this.parent.userGlobalPower < cmd.requiredGlobalPower) &&

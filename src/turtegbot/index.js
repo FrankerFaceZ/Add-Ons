@@ -71,7 +71,14 @@ class TurtegBot extends Addon {
 			return;
 		}
 
-		this.roomPrefix = (await this.turtegbot_api.room.getRoomSettings(this.roomId)).prefix || "#";
+		const roomSettings = await this.turtegbot_api.room.getRoomSettings(this.roomId);
+		if(!roomSettings.isBotAdded)
+		{
+			this.roomId = undefined;
+			return;
+		}
+
+		this.roomPrefix = roomSettings.prefix || "#";
 
 		if (this.userId)
 			this.userChannelPower = await this.turtegbot_api.ffz.getUserPower(this.roomId, this.userId);
