@@ -5,7 +5,19 @@ class SmokeysUtils extends Addon {
 		super(...args);
 
 		this.notify_icon = document.querySelector('link[rel="icon"]')?.href;
+		this.notify_icon_original = this.notify_icon;
 		this.pinned_handler = undefined;
+		this.hd_video_handler = null;
+		this.creating_pinned_log = false;
+
+		// Cache DOM elements
+		this.cached_chat_input = null;
+		this.cached_close_button = null;
+		this.cached_icon_link = null;
+
+		// Mod action confirmation tracking
+		this.pending_mod_action = null;
+		this.mod_action_timeout = null;
 
 		this.inject('settings');
 		this.inject('chat');
@@ -187,6 +199,43 @@ class SmokeysUtils extends Addon {
 			},
 		});
 
+		this.settings.add('smokemotes.mod_timeout_duration', {
+			default: 600,
+
+			ui: {
+				sort: 1.5,
+				path: "Add-Ons > Smokey's Utilities >> Mod Keybinds",
+				title: 'Timeout Duration',
+				description: 'Duration for timeout keybind (T key).',
+				component: 'setting-select-box',
+				data: [
+					{ value: 1, title: '1 second (Purge)' },
+					{ value: 10, title: '10 seconds' },
+					{ value: 60, title: '1 minute' },
+					{ value: 300, title: '5 minutes' },
+					{ value: 600, title: '10 minutes' },
+					{ value: 1800, title: '30 minutes' },
+					{ value: 3600, title: '1 hour' },
+					{ value: 14400, title: '4 hours' },
+					{ value: 86400, title: '1 day' },
+					{ value: 604800, title: '1 week' },
+					{ value: 1209600, title: '2 weeks' }
+				]
+			},
+		});
+
+		this.settings.add('smokemotes.mod_confirm_actions', {
+			default: false,
+
+			ui: {
+				sort: 1.6,
+				path: "Add-Ons > Smokey's Utilities >> Mod Keybinds",
+				title: 'Confirm Mod Actions',
+				description: 'Enable to require pressing the keybind twice to confirm timeout/ban/delete actions.',
+				component: 'setting-check-box',
+			},
+		});
+
 		this.settings.add('smokemotes.auto_exit_viewercard', {
 			default: true,
 
@@ -237,7 +286,130 @@ class SmokeysUtils extends Addon {
 		this.ViewerCard.on('mount', this.updateCard, this);
 		this.ViewerCard.on('unmount', this.unmountCard, this);
 
+		// Restore pinned messages from localStorage
+		this.restorePinnedMessages();
+
 		this.log.debug("Smokey's Utilities module was enabled successfully.");
+	}
+
+	onDisable() {
+		// Save pinned messages before cleanup
+		this.savePinnedMessages();
+
+		// Clean up event listeners
+		if (this.hd_video_handler) {
+			try {
+				document.removeEventListener('visibilitychange', this.hd_video_handler, true);
+			} catch (err) {
+				// Ignore removal errors
+			}
+			this.hd_video_handler = null;
+		}
+
+		// Remove keybind listener
+		window.removeEventListener('keydown', this.onKeyDown);
+
+		// Remove ViewerCard listeners
+		this.ViewerCard.off('mount', this.updateCard, this);
+		this.ViewerCard.off('unmount', this.unmountCard, this);
+
+		// Remove pinned message listener
+		this.off('chat:buffer-message', this.handlePin, this);
+		this.event_listener = false;
+
+		// Remove pinned log element
+		const pinned_log = document.querySelector('#smokey_pinned_log');
+		if (pinned_log) {
+			pinned_log.remove();
+		}
+
+		// Clear cached DOM elements
+		this.cached_chat_input = null;
+		this.cached_close_button = null;
+		this.cached_icon_link = null;
+
+		// Clear pending mod actions
+		this.pending_mod_action = null;
+		if (this.mod_action_timeout) {
+			clearTimeout(this.mod_action_timeout);
+			this.mod_action_timeout = null;
+		}
+
+		this.log.debug("Smokey's Utilities module was disabled successfully.");
+	}
+
+	savePinnedMessages() {
+		try {
+			const pinned_log = document.querySelector('#smokey_pinned_log');
+			if (!pinned_log || !pinned_log.childNodes.length) {
+				localStorage.removeItem('smokemotes_pinned_messages');
+				return;
+			}
+
+			const messages = [];
+			for (const child of pinned_log.childNodes) {
+				messages.push({
+					html: child.outerHTML,
+					timestamp: Date.now()
+				});
+			}
+
+			localStorage.setItem('smokemotes_pinned_messages', JSON.stringify(messages));
+		} catch (err) {
+			this.log.warn('Failed to save pinned messages to localStorage', err);
+		}
+	}
+
+	restorePinnedMessages() {
+		try {
+			const saved = localStorage.getItem('smokemotes_pinned_messages');
+			if (!saved) return;
+
+			const messages = JSON.parse(saved);
+			if (!messages || !messages.length) return;
+
+			// Check if messages are too old (more than 1 hour)
+			const now = Date.now();
+			const oneHour = 60 * 60 * 1000;
+			const validMessages = messages.filter(msg => (now - msg.timestamp) < oneHour);
+
+			if (!validMessages.length) {
+				localStorage.removeItem('smokemotes_pinned_messages');
+				return;
+			}
+
+			// Wait for DOM to be ready
+			requestAnimationFrame(() => {
+				const container = this.site_chat.ChatContainer.first;
+				const el = container?.state?.chatListElement;
+				if (!el) return;
+
+				let pinned_log = document.querySelector('#smokey_pinned_log');
+				if (!pinned_log) {
+					pinned_log = createElement('div', {
+						id: 'smokey_pinned_log',
+						class: 'pinned-highlight-log tw-absolute tw-top-0 tw-z-above tw-full-width tw-c-background-base',
+						style: 'z-order:99 !important;'
+					});
+					el.parentNode.prepend(pinned_log);
+				}
+
+				// Restore messages
+				for (const msg of validMessages) {
+					const temp = createElement('div');
+					temp.innerHTML = msg.html;
+					const restoredMsg = temp.firstChild;
+					if (restoredMsg) {
+						pinned_log.appendChild(restoredMsg);
+					}
+				}
+
+				pinned_log.style.color = this.settings.get('smokemotes.pinned_font_color');
+			});
+		} catch (err) {
+			this.log.warn('Failed to restore pinned messages from localStorage', err);
+			localStorage.removeItem('smokemotes_pinned_messages');
+		}
 	}
 
 	/**
@@ -280,6 +452,14 @@ class SmokeysUtils extends Addon {
 
 		let pinned_log = document.querySelector('#smokey_pinned_log');
 		if ( ! pinned_log ) {
+			// Prevent race condition when multiple messages arrive simultaneously
+			if (this.creating_pinned_log) {
+				// Wait for the log to be created, then retry
+				requestAnimationFrame(() => this.handlePin(event));
+				return;
+			}
+
+			this.creating_pinned_log = true;
 			const container = this.site_chat.ChatContainer.first,
 				el = container?.state?.chatListElement;
 
@@ -290,6 +470,7 @@ class SmokeysUtils extends Addon {
 			});
 
 			el.parentNode.prepend(pinned_log);
+			this.creating_pinned_log = false;
 		}
 
 		pinned_log.style.color = this.settings.get('smokemotes.pinned_font_color');
@@ -384,10 +565,15 @@ class SmokeysUtils extends Addon {
 
 			pinned_log.appendChild(line);
 
-			if (document.hidden)
-				document.querySelector(
-					'link[rel="icon"]'
-				).href = this.notify_icon;
+			if (document.hidden) {
+				// Cache icon link element
+				if (!this.cached_icon_link || !document.contains(this.cached_icon_link)) {
+					this.cached_icon_link = document.querySelector('link[rel="icon"]');
+				}
+				if (this.cached_icon_link) {
+					this.cached_icon_link.href = this.notify_icon;
+				}
+			}
 
 			const timeout = this.settings.get('smokemotes.pinned_timer');
 			if ( timeout > 0 ) {
@@ -401,14 +587,24 @@ class SmokeysUtils extends Addon {
 	 */
 
 	keep_hd_video() {
+		// Remove existing handler if present
+		if (this.hd_video_handler) {
+			try {
+				document.removeEventListener('visibilitychange', this.hd_video_handler, true);
+			} catch (err) {
+				// Ignore removal errors
+			}
+			this.hd_video_handler = null;
+		}
+
 		if (this.chat.context.get('smokemotes.keep_hd_video')) {
 			try {
+				this.hd_video_handler = e => {
+					e.stopImmediatePropagation();
+				};
 				document.addEventListener(
 					'visibilitychange',
-					e => {
-						e.stopImmediatePropagation();
-					},
-					true,
+					this.hd_video_handler,
 					true
 				);
 			} catch (err) {
@@ -428,10 +624,14 @@ class SmokeysUtils extends Addon {
 	}
 
 	onNotifyWindowFocus() {
-		if (!document.hidden)
-			document.querySelector(
-				'link[rel="icon"]'
-			).href = this.notify_icon_original;
+		if (!document.hidden) {
+			if (!this.cached_icon_link || !document.contains(this.cached_icon_link)) {
+				this.cached_icon_link = document.querySelector('link[rel="icon"]');
+			}
+			if (this.cached_icon_link) {
+				this.cached_icon_link.href = this.notify_icon_original;
+			}
+		}
 	}
 
 	checkExitViewerCard(close_button){
@@ -444,10 +644,42 @@ class SmokeysUtils extends Addon {
 	 * Moderator Keybinds
 	 */
 
+	executeModAction(action, close_button) {
+		const chatService = this.resolve('site.chat').ChatService.first;
+		const duration = this.settings.get('smokemotes.mod_timeout_duration');
+
+		switch (action) {
+			case 'timeout':
+				chatService.sendMessage(`/timeout ${this.ModCardData.user} ${duration}`);
+				break;
+			case 'delete':
+				chatService.sendMessage(`/delete ${this.ModCardData.message_id}`);
+				break;
+			case 'ban':
+				chatService.sendMessage(`/ban ${this.ModCardData.user}`);
+				break;
+			case 'purge':
+				chatService.sendMessage(`/timeout ${this.ModCardData.user} 1`);
+				break;
+		}
+
+		this.updateLogin();
+		this.checkExitViewerCard(close_button);
+		this.pending_mod_action = null;
+		if (this.mod_action_timeout) {
+			clearTimeout(this.mod_action_timeout);
+			this.mod_action_timeout = null;
+		}
+	}
+
 	onKeyDown(e) {
+		// Cache chat input element
+		if (!this.cached_chat_input || !document.contains(this.cached_chat_input)) {
+			this.cached_chat_input = document.querySelector('div[data-a-target="chat-input"]');
+		}
 
 		if (
-			document.activeElement == document.querySelector('div[data-a-target="chat-input"]') ||
+			document.activeElement == this.cached_chat_input ||
 			e.ctrlKey ||
 			e.metaKey ||
 			e.shiftKey ||
@@ -455,62 +687,77 @@ class SmokeysUtils extends Addon {
 		)
 			return;
 
-		const close_button = document.querySelector('button[data-test-selector="close-viewer-card-button"]');
+		// Cache close button
+		if (!this.cached_close_button || !document.contains(this.cached_close_button)) {
+			this.cached_close_button = document.querySelector('button[data-test-selector="close-viewer-card-button"]');
+		}
+		const close_button = this.cached_close_button;
 
 		const keyCode = e.keyCode || e.which;
+		const requireConfirm = this.settings.get('smokemotes.mod_confirm_actions');
 
+		let action = null;
 		switch (keyCode) {
 			// timeout
 			case 84:
-
-				this.resolve('site.chat').ChatService.first.sendMessage(
-					`/timeout ${this.ModCardData.user} 600`
-				);
-				this.updateLogin();
-				this.checkExitViewerCard(close_button);
-
+				action = 'timeout';
 				break;
 
-				// delete message
+			// delete message
 			case 68:
-
-				this.resolve('site.chat').ChatService.first.sendMessage(
-					`/delete ${this.ModCardData.message_id}`
-				);
-				this.updateLogin();
-				this.checkExitViewerCard(close_button);
-
+				action = 'delete';
 				break;
 
-				// ban
+			// ban
 			case 66:
-
-				this.resolve('site.chat').ChatService.first.sendMessage(
-					`/ban ${this.ModCardData.user}`
-				);
-				this.updateLogin();
-				this.checkExitViewerCard(close_button);
-
+				action = 'ban';
 				break;
 
-				// purge
+			// purge
 			case 80:
-
-				this.resolve('site.chat').ChatService.first.sendMessage(
-					`/timeout ${this.ModCardData.user} 1`
-				);
-				this.updateLogin();
-				this.checkExitViewerCard(close_button);
-
+				action = 'purge';
 				break;
 
-				// Esc key to close viewer card
+			// Esc key to close viewer card
 			case 27:
 				if (close_button) {
 					close_button.click();
 				}
+				// Clear any pending action
+				this.pending_mod_action = null;
+				if (this.mod_action_timeout) {
+					clearTimeout(this.mod_action_timeout);
+					this.mod_action_timeout = null;
+				}
+				return;
+		}
 
-				break;
+		if (!action) return;
+
+		// If confirmation is disabled, execute immediately
+		if (!requireConfirm) {
+			this.executeModAction(action, close_button);
+			return;
+		}
+
+		// If confirmation is enabled, check if this is a repeat press
+		if (this.pending_mod_action === action) {
+			// Second press - execute the action
+			this.executeModAction(action, close_button);
+		} else {
+			// First press - set pending action and wait for confirmation
+			this.pending_mod_action = action;
+
+			// Clear previous timeout if exists
+			if (this.mod_action_timeout) {
+				clearTimeout(this.mod_action_timeout);
+			}
+
+			// Reset pending action after 2 seconds
+			this.mod_action_timeout = setTimeout(() => {
+				this.pending_mod_action = null;
+				this.mod_action_timeout = null;
+			}, 2000);
 		}
 	}
 
