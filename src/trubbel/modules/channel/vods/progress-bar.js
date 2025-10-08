@@ -1,8 +1,14 @@
-const { createElement, on, off } = FrankerFaceZ.utilities.dom;
+const { createElement } = FrankerFaceZ.utilities.dom;
 
-export class ProgressBar {
+export default class ProgressBar {
   constructor(parent) {
     this.parent = parent;
+    this.settings = parent.settings;
+    this.router = parent.router;
+    this.style = parent.style;
+    this.site = parent.site;
+    this.log = parent.log;
+
     this.isActive = false;
     this.progressOverlay = null;
     this.progressBar = null;
@@ -24,33 +30,35 @@ export class ProgressBar {
   }
 
   initialize() {
-    const enabled = this.parent.settings.get("addon.trubbel.channel.vods-progress_bar");
+    const enabled = this.settings.get("addon.trubbel.channel.vods.progress_bar");
     if (enabled) {
       this.handleNavigation();
+    } else {
+      this.disableProgressBar();
     }
   }
 
   handleSettingChange(enabled) {
     if (enabled) {
-      this.parent.log.info("[VOD Progress Bar] Enabling progress bar");
+      this.log.info("[VOD Progress Bar] Enabling progress bar");
       this.handleNavigation();
     } else {
-      this.parent.log.info("[VOD Progress Bar] Disabling progress bar");
+      this.log.info("[VOD Progress Bar] Disabling progress bar");
       this.disableProgressBar();
     }
   }
 
   async handleNavigation() {
-    const currentRoute = this.parent.router?.current?.name;
+    const currentRoute = this.router?.current?.name;
     if (currentRoute === "video") {
-      const enabled = this.parent.settings.get("addon.trubbel.channel.vods-progress_bar");
+      const enabled = this.settings.get("addon.trubbel.channel.vods.progress_bar");
       if (enabled && !this.isActive) {
-        this.parent.log.info("[VOD Progress Bar] Entering video page, enabling progress bar");
+        this.log.info("[VOD Progress Bar] Entering video page, enabling progress bar");
         await this.waitForPlayerToLoad();
       }
     } else {
       if (this.isActive) {
-        this.parent.log.info("[VOD Progress Bar] Leaving video page, disabling progress bar");
+        this.log.info("[VOD Progress Bar] Leaving video page, disabling progress bar");
         this.disableProgressBar();
       }
     }
@@ -58,7 +66,7 @@ export class ProgressBar {
 
   async enableProgressBar() {
     if (this.isActive) return;
-    this.parent.log.info("[VOD Progress Bar] Setting up progress bar");
+    this.log.info("[VOD Progress Bar] Setting up progress bar");
     await this.createProgressOverlay();
     await this.setupObserver();
     this.isActive = true;
@@ -67,7 +75,7 @@ export class ProgressBar {
 
   disableProgressBar() {
     if (!this.isActive) return;
-    this.parent.log.info("[VOD Progress Bar] Cleaning up progress bar");
+    this.log.info("[VOD Progress Bar] Cleaning up progress bar");
     this.cleanup();
     this.isActive = false;
     this.updateCSS();
@@ -75,22 +83,22 @@ export class ProgressBar {
 
   async waitForPlayerToLoad() {
     try {
-      await this.parent.site.awaitElement("[data-a-target=\"player-controls\"]", document.documentElement, 10000);
-      await this.parent.site.awaitElement("[data-a-target=\"player-seekbar-current-time\"]", document.documentElement, 5000);
-      await this.parent.site.awaitElement("[data-a-target=\"player-seekbar-duration\"]", document.documentElement, 5000);
-      await this.parent.site.awaitElement(".video-player__container", document.documentElement, 5000);
+      await this.site.awaitElement("[data-a-target=\"player-controls\"]", document.documentElement, 10000);
+      await this.site.awaitElement("[data-a-target=\"player-seekbar-current-time\"]", document.documentElement, 5000);
+      await this.site.awaitElement("[data-a-target=\"player-seekbar-duration\"]", document.documentElement, 5000);
+      await this.site.awaitElement(".video-player__container", document.documentElement, 5000);
 
-      this.parent.log.info("[VOD Progress Bar] All required player elements found");
+      this.log.info("[VOD Progress Bar] All required player elements found");
       this.enableProgressBar();
     } catch (error) {
-      this.parent.log.warn("[VOD Progress Bar] Failed to find required player elements:", error);
+      this.log.warn("[VOD Progress Bar] Failed to find required player elements:", error);
     }
   }
 
   async createProgressOverlay() {
     if (this.progressOverlay) return;
     try {
-      const playerContainer = await this.parent.site.awaitElement(".video-player__container", document.documentElement, 5000);
+      const playerContainer = await this.site.awaitElement(".video-player__container", document.documentElement, 5000);
 
       this.progressOverlay = createElement("div", {
         className: "vod-progress-overlay"
@@ -113,9 +121,9 @@ export class ProgressBar {
       this.progressOverlay.appendChild(this.progressBar);
       playerContainer.appendChild(this.progressOverlay);
 
-      this.parent.log.info("[VOD Progress Bar] Progress bar created and positioned in video player container");
+      this.log.info("[VOD Progress Bar] Progress bar created and positioned in video player container");
     } catch (error) {
-      this.parent.log.warn("[VOD Progress Bar] Failed to find video player container:", error);
+      this.log.warn("[VOD Progress Bar] Failed to find video player container:", error);
     }
   }
 
@@ -159,7 +167,7 @@ export class ProgressBar {
         }
       }
     } catch (error) {
-      this.parent.log.warn("[VOD Progress Bar] Error updating progress:", error);
+      this.log.warn("[VOD Progress Bar] Error updating progress:", error);
     }
   }
 
@@ -194,7 +202,7 @@ export class ProgressBar {
     if (this.observer) this.observer.disconnect();
 
     try {
-      const playerControls = await this.parent.site.awaitElement("[data-a-target=\"player-controls\"]", document.documentElement, 5000);
+      const playerControls = await this.site.awaitElement("[data-a-target=\"player-controls\"]", document.documentElement, 5000);
 
       this.observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -211,7 +219,7 @@ export class ProgressBar {
 
       this.checkPlayerControlsVisibility();
     } catch (error) {
-      this.parent.log.warn("[VOD Progress Bar] Failed to find player controls for observer:", error);
+      this.log.warn("[VOD Progress Bar] Failed to find player controls for observer:", error);
     }
   }
 
@@ -235,9 +243,9 @@ export class ProgressBar {
   }
 
   updateCSS() {
-    if (this.parent.settings.get("addon.trubbel.channel.vods-progress_bar")) {
-      const position = this.parent.settings.get("addon.trubbel.channel.vods-progress_bar-position");
-      this.parent.style.set("vod-progress-bar", `
+    if (this.settings.get("addon.trubbel.channel.vods.progress_bar")) {
+      const position = this.settings.get("addon.trubbel.channel.vods.progress_bar.position");
+      this.style.set("vod-progress-bar", `
         .vod-progress-overlay {
           position: absolute;
           ${position === "top" ? "top: 0;" : "bottom: 0;"}
@@ -266,7 +274,7 @@ export class ProgressBar {
         }
       `);
     } else {
-      this.parent.style.delete("vod-progress-bar");
+      this.style.delete("vod-progress-bar");
     }
   }
 }

@@ -1,0 +1,10 @@
+query Trubbel_isFirstTimeChatter($login: String!) {
+  user(login: $login) {
+    id
+    login
+    self {
+      isFirstTimeChatter
+      __typename
+    }
+  }
+}

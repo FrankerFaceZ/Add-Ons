@@ -9,7 +9,7 @@
 		>
 			<span class="tw-button__text ffz-i-play" />
 			<div class="ffz-il-tooltip ffz-il-tooltip--right ffz-il-tooltip--align-right">
-				{{ t("setting.preview-notification", "Preview Notification") }}
+				{{ t("addon.trubbel.preview_notification", "Preview Notification") }}
 			</div>
 		</button>
 	</div>
