@@ -1,0 +1,8 @@
+query MassTermBlockerTool_GetBlockedTerms( $login: String! ) {
+    user( login: $login ) {
+        blockedTerms {
+            isModEditable
+            phrases
+        }
+    }
+}
