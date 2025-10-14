@@ -19,7 +19,8 @@ export default class Tweaks {
           div:has(> div [style] button[data-test-selector="follow-button"]),
           div:has(> button[data-test-selector="unfollow-button"]),
           div:has(> div [style] button[data-test-selector="unfollow-button"]),
-          div:has(> button[data-a-target="notifications-toggle"]) {
+          div:has(> button[data-a-target="notifications-toggle"]),
+          .metadata-layout__support div:has(> button[data-a-target="top-nav-get-bits-button"]) {
             border-radius: 0.4rem !important;
           }
         `);

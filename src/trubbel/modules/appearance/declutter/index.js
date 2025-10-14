@@ -70,6 +70,7 @@ export default class Declutter {
     this.settings.getChanges("addon.trubbel.appearance.declutter.channel.combos", val => {
       this.loadable.toggle("CombosIngressButton_Available", !val);
       this.loadable.toggle("OneTapStreakPills", !val);
+      this.loadable.toggle("OneTapStore", !val);
 
       if (val) this.parent.resolve("site.chat").chat.addTokenizer(this.tokenizer);
       else this.parent.resolve("site.chat").chat.removeTokenizer(this.tokenizer);
