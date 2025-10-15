@@ -1,7 +1,8 @@
 export const BAD_USERS = [
   "_deck", "bits", "directory", "downloads", "drops", "friends",
   "inventory", "jobs", "moderator", "p", "partner", "prime", "privacy",
-  "recaps", "search", "settings", "store", "subscriptions", "turbo", "wallet"
+  "recaps", "search", "settings", "store", "subs", "subscriptions",
+  "turbo", "unsubscribe", "wallet"
 ];
 
 export const ErrorCodes = ["1000", "2000", "3000", "4000", "5000"];

@@ -9,6 +9,7 @@ import PopoutChatName from "../../modules/channel/chat/popout-header-name";
 import RaidMessage from "../../modules/channel/chat/raid-message";
 import RaidPreview from "../../modules/channel/chat/raid-preview";
 import RecentMessages from "../../modules/channel/chat/recent-messages";
+import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import TimestampHandler from "../../modules/channel/chat/timestamps";
 
@@ -40,6 +41,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage = new RaidMessage(this);
     this.raidPreview = new RaidPreview(this);
     this.recentMessages = new RecentMessages(this);
+    this.sharedChatMessage = new SharedChatMessage(this);
     this.steamInspect = new SteamInspect(this);
     this.timestampHandler = new TimestampHandler(this);
 
@@ -258,6 +260,20 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Shared Chat - Hide shared messages
+    this.settings.add("addon.trubbel.channel.chat.shared_chat.hide-message", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Shared Chat",
+        title: "Hide shared messages",
+        component: "setting-check-box"
+      },
+      changed: val => this.sharedChatMessage.handleSettingChange(val)
+    });
+
+
+
     // Channel - Chat - Timestamp - Display missing timestamps
     this.settings.add("addon.trubbel.channel.chat.timestamps.add_missing", {
       default: false,
@@ -341,6 +357,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage.initialize();
     this.raidPreview.initialize();
     this.recentMessages.initialize();
+    this.sharedChatMessage.initialize();
     this.steamInspect.initialize();
     this.timestampHandler.initialize();
   }
@@ -357,6 +374,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage.handleNavigation();
     this.raidPreview.handleNavigation();
     this.recentMessages.handleNavigation();
+    this.sharedChatMessage.handleNavigation();
     this.steamInspect.handleNavigation();
     this.timestampHandler.handleNavigation();
   }
