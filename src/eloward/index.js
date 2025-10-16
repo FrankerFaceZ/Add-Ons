@@ -57,10 +57,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 	onEnable() {
 		this.log.info('🚀 EloWard: Starting initialization...');
-
+		
 		const chromeExtDetectedBody = document.body?.getAttribute('data-eloward-chrome-ext') === 'active';
 		const chromeExtDetectedHtml = document.documentElement?.getAttribute('data-eloward-chrome-ext') === 'active';
-
+		
 		if (chromeExtDetectedBody || chromeExtDetectedHtml) {
 			this.chromeExtensionDetected = true;
 			this.log.info('🔌 EloWard: Chrome extension detected - FFZ addon disabled for this session');
@@ -73,30 +73,36 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		this.on('chat:room-add', this.onRoomAdd, this);
 		this.on('chat:room-remove', this.onRoomRemove, this);
 		this.on('site.context:changed', this.onContextChanged, this);
-
+		
 		this.chat.addTokenizer({
 			type: 'eloward-ranks',
 			process: this.processMessage.bind(this)
 		});
-
+		
 		this.initializeExistingRooms();
 	}
 
 	initializeBasicInfrastructure() {
 		this.badgeStyleElement = document.createElement('style');
 		this.badgeStyleElement.id = 'eloward-badge-styles';
-		this.badgeStyleElement.textContent = this.generateRankSpecificCSS();
+		this.badgeStyleElement.textContent = `${this.generateRankSpecificCSS()}
+			/* EloWard tooltip line weights */
+			.eloward-tt { display:flex; flex-direction:column; gap:2px; }
+			.eloward-tt .rank   { font-weight: 600; }
+			.eloward-tt .muted  { opacity: .8; font-weight: 500; }
+			.eloward-tt .hint   { opacity: .6; font-weight: 500; }
+		`;
 		document.head.appendChild(this.badgeStyleElement);
 	}
 
-	getBadgeData(tier, isAnimated = false, rankData = null) {
+	getBadgeData(tier, isAnimated = false) {
 		const extension = isAnimated ? '.webp' : '.png';
 		const suffix = isAnimated ? '_premium' : '';
 		const badgeUrl = `https://eloward-cdn.unleashai.workers.dev/lol/${tier}${suffix}${extension}`;
-
+		
 		return {
 			id: tier,
-			title: rankData ? this.formatRankText(rankData) : tier.charAt(0).toUpperCase() + tier.slice(1),
+			title: '',                // ⬅️ empty so FFZ doesn't add a top line
 			slot: 777,
 			image: badgeUrl,
 			urls: {
@@ -105,55 +111,86 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				4: badgeUrl
 			},
 			svg: false,
-			no_invert: true,
-			click_handler: rankData ? () => this.openOpGG(rankData) : null,
-			tooltipExtra: rankData ? () => this.createTooltipExtra(rankData) : null
+			tooltipExtra: this.createTooltipHandler.bind(this),
+			click_handler: this.handleBadgeClick.bind(this)
 		};
 	}
 
-	createTooltipExtra(rankData) {
-		const container = document.createElement('div');
-		container.className = 'eloward-tooltip-extra';
-
-		if (rankData.summonerName) {
-			const summonerLine = document.createElement('div');
-			summonerLine.className = 'eloward-tooltip-summoner';
-			summonerLine.textContent = rankData.summonerName;
-			container.appendChild(summonerLine);
-		}
-
-		const displayRegion = this.getDisplayRegion(rankData.region);
-		if (displayRegion) {
-			const regionLine = document.createElement('div');
-			regionLine.className = 'eloward-tooltip-region';
-			regionLine.textContent = displayRegion;
-			container.appendChild(regionLine);
-		}
-
-		const hintLine = document.createElement('div');
-		hintLine.className = 'eloward-tooltip-hint';
-		hintLine.textContent = 'Click to view OP.GG';
-		container.appendChild(hintLine);
-
-		return container;
-	}
-
-	getBadgeId(tier, isAnimated = false) {
+	getBadgeId(tier, isAnimated = false) { 
 		const suffix = isAnimated ? '-premium' : '';
 		return `addon.eloward.rank-${tier}${suffix}`;
 	}
 
-	openOpGG(rankData) {
-		if (!rankData?.summonerName || !rankData?.region) return;
+	createTooltipHandler(user) {
+		try {
+			const username = user?.login || user?.user_login;
+			if (!username) return null;
 
-		const opGGRegion = this.regionMapping[rankData.region];
-		if (!opGGRegion) return;
+			const cachedRank = this.getCachedRank(username);
+			if (!cachedRank) return null;
 
-		const encodedName = encodeURIComponent(rankData.summonerName.split('#')[0]);
-		const tagLine = rankData.summonerName.split('#')[1] || rankData.region.toUpperCase();
-		const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
+			const rankText = this.formatRankText(cachedRank);          // line 1
+			const summonerName = cachedRank.summonerName || null;      // line 2
+			const region = this.getDisplayRegion(cachedRank.region);    // line 3
 
-		window.open(opGGUrl, '_blank');
+			// Build a small DOM tooltip so we can style line weight/opacity.
+			const wrap = document.createElement('div');
+			wrap.className = 'eloward-tt';
+
+			if (rankText) {
+				const l1 = document.createElement('div');
+				l1.className = 'rank';
+				l1.textContent = rankText;
+				wrap.appendChild(l1);
+			}
+
+			if (summonerName) {
+				const l2 = document.createElement('div');
+				l2.className = 'muted';
+				l2.textContent = summonerName;
+				wrap.appendChild(l2);
+			}
+
+			if (region) {
+				const l3 = document.createElement('div');
+				l3.className = 'muted';
+				l3.textContent = region;
+				wrap.appendChild(l3);
+			}
+
+			const l4 = document.createElement('div');
+			l4.className = 'hint';
+			l4.textContent = 'Click to view OP.GG';
+			wrap.appendChild(l4);
+
+			return wrap;
+		} catch {
+			return null;
+		}
+	}
+
+	// Removed DOM tooltip builder; we rely on FFZ tooltipExtra (string) for robust cross-theme tooltips
+
+	// eslint-disable-next-line no-unused-vars
+	handleBadgeClick(_user_id, user_login, _room_id, _room_login, _badge_data, _event) {
+		try {
+			if (!user_login) return null;
+			
+			const cachedRank = this.getCachedRank(user_login);
+			if (!cachedRank?.summonerName || !cachedRank?.region) return null;
+			
+			const opGGRegion = this.regionMapping[cachedRank.region];
+			if (!opGGRegion) return null;
+			
+			const encodedName = encodeURIComponent(cachedRank.summonerName.split('#')[0]);
+			const tagLine = cachedRank.summonerName.split('#')[1] || cachedRank.region.toUpperCase();
+			const opGGUrl = `https://op.gg/lol/summoners/${opGGRegion}/${encodedName}-${tagLine}`;
+			
+			return opGGUrl;
+		} catch (error) {
+			console.warn('EloWard: Error handling badge click:', error);
+			return null;
+		}
 	}
 
 	initializeRankBadges() {
@@ -319,97 +356,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				}
 			}
 		`;
-
-		css += `
-			.ffz-tooltip.ffz--tooltip-badge {
-				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-				font-size: 13px !important;
-				padding: 8px 12px !important;
-			}
-
-			.eloward-tooltip-extra {
-				margin-top: 4px !important;
-			}
-
-			.eloward-tooltip-summoner {
-				font-weight: 500 !important;
-				font-size: 12px !important;
-				margin-bottom: 2px !important;
-			}
-
-			.eloward-tooltip-region {
-				font-weight: 500 !important;
-				font-size: 12px !important;
-				margin-bottom: 6px !important;
-			}
-
-			.eloward-tooltip-hint {
-				font-size: 10px !important;
-				font-style: italic !important;
-				margin-top: 6px !important;
-				padding-top: 6px !important;
-				border-top: 1px solid rgba(128, 128, 128, 0.2) !important;
-			}
-
-			.tw-root--theme-dark .ffz-tooltip.ffz--tooltip-badge,
-			html[data-theme="dark"] .ffz-tooltip.ffz--tooltip-badge,
-			body.dark .ffz-tooltip.ffz--tooltip-badge {
-				background-color: #18181b !important;
-				color: #efeff1 !important;
-				border-color: #3a3a3d !important;
-			}
-
-			.tw-root--theme-dark .eloward-tooltip-summoner,
-			html[data-theme="dark"] .eloward-tooltip-summoner,
-			body.dark .eloward-tooltip-summoner,
-			.tw-root--theme-dark .eloward-tooltip-region,
-			html[data-theme="dark"] .eloward-tooltip-region,
-			body.dark .eloward-tooltip-region {
-				color: #adadb8 !important;
-			}
-
-			.tw-root--theme-dark .eloward-tooltip-hint,
-			html[data-theme="dark"] .eloward-tooltip-hint,
-			body.dark .eloward-tooltip-hint {
-				color: #848494 !important;
-			}
-
-			.tw-root--theme-dark .eloward-tooltip-hint,
-			html[data-theme="dark"] .eloward-tooltip-hint,
-			body.dark .eloward-tooltip-hint {
-				border-top-color: rgba(255, 255, 255, 0.1) !important;
-			}
-
-			.tw-root--theme-light .ffz-tooltip.ffz--tooltip-badge,
-			html[data-theme="light"] .ffz-tooltip.ffz--tooltip-badge,
-			body:not(.dark) .ffz-tooltip.ffz--tooltip-badge {
-				background-color: #ffffff !important;
-				color: #0e0e10 !important;
-				border-color: #dedee3 !important;
-			}
-
-			.tw-root--theme-light .eloward-tooltip-summoner,
-			html[data-theme="light"] .eloward-tooltip-summoner,
-			body:not(.dark) .eloward-tooltip-summoner,
-			.tw-root--theme-light .eloward-tooltip-region,
-			html[data-theme="light"] .eloward-tooltip-region,
-			body:not(.dark) .eloward-tooltip-region {
-				color: #53535f !important;
-			}
-
-			.tw-root--theme-light .eloward-tooltip-hint,
-			html[data-theme="light"] .eloward-tooltip-hint,
-			body:not(.dark) .eloward-tooltip-hint {
-				color: #848494 !important;
-			}
-
-			.tw-root--theme-light .eloward-tooltip-hint,
-			html[data-theme="light"] .eloward-tooltip-hint,
-			body:not(.dark) .eloward-tooltip-hint {
-				border-top-color: rgba(0, 0, 0, 0.1) !important;
-			}
-		`;
-
+		
 		return css;
 	}
 
@@ -507,8 +454,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const isAnimated = rankData.animate_badge || false;
 		const badgeId = this.getBadgeId(tier, isAnimated);
 		const ffzUser = this.chat.getUser(userId);
-		const badgeData = this.getBadgeData(tier, isAnimated, rankData);
 
+		const badgeData = this.getBadgeData(tier, isAnimated);
+		// badgeData.title = formattedRankText || 'UNRANKED';
+		badgeData.title = '';  // ⬅️ keep it empty so only our styled tooltip shows
+		
 		this.badges.loadBadgeData(badgeId, badgeData);
 
 		if (!ffzUser.getBadge(badgeId)) {
