@@ -321,7 +321,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		`;
 
 		css += `
-			/* EloWard FFZ Tooltip Styling - Reversed Colors & Enhanced Content */
 			.ffz-tooltip.ffz--tooltip-badge {
 				font-family: Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 				font-size: 13px !important;
@@ -352,7 +351,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				border-top: 1px solid rgba(128, 128, 128, 0.2) !important;
 			}
 
-			/* Dark Mode - Dark tooltip background (reversed) */
 			.tw-root--theme-dark .ffz-tooltip.ffz--tooltip-badge,
 			html[data-theme="dark"] .ffz-tooltip.ffz--tooltip-badge,
 			body.dark .ffz-tooltip.ffz--tooltip-badge {
@@ -382,7 +380,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				border-top-color: rgba(255, 255, 255, 0.1) !important;
 			}
 
-			/* Light Mode - Light tooltip background (reversed) */
 			.tw-root--theme-light .ffz-tooltip.ffz--tooltip-badge,
 			html[data-theme="light"] .ffz-tooltip.ffz--tooltip-badge,
 			body:not(.dark) .ffz-tooltip.ffz--tooltip-badge {
