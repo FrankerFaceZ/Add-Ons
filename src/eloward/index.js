@@ -339,8 +339,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 
 			.eloward-tooltip-region {
-				font-weight: 400 !important;
-				font-size: 11px !important;
+				font-weight: 500 !important;
+				font-size: 12px !important;
 				margin-bottom: 6px !important;
 			}
 
@@ -363,15 +363,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 			.tw-root--theme-dark .eloward-tooltip-summoner,
 			html[data-theme="dark"] .eloward-tooltip-summoner,
-			body.dark .eloward-tooltip-summoner {
+			body.dark .eloward-tooltip-summoner,
+			.tw-root--theme-dark .eloward-tooltip-region,
+			html[data-theme="dark"] .eloward-tooltip-region,
+			body.dark .eloward-tooltip-region {
 				color: #adadb8 !important;
 			}
 
-			.tw-root--theme-dark .eloward-tooltip-region,
 			.tw-root--theme-dark .eloward-tooltip-hint,
-			html[data-theme="dark"] .eloward-tooltip-region,
 			html[data-theme="dark"] .eloward-tooltip-hint,
-			body.dark .eloward-tooltip-region,
 			body.dark .eloward-tooltip-hint {
 				color: #848494 !important;
 			}
@@ -393,15 +393,15 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 
 			.tw-root--theme-light .eloward-tooltip-summoner,
 			html[data-theme="light"] .eloward-tooltip-summoner,
-			body:not(.dark) .eloward-tooltip-summoner {
+			body:not(.dark) .eloward-tooltip-summoner,
+			.tw-root--theme-light .eloward-tooltip-region,
+			html[data-theme="light"] .eloward-tooltip-region,
+			body:not(.dark) .eloward-tooltip-region {
 				color: #53535f !important;
 			}
 
-			.tw-root--theme-light .eloward-tooltip-region,
 			.tw-root--theme-light .eloward-tooltip-hint,
-			html[data-theme="light"] .eloward-tooltip-region,
 			html[data-theme="light"] .eloward-tooltip-hint,
-			body:not(.dark) .eloward-tooltip-region,
 			body:not(.dark) .eloward-tooltip-hint {
 				color: #848494 !important;
 			}
