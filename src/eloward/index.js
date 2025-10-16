@@ -15,7 +15,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			maxCacheSize: 500
 		};
 
-		// Region mapping for op.gg URLs
 		this.regionMapping = {
 			'na1': 'na', 'euw1': 'euw', 'eun1': 'eune', 'kr': 'kr', 'br1': 'br',
 			'jp1': 'jp', 'la1': 'lan', 'la2': 'las', 'oc1': 'oce', 'tr1': 'tr',
@@ -56,7 +55,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	onEnable() {
-		this.log.info('🚀 EloWard: Starting initialization...');
 		
 		const chromeExtDetectedBody = document.body?.getAttribute('data-eloward-chrome-ext') === 'active';
 		const chromeExtDetectedHtml = document.documentElement?.getAttribute('data-eloward-chrome-ext') === 'active';
@@ -67,7 +65,6 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			return;
 		}
 
-		this.log.info('🔌 EloWard: No Chrome extension detected - proceeding with FFZ addon');
 		this.initializeBasicInfrastructure();
 		this.initializeRankBadges();
 		this.on('chat:room-add', this.onRoomAdd, this);
@@ -102,7 +99,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		
 		return {
 			id: tier,
-			title: '',                // ⬅️ empty so FFZ doesn't add a top line
+			title: '',
 			slot: 777,
 			image: badgeUrl,
 			urls: {
@@ -129,11 +126,10 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			const cachedRank = this.getCachedRank(username);
 			if (!cachedRank) return null;
 
-			const rankText = this.formatRankText(cachedRank);          // line 1
-			const summonerName = cachedRank.summonerName || null;      // line 2
-			const region = this.getDisplayRegion(cachedRank.region);    // line 3
+			const rankText = this.formatRankText(cachedRank);
+			const summonerName = cachedRank.summonerName || null;
+			const region = this.getDisplayRegion(cachedRank.region);
 
-			// Build a small DOM tooltip so we can style line weight/opacity.
 			const wrap = document.createElement('div');
 			wrap.className = 'eloward-tt';
 
@@ -194,14 +190,11 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 	}
 
 	initializeRankBadges() {
-		// Initialize both static and animated badges for all tiers
 		for (const tier of this.rankTiers) {
-			// Static badge
 			const staticBadgeId = this.getBadgeId(tier, false);
 			const staticBadgeData = this.getBadgeData(tier, false);
 			this.badges.loadBadgeData(staticBadgeId, staticBadgeData);
 			
-			// Animated badge
 			const animatedBadgeId = this.getBadgeId(tier, true);
 			const animatedBadgeData = this.getBadgeData(tier, true);
 			this.badges.loadBadgeData(animatedBadgeId, animatedBadgeData);
@@ -249,8 +242,8 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				this.addUserBadge(userId, username, rankData);
 				this.incrementMetric('successful_lookup', roomLogin);
 			}
-		} catch (error) {
-			// Silent fail for 404s and other errors
+		} catch {
+			// Silent fail
 		}
 	}
 
@@ -456,8 +449,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 		const ffzUser = this.chat.getUser(userId);
 
 		const badgeData = this.getBadgeData(tier, isAnimated);
-		// badgeData.title = formattedRankText || 'UNRANKED';
-		badgeData.title = '';  // ⬅️ keep it empty so only our styled tooltip shows
+		badgeData.title = '';
 		
 		this.badges.loadBadgeData(badgeId, badgeData);
 
@@ -628,7 +620,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 			}
 			
 			return isActive;
-		} catch (error) {
+		} catch {
 			this.log.warn(`⚠️ EloWard: Failed to check status for ${channelName}`);
 			return false;
 		}
@@ -643,7 +635,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ channel_name: channelName.toLowerCase() })
 			});
-		} catch (error) {
+		} catch {
 			// Silent fail
 		}
 	}
@@ -704,7 +696,7 @@ class EloWardFFZAddon extends FrankerFaceZ.utilities.addon.Addon {
 				this.log.info(`❓ EloWard: No game category found for ${channelName}`);
 				return false;
 			}
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}
