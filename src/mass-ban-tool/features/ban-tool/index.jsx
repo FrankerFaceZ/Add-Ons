@@ -52,13 +52,13 @@ export class MassBanTool {
 
                         <div class="tw-mg-y-05">
                             <div class="ffz--widget ffz--select-box">
-                                <div class="tw-flex tw-align-items-start ffz-mmu-mass-ban-tool-upload-field">
+                                <div class="tw-flex tw-align-items-center ffz-mmu-mass-ban-tool-upload-field">
                                     <label class="tw-mg-y-05" for="ffz-mmu-mass-ban-tool-upload-file">Upload Users List File</label>
                                 </div>
 
                                 <section class="tw-c-text-alt-2">
                                     <div>
-                                        <p>Optionally you can upload a <code>.txt</code> file here to populate the Users List. Make sure your list consists of one username per line.</p>
+                                        <p>Optionally you can upload a <code>.csv</code> or <code>.txt</code> file here to populate the Users List. Make sure your list consists of one username per line/row.</p>
                                     </div>
                                 </section>
                             </div>
@@ -66,10 +66,10 @@ export class MassBanTool {
 
                         <div class="tw-mg-y-05">
                             <div class="ffz--widget ffz--select-box">
-                                <div id="ffz-mmu-mass-ban-tool-recent-followers-count-field" class="tw-flex tw-align-items-start ffz-mmu-mass-ban-tool-recent-followers-count-field">
+                                <div id="ffz-mmu-mass-ban-tool-recent-followers-count-field" class="tw-flex tw-align-items-center ffz-mmu-mass-ban-tool-recent-followers-count-field">
                                     <label class="tw-mg-y-05" for="ffz-mmu-mass-ban-tool-recent-followers-count-import">Recent Followers<br /><span class="ffz-mmu-sub-label">(by count)</span></label>
 
-                                    <div class="tw-flex tw-mg-t-2 tw-align-items-start ffz-mmu-mass-ban-tool-recent-followers-count-inputs ffz-mmu-mass-ban-tool-recent-followers-inputs"></div>
+                                    <div class="tw-flex ffz-mmu-mass-ban-tool-recent-followers-count-inputs ffz-mmu-mass-ban-tool-recent-followers-inputs"></div>
 
                                     { retrievingRecentFollowers( 'count' ) }
                                 </div>
@@ -84,10 +84,10 @@ export class MassBanTool {
 
                         <div class="tw-mg-y-05">
                             <div class="ffz--widget ffz--select-box">
-                                <div id="ffz-mmu-mass-ban-tool-recent-followers-timestamp-field" class="tw-flex tw-align-items-start ffz-mmu-mass-ban-tool-recent-followers-timestamp-field">
+                                <div id="ffz-mmu-mass-ban-tool-recent-followers-timestamp-field" class="tw-flex tw-align-items-center ffz-mmu-mass-ban-tool-recent-followers-timestamp-field">
                                     <label class="tw-mg-y-05">Recent Followers<br /><span class="ffz-mmu-sub-label">(by follow time)</span></label>
 
-                                    <div class="tw-mg-t-2 ffz-mmu-mass-ban-tool-recent-followers-timestamp-inputs ffz-mmu-mass-ban-tool-recent-followers-inputs">
+                                    <div class="ffz-mmu-mass-ban-tool-recent-followers-timestamp-inputs ffz-mmu-mass-ban-tool-recent-followers-inputs">
 
                                         <label class="tw-font-size-7 tw-mg-l-05" for="ffz-mmu-mass-ban-tool-recent-followers-timestamp-import-after-value">After:</label>
 

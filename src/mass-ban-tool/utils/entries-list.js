@@ -1,9 +1,9 @@
 const { openFile } = FrankerFaceZ.utilities.dom;
 
 export async function openFileSelector( MMU, tool ) {
-    const entriesListFile = await openFile( 'text/plain', false );
+    const entriesListFile = await openFile( 'text/csv,text/plain', false );
 
-    if ( entriesListFile.type === 'text/plain' ) {
+    if ( [ 'text/csv', 'text/plain' ].includes( entriesListFile.type ) ) {
         entriesListFile.text()
             .then( ( contents ) => {
                 const entriesListArray = contents.replace( /\r\n/gm, '\n' ).match( /^.*$/gm );

@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "TurtegBot",
+	"name": "TurtegBot",
+	"author": "Xslash58",
+	"description": "Adds TurtegBot badges and command suggestions.",
+	"website": "https://turteg.xslash.ovh",
+	"settings": "add_ons.turtegbot",
+	"created": "2025-09-13T22:42:51.925Z",
+	"updated": "2025-10-05T02:12:43.454Z"
+}

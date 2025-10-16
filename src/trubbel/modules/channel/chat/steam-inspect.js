@@ -1,6 +1,13 @@
-export class SteamInspect {
+import { BAD_USERS } from "../../../utilities/constants/types";
+
+export default class SteamInspect {
   constructor(parent) {
     this.parent = parent;
+    this.settings = parent.settings;
+    this.router = parent.router;
+    this.site = parent.site;
+    this.log = parent.log;
+
     this.isActive = false;
 
     this.handleNavigation = this.handleNavigation.bind(this);
@@ -68,33 +75,47 @@ export class SteamInspect {
   }
 
   initialize() {
-    const enabled = this.parent.settings.get("addon.trubbel.channel.chat-steam");
+    const enabled = this.settings.get("addon.trubbel.channel.chat.links.steam_inspect");
     if (enabled) {
       this.handleNavigation();
+    } else {
+      this.disableSteamInspect();
     }
   }
 
   handleSettingChange(enabled) {
     if (enabled) {
-      this.parent.log.info("[Steam Inspect] Enabling clickable Steam inspect links");
+      this.log.info("[Steam Inspect] Enabling clickable Steam inspect links");
       this.handleNavigation();
     } else {
-      this.parent.log.info("[Steam Inspect] Disabling clickable Steam inspect links");
+      this.log.info("[Steam Inspect] Disabling clickable Steam inspect links");
       this.disableSteamInspect();
     }
   }
 
   handleNavigation() {
-    const chatRoutes = this.parent.site.constructor.CHAT_ROUTES;
-    if (chatRoutes.includes(this.parent.router?.current?.name)) {
-      const enabled = this.parent.settings.get("addon.trubbel.channel.chat-steam");
+    const chatRoutes = this.site.constructor.CHAT_ROUTES;
+    const currentRoute = this.router?.current?.name;
+
+    let pathname;
+
+    if (this.router?.match && this.router.match[1]) {
+      pathname = this.router.match[1];
+    } else {
+      const location = this.router?.location;
+      const segment = location?.split("/").filter(segment => segment.length > 0);
+      pathname = segment?.[0];
+    }
+
+    if (chatRoutes.includes(currentRoute) && pathname && !BAD_USERS.includes(pathname)) {
+      const enabled = this.settings.get("addon.trubbel.channel.chat.links.steam_inspect");
       if (enabled && !this.isActive) {
-        this.parent.log.info("[Steam Inspect] Entering user page, enabling Steam inspect links");
+        this.log.info("[Steam Inspect] Entering user page, enabling Steam inspect links");
         this.enableSteamInspect();
       }
     } else {
       if (this.isActive) {
-        this.parent.log.info("[Steam Inspect] Leaving user page, disabling Steam inspect links");
+        this.log.info("[Steam Inspect] Leaving user page, disabling Steam inspect links");
         this.disableSteamInspect();
       }
     }
@@ -102,7 +123,7 @@ export class SteamInspect {
 
   enableSteamInspect() {
     if (this.isActive) return;
-    this.parent.log.info("[Steam Inspect] Adding Steam inspect tokenizer");
+    this.log.info("[Steam Inspect] Adding Steam inspect tokenizer");
     this.parent.resolve("site.chat").chat.addTokenizer(this.steamInspectLink);
     this.parent.emit("chat:update-lines");
     this.isActive = true;
@@ -110,7 +131,7 @@ export class SteamInspect {
 
   disableSteamInspect() {
     if (!this.isActive) return;
-    this.parent.log.info("[Steam Inspect] Removing Steam inspect tokenizer");
+    this.log.info("[Steam Inspect] Removing Steam inspect tokenizer");
     this.parent.resolve("site.chat").chat.removeTokenizer(this.steamInspectLink);
     this.parent.emit("chat:update-lines");
     this.isActive = false;

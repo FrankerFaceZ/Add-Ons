@@ -138,7 +138,7 @@ setupPlayerControlsObserver();
 
 export function notification(icon = "", message, timeout = 6000) {
   const ffz = FrankerFaceZ.get();
-  const position = ffz.settings.get("addon.trubbel.appearance.notifications-position");
+  const position = ffz.settings.get("addon.trubbel.appearance.notifications.custom.position");
 
   const isPlayerPosition = position.startsWith("player-");
   const videoPlayer = isPlayerPosition ? document.querySelector(".video-player") : null;
@@ -153,11 +153,11 @@ export function notification(icon = "", message, timeout = 6000) {
   const notification = createElement("div", {
     className: `dynamic-notification position-${effectivePosition}`,
     style: `
-      background-color: ${ffz.settings.get("addon.trubbel.appearance.notifications-background-color") || "rgb(0, 0, 0)"};
-      color: ${ffz.settings.get("addon.trubbel.appearance.notifications-text-color") || "#ffffff"};
-      padding: ${ffz.settings.get("addon.trubbel.appearance.notifications-padding") ? "4" : "8"}px;
+      background-color: ${ffz.settings.get("addon.trubbel.appearance.notifications.custom.background_color") || "rgb(0, 0, 0)"};
+      color: ${ffz.settings.get("addon.trubbel.appearance.notifications.custom.text_color") || "#ffffff"};
+      padding: ${ffz.settings.get("addon.trubbel.appearance.notifications.custom.padding") ? "4" : "8"}px;
       border-radius: 5px;
-      font-size: ${ffz.settings.get("addon.trubbel.appearance.notifications-font-size") || "16"}px;
+      font-size: ${ffz.settings.get("addon.trubbel.appearance.notifications.custom.font_size") || "16"}px;
       font-family: monospace;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
       gap: 4px;

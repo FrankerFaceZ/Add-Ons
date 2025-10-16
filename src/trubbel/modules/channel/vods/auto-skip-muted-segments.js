@@ -1,9 +1,14 @@
 import { formatTime } from "../../../utilities/format";
 import { notification } from "../../../utilities/notification";
 
-export class AutoSkipMutedSegments {
+export default class AutoSkipMutedSegments {
   constructor(parent) {
     this.parent = parent;
+    this.settings = parent.settings;
+    this.router = parent.router;
+    this.site = parent.site;
+    this.log = parent.log;
+
     this.isActive = false;
     this.currentVideoUrl = null;
     this.video = null;
@@ -30,18 +35,20 @@ export class AutoSkipMutedSegments {
   }
 
   initialize() {
-    const enabled = this.parent.settings.get("addon.trubbel.channel.vods-skip_muted_segments");
+    const enabled = this.settings.get("addon.trubbel.channel.vods.segments.skip_muted");
     if (enabled) {
       this.handleNavigation();
+    } else {
+      this.disableAutoSkip();
     }
   }
 
   handleSettingChange(enabled) {
     if (enabled) {
-      this.parent.log.info("[Auto Skip Muted Segments] Enabling auto-skip muted segments");
+      this.log.info("[Auto Skip Muted Segments] Enabling auto-skip muted segments");
       this.handleNavigation();
     } else {
-      this.parent.log.info("[Auto Skip Muted Segments] Disabling auto-skip muted segments");
+      this.log.info("[Auto Skip Muted Segments] Disabling auto-skip muted segments");
       this.disableAutoSkip();
     }
   }
@@ -52,43 +59,38 @@ export class AutoSkipMutedSegments {
   }
 
   handleNavigation() {
-    const currentRoute = this.parent.router?.current?.name;
-    const currentVideoUrl = this.parent.router?.location;
+    const currentRoute = this.router?.current?.name;
+    const currentVideoUrl = this.router?.location;
     if (currentRoute === "video") {
-      const enabled = this.parent.settings.get("addon.trubbel.channel.vods-skip_muted_segments");
+      const enabled = this.settings.get("addon.trubbel.channel.vods.segments.skip_muted");
 
       if (enabled) {
-        // Check if we've switched to a different video
         if (this.currentVideoUrl !== currentVideoUrl) {
           const oldVideoId = this.getVideoId(this.currentVideoUrl);
           const newVideoId = this.getVideoId(currentVideoUrl);
-          this.parent.log.info(`[Auto Skip Muted Segments] Video changed: ${oldVideoId} → ${newVideoId}`);
+          this.log.info(`[Auto Skip Muted Segments] Video changed: ${oldVideoId} → ${newVideoId}`);
 
-          // If we were already active, disable first to clean up
           if (this.isActive) {
-            this.parent.log.info("[Auto Skip Muted Segments] Cleaning up previous video");
+            this.log.info("[Auto Skip Muted Segments] Cleaning up previous video");
             this.disableAutoSkip();
           }
 
-          // Update tracked URL and enable for new video
           this.currentVideoUrl = currentVideoUrl;
-          this.parent.log.info(`[Auto Skip Muted Segments] Enabling for new video: ${newVideoId}`);
+          this.log.info(`[Auto Skip Muted Segments] Enabling for new video: ${newVideoId}`);
           this.enableAutoSkip();
         } else if (!this.isActive) {
-          // Same video but not active (e.g., setting was just enabled)
           const videoId = this.getVideoId(currentVideoUrl);
-          this.parent.log.info(`[Auto Skip Muted Segments] Entering video page, enabling auto-skip for: ${videoId}`);
+          this.log.info(`[Auto Skip Muted Segments] Entering video page, enabling auto-skip for: ${videoId}`);
           this.currentVideoUrl = currentVideoUrl;
           this.enableAutoSkip();
         }
       } else if (this.isActive) {
-        // Setting is disabled but we're still active
-        this.parent.log.info("[Auto Skip Muted Segments] Setting disabled, disabling auto-skip");
+        this.log.info("[Auto Skip Muted Segments] Setting disabled, disabling auto-skip");
         this.disableAutoSkip();
       }
     } else {
       if (this.isActive) {
-        this.parent.log.info("[Auto Skip Muted Segments] Leaving video page, disabling auto-skip");
+        this.log.info("[Auto Skip Muted Segments] Leaving video page, disabling auto-skip");
         this.disableAutoSkip();
       }
       this.currentVideoUrl = null;
@@ -98,15 +100,13 @@ export class AutoSkipMutedSegments {
   async enableAutoSkip() {
     if (this.isActive) return;
 
-    this.parent.log.info("[Auto Skip Muted Segments] Setting up auto-skip muted segments");
+    this.log.info("[Auto Skip Muted Segments] Setting up auto-skip muted segments");
     this.isActive = true;
 
-    // Clear any previous segments
     this.mutedSegments = [];
     this.isSkipping = false;
     this.lastUpdateTime = 0;
 
-    // Initialize video monitoring with a delay to ensure page is loaded
     setTimeout(() => {
       this.initializeVideoMonitoring();
     }, 1000);
@@ -115,7 +115,7 @@ export class AutoSkipMutedSegments {
   disableAutoSkip() {
     if (!this.isActive) return;
 
-    this.parent.log.info("[Auto Skip Muted Segments] Removing auto-skip muted segments");
+    this.log.info("[Auto Skip Muted Segments] Removing auto-skip muted segments");
 
     if (this.video) {
       this.video.removeEventListener("timeupdate", this.onTimeUpdate);
@@ -132,7 +132,6 @@ export class AutoSkipMutedSegments {
     this.isSkipping = false;
     this.lastUpdateTime = 0;
     this.isActive = false;
-    // Note: Don't reset currentVideoUrl here as it's used for comparison in handleNavigation
   }
 
   async initializeVideoMonitoring() {
@@ -141,43 +140,36 @@ export class AutoSkipMutedSegments {
     const videoId = this.getVideoId(this.currentVideoUrl);
 
     try {
-      this.parent.log.info(`[Auto Skip Muted Segments] Waiting for video player (${videoId})...`);
-      this.video = await this.parent.site.awaitElement(".video-player video", document.documentElement, 5000);
-      this.parent.log.info(`[Auto Skip Muted Segments] Video player found (${videoId})`);
+      this.log.info(`[Auto Skip Muted Segments] Waiting for video player (${videoId})...`);
+      this.video = await this.site.awaitElement(".video-player video", document.documentElement, 5000);
+      this.log.info(`[Auto Skip Muted Segments] Video player found (${videoId})`);
 
-      this.parent.log.info(`[Auto Skip Muted Segments] Waiting for seekbar (${videoId})...`);
-      this.seekbar = await this.parent.site.awaitElement(".seekbar-bar", document.documentElement, 5000);
-      this.parent.log.info(`[Auto Skip Muted Segments] Seekbar found (${videoId})`);
+      this.log.info(`[Auto Skip Muted Segments] Waiting for seekbar (${videoId})...`);
+      this.seekbar = await this.site.awaitElement(".seekbar-bar", document.documentElement, 5000);
+      this.log.info(`[Auto Skip Muted Segments] Seekbar found (${videoId})`);
 
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Setup monitoring
       this.setupVideoMonitoring();
       this.setupSeekbarMonitoring();
 
-      // Initial segment parsing with logging
       this.mutedSegments = this.parseMutedSegments(true);
 
-      this.parent.log.info(`[Auto Skip Muted Segments] Auto-skip initialized successfully for video: ${videoId}`);
+      this.log.info(`[Auto Skip Muted Segments] Auto-skip initialized successfully for video: ${videoId}`);
 
     } catch (error) {
-      this.parent.log.error(`[Auto Skip Muted Segments] Failed to initialize auto-skip for video ${videoId}:`, error);
+      this.log.error(`[Auto Skip Muted Segments] Failed to initialize auto-skip for video ${videoId}:`, error);
     }
   }
 
   setupVideoMonitoring() {
     if (!this.video || !this.isActive) return;
 
-    // Monitor video time updates
     this.video.addEventListener("timeupdate", this.onTimeUpdate);
-
-    // Update segments when video metadata loads
     this.video.addEventListener("loadedmetadata", this.onLoadedMetadata);
-
-    // Update segments when video duration changes
     this.video.addEventListener("durationchange", this.onDurationChange);
 
-    this.parent.log.info("[Auto Skip Muted Segments] Video monitoring setup complete");
+    this.log.info("[Auto Skip Muted Segments] Video monitoring setup complete");
   }
 
   setupSeekbarMonitoring() {
@@ -197,7 +189,7 @@ export class AutoSkipMutedSegments {
     });
 
     this.observers.push(observer);
-    this.parent.log.info("[Auto Skip Muted Segments] Seekbar monitoring setup complete");
+    this.log.info("[Auto Skip Muted Segments] Seekbar monitoring setup complete");
   }
 
   onTimeUpdate() {
@@ -212,7 +204,7 @@ export class AutoSkipMutedSegments {
       const newSegments = this.parseMutedSegments();
       if (this.segmentsChanged(this.mutedSegments, newSegments)) {
         this.mutedSegments = newSegments;
-        this.parent.log.info("[Auto Skip Muted Segments] Segments updated after metadata load");
+        this.log.info("[Auto Skip Muted Segments] Segments updated after metadata load");
       }
     }, 1000);
   }
@@ -223,12 +215,11 @@ export class AutoSkipMutedSegments {
       const newSegments = this.parseMutedSegments();
       if (this.segmentsChanged(this.mutedSegments, newSegments)) {
         this.mutedSegments = newSegments;
-        this.parent.log.info("[Auto Skip Muted Segments] Segments updated after duration change");
+        this.log.info("[Auto Skip Muted Segments] Segments updated after duration change");
       }
     }, 1000);
   }
 
-  // Parse muted segments from seekbar and merge consecutive ones
   parseMutedSegments(logResults = false) {
     if (!this.seekbar || !this.video || !this.isActive) return [];
 
@@ -238,17 +229,15 @@ export class AutoSkipMutedSegments {
 
     if (!totalDuration) {
       if (logResults) {
-        this.parent.log.info("[Auto Skip Muted Segments] Video duration not available yet, no segments to parse");
+        this.log.info("[Auto Skip Muted Segments] Video duration not available yet, no segments to parse");
       }
       return [];
     }
 
-    // First, collect all individual muted segments
     seekbarSegments.forEach(segment => {
       const style = segment.style;
       const bgColor = style.backgroundColor;
 
-      // Check if this is a muted segment
       if (bgColor && bgColor.includes("rgba(212, 73, 73, 0.5)")) {
         const insetStart = style.insetInlineStart || style.left;
         const width = style.width;
@@ -268,18 +257,15 @@ export class AutoSkipMutedSegments {
 
     if (logResults) {
       if (rawSegments.length === 0) {
-        this.parent.log.info("[Auto Skip Muted Segments] No muted segments found in this video");
+        this.log.info("[Auto Skip Muted Segments] No muted segments found in this video");
       } else {
-        this.parent.log.info(`[Auto Skip Muted Segments] Found ${rawSegments.length} individual muted segments`);
+        this.log.info(`[Auto Skip Muted Segments] Found ${rawSegments.length} individual muted segments`);
       }
     }
 
     if (rawSegments.length === 0) return [];
 
-    // Sort segments by start time
     rawSegments.sort((a, b) => a.start - b.start);
-
-    // Merge consecutive/overlapping segments
     const mergedSegments = [];
     let currentBlock = { ...rawSegments[0] };
 
@@ -287,12 +273,9 @@ export class AutoSkipMutedSegments {
       const segment = rawSegments[i];
       const gap = segment.start - currentBlock.end;
 
-      // If segments are very close together (within 1 second), merge them
       if (gap <= 1.0) {
-        // Extend the current block to include this segment
         currentBlock.end = Math.max(currentBlock.end, segment.end);
       } else {
-        // Gap is too large, finish current block and start a new one
         mergedSegments.push(currentBlock);
         currentBlock = { ...segment };
       }
@@ -301,13 +284,12 @@ export class AutoSkipMutedSegments {
     mergedSegments.push(currentBlock);
 
     if (logResults && rawSegments.length > 0) {
-      this.parent.log.info(`[Auto Skip Muted Segments] Found ${rawSegments.length} individual muted segments, merged into ${mergedSegments.length} blocks:`, mergedSegments);
+      this.log.info(`[Auto Skip Muted Segments] Found ${rawSegments.length} individual muted segments, merged into ${mergedSegments.length} blocks:`, mergedSegments);
     }
 
     return mergedSegments;
   }
 
-  // Check if current time is in or approaching a muted segment
   checkForMutedSegment() {
     if (!this.video || this.isSkipping || this.mutedSegments.length === 0 || !this.isActive) return;
 
@@ -315,7 +297,6 @@ export class AutoSkipMutedSegments {
     const lookAheadTime = 0.5;
 
     for (let segment of this.mutedSegments) {
-      // Check if we're currently in the segment or about to enter it
       if (currentTime >= segment.start - lookAheadTime && currentTime < segment.end) {
         const startTime = formatTime(segment.start);
         const endTime = formatTime(segment.end);
@@ -323,9 +304,9 @@ export class AutoSkipMutedSegments {
 
         this.skipToTime(segment.end);
 
-        this.parent.log.info(`[Auto Skip Muted Segments] Skipped muted segment: ${startTime} → ${endTime} (${segmentDuration} duration)`);
+        this.log.info(`[Auto Skip Muted Segments] Skipped muted segment: ${startTime} → ${endTime} (${segmentDuration} duration)`);
 
-        if (this.parent.settings.get("addon.trubbel.channel.vods-skip_muted_segments-notification")) {
+        if (this.settings.get("addon.trubbel.channel.vods.segments.skip_muted.notification")) {
           notification("🔇", `Skipped muted segment: ${startTime} → ${endTime} (${segmentDuration} duration)`, 12000);
         }
         break;
@@ -333,20 +314,17 @@ export class AutoSkipMutedSegments {
     }
   }
 
-  // Skip to specific time
   skipToTime(time) {
     if (!this.video || this.isSkipping || !this.isActive) return;
 
     this.isSkipping = true;
     this.video.currentTime = Math.min(time + 0.1, this.video.duration);
 
-    // Reset skipping flag after a short delay
     setTimeout(() => {
       this.isSkipping = false;
     }, 1000);
   }
 
-  // Update muted segments periodically
   updateMutedSegments() {
     if (!this.isActive) return;
 
@@ -356,18 +334,16 @@ export class AutoSkipMutedSegments {
     this.lastUpdateTime = now;
     const newSegments = this.parseMutedSegments();
 
-    // Only update and log if segments have changed
     if (this.segmentsChanged(this.mutedSegments, newSegments)) {
       this.mutedSegments = newSegments;
       if (newSegments.length === 0) {
-        this.parent.log.info("[Auto Skip Muted Segments] Updated: No muted segments found");
+        this.log.info("[Auto Skip Muted Segments] Updated: No muted segments found");
       } else {
-        this.parent.log.info(`[Auto Skip Muted Segments] Updated: Found ${this.getTotalRawSegments()} individual muted segments, merged into ${newSegments.length} blocks`);
+        this.log.info(`[Auto Skip Muted Segments] Updated: Found ${this.getTotalRawSegments()} individual muted segments, merged into ${newSegments.length} blocks`);
       }
     }
   }
 
-  // Helper to check if segments have changed
   segmentsChanged(oldSegments, newSegments) {
     if (oldSegments.length !== newSegments.length) return true;
 
