@@ -40,7 +40,7 @@ export default class Tweaks {
               outline: unset !important;
             }
           }
-          .chat-wysiwyg-input__box:focus-within {
+          .chat-wysiwyg-input-box--allow-focus-style:focus-within {
             box-shadow: inset 0 0 0 var(--input-border-width-default) var(--color-border-input-focus) !important;
           }
         `);

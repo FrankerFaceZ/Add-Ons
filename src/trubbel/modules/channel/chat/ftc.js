@@ -158,7 +158,7 @@ export default class FirstTimeChatter {
 
   applyFirstTimeChatterIndicator() {
     this.style.set("trubbel-firsttimechatter-border", `
-      .chat-wysiwyg-input__box {
+      .chat-wysiwyg-input-box--allow-border-style:not(:hover):not(:focus-within) {
         box-shadow: inset 0 0 0 var(--input-border-width-small) rgb(255, 117, 230) !important;
       }
     `);
