@@ -10,10 +10,10 @@
 	"description": "↓ Lots of features ↓\n\n**Chat:**\n\n– Clickable Steam Inspect Links\n\n– Custom Commands (accountage, followage, localmod/sub etc.)\n\n– BTTV-like Moderation\n\n– Channel Name in Popout Chat\n\n– Clickable Usernames in /mods, /vips and Raid Messages\n\n**Directory:**\n\n– Display Channel Follow Dates\n\n– Display Total Followed Channels\n\n– Live Thumbnail Previews\n\n**Inventory:**\n\n– Auto Claim Drops\n\n– Collapsible Drops\n\n**Livestream:**\n\n– Auto Mute/Pause Stream (in background tabs)\n\n**Mod View:**\n\n– Activity Feed Moderation\n\n– Auto Mod View\n\n**Overall:**\n\n– Live Sidebar Previews\n\n– Yet Another Prime Reminder\n\n**Player:**\n\n– Auto Reset Player\n\n**VODs:**\n\n– Auto Skip Muted Segments\n\n– Custom Seeking\n\n– Custom Progress Bar\n\n…among other things…",
 	"author": "Trubbel",
 	"maintainer": "Trubbel",
-	"version": "4.2.2",
+	"version": "4.2.3",
 	"search_terms": "trubbel",
 	"website": "https://twitch.tv/trubbel",
 	"settings": "add_ons.trubbel_s_utilities",
 	"created": "2025-01-06T23:29:54.496Z",
-	"updated": "2025-10-15T03:35:15.090Z"
+	"updated": "2025-10-19T17:30:48.508Z"
 }

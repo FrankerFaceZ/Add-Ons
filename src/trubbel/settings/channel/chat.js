@@ -3,6 +3,7 @@ import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
 import InfoMessage from "../../modules/channel/chat/info-message";
 import ChatMarkdown from "../../modules/channel/chat/markdown";
+import MessageHighlight from "../../modules/channel/chat/message-highlight";
 import OldClipFormat from "../../modules/channel/chat/old-clip-format";
 import OldViewerList from "../../modules/channel/chat/old-viewer-list";
 import PopoutChatName from "../../modules/channel/chat/popout-header-name";
@@ -35,6 +36,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.firstTimeChatter = new FirstTimeChatter(this);
     this.infoMessage = new InfoMessage(this);
     this.chatMarkdown = new ChatMarkdown(this);
+    this.messageHighlight = new MessageHighlight(this);
     this.oldClipFormat = new OldClipFormat(this);
     this.oldViewerList = new OldViewerList(this);
     this.popoutChatName = new PopoutChatName(this);
@@ -160,6 +162,47 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.chatMarkdown.handleSettingChange(val)
+    });
+
+
+
+    // Channel - Chat - Messages - Highlight Messages on Hover
+    this.settings.add("addon.trubbel.channel.chat.messages.highlight", {
+      default: 0,
+      ui: {
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Messages",
+        title: "Highlight Messages on Hover",
+        description: "Highlight all messages from a user.",
+        component: "setting-select-box",
+        data: [
+          { value: 0, title: "Off" },
+          { value: 1, title: "Username" },
+          { value: 2, title: "Entire Message" }
+        ]
+      },
+      changed: val => this.messageHighlight.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Messages - Hover Highlight
+    this.settings.add("addon.trubbel.channel.chat.messages.highlight.color", {
+      default: "rgba(169, 112, 255, 0.5)",
+      requires: ["addon.trubbel.channel.chat.messages.highlight"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.messages.highlight"))
+          return false;
+        return val;
+      },
+      ui: {
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Messages",
+        title: "Hover Highlight",
+        description: "Background color for highlighted messages.",
+        component: "setting-color-box"
+      },
+      changed: () => {
+        if (this.messageHighlight?.currentHoveredUser) {
+          this.messageHighlight.applyHighlight(this.messageHighlight.currentHoveredUser);
+        }
+      }
     });
 
 
@@ -351,6 +394,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.firstTimeChatter.initialize();
     this.infoMessage.initialize();
     this.chatMarkdown.initialize();
+    this.messageHighlight.initialize();
     this.oldClipFormat.initialize();
     this.oldViewerList.initialize();
     this.popoutChatName.initialize();
@@ -368,6 +412,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.firstTimeChatter.handleNavigation();
     this.infoMessage.handleNavigation();
     this.chatMarkdown.handleNavigation();
+    this.messageHighlight.handleNavigation();
     this.oldClipFormat.handleNavigation();
     this.oldViewerList.handleNavigation();
     this.popoutChatName.handleNavigation();
