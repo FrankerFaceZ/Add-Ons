@@ -30,6 +30,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.inject("site.router");
     this.inject("site.apollo");
     this.inject("site.twitch_data");
+    this.inject("site.chat.scroller");
 
     this.bttvModeration = new BTTVModeration(this);
     this.customCommands = new Commands(this);

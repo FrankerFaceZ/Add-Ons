@@ -6,6 +6,7 @@ export default class MessageHighlight {
   constructor(parent) {
     this.parent = parent;
     this.settings = parent.settings;
+    this.scroller = parent.scroller;
     this.router = parent.router;
     this.style = parent.style;
     this.site = parent.site;
@@ -20,6 +21,8 @@ export default class MessageHighlight {
     this.handleSettingChange = this.handleSettingChange.bind(this);
     this.handleMessageHover = this.handleMessageHover.bind(this);
     this.handleMessageLeave = this.handleMessageLeave.bind(this);
+    this.onScrollerMount = this.onScrollerMount.bind(this);
+    this.onScrollerUnmount = this.onScrollerUnmount.bind(this);
   }
 
   initialize() {
@@ -75,7 +78,12 @@ export default class MessageHighlight {
     this.log.info("[Message Highlight] Setting up message highlight");
     this.isActive = true;
 
-    this.addEventListeners();
+    this.scroller.ChatScroller.on("mount", this.onScrollerMount, this);
+    this.scroller.ChatScroller.on("unmount", this.onScrollerUnmount, this);
+
+    for (const inst of this.scroller.ChatScroller.instances) {
+      this.onScrollerMount(inst);
+    }
   }
 
   disableMessageHighlight() {
@@ -89,42 +97,38 @@ export default class MessageHighlight {
       this.currentHoveredUser = null;
     }
 
-    this.removeEventListeners();
+    for (const inst of this.scroller.ChatScroller.instances) {
+      this.onScrollerUnmount(inst);
+    }
+
+    this.scroller.ChatScroller.off("mount", this.onScrollerMount, this);
+    this.scroller.ChatScroller.off("unmount", this.onScrollerUnmount, this);
   }
 
-  addEventListeners() {
-    const chatContainer = document.querySelector(".chat-scrollable-area__message-container");
+  onScrollerMount(inst) {
+    if (!this.isActive) return;
+
+    const node = this.scroller.fine.getChildNode(inst);
+    if (!node) return;
+
+    const chatContainer = node.querySelector(".chat-scrollable-area__message-container");
     if (chatContainer) {
       on(chatContainer, "mouseover", this.handleMessageHover);
       on(chatContainer, "mouseout", this.handleMessageLeave);
+
+      chatContainer._trubbel_highlight_attached = true;
     }
-
-    this.observer = new MutationObserver(() => {
-      const container = document.querySelector(".chat-scrollable-area__message-container");
-      if (container && !container.__trubbel_highlight_attached) {
-        container.__trubbel_highlight_attached = true;
-        on(container, "mouseover", this.handleMessageHover);
-        on(container, "mouseout", this.handleMessageLeave);
-      }
-    });
-
-    this.observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
   }
 
-  removeEventListeners() {
-    const containers = document.querySelectorAll(".chat-scrollable-area__message-container");
-    containers.forEach(container => {
-      off(container, "mouseover", this.handleMessageHover);
-      off(container, "mouseout", this.handleMessageLeave);
-      delete container.__trubbel_highlight_attached;
-    });
+  onScrollerUnmount(inst) {
+    const node = this.scroller.fine.getChildNode(inst);
+    if (!node) return;
 
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
+    const chatContainer = node.querySelector(".chat-scrollable-area__message-container");
+    if (chatContainer && chatContainer._trubbel_highlight_attached) {
+      off(chatContainer, "mouseover", this.handleMessageHover);
+      off(chatContainer, "mouseout", this.handleMessageLeave);
+      delete chatContainer._trubbel_highlight_attached;
     }
   }
 
