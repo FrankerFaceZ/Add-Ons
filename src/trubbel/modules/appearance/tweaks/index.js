@@ -72,6 +72,17 @@ export default class Tweaks {
     } else {
       this.style.delete("viewer-list-padding");
     }
+    // Appearance - Tweaks - Directory - Full-width in directory
+    if (this.settings.get("addon.trubbel.appearance.tweaks.directory.max_width")) {
+      this.style.set("directory-max-width", `
+          main.twilight-main .common-centered-column,
+          main.twilight-main .directory-header-new__info {
+            max-width: unset !important;
+          }
+        `);
+    } else {
+      this.style.delete("directory-max-width");
+    }
     // Appearance - Tweaks - Inventory - Display bigger images in the inventory page
     if (this.settings.get("addon.trubbel.appearance.tweaks.inventory.big_img")) {
       this.style.set("inv-big-img", `

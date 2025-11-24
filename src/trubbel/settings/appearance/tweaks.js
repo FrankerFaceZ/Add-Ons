@@ -80,6 +80,21 @@ export class Appearance_Tweaks extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Appearance - Tweaks - Directory - Full-width in directory
+    this.settings.add("addon.trubbel.appearance.tweaks.directory.max_width", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Tweaks >> Directory",
+        title: "Full-width in directory",
+        description: "Removes the `max-width` in the directory pages to reduce empty spaces.",
+        component: "setting-check-box"
+      },
+      changed: () => this.tweaks.updateCSS()
+    });
+
+
+
     // Appearance - Tweaks - Inventory - Display bigger images in the inventory page
     this.settings.add("addon.trubbel.appearance.tweaks.inventory.big_img", {
       default: false,
