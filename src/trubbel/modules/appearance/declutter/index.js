@@ -68,6 +68,7 @@ export default class Declutter {
 
     // Appearance - Declutter - Channel - Hide Combos
     this.settings.getChanges("addon.trubbel.appearance.declutter.channel.combos", val => {
+      this.loadable.toggle("OneTapBreakpointAnimationPlayerOverlay", !val);
       this.loadable.toggle("CombosIngressButton_Available", !val);
       this.loadable.toggle("OneTapStreakPills", !val);
       this.loadable.toggle("OneTapStore", !val);
