@@ -25,24 +25,6 @@ export default class Declutter {
       "hide-stream-monthly-recap": "div > div:has(> article a[href*=\"/recaps/\"])",
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
     };
-
-    this.tokenizer = {
-      type: "combos",
-      priority: 0,
-      process: (tokens, msg) => {
-        const chatTypes = this.parent.resolve("site.chat").chat_types;
-
-        const combos = [
-          chatTypes.OneTapBreakpointAchieved,
-          chatTypes.OneTapStreakExpired,
-          chatTypes.OneTapStreakStarted
-        ];
-
-        if (combos.includes(msg.type)) {
-          msg.ffz_removed = true;
-        }
-      }
-    };
   }
 
   onEnable() {
@@ -65,17 +47,6 @@ export default class Declutter {
     this.toggleHide("hide-stream-monthly-recap", this.settings.get("addon.trubbel.appearance.declutter.stream.monthly_recap"));
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
     this.updateCSS();
-
-    // Appearance - Declutter - Channel - Hide Combos
-    this.settings.getChanges("addon.trubbel.appearance.declutter.channel.combos", val => {
-      this.loadable.toggle("OneTapBreakpointAnimationPlayerOverlay", !val);
-      this.loadable.toggle("CombosIngressButton_Available", !val);
-      this.loadable.toggle("OneTapStreakPills", !val);
-      this.loadable.toggle("OneTapStore", !val);
-
-      if (val) this.parent.resolve("site.chat").chat.addTokenizer(this.tokenizer);
-      else this.parent.resolve("site.chat").chat.removeTokenizer(this.tokenizer);
-    });
 
     // Appearance - Declutter - Stream - Hide sponsored banner above chat
     this.settings.getChanges("addon.trubbel.appearance.declutter.stream.ChannelSkinsBanner", val => {

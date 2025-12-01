@@ -13,24 +13,6 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
     this.declutter = new Declutter(this);
 
-    // Appearance - Declutter - Channel - Hide Combos
-    this.settings.add("addon.trubbel.appearance.declutter.channel.combos", {
-      default: false,
-      ui: {
-        sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Channel",
-        title: "Hide Combos",
-        description: "Remove the combo button below and within the player. And in chat.",
-        component: "setting-check-box"
-      },
-      changed: (val) => {
-        this.declutter.loadable.toggle("CombosIngressButton_Available", !val);
-        this.declutter.loadable.toggle("OneTapStreakPills", !val);
-      }
-    });
-
-
-
     // Appearance - Declutter - Chat - Hide stream chat header
     this.settings.add("addon.trubbel.appearance.declutter.chat.stream_header", {
       default: false,
