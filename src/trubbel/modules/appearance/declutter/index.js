@@ -18,7 +18,7 @@ export default class Declutter {
       "hide-sidebar-treasure-train": ".side-nav-card div:has(> .hype-train-icon__train--treasure)",
       "hide-sidebar-hype-train": ".side-nav-card div:has(> .hype-train-icon__train--default)",
       "hide-sidebar-gift-discount": ".side-nav-card div:has(> [class*=\"giftGradient--\"])",
-      "hide-player-cc": "[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M2 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zm2 0h12v10H4V5z\"]),[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M4 3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4zm1.744 5.962a1.93 1.93 0 0 1 3.598-.395l.105.21-.894.447-.105-.21a.93.93 0 0 0-1.734.19l-.007.028a3.166 3.166 0 0 0 0 1.536l.007.028a.93.93 0 0 0 1.734.19l.105-.21.894.448-.105.21a1.93 1.93 0 0 1-3.598-.396l-.007-.027a4.166 4.166 0 0 1 0-2.021l.007-.028zm5 0a1.93 1.93 0 0 1 3.598-.395l.105.21-.894.447-.105-.21a.93.93 0 0 0-1.734.19l-.007.028a3.165 3.165 0 0 0 0 1.536l.007.028a.93.93 0 0 0 1.734.19l.105-.21.894.448-.105.21a1.93 1.93 0 0 1-3.598-.396l-.007-.027a4.168 4.168 0 0 1 0-2.021l.007-.028z\"])",
+      "hide-player-cc": "[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M2 5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5Zm2 0h16v14H4V5Z\"]),[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M4 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4Zm6.642 10.242c-.301.494-.763.758-1.163.758-.66 0-1.488-.717-1.488-2s.828-2 1.488-2c.4 0 .862.264 1.163.758l.858-.494C11.05 9.498 10.313 9 9.479 9 8.109 9 7 10.343 7 12s1.11 3 2.479 3c.834 0 1.572-.499 2.021-1.264l-.858-.494Zm5.5 0c-.301.494-.763.758-1.163.758-.66 0-1.488-.717-1.488-2s.828-2 1.488-2c.4 0 .862.264 1.163.758l.858-.494C16.55 9.498 15.813 9 14.979 9c-1.37 0-2.479 1.343-2.479 3s1.11 3 2.479 3c.834 0 1.572-.499 2.021-1.264l-.858-.494Z\"])",
       "hide-player-disclosure": ".disclosure-tool",
       "hide-player-mrv": ".video-player__overlay :is(.player-overlay-background--darkness-3):has(.offline-recommendations-video-card)",
       "hide-stories": "#side-nav [class*=\"storiesLeftNavSection--\"],#side-nav :is([style]) :has([class*=\"storiesLeftNavSectionCollapsedButton--\"]),div[class^=\"Layout-sc-\"]:has(> .scrollable-area[style] > div[style] > h2.sr-only)",
@@ -68,6 +68,7 @@ export default class Declutter {
 
     // Appearance - Declutter - Channel - Hide Combos
     this.settings.getChanges("addon.trubbel.appearance.declutter.channel.combos", val => {
+      this.loadable.toggle("OneTapBreakpointAnimationPlayerOverlay", !val);
       this.loadable.toggle("CombosIngressButton_Available", !val);
       this.loadable.toggle("OneTapStreakPills", !val);
       this.loadable.toggle("OneTapStore", !val);
