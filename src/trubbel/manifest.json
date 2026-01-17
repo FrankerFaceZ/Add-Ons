@@ -5,15 +5,15 @@
 		"main",
 		"clips"
 	],
-	"name": "Trubbel’s Utilities",
+	"name": "Trubbel\u2019s Utilities",
 	"short_name": "Trubbel",
-	"description": "↓ Lots of features ↓\n\n**Chat:**\n\n– Clickable Steam Inspect Links\n\n– Custom Commands (accountage, followage, localmod/sub etc.)\n\n– BTTV-like Moderation\n\n– Channel Name in Popout Chat\n\n– Clickable Usernames in /mods, /vips and Raid Messages\n\n**Directory:**\n\n– Display Channel Follow Dates\n\n– Display Total Followed Channels\n\n– Live Thumbnail Previews\n\n**Inventory:**\n\n– Auto Claim Drops\n\n– Collapsible Drops\n\n**Livestream:**\n\n– Auto Mute/Pause Stream (in background tabs)\n\n**Mod View:**\n\n– Activity Feed Moderation\n\n– Auto Mod View\n\n**Overall:**\n\n– Live Sidebar Previews\n\n– Yet Another Prime Reminder\n\n**Player:**\n\n– Auto Reset Player\n\n**VODs:**\n\n– Auto Skip Muted Segments\n\n– Custom Seeking\n\n– Custom Progress Bar\n\n…among other things…",
+	"description": "↓ Lots of features ↓\n\n**Chat:**\n\n– Custom commands\n\n– First-time chatter indicator (for yourself)\n\n– Clickable Steam inspect links\n\n– Markdown support (bold, italic, underline, strikethrough, spoilers and timestamps)\n\n– Highlight messages\n\n– BTTV-like moderation\n\n– Raid preview (image, video)\n\n– Hide shared messages\n\n– Translate chat messages\n\n– Clickable usernames in /mods, /vips and raid messages\n\n– Display recent messages in viewer cards\n\n**Mod View:**\n\n– Activity feed moderation\n\n– Display emote and cheer tooltips in activity feed\n\n– Automatically enter mod view\n\n**Player:**\n\n– Automatically reset player on error\n\n**VODs:**\n\n– Custom progress bar\n\n– Custom seeking\n\n– Frame by frame seeking\n\n– Automatically skip muted segments\n\n**Dashboard:**\n\n– Show dashboard deletion date for past broadcasts\n\n**Directory:**\n\n– Display follow date in followed channels\n\n– Display total followed channels\n\n– Thumbnail previews\n\n**Inventory:**\n\n– Automatically claim drops\n\n– Collapsible drops\n\n**Overall:**\n\n– Yet Another Prime Reminder\n\n– Sidebar previews\n\n– Pinned sidebar channels\n\n– Automatically expand sidebar channels\n\n…among other things…",
 	"author": "Trubbel",
 	"maintainer": "Trubbel",
-	"version": "4.2.6",
+	"version": "4.2.7",
 	"search_terms": "trubbel",
 	"website": "https://twitch.tv/trubbel",
 	"settings": "add_ons.trubbel_s_utilities",
 	"created": "2025-01-06T23:29:54.496Z",
-	"updated": "2025-12-01T19:54:01.713Z"
+	"updated": "2026-01-17T16:15:04.277Z"
 }

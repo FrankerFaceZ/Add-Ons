@@ -23,6 +23,7 @@ export default class Declutter {
       "hide-player-mrv": ".video-player__overlay :is(.player-overlay-background--darkness-3):has(.offline-recommendations-video-card)",
       "hide-stories": "#side-nav [class*=\"storiesLeftNavSection--\"],#side-nav :is([style]) :has([class*=\"storiesLeftNavSectionCollapsedButton--\"]),div[class^=\"Layout-sc-\"]:has(> .scrollable-area[style] > div[style] > h2.sr-only)",
       "hide-stream-monthly-recap": "div > div:has(> article a[href*=\"/recaps/\"])",
+      "hide-watch-streak": ".rewards-list > div:has([style*=\"cursor: pointer\"] svg [d*=\"M5.295 8.05 10 2l3 4 2-3 3.8 5.067a11 11 0 0 1 2.2 6.6A7.333 7.333 0 0 1 13.667 22h-3.405A7.262 7.262 0 0 1 3 14.738c0-2.423.807-4.776 2.295-6.688Zm7.801 1.411 2-3L17.2 9.267a9 9 0 0 1 1.8 5.4 5.334 5.334 0 0 1-4.826 5.31 3 3 0 0 0 .174-3.748L12 13l-2.348 3.229a3 3 0 0 0 .18 3.754A5.263 5.263 0 0 1 5 14.738c0-1.978.66-3.9 1.873-5.46l3.098-3.983 3.125 4.166Z\"])",
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
     };
   }
@@ -45,6 +46,7 @@ export default class Declutter {
     this.toggleHide("hide-player-mrv", this.settings.get("addon.trubbel.appearance.declutter.player.most_recent_video"));
     this.toggleHide("hide-stories", this.settings.get("addon.trubbel.appearance.declutter.stories"));
     this.toggleHide("hide-stream-monthly-recap", this.settings.get("addon.trubbel.appearance.declutter.stream.monthly_recap"));
+    this.toggleHide("hide-watch-streak", this.settings.get("addon.trubbel.appearance.declutter.stream.watch_streak"));
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
     this.updateCSS();
 
@@ -118,6 +120,17 @@ export default class Declutter {
         `);
     } else {
       this.style.delete("hide-stream-power-ups");
+    }
+    // Appearance - Declutter - Stream - Hide sponsored player gradient
+    if (this.settings.get("addon.trubbel.appearance.declutter.stream.sponsored_gradient")) {
+      this.style.set("hide-sponsored-player-gradient", `
+          .channel-page__video-player--with-border {
+            background: transparent !important;
+            padding: 0px !important;
+          }
+        `);
+    } else {
+      this.style.delete("hide-sponsored-player-gradient");
     }
   }
 }

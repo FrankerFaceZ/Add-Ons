@@ -20,6 +20,16 @@ query Trubbel_GetRaidStreamInfo($login: String!) {
       }
       __typename
     }
+    chatSettings {
+      chatDelayMs
+      followersOnlyDurationMinutes
+      isEmoteOnlyModeEnabled
+      isSubscribersOnlyModeEnabled
+      isUniqueChatModeEnabled
+      requireVerifiedAccount
+      slowModeDurationSeconds
+      __typename
+    }
     __typename
   }
 }

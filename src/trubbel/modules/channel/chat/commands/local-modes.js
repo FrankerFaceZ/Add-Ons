@@ -48,7 +48,7 @@ export class LocalModeManager {
       });
       this.ctx.log.info(`[Local Mode] Mod mode disabled`);
     } else {
-      
+
       const wasSubModeActive = this.currentMode === "sub";
       if (wasSubModeActive) {
         this.disableCurrentMode();
@@ -76,7 +76,7 @@ export class LocalModeManager {
       priority: 0,
       process: (tokens, msg) => {
         const badges = msg.badges || {};
-        const isSubscriber = "subscriber" in badges;
+        const isSubscriber = "subscriber" in badges || "founder" in badges;
         const isModOrHigher = this.isModeratorOrHigher(badges);
         if (!isSubscriber && !isModOrHigher) msg.ffz_removed = true;
       }
@@ -121,7 +121,8 @@ export class LocalModeManager {
       "staff" in badges ||
       "admin" in badges ||
       "global_mod" in badges ||
-      "moderator" in badges;
+      "moderator" in badges ||
+      "lead_moderator" in badges;
   }
 
   getStatus() {
