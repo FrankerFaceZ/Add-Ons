@@ -1,0 +1,12 @@
+{
+	"enabled": false,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "CustomCmds",
+	"name": "Custom Commands Auto Completer",
+	"author": "iXyles",
+	"description": "Adds auto-completion support for custom bot commands. Dynamically fetches commands from popular bots like Fossabot, StreamElements, NightBot, MooBot or custom bots when they are active in the channel.",
+	"settings": "add_ons.custom_commands_auto_complete",
+    "created": "2026-02-01T17:45:00.000Z",
+    "updated": "2026-02-01T17:45:00.000Z"
+}
