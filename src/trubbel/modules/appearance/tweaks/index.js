@@ -13,14 +13,13 @@ export default class Tweaks {
     // Appearance - Tweaks - Buttons, Input, Select, Textarea - Use old buttons with less border-radius
     if (this.settings.get("addon.trubbel.appearance.tweaks.form_control.border-radius")) {
       this.style.set("button-border-radius", `
-          button[class*="ScCoreButton-sc-"],
-          a[class*="ScCoreButton-sc-"],
-          div:has(> button[data-test-selector="follow-button"]),
-          div:has(> div [style] button[data-test-selector="follow-button"]),
-          div:has(> button[data-test-selector="unfollow-button"]),
-          div:has(> div [style] button[data-test-selector="unfollow-button"]),
-          div:has(> button[data-a-target="notifications-toggle"]),
-          .metadata-layout__support div:has(> button[data-a-target="top-nav-get-bits-button"]) {
+          div:has(> div [style] button[data-a-target="follow-button"]),
+          div:has(> div [style] button[data-a-target="unfollow-button"]),
+          div:has(> [class^="ScCoreButton-"] [data-a-target="tw-core-button-label-text"]),
+          [class^="ScCoreButton-"]:has([data-a-target="tw-core-button-label-text"]),
+          button[data-test-selector="subscribe-button__dropdown"],
+          .metadata-layout__support div:has(> [class^="ScCoreButton-"][data-a-target="top-nav-get-bits-button"]),
+          .metadata-layout__support [class^="ScCoreButton-"][data-a-target="top-nav-get-bits-button"] {
             border-radius: 0.4rem !important;
           }
         `);
@@ -97,6 +96,17 @@ export default class Tweaks {
         `);
     } else {
       this.style.delete("inv-big-img");
+    }
+    // Appearance - Tweaks - Scrollbars - Thinner scrollbars in chat and sidebar
+    if (this.settings.get("addon.trubbel.appearance.tweaks.scrollbar.thin")) {
+      this.style.set("scrollbar-thin", `
+          .side-nav__scrollable_content,
+          .stream-chat .scrollable-area {
+            scrollbar-width: thin !important;
+          }
+        `);
+    } else {
+      this.style.delete("scrollbar-thin");
     }
     // Appearance - Tweaks - Titles - Display full titles for sidebar tooltips
     if (this.settings.get("addon.trubbel.appearance.tweaks.titles.full_sidebar_tooltip")) {

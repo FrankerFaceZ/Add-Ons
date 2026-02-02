@@ -333,6 +333,61 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Translation - Enable Simple Translate
+    this.settings.add("addon.trubbel.channel.chat.translation", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Translation",
+        title: "Enable Simple Translate",
+        description: "After enabling this you need to set it up in [Chat > Actions](~chat.actions), then pick either, [In-Line](~chat.actions.in_line), [Message Hover](~chat.actions.message_hover), or [User Context](~chat.actions.user_context).\n\n**Note:** This uses Google Translate.",
+        component: "setting-check-box"
+      },
+      changed: val => this.chatTranslate.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Translation - Target Language
+    this.settings.add("addon.trubbel.channel.chat.translation.target_lang", {
+      default: "en",
+      requires: ["addon.trubbel.channel.chat.translation"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.translation"))
+          return false;
+        return val;
+      },
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Translation",
+        title: "Target Language",
+        description: "The language to translate messages into.",
+        component: "setting-select-box",
+        data: [
+          { value: "en", title: "English" },
+          { value: "es", title: "Spanish" },
+          { value: "fr", title: "French" },
+          { value: "de", title: "German" },
+          { value: "it", title: "Italian" },
+          { value: "pt", title: "Portuguese" },
+          { value: "ru", title: "Russian" },
+          { value: "ja", title: "Japanese" },
+          { value: "ko", title: "Korean" },
+          { value: "zh-CN", title: "Chinese (Simplified)" },
+          { value: "zh-TW", title: "Chinese (Traditional)" },
+          { value: "ar", title: "Arabic" },
+          { value: "hi", title: "Hindi" },
+          { value: "sv", title: "Swedish" },
+          { value: "da", title: "Danish" },
+          { value: "no", title: "Norwegian" },
+          { value: "fi", title: "Finnish" },
+          { value: "nl", title: "Dutch" },
+          { value: "pl", title: "Polish" },
+          { value: "tr", title: "Turkish" }
+        ]
+      }
+    });
+
+
+
     // Channel - Chat - UI - Show old viewer list
     this.settings.add("addon.trubbel.channel.chat.ui.old_viewer_list", {
       default: false,

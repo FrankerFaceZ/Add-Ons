@@ -1,8 +1,8 @@
 import { PRIME_REMINDER_KEY_CONFIG } from "../../../utilities/constants/config";
-
 import PRIME_REMINDER from "../../../utilities/graphql/prime-reminder.gql";
 
 const { createElement } = FrankerFaceZ.utilities.dom;
+const { sleep } = FrankerFaceZ.utilities.object;
 
 export class PrimeReminder {
   constructor(parent) {
@@ -13,151 +13,104 @@ export class PrimeReminder {
     this.log = parent.log;
 
     this.settingKey = "addon.trubbel.twilight.prime.yapr";
+
     this.isActive = false;
     this.checkInterval = null;
     this.crownElement = null;
-    this.lastCheckTime = 0;
+    this.primeStatus = null;
     this.renewalDate = null;
-    this.primeIsAvailable = null;
-
-    this.initialize = this.initialize.bind(this);
-    this.handleSettingChange = this.handleSettingChange.bind(this);
-    this.enablePrimeReminder = this.enablePrimeReminder.bind(this);
-    this.disablePrimeReminder = this.disablePrimeReminder.bind(this);
-    this.checkPrimeStatus = this.checkPrimeStatus.bind(this);
-    this.checkStoredRenewalDate = this.checkStoredRenewalDate.bind(this);
-    this.updateCheckInterval = this.updateCheckInterval.bind(this);
-    this.showCrownIcon = this.showCrownIcon.bind(this);
-    this.hideCrownIcon = this.hideCrownIcon.bind(this);
-    this.createCrownElement = this.createCrownElement.bind(this);
-    this.getStoredData = this.getStoredData.bind(this);
-    this.setStoredData = this.setStoredData.bind(this);
-    this.clearStoredData = this.clearStoredData.bind(this);
-    this.isValidRenewalDate = this.isValidRenewalDate.bind(this);
   }
 
   initialize() {
     const enabled = this.settings.get(this.settingKey);
     if (enabled) {
-      this.enablePrimeReminder();
-    } else {
-      this.disablePrimeReminder();
+      this.enable();
     }
   }
 
   handleSettingChange(enabled) {
     if (enabled) {
-      this.log.info("[Yet Another Prime Reminder] Enabling Prime Reminder");
-      this.enablePrimeReminder();
+      this.log.info("[YetAnotherPrimeReminder] Enabling Prime Reminder");
+      this.enable();
     } else {
-      this.log.info("[Yet Another Prime Reminder] Disabling Prime Reminder");
-      this.disablePrimeReminder();
+      this.log.info("[YetAnotherPrimeReminder] Disabling Prime Reminder");
+      this.disable();
     }
   }
 
-  isValidRenewalDate(dateString) {
-    if (!dateString) return false;
-
-    const date = new Date(dateString);
-
-    if (isNaN(date.getTime())) return false;
-
-    const epochStart = new Date('1970-01-01T00:00:00Z');
-    if (Math.abs(date.getTime() - epochStart.getTime()) < 1000) {
-      this.log.info("[Yet Another Prime Reminder] Received Unix epoch as renewal date - treating as invalid");
-      return false;
-    }
-
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    if (date < oneYearAgo) {
-      this.log.info("[Yet Another Prime Reminder] Renewal date is more than 1 year in the past - treating as invalid");
-      return false;
-    }
-    return true;
-  }
-
-  enablePrimeReminder() {
+  enable() {
     if (this.isActive) return;
 
     const popoutRoutes = this.site.constructor.POPOUT_ROUTES;
     if (popoutRoutes.includes(this.router?.current?.name)) {
-      this.log.info("[Yet Another Prime Reminder] Not available in popout pages");
+      this.log.info("[YetAnotherPrimeReminder] Not available in popout pages");
       return;
     }
 
-    this.log.info("[Yet Another Prime Reminder] Setting up Prime Reminder");
+    this.log.info("[YetAnotherPrimeReminder] Setting up Prime Reminder");
     this.isActive = true;
 
     const storedData = this.getStoredData();
-    const now = new Date();
+    const now = Date.now();
 
-    if (storedData) {
-      const lastCheck = storedData.lastCheck ? new Date(storedData.lastCheck) : null;
-      const timeSinceLastCheck = lastCheck ? (now - lastCheck) / (1000 * 60 * 60) : Infinity;
-
-      if (lastCheck) {
-        this.log.info("[Yet Another Prime Reminder] Last check was at:", lastCheck.toLocaleString());
-        this.log.info(`[Yet Another Prime Reminder] Time since last check: ${timeSinceLastCheck.toFixed(1)} hours`);
-      }
-
-      if (storedData.primeIsAvailable === true) {
-        this.primeIsAvailable = true;
-
-        const shouldCheckGraphQL = !lastCheck || timeSinceLastCheck >= 0.5;
-        if (shouldCheckGraphQL) {
-          this.log.info("[Yet Another Prime Reminder] Checking if Prime is still available (30+ minutes since last check)");
-          this.checkPrimeStatus();
-        } else {
-          this.log.info("[Yet Another Prime Reminder] Recent check found - Prime should still be available");
-          this.showCrownIcon("Your Prime is available!");
-          this.updateCheckInterval();
-        }
-      } else if ((storedData.primeIsAvailable === false || storedData.primeIsAvailable === undefined) && storedData.renewalDate) {
-
-        if (!this.isValidRenewalDate(storedData.renewalDate)) {
-          this.log.info("[Yet Another Prime Reminder] Stored renewal date is invalid - making fresh GraphQL call");
-          this.primeIsAvailable = null;
-          this.checkPrimeStatus();
-          return;
-        }
-
-        this.renewalDate = new Date(storedData.renewalDate);
-        this.primeIsAvailable = false;
-
-        this.log.info("[Yet Another Prime Reminder] Loaded stored renewal date:", this.renewalDate.toLocaleString());
-
-        if (now >= this.renewalDate) {
-          this.log.info("[Yet Another Prime Reminder] Renewal time has passed, Prime should be available - checking via GraphQL");
-          this.checkPrimeStatus();
-          return;
-        }
-
-        const shouldCheckGraphQL = !lastCheck || timeSinceLastCheck >= 6;
-        if (shouldCheckGraphQL) {
-          this.log.info("[Yet Another Prime Reminder] Periodic verification check (6+ hours since last check)");
-          this.checkPrimeStatus();
-        } else {
-          this.log.info("[Yet Another Prime Reminder] Recent check found - using stored renewal data");
-          this.updateCheckInterval();
-          this.checkStoredRenewalDate();
-        }
-      } else {
-        this.log.info("[Yet Another Prime Reminder] Invalid stored data - making fresh GraphQL call");
-        this.primeIsAvailable = null;
-        this.checkPrimeStatus();
-      }
-    } else {
-      this.log.info("[Yet Another Prime Reminder] No stored data found - making initial GraphQL call");
-      this.primeIsAvailable = null;
+    if (!storedData) {
+      this.log.info("[YetAnotherPrimeReminder] No stored data - making initial check");
       this.checkPrimeStatus();
+      return;
     }
+
+    const lastCheck = storedData.lastCheck ? new Date(storedData.lastCheck).getTime() : 0;
+    const timeSinceLastCheck = (now - lastCheck) / (1000 * 60 * 60);
+
+    if (lastCheck) {
+      this.log.info(`[YetAnotherPrimeReminder] Last check: ${timeSinceLastCheck.toFixed(1)} hours ago`);
+    }
+
+    if (storedData.primeIsAvailable === true) {
+      this.primeStatus = true;
+
+      if (timeSinceLastCheck >= 0.5) {
+        this.log.info("[YetAnotherPrimeReminder] Verifying Prime is still available");
+        this.checkPrimeStatus();
+      } else {
+        this.log.info("[YetAnotherPrimeReminder] Prime should still be available");
+        this.showCrownIcon("Your Prime is available!");
+        this.scheduleNextCheck();
+      }
+      return;
+    }
+
+    if (storedData.renewalDate && this.isValidRenewalDate(storedData.renewalDate)) {
+      this.primeStatus = false;
+      this.renewalDate = new Date(storedData.renewalDate);
+
+      this.log.info("[YetAnotherPrimeReminder] Loaded renewal date:", this.renewalDate.toLocaleString());
+
+      if (now >= this.renewalDate.getTime()) {
+        this.log.info("[YetAnotherPrimeReminder] Renewal time passed - checking status");
+        this.checkPrimeStatus();
+        return;
+      }
+
+      if (timeSinceLastCheck >= 6) {
+        this.log.info("[YetAnotherPrimeReminder] Periodic verification (6+ hours)");
+        this.checkPrimeStatus();
+      } else {
+        this.log.info("[YetAnotherPrimeReminder] Using stored renewal data");
+        this.checkRenewalProximity();
+        this.scheduleNextCheck();
+      }
+      return;
+    }
+
+    this.log.info("[YetAnotherPrimeReminder] Invalid stored data - rechecking");
+    this.checkPrimeStatus();
   }
 
-  disablePrimeReminder() {
+  disable() {
     if (!this.isActive) return;
 
-    this.log.info("[Yet Another Prime Reminder] Removing Prime Reminder");
+    this.log.info("[YetAnotherPrimeReminder] Disabling Prime Reminder");
 
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
@@ -168,68 +121,60 @@ export class PrimeReminder {
     this.clearStoredData();
 
     this.isActive = false;
+    this.primeStatus = null;
     this.renewalDate = null;
-    this.primeIsAvailable = null;
 
     this.parent.emit("tooltips:cleanup");
   }
 
   async checkPrimeStatus() {
     if (!this.isActive) return;
+
     try {
-      this.log.info("[Yet Another Prime Reminder] Checking Prime status via GraphQL...");
+      this.log.info("[YetAnotherPrimeReminder] Checking Prime status via GraphQL");
 
       const apollo = this.parent.resolve("site.apollo");
       if (!apollo) {
-        this.log.warn("[Yet Another Prime Reminder] Apollo client not available");
+        this.log.warn("[YetAnotherPrimeReminder] Apollo client not available");
         return;
       }
 
       const result = await apollo.client.query({
         query: PRIME_REMINDER,
-        variables: {},
         fetchPolicy: "network-only"
       });
 
       const data = result?.data;
-      this.log.info("[Yet Another Prime Reminder] Prime data:", data);
+      this.log.info("[YetAnotherPrimeReminder] Prime data:", data);
+
       if (!data) {
-        this.log.warn("[Yet Another Prime Reminder] No data received from GraphQL query");
+        this.log.warn("[YetAnotherPrimeReminder] No data received");
         return;
       }
 
       if (!data.currentUser) {
-        this.log.warn("[Yet Another Prime Reminder] User doesn't seem to be authenticated/logged in.");
+        this.log.warn("[YetAnotherPrimeReminder] User not authenticated");
         this.disableSettingAcrossProfiles();
         return;
       }
 
-      const hasPrime = data.currentUser?.hasPrime;
-      if (!hasPrime) {
-        this.log.info("[Yet Another Prime Reminder] User doesn't have Prime, disabling setting across all profiles");
+      if (!data.currentUser.hasPrime) {
+        this.log.info("[YetAnotherPrimeReminder] User doesn't have Prime");
         this.disableSettingAcrossProfiles();
-
-        const button = this.parent.resolve("site.menu_button");
-        if (button) {
-          button.addToast({
-            icon: "ffz-i-attention",
-            title: "Trubbel\u2019s Utilities",
-            text: "**[Yet Another Prime Reminder]**\n\nYou do not have Prime.\n\n--\n\nThis feature is meant for users who have Prime only, otherwise it will disable itself automatically.",
-            markdown: true,
-          });
-        }
-
+        this.showNoPrimeNotification();
         return;
       }
 
-      this.log.info("[Yet Another Prime Reminder] User has Prime");
+      this.log.info("[YetAnotherPrimeReminder] User has Prime");
 
       const canPrimeSubscribe = data.user?.self?.canPrimeSubscribe;
       const primeSubCreditBenefit = data.user?.self?.primeSubCreditBenefit;
 
       if (canPrimeSubscribe) {
-        this.log.info("[Yet Another Prime Reminder] Prime subscription is available! Showing crown icon");
-        this.primeIsAvailable = true;
+        this.log.info("[YetAnotherPrimeReminder] Prime available - showing full crown");
+        this.primeStatus = true;
+        this.renewalDate = null;
+
         this.showCrownIcon("Your Prime is available!");
 
         this.setStoredData({
@@ -239,13 +184,14 @@ export class PrimeReminder {
           willRenew: primeSubCreditBenefit?.willRenew || false
         });
 
-        this.updateCheckInterval();
+        this.scheduleNextCheck();
       } else {
-        this.log.info("[Yet Another Prime Reminder] Prime subscription is not available");
-        this.primeIsAvailable = false;
+        this.log.info("[YetAnotherPrimeReminder] Prime not available (already used)");
+        this.primeStatus = false;
+
         this.hideCrownIcon();
 
-        if (primeSubCreditBenefit && primeSubCreditBenefit.renewalDate && this.isValidRenewalDate(primeSubCreditBenefit.renewalDate)) {
+        if (primeSubCreditBenefit?.renewalDate && this.isValidRenewalDate(primeSubCreditBenefit.renewalDate)) {
           const renewalDate = new Date(primeSubCreditBenefit.renewalDate);
           this.renewalDate = renewalDate;
 
@@ -256,101 +202,134 @@ export class PrimeReminder {
             willRenew: primeSubCreditBenefit.willRenew
           });
 
-          this.log.info(`[Yet Another Prime Reminder] Prime will renew on: ${renewalDate.toLocaleString()}`);
-          this.updateCheckInterval();
-          this.checkStoredRenewalDate();
+          this.log.info(`[YetAnotherPrimeReminder] Renewal date: ${renewalDate.toLocaleString()}`);
+          this.checkRenewalProximity();
+          this.scheduleNextCheck();
         } else {
-          this.log.info("[Yet Another Prime Reminder] No valid renewal date available - setting up periodic check");
+          this.log.info("[YetAnotherPrimeReminder] No valid renewal date - periodic checks");
+
           this.setStoredData({
             primeIsAvailable: false,
             lastCheck: new Date().toISOString(),
             willRenew: primeSubCreditBenefit?.willRenew || false,
             renewalDate: null
           });
-          this.updateCheckInterval();
+
+          this.scheduleNextCheck();
         }
       }
 
-      this.lastCheckTime = Date.now();
-
     } catch (error) {
-      this.log.error("[Yet Another Prime Reminder] Error checking Prime status:", error);
+      this.log.error("[YetAnotherPrimeReminder] Error checking Prime status:", error);
     }
   }
 
-  checkStoredRenewalDate() {
+  checkRenewalProximity() {
     if (!this.isActive || !this.renewalDate) return;
 
     const now = new Date();
 
-    this.log.info("[Yet Another Prime Reminder] Checking stored renewal date:", this.renewalDate.toLocaleString());
+    this.log.info("[YetAnotherPrimeReminder] Checking renewal proximity:", this.renewalDate.toLocaleString());
 
     if (now >= this.renewalDate) {
-      this.log.info("[Yet Another Prime Reminder] Renewal time has passed, checking Prime status via GraphQL");
+      this.log.info("[YetAnotherPrimeReminder] Renewal time passed - checking via GraphQL");
       this.checkPrimeStatus();
       return;
     }
 
     const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const renewalDateOnly = new Date(this.renewalDate.getFullYear(), this.renewalDate.getMonth(), this.renewalDate.getDate());
+    const renewalDateOnly = new Date(
+      this.renewalDate.getFullYear(),
+      this.renewalDate.getMonth(),
+      this.renewalDate.getDate()
+    );
     const daysUntilRenewal = Math.ceil((renewalDateOnly - nowDate) / (1000 * 60 * 60 * 24));
 
-    this.log.info(`[Yet Another Prime Reminder] Days until renewal: ${daysUntilRenewal}`);
+    this.log.info(`[YetAnotherPrimeReminder] Days until renewal: ${daysUntilRenewal}`);
 
-    if (daysUntilRenewal <= 3 && daysUntilRenewal > 0) {
+    if (daysUntilRenewal >= 0 && daysUntilRenewal <= 3) {
       let tooltip;
-      if (daysUntilRenewal === 1) {
+
+      if (daysUntilRenewal <= 1) {
         const hoursUntilRenewal = (this.renewalDate - now) / (1000 * 60 * 60);
         if (hoursUntilRenewal <= 24) {
-          tooltip = `Prime available in ${Math.ceil(hoursUntilRenewal)} hour${Math.ceil(hoursUntilRenewal) !== 1 ? "s" : ""}`;
+          const hours = Math.ceil(hoursUntilRenewal);
+          tooltip = `Prime available in ${hours} hour${hours !== 1 ? "s" : ""}`;
         } else {
-          tooltip = `Prime available in 1 day`;
+          tooltip = "Prime available in 1 day";
         }
       } else {
         tooltip = `Prime available in ${daysUntilRenewal} day${daysUntilRenewal !== 1 ? "s" : ""}`;
       }
+
       this.showCrownIcon(tooltip, true);
-      this.log.info(`[Yet Another Prime Reminder] Prime renewal soon: ${tooltip}`);
+      this.log.info(`[YetAnotherPrimeReminder] Showing hollow crown: ${tooltip}`);
     } else {
-      this.log.info("[Yet Another Prime Reminder] Prime renewal not within 3 days, hiding crown");
+      this.log.info("[YetAnotherPrimeReminder] Not within 3 days - hiding crown");
       this.hideCrownIcon();
     }
   }
 
-  updateCheckInterval() {
+  scheduleNextCheck() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      this.log.info("[Yet Another Prime Reminder] Cleared existing interval");
     }
 
     if (!this.isActive) return;
 
-    if (this.primeIsAvailable === true) {
-      this.checkInterval = setInterval(() => {
-        this.checkPrimeStatus();
-      }, 30 * 60 * 1000);
+    let interval;
+    let description;
 
-      this.log.info("[Yet Another Prime Reminder] Set 30-minute interval (Prime available)");
-    } else if (this.primeIsAvailable === false) {
-      this.checkInterval = setInterval(() => {
-        this.checkStoredRenewalDate();
-      }, 60 * 60 * 1000);
-
-      this.log.info("[Yet Another Prime Reminder] Set 1-hour interval (Prime used)");
+    if (this.primeStatus === true) {
+      interval = 30 * 60 * 1000;
+      description = "30-minute interval (Prime available)";
+    } else if (this.primeStatus === false) {
+      interval = 60 * 60 * 1000;
+      description = "1-hour interval (Prime used, checking renewal)";
     } else {
-      this.checkInterval = setInterval(() => {
-        this.checkPrimeStatus();
-      }, 60 * 60 * 1000);
-
-      this.log.info("[Yet Another Prime Reminder] Set 1-hour interval (unknown state)");
+      interval = 60 * 60 * 1000;
+      description = "1-hour interval (unknown state)";
     }
+
+    this.checkInterval = setInterval(() => {
+      if (this.primeStatus === true) {
+        this.checkPrimeStatus();
+      } else {
+        this.checkRenewalProximity();
+      }
+    }, interval);
+
+    this.log.info(`[YetAnotherPrimeReminder] Scheduled: ${description}`);
+  }
+
+  isValidRenewalDate(dateString) {
+    if (!dateString) return false;
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) return false;
+
+    const epochStart = new Date("1970-01-01T00:00:00Z");
+    if (Math.abs(date.getTime() - epochStart.getTime()) < 1000) {
+      this.log.info("[YetAnotherPrimeReminder] Received Unix epoch - invalid");
+      return false;
+    }
+
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    if (date < oneYearAgo) {
+      this.log.info("[YetAnotherPrimeReminder] Date >1 year old - invalid");
+      return false;
+    }
+
+    return true;
   }
 
   showCrownIcon(tooltipText, isEmpty = false) {
     const searchContainer = document.querySelector(".top-nav__search-container");
     if (!searchContainer) {
-      this.log.warn("[Yet Another Prime Reminder] Search container not found");
+      this.log.warn("[YetAnotherPrimeReminder] Search container not found");
       return;
     }
 
@@ -359,7 +338,7 @@ export class PrimeReminder {
     this.crownElement = this.createCrownElement(tooltipText, isEmpty);
     searchContainer.parentNode.insertBefore(this.crownElement, searchContainer);
 
-    this.log.info(`[Yet Another Prime Reminder] Crown icon shown: ${tooltipText}`);
+    this.log.info(`[YetAnotherPrimeReminder] Crown shown: ${tooltipText}`);
   }
 
   hideCrownIcon() {
@@ -379,13 +358,8 @@ export class PrimeReminder {
         alignSelf: "center",
         flexWrap: "nowrap"
       }}>
-        <div style={{
-          display: "flex",
-          justifyContent: "center"
-        }}>
-          <div style={{
-            display: "inline-flex"
-          }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "inline-flex" }}>
             <button
               className="ffz-il-tooltip__container"
               style={{
@@ -402,7 +376,7 @@ export class PrimeReminder {
                 fontSize: "var(--button-text-default, 13px)",
                 height: "var(--button-size-default, 30px)",
                 width: "var(--button-size-default, 30px)",
-                borderRadius: this.settings.get("addon.trubbel.appearance.tweaks.form_control.border-radius") ? "0.4rem" : "var(--border-radius-rounded)",
+                borderRadius: "var(--border-radius-rounded)",
                 backgroundColor: "var(--color-background-button-text-default, #f7f7f8)",
                 color: "var(--color-fill-button-icon, #53535f)",
                 border: "none",
@@ -416,9 +390,7 @@ export class PrimeReminder {
                 backgroundColor: "var(--color-background-button-text-default, #f7f7f8)",
                 color: "var(--color-fill-button-icon, #53535f)"
               })}
-              onClick={() => {
-                this.router.navigate("user", { userName: "subscriptions" });
-              }}
+              onClick={() => this.router.navigate("user", { userName: "subscriptions" })}
               aria-expanded="false"
               aria-label="Prime Reminder"
               data-a-target="prime-reminder-button"
@@ -433,26 +405,24 @@ export class PrimeReminder {
                   alignItems: "center",
                   width: "2rem",
                   height: "2rem",
-                  fill: isEmpty ? "var(--color-fill-current, currentColor)" : "#0e9bd8"
+                  fill: isEmpty ? "var(--color-fill-current, currentColor)" : "#0096d6"
                 }}>
                   <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
                     aria-hidden="true"
                     role="presentation"
-                    style={{
-                      height: "2rem",
-                      width: "2rem"
-                    }}
+                    style={{ height: "2rem", width: "2rem" }}
                   >
-                    <path fillRule="evenodd"
+                    <path
+                      fillRule="evenodd"
                       d={isEmpty
-                        ? "M13.798 10.456 10 6.657l-3.798 3.799L4 8.805V13h12V8.805l-2.202 1.65zM18 5v8a2 2 0 0 1-2 2H4a2.002 2.002 0 0 1-2-2V5l4 3 4-4 4 4 4-3z"
-                        : "M2 5l4 3 4-4 4 4 4-3v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5z"
+                        ? "M16.852 12.68 12 7.828 7.148 12.68 4 10.161V17h16v-6.839l-3.148 2.519ZM22 6v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6l5 4 5-5 5 5 5-4Z"
+                        : "M2 17V6l5 4 5-5 5 5 5-4v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2Z"
                       }
-                      clipRule="evenodd">
-                    </path>
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               </div>
@@ -469,9 +439,9 @@ export class PrimeReminder {
   getStoredData() {
     try {
       const data = this.settings.provider.get(PRIME_REMINDER_KEY_CONFIG);
-      return data ? data : null;
+      return data || null;
     } catch (error) {
-      this.log.error("[Yet Another Prime Reminder] Error reading stored data:", error);
+      this.log.error("[YetAnotherPrimeReminder] Error reading stored data:", error);
       return null;
     }
   }
@@ -479,18 +449,30 @@ export class PrimeReminder {
   setStoredData(data) {
     try {
       this.settings.provider.set(PRIME_REMINDER_KEY_CONFIG, data);
-      this.log.debug("[Yet Another Prime Reminder] Data stored:", data);
+      this.log.debug("[YetAnotherPrimeReminder] Data stored:", data);
     } catch (error) {
-      this.log.error("[Yet Another Prime Reminder] Error storing data:", error);
+      this.log.error("[YetAnotherPrimeReminder] Error storing data:", error);
     }
   }
 
   clearStoredData() {
     try {
       this.settings.provider.delete(PRIME_REMINDER_KEY_CONFIG);
-      this.log.debug("[Yet Another Prime Reminder] Stored data cleared");
+      this.log.debug("[YetAnotherPrimeReminder] Stored data cleared");
     } catch (error) {
-      this.log.error("[Yet Another Prime Reminder] Error clearing stored data:", error);
+      this.log.error("[YetAnotherPrimeReminder] Error clearing stored data:", error);
+    }
+  }
+
+  showNoPrimeNotification() {
+    const button = this.parent.resolve("site.menu_button");
+    if (button) {
+      button.addToast({
+        icon: "ffz-i-attention",
+        title: "Trubbel\u2019s Utilities",
+        text: "**[YetAnotherPrimeReminder]**\n\nYou do not have Prime.\n\n--\n\nThis feature is meant for users who have Prime only, otherwise it will disable itself automatically.",
+        markdown: true,
+      });
     }
   }
 
@@ -502,24 +484,21 @@ export class PrimeReminder {
     while (true) {
       try {
         const profile = this.settings.profile(profileId);
-
-        if (profile === null) {
-          break;
-        }
+        if (profile === null) break;
 
         if (profile.has(settingKey)) {
-          this.log.info(`[Yet Another Prime Reminder] Disabling setting for profile ${profileId}`);
+          this.log.info(`[YetAnotherPrimeReminder] Disabling setting for profile ${profileId}`);
           profile.set(settingKey, false);
           disabledCount++;
         }
 
         profileId++;
       } catch (error) {
-        this.log.debug(`[Yet Another Prime Reminder] Profile ${profileId} doesn't exist or error occurred:`, error);
+        this.log.debug(`[YetAnotherPrimeReminder] Profile ${profileId} error:`, error);
         break;
       }
     }
 
-    this.log.info(`[Yet Another Prime Reminder] Disabled setting across ${disabledCount} profile(s)`);
+    this.log.info(`[YetAnotherPrimeReminder] Disabled across ${disabledCount} profile(s)`);
   }
 }

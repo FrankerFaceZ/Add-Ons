@@ -266,7 +266,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
         sort: -1,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar Extended >> About",
         title: "About",
-        description: "⚠️ Please note that these features are experimental.",
+        description: "⚠️ Please note that these features are experimental.\n\n• If you're having issues, try disabling addons that might interfere with the sidebar.",
         component: () => import("../../components/main_menu/setting-info.vue"),
         force_seen: true
       },

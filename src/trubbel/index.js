@@ -9,6 +9,9 @@ import { Channel_ModView } from "./settings/channel/mod-view";
 import { Channel_Player } from "./settings/channel/player";
 import { Channel_VODs } from "./settings/channel/vods";
 
+// Dashboard
+import { Dashboard } from "./settings/dashboard/dashboard";
+
 // Directory
 import { Directory_Following } from "./settings/directory/following";
 import { Directory_Thumbnails } from "./settings/directory/thumbnails";
@@ -45,6 +48,9 @@ class Trubbel extends Addon {
       this.inject(Channel_ModView);
       this.inject(Channel_Player);
       this.inject(Channel_VODs);
+
+      // Dashboard
+      this.inject(Dashboard);
 
       // Directory
       this.inject(Directory_Following);

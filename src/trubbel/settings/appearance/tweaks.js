@@ -109,6 +109,21 @@ export class Appearance_Tweaks extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Appearance - Tweaks - Scrollbars - Thinner scrollbars in chat and sidebar
+    this.settings.add("addon.trubbel.appearance.tweaks.scrollbar.thin", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Tweaks >> Scrollbars",
+        title: "Thinner scrollbars in chat and sidebar",
+        description: "This is meant for certain browsers that has much thicker scrollbars.",
+        component: "setting-check-box"
+      },
+      changed: () => this.tweaks.updateCSS()
+    });
+
+
+
     // Appearance - Tweaks - System Theme - Enable System Theme
     this.settings.add("addon.trubbel.appearance.tweaks.system_theme", {
       default: false,
