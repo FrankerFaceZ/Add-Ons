@@ -1,4 +1,5 @@
 import BTTVModeration from "../../modules/channel/chat/bttv";
+import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
 import InfoMessage from "../../modules/channel/chat/info-message";
@@ -33,6 +34,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.inject("site.chat.scroller");
 
     this.bttvModeration = new BTTVModeration(this);
+    this.chatTranslate = new ChatTranslate(this);
     this.customCommands = new Commands(this);
     this.firstTimeChatter = new FirstTimeChatter(this);
     this.infoMessage = new InfoMessage(this);
@@ -446,6 +448,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
   onEnable() {
     this.router.on(":route", this.navigate, this);
     this.bttvModeration.initialize();
+    this.chatTranslate.initialize();
     this.customCommands.initialize();
     this.firstTimeChatter.initialize();
     this.infoMessage.initialize();
@@ -464,6 +467,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
   async navigate() {
     this.bttvModeration.handleNavigation();
+    this.chatTranslate.handleNavigation();
     this.customCommands.handleNavigation();
     this.firstTimeChatter.handleNavigation();
     this.infoMessage.handleNavigation();
