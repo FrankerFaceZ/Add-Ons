@@ -87,11 +87,18 @@ class RepetitionDetector extends Addon {
 
 		const chatContext = this.chat.context;
 
-		const checkRepetitionAndCache = (username, message) => {
+		const checkRepetitionAndCache = (username, message, id) => {
 			const cacheTtl = this.settings.get('addon.repetition_detector.cache_ttl') * 1000;
 			const simThreshold = this.settings.get('addon.repetition_detector.similarity_threshold');
 			if(this.cache.has(username)) {
 				this.cache.get(username).expire = Date.now() + cacheTtl;
+
+				if (this.cache.get(username).messages.some(m => m.msgId === id))
+				{
+					// message was already counted, ignore duplicate
+					return -1;
+				}
+
 				let n = 1;
 				const messagesInCache = this.cache.get(username).messages;
 				for(let i = 0; i < messagesInCache.length; i++) {
@@ -99,13 +106,15 @@ class RepetitionDetector extends Addon {
 						n++;
 					}
 				}
-				this.cache.get(username).messages.push({msg: message, expire: Date.now() + cacheTtl});
+				this.cache.get(username).messages.push({msg: message, expire: Date.now() + cacheTtl, msgId: id});
 				return n;
 			} else {
 				this.cache.set(username, {
 					messages:[
 						{
-							msg: message, expire: Date.now() + cacheTtl
+							msg: message, 
+							expire: Date.now() + cacheTtl,
+							msgId: id
 						}
 					],
 					expire: Date.now() + cacheTtl
@@ -127,6 +136,7 @@ class RepetitionDetector extends Addon {
 			},
 
 			process(tokens, msg) {
+				if (msg.roomID == undefined) return tokens; // ignore non-chat messages (i.e. threads)
 
 				if(!msg.message || msg.message === '') return tokens; // ignore the message if its empty
 
@@ -137,7 +147,14 @@ class RepetitionDetector extends Addon {
 						(msg.badges.moderator || msg.badges.broadcaster)) return tokens;
 				// counts the message repetition
 				if(!msg.repetitionCount && msg.repetitionCount !== 0) {
-					msg.repetitionCount = checkRepetitionAndCache(msg.user.id, msg.message);
+
+					let count = checkRepetitionAndCache(msg.user.id, msg.message, msg.id);
+
+					if (count != -1)
+					{
+						msg.repetitionCount = count;
+					}
+					
 				}
 				// if the message repetition count is higher than the threthold, updates the repetition count
 				if(msg.repetitionCount >= this.settings.get('addon.repetition_detector.repetitions_threshold')) {
