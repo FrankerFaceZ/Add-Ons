@@ -1,0 +1,6 @@
+query VodTimestamp_GetVideoInfo($id: ID!) {
+	video(id: $id) {
+		id
+		createdAt
+	}
+}
