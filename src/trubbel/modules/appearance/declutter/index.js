@@ -13,6 +13,7 @@ export default class Declutter {
       "hide-sidebar-guest-avatar": ".side-nav-card :is(.primary-with-small-avatar__mini-avatar)",
       "hide-sidebar-guest-number": ".side-nav-card [data-a-target=\"side-nav-card-metadata\"] :is(p):nth-child(2)",
       "hide-sidebar-all-time-high-train": ".side-nav-card div:has(> .hype-train-icon__trophy)",
+      "hide-sidebar-community-train": ".side-nav-card div:has(> .hype-train-icon__train--community)",
       "hide-sidebar-golden-kappa-train": ".side-nav-card div:has(> .hype-train-icon__train--golden-kappa)",
       "hide-sidebar-shared-hype-train": ".side-nav-card div:has(> .hype-train-icon__train--shared)",
       "hide-sidebar-treasure-train": ".side-nav-card div:has(> .hype-train-icon__train--treasure)",
@@ -36,6 +37,7 @@ export default class Declutter {
     this.toggleHide("hide-sidebar-guest-avatar", this.settings.get("addon.trubbel.appearance.declutter.sidebar.guest_avatar"));
     this.toggleHide("hide-sidebar-guest-number", this.settings.get("addon.trubbel.appearance.declutter.sidebar.guest_number"));
     this.toggleHide("hide-sidebar-all-time-high-train", this.settings.get("addon.trubbel.appearance.declutter.sidebar.all_time_high_train"));
+    this.toggleHide("hide-sidebar-community-train", this.settings.get("addon.trubbel.appearance.declutter.sidebar.community_train"));
     this.toggleHide("hide-sidebar-golden-kappa-train", this.settings.get("addon.trubbel.appearance.declutter.sidebar.golden_kappa_train"));
     this.toggleHide("hide-sidebar-shared-hype-train", this.settings.get("addon.trubbel.appearance.declutter.sidebar.shared_hype_train"));
     this.toggleHide("hide-sidebar-treasure-train", this.settings.get("addon.trubbel.appearance.declutter.sidebar.treasure_train"));

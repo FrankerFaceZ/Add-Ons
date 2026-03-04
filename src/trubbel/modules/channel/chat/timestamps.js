@@ -1,6 +1,6 @@
 import { BAD_USERS } from "../../../utilities/constants/types";
 
-const { createElement } = FrankerFaceZ.utilities.dom;
+const { createElement, setChildren } = FrankerFaceZ.utilities.dom;
 
 export default class TimestampHandler {
   constructor(parent) {
@@ -18,7 +18,6 @@ export default class TimestampHandler {
     this.enableTimestampHandler = this.enableTimestampHandler.bind(this);
     this.disableTimestampHandler = this.disableTimestampHandler.bind(this);
     this.handleSettingChange = this.handleSettingChange.bind(this);
-    this.handleMessage = this.handleMessage.bind(this);
     this.addTimestampToMessage = this.addTimestampToMessage.bind(this);
 
     this.ChatLine = this.fine.define(
@@ -87,76 +86,53 @@ export default class TimestampHandler {
     this.log.info("[Timestamp Handler] Setting up timestamp handling");
     this.isActive = true;
 
-    this.ChatLine.on("mount", this.handleMessage);
-    this.ChatLine.on("mutate", this.handleMessage);
-    this.ChatLine.each(inst => this.handleMessage(inst));
+    this.ChatLine.each(inst => this.addTimestampToMessage(inst));
+    this.StatusLine.each(inst => this.addTimestampToMessage(inst));
 
-    this.StatusLine.on("mount", this.handleMessage);
-    this.StatusLine.on("mutate", this.handleMessage);
-    this.StatusLine.each(inst => this.handleMessage(inst));
-  }
+    this.ChatLine.on("mount", this.addTimestampToMessage);
+    this.ChatLine.on("update", this.addTimestampToMessage);
 
-  handleMessage(inst) {
-    if (!this.isActive) {
-      return;
-    }
-
-    const chatModule = this.parent.resolve("chat");
-    const want_ts = chatModule ? chatModule.context.get("chat.extra-timestamps") : false;
-
-    if (!want_ts) return;
-
-    this.addTimestampToMessage(inst);
+    this.StatusLine.on("mount", this.addTimestampToMessage);
+    this.StatusLine.on("update", this.addTimestampToMessage);
   }
 
   addTimestampToMessage(inst) {
-    if (inst.trubbel_timestamp_processed) return;
+    if (!this.isActive) return;
 
-    requestAnimationFrame(() => {
-      try {
-        const { setChildren } = FrankerFaceZ.utilities.dom;
+    const chatModule = this.parent.resolve("chat");
+    const want_ts = chatModule?.context.get("chat.extra-timestamps");
+    if (!want_ts) return;
 
-        const hostNode = this.fine.getHostNode(inst);
-        if (!hostNode) {
-          return;
-        }
+    const message = inst.props?.message;
+    const messageId = message?.id;
 
-        const statusElement = hostNode.querySelector(".chat-line__status") || hostNode.closest(".chat-line__status");
-        const messageElement = hostNode.querySelector(".chat-line__message") || hostNode.closest(".chat-line__message");
+    if (messageId && inst._trubbel_timestamp_msg_id === messageId) return;
 
-        const targetElement = statusElement || messageElement;
-        if (!targetElement) {
-          return;
-        }
+    const hostNode = this.fine.getHostNode(inst);
+    if (!hostNode) return;
 
-        const existingTimestamp = targetElement.querySelector(".chat-line__timestamp");
-        if (existingTimestamp) {
-          inst.trubbel_timestamp_processed = true;
-          return;
-        }
+    const statusElement = hostNode.querySelector(".chat-line__status")
+      || hostNode.closest(".chat-line__status");
+    const messageElement = hostNode.querySelector(".chat-line__message")
+      || hostNode.closest(".chat-line__message");
 
-        const chatModule = this.parent.resolve("chat");
-        if (!chatModule) {
-          return;
-        }
+    const targetElement = statusElement || messageElement;
+    if (!targetElement) return;
 
-        const timestamp = createElement("span");
-        timestamp.className = "chat-line__timestamp";
-        timestamp.textContent = chatModule.formatTime(Date.now());
+    const existingTimestamp = targetElement.querySelector(".chat-line__timestamp");
+    if (existingTimestamp) {
+      if (messageId) inst._trubbel_timestamp_msg_id = messageId;
+      return;
+    }
 
-        const existingChildren = Array.from(targetElement.childNodes);
+    const timestamp = createElement("span");
+    timestamp.className = "chat-line__timestamp";
+    timestamp.textContent = chatModule.formatTime(message?.timestamp || Date.now());
 
-        const children = [timestamp, ...existingChildren];
+    const existingChildren = Array.from(targetElement.childNodes);
+    setChildren(targetElement, [timestamp, ...existingChildren]);
 
-        setChildren(targetElement, children);
-        inst.trubbel_timestamp_processed = true;
-
-        this.log.debug("[Timestamp Handler] Added timestamp to message");
-
-      } catch (err) {
-        this.log.error("[Timestamp Handler] Error adding timestamp:", err);
-      }
-    });
+    if (messageId) inst._trubbel_timestamp_msg_id = messageId;
   }
 
   disableTimestampHandler() {
@@ -165,10 +141,13 @@ export default class TimestampHandler {
     this.log.info("[Timestamp Handler] Removing timestamp handling");
     this.isActive = false;
 
-    this.ChatLine.off("mount", this.handleMessage);
-    this.ChatLine.off("mutate", this.handleMessage);
+    this.ChatLine.off("mount", this.addTimestampToMessage);
+    this.ChatLine.off("update", this.addTimestampToMessage);
 
-    this.StatusLine.off("mount", this.handleMessage);
-    this.StatusLine.off("mutate", this.handleMessage);
+    this.StatusLine.off("mount", this.addTimestampToMessage);
+    this.StatusLine.off("update", this.addTimestampToMessage);
+
+    this.ChatLine.each(inst => delete inst._trubbel_timestamp_msg_id);
+    this.StatusLine.each(inst => delete inst._trubbel_timestamp_msg_id);
   }
 }
