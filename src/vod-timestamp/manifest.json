@@ -1,0 +1,15 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main"
+	],
+	"name": "VOD Timestamp Finder",
+	"description": "Enter a UTC or local time to jump to the exact moment in a VOD. Generates timestamped VOD links from chat message times.",
+	"author": "mellen",
+	"maintainer": "mellen",
+	"version": "1.0.0",
+	"website": "https://heatsync.org",
+	"settings": "add_ons.vod_timestamp",
+	"created": "2026-02-20T00:00:00.000Z"
+}
