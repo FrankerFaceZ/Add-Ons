@@ -9,7 +9,6 @@ const { sleep } = FrankerFaceZ.utilities.object;
 export default class PopoutChatName {
   constructor(parent) {
     this.parent = parent;
-    this.twitch_data = parent.twitch_data;
     this.settings = parent.settings;
     this.router = parent.router;
     this.site = parent.site;
@@ -21,7 +20,6 @@ export default class PopoutChatName {
     this.enablePopoutChatName = this.enablePopoutChatName.bind(this);
     this.disablePopoutChatName = this.disablePopoutChatName.bind(this);
     this.handleSettingChange = this.handleSettingChange.bind(this);
-    this.extractStreamerFromRoute = this.extractStreamerFromRoute.bind(this);
   }
 
   initialize() {
@@ -57,16 +55,29 @@ export default class PopoutChatName {
     }
   }
 
-  async enablePopoutChatName() {
-    if (this.isActive) return;
-
-    const streamer = this.extractStreamerFromRoute();
-    if (!streamer) {
-      this.log.warn("[Popout Chat Name] Could not extract streamer name from route");
-      return;
+  getChannelDataFromProps() {
+    const props = this.site.children?.chat?.ChatContainer?.first?.props;
+    if (!props) {
+      this.log.warn("[Popout Chat Name] ChatContainer props not available");
+      return null;
     }
 
-    this.log.info(`[Popout Chat Name] Setting up chat name replacement for: ${streamer}`);
+    if (!props.isPopout) {
+      this.log.warn("[Popout Chat Name] Could not find popout state");
+      return null;
+    }
+
+    const { channelDisplayName, channelLogin } = props;
+    if (!channelDisplayName || !channelLogin) {
+      this.log.warn("[Popout Chat Name] ChatContainer props missing channel data");
+      return null;
+    }
+
+    return { channelDisplayName, channelLogin };
+  }
+
+  async enablePopoutChatName() {
+    if (this.isActive) return;
     this.isActive = true;
 
     try {
@@ -78,21 +89,23 @@ export default class PopoutChatName {
 
       if (!streamChatHeader) {
         this.log.warn("[Popout Chat Name] Chat header element not found");
+        this.isActive = false;
         return;
       }
 
       // waiting because of shared chats
       await sleep(5000);
 
-      const data = await this.twitch_data.getUser(null, streamer);
+      const data = this.getChannelDataFromProps();
       if (!data) {
-        this.log.warn(`[Popout Chat Name] Could not get user data for: ${streamer}`);
+        this.isActive = false;
         return;
       }
 
-      const displayName = data.displayName;
-      const login = data.login;
-      const username = displayName.toLowerCase() !== login ? `${displayName} (${login})` : displayName;
+      const { channelDisplayName, channelLogin } = data;
+      const username = channelDisplayName.toLowerCase() !== channelLogin
+        ? `${channelDisplayName} (${channelLogin})`
+        : channelDisplayName;
 
       streamChatHeader.textContent = username;
       streamChatHeader.title = username;
@@ -100,6 +113,7 @@ export default class PopoutChatName {
       this.log.info(`[Popout Chat Name] Chat header updated to: ${username}`);
     } catch (error) {
       this.log.warn("[Popout Chat Name] Error updating chat header:", error);
+      this.isActive = false;
     }
   }
 
@@ -107,15 +121,5 @@ export default class PopoutChatName {
     if (!this.isActive) return;
     this.log.info("[Popout Chat Name] Removing chat name replacement");
     this.isActive = false;
-  }
-
-  extractStreamerFromRoute() {
-    if (!this.router?.match) {
-      this.log.warn("[Popout Chat Name] No valid route match found");
-      return null;
-    }
-
-    const streamer = this.router?.match[1];
-    return streamer;
   }
 }

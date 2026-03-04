@@ -120,7 +120,15 @@ export default class InfoMessage {
           return;
         }
 
-        const textContent = element.textContent;
+        const timestampElement = element.querySelector(".chat-line__timestamp");
+
+        const elementClone = element.cloneNode(true);
+        const timestampClone = elementClone.querySelector(".chat-line__timestamp");
+        if (timestampClone) {
+          timestampClone.remove();
+        }
+
+        const textContent = elementClone.textContent;
         const regex = /[:：]\s*([^.\n。]+)(?:[.。])?/;
         const match = textContent.match(regex);
 
@@ -142,7 +150,7 @@ export default class InfoMessage {
         const beforeText = textContent.substring(0, match.index + 1) + " ";
         const afterText = ".";
 
-        const children = [beforeText];
+        const children = timestampElement ? [timestampElement, beforeText] : [beforeText];
 
         usernames.forEach((username, index) => {
           const usernameElement = document.createElement("span");

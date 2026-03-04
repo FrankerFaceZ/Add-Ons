@@ -216,14 +216,25 @@ export default class RaidPreview {
       .trubbel-preview-container {
         position: relative;
         width: 100%;
+        max-width: 440px;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         border-radius: 4px;
+        background: black;
+      }
+      .trubbel-preview-container iframe,
+      .trubbel-preview-container img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
       }
       .trubbel-blurred-preview {
         filter: blur(3rem) brightness(50%);
         transform: scale(1.3);
-        transition: all 0.3s ease;
-        transform-origin: center center;
+        transition: filter 0.3s ease, transform 0.3s ease;
+        transform-origin: center;
       }
       .trubbel-preview-container:hover .trubbel-blurred-preview {
         filter: blur(0) brightness(100%);
@@ -326,10 +337,7 @@ export default class RaidPreview {
 
       const mediaStyle = {
         maxWidth: "440px",
-        maxHeight: "248px",
         width: "100%",
-        height: "auto",
-        objectFit: "contain",
         borderRadius: "4px",
         display: "block",
       };
@@ -532,7 +540,6 @@ export default class RaidPreview {
       );
     };
 
-    // Main info element with restructured JSX
     const previewMedia = createPreviewMedia();
     const chatSettings = createChatSettings();
 

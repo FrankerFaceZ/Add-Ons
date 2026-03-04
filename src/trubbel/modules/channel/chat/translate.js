@@ -25,6 +25,7 @@ export default class ChatTranslate {
     this.translationTokenizer = {
       type: "chat-translate",
       priority: 0,
+
       render: (token, createElement) => {
         if (token.translation_type === "loading") {
           return createElement("div", {
@@ -69,70 +70,69 @@ export default class ChatTranslate {
 
         if (msg.trubbel_translation && msg.trubbel_translation_data) {
           const data = msg.trubbel_translation_data;
-          const out = [...tokens];
 
           if (data.error) {
-            out.push({
-              type: "chat-translate",
-              translation_type: "error",
-              error: data.error
-            });
-          } else if (data.text) {
-            out.push({
-              type: "chat-translate",
-              translation_type: "result",
-              text: data.text,
-              sourceLang: data.sourceLang,
-              candidateText: data.candidateText
-            });
+            return [
+              ...tokens,
+              { type: "chat-translate", translation_type: "error", error: data.error }
+            ];
           }
 
-          return out;
+          if (data.text) {
+            return [
+              ...tokens,
+              {
+                type: "chat-translate",
+                translation_type: "result",
+                text: data.text,
+                sourceLang: data.sourceLang,
+                candidateText: data.candidateText
+              }
+            ];
+          }
+
+          return tokens;
         }
 
         const translation = this.translations.get(msg.id);
         if (!translation) return tokens;
 
-        const out = [...tokens];
-
         if (translation.loading) {
-          out.push({
-            type: "chat-translate",
-            translation_type: "loading"
-          });
-
-        } else if (translation.error) {
-
-          msg.trubbel_translation = true;
-          msg.trubbel_translation_data = {
-            error: translation.error
-          };
-
-          out.push({
-            type: "chat-translate",
-            translation_type: "error",
-            error: translation.error
-          });
-
-        } else if (translation.text) {
-
-          msg.trubbel_translation = true;
-          msg.trubbel_translation_data = {
-            text: translation.text,
-            sourceLang: translation.sourceLang,
-            candidateText: translation.candidateText
-          };
-
-          out.push({
-            type: "chat-translate",
-            translation_type: "result",
-            text: translation.text,
-            sourceLang: translation.sourceLang,
-            candidateText: translation.candidateText
-          });
+          return [
+            ...tokens,
+            { type: "chat-translate", translation_type: "loading" }
+          ];
         }
 
-        return out;
+        if (translation.error) {
+          msg.trubbel_translation = true;
+          msg.trubbel_translation_data = { error: translation.error };
+          return [
+            ...tokens,
+            { type: "chat-translate", translation_type: "error", error: translation.error }
+          ];
+        }
+
+        if (translation.text) {
+          msg.trubbel_translation = true;
+          msg.trubbel_translation_data = {
+            text: translation.text,
+            sourceLang: translation.sourceLang,
+            candidateText: translation.candidateText,
+          };
+          return [
+            ...tokens,
+            {
+              type: "chat-translate",
+              translation_type: "result",
+              text: translation.text,
+              sourceLang: translation.sourceLang,
+              candidateText: translation.candidateText
+            }
+          ];
+        }
+
+        return tokens;
       }
     };
   }
@@ -212,13 +212,12 @@ export default class ChatTranslate {
       },
 
       click: async (event, data) => {
-        if (!data.message || !data.message.text) return;
+        if (!data.message) return;
         await this.handleTranslate(data);
       },
     });
 
-    this.style.set("chat-translations",
-      `
+    this.style.set("chat-translations", `
       .trubbel-chat-translation {
         display: block;
         margin-top: 0.25rem;
@@ -281,49 +280,63 @@ export default class ChatTranslate {
 
   async handleTranslate(data) {
     const messageId = data.message.id;
-    const messageText = data.message.text;
 
-    if (this.translations.has(messageId)) {
-      return;
-    }
+    if (this.translations.has(messageId)) return;
 
-    const messages = this.chat.chat.iterateMessages();
-    for (const msg of messages) {
-      if (msg.id === messageId && msg.trubbel_translation) {
-        return;
+    let fullMessage = null;
+    for (const item of this.chat.chat.iterateMessages()) {
+      if (item.message?.id === messageId) {
+        if (item.message.trubbel_translation) return;
+        fullMessage = item.message;
+        break;
       }
     }
+
+    if (!fullMessage) return;
+
+    const tokens = fullMessage.ffz_tokens;
+    const textSegments = [];
+
+    if (tokens && tokens.length) {
+      for (const token of tokens) {
+        if (token.type !== "text") continue;
+        const trimmed = token.text.trim();
+        if (!trimmed.length) continue;
+        textSegments.push(trimmed);
+      }
+    }
+
+    if (!textSegments.length) return;
 
     if (this.translations.size >= 30) {
       const firstKey = this.translations.keys().next().value;
       this.translations.delete(firstKey);
     }
 
-    this.translations.set(messageId, {
-      loading: true,
-      text: null,
-      sourceLang: null,
-      error: null,
-    });
-
+    this.translations.set(messageId, { loading: true });
     this.parent.emit("chat:update-lines");
 
     try {
       const targetLang = this.settings.get("addon.trubbel.channel.chat.translation.target_lang");
 
-      const result = await this.translateText(messageText, targetLang);
+      const combined = textSegments.join("\n");
+      const result = await this.translateText(combined, targetLang);
 
       if (result.isError) {
         this.translations.set(messageId, {
           loading: false,
-          text: null,
-          sourceLang: null,
           error: result.errorMessage,
         });
       } else {
+        const translatedText = result.resultText
+          .split("\n")
+          .map(s => s.trim())
+          .filter(s => s.length)
+          .join(" ");
+
         this.translations.set(messageId, {
           loading: false,
-          text: result.resultText,
+          text: translatedText,
           sourceLang: result.sourceLanguage,
           candidateText: result.candidateText,
           error: null,
@@ -333,8 +346,6 @@ export default class ChatTranslate {
       this.log.error("Translation error:", error);
       this.translations.set(messageId, {
         loading: false,
-        text: null,
-        sourceLang: null,
         error: "Translation failed",
       });
     }

@@ -105,11 +105,23 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-sidebar-all-time-high-train", val)
     });
 
+    // Appearance - Declutter - Left Navigation - Hide Community Train
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.community_train", {
+      default: false,
+      ui: {
+        sort: 5,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        title: "Hide Community Train",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-community-train", val)
+    });
+
     // Appearance - Declutter - Left Navigation - Hide Golden Kappa Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.golden_kappa_train", {
       default: false,
       ui: {
-        sort: 5,
+        sort: 6,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Golden Kappa Train",
         component: "setting-check-box"
@@ -121,7 +133,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.shared_hype_train", {
       default: false,
       ui: {
-        sort: 6,
+        sort: 7,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Shared Hype Train",
         component: "setting-check-box"
@@ -133,7 +145,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.treasure_train", {
       default: false,
       ui: {
-        sort: 7,
+        sort: 8,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Treasure Train",
         component: "setting-check-box"
@@ -145,7 +157,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.hype_train", {
       default: false,
       ui: {
-        sort: 8,
+        sort: 9,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Hype Train",
         component: "setting-check-box"
@@ -157,7 +169,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.gift_discount", {
       default: false,
       ui: {
-        sort: 9,
+        sort: 10,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Gift Discount",
         component: "setting-check-box"

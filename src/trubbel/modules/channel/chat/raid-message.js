@@ -1,6 +1,6 @@
 import { BAD_USERS } from "../../../utilities/constants/types";
 
-const { setChildren } = FrankerFaceZ.utilities.dom;
+const { createElement, on, setChildren } = FrankerFaceZ.utilities.dom;
 
 export default class RaidMessage {
   constructor(parent) {
@@ -18,8 +18,7 @@ export default class RaidMessage {
     this.enableRaidHandler = this.enableRaidHandler.bind(this);
     this.disableRaidHandler = this.disableRaidHandler.bind(this);
     this.handleSettingChange = this.handleSettingChange.bind(this);
-    this.handleRaidMessage = this.handleRaidMessage.bind(this);
-    this.makeRaidUsernameClickable = this.makeRaidUsernameClickable.bind(this);
+    this.processRaidMessage = this.processRaidMessage.bind(this);
 
     this.UserNoticeLine = this.fine.define(
       "user-notice-line-raid",
@@ -52,7 +51,6 @@ export default class RaidMessage {
     const currentRoute = this.router?.current?.name;
 
     let pathname;
-
     if (this.router?.match && this.router.match[1]) {
       pathname = this.router.match[1];
     } else {
@@ -81,53 +79,54 @@ export default class RaidMessage {
     this.log.info("[Raid Message Handler] Setting up raid message handling");
     this.isActive = true;
 
-    this.UserNoticeLine.ready((cls, instances) => {
-      for (const inst of instances) {
-        this.handleRaidMessage(inst);
-      }
-    });
-    this.UserNoticeLine.on("mount", this.handleRaidMessage);
-    this.UserNoticeLine.on("mutate", this.handleRaidMessage);
-    this.UserNoticeLine.each(inst => this.handleRaidMessage(inst));
+    this.UserNoticeLine.each(inst => this.processRaidMessage(inst));
+    this.UserNoticeLine.on("mount", this.processRaidMessage);
+    this.UserNoticeLine.on("update", this.processRaidMessage);
   }
 
-  handleRaidMessage(inst) {
-    if (!this.isActive) {
-      this.log.debug("[Raid Message Handler] Not active, skipping message handling");
-      return;
-    }
+  processRaidMessage(inst) {
+    if (!this.isActive) return;
 
     const message = inst?.props?.message;
+    const chat = this.site.children.chat
+    const RAID_TYPE = chat?.chat_types?.Raid;
 
-    const RAID_TYPE = this?.site?.children?.chat?.chat_types?.Raid;
-    if (message?.type === RAID_TYPE && message?.params?.msgId === "raid") {
-      this.log.info("[Raid Message Handler] Processing raid message:", message?.params?.displayName);
-      this.makeRaidUsernameClickable(inst, message);
-    }
-  }
+    if (message?.type !== RAID_TYPE || message?.params?.msgId !== "raid") return;
+    if (inst._trubbel_raid_msg_id === message.id) return;
 
-  makeRaidUsernameClickable(inst, message) {
-    if (inst.trubbel_raid_processed) return;
+    const hostNode = this.fine.getHostNode(inst);
+    if (!hostNode) return;
 
-    if (!inst.trubbel_raid_click_handler) {
-      inst.trubbel_raid_click_handler = (event) => {
+    const element = hostNode.querySelector("[data-test-selector=\"user-notice-line\"]")
+      || hostNode.closest("[data-test-selector=\"user-notice-line\"]");
+    if (!element) return;
+
+    const displayName = message.params.displayName;
+    const textContent = element.textContent;
+
+    if (!textContent?.includes(displayName)) return;
+
+    const displayNameIndex = textContent.indexOf(displayName);
+    if (displayNameIndex === -1) return;
+
+    const beforeText = textContent.substring(0, displayNameIndex);
+    const afterText = textContent.substring(displayNameIndex + displayName.length);
+
+    if (!inst._trubbel_raid_click_handler) {
+      inst._trubbel_raid_click_handler = (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        const target = event.currentTarget;
-        const login = target.dataset.userLogin;
-        const userID = target.dataset.userId;
+        const login = message.params.login;
+        this.log.info("[Raid Message Handler] Raid username clicked:", login);
 
-        this.log.info("[Raid Message Handler] Raid user clicked:", login);
-
-        const chatContainer = this.parent.resolve("site.chat")?.ChatContainer;
-        if (chatContainer?.first?.onUsernameClick) {
-          this.log.info("[Raid Message Handler] Using ChatContainer.first.onUsernameClick");
-          chatContainer.first.onUsernameClick(
+        const container = chat?.ChatContainer;
+        if (container?.first?.onUsernameClick) {
+          container.first.onUsernameClick(
             login,
-            "chat_message",
+            "chat_raid_message",
             message.id,
-            target.getBoundingClientRect().bottom
+            event.currentTarget.getBoundingClientRect().bottom
           );
         } else {
           this.log.warn("[Raid Message Handler] Could not find onUsernameClick handler");
@@ -135,63 +134,24 @@ export default class RaidMessage {
       };
     }
 
-    requestAnimationFrame(() => {
-      try {
-        const hostNode = this.fine.getHostNode(inst);
-        if (!hostNode) {
-          this.log.warn("[Raid Message Handler] Could not find host node for instance");
-          return;
-        }
+    const usernameElement = createElement("span");
+    usernameElement.className = "chatter-name ffz-interactive";
+    usernameElement.setAttribute("role", "button");
+    usernameElement.style.cursor = "pointer";
+    usernameElement.style.fontWeight = "bold";
+    usernameElement.textContent = displayName;
+    usernameElement.setAttribute("data-user-id", message.params.userID);
+    usernameElement.setAttribute("data-user-login", message.params.login);
+    on(usernameElement, "click", inst._trubbel_raid_click_handler);
 
-        const element = hostNode.querySelector("[data-test-selector=\"user-notice-line\"]") || hostNode.closest("[data-test-selector=\"user-notice-line\"]");
-        if (!element) {
-          this.log.warn("[Raid Message Handler] Could not find .user-notice-line element");
-          return;
-        }
+    const children = [];
+    if (beforeText) children.push(beforeText);
+    children.push(usernameElement);
+    if (afterText) children.push(afterText);
 
-        const textContent = element.textContent;
-        const displayName = message.params.displayName;
+    setChildren(element, children);
 
-        if (!textContent || !textContent.includes(displayName)) {
-          this.log.warn("[Raid Message Handler] Could not find raid username in text");
-          return;
-        }
-
-        const displayNameIndex = textContent.indexOf(displayName);
-        if (displayNameIndex === -1) return;
-
-        const beforeText = textContent.substring(0, displayNameIndex);
-        const afterText = textContent.substring(displayNameIndex + displayName.length);
-
-        const children = [];
-
-        if (beforeText) {
-          children.push(beforeText);
-        }
-
-        const usernameElement = document.createElement("span");
-        usernameElement.className = "chatter-name ffz-interactive";
-        usernameElement.setAttribute("role", "button");
-        usernameElement.style.cursor = "pointer";
-        usernameElement.style.fontWeight = "bold";
-        usernameElement.textContent = displayName;
-        usernameElement.setAttribute("data-user-id", message.params.userID);
-        usernameElement.setAttribute("data-user-login", message.params.login);
-        usernameElement.addEventListener("click", inst.trubbel_raid_click_handler);
-
-        children.push(usernameElement);
-
-        if (afterText) {
-          children.push(afterText);
-        }
-
-        setChildren(element, children);
-
-        inst.trubbel_raid_processed = true;
-      } catch (err) {
-        this.log.error("[Raid Message Handler] Error in DOM manipulation:", err);
-      }
-    });
+    inst._trubbel_raid_msg_id = message.id;
   }
 
   disableRaidHandler() {
@@ -200,16 +160,12 @@ export default class RaidMessage {
     this.log.info("[Raid Message Handler] Removing raid message handling");
     this.isActive = false;
 
-    this.UserNoticeLine.off("mount", this.handleRaidMessage);
-    this.UserNoticeLine.off("mutate", this.handleRaidMessage);
+    this.UserNoticeLine.off("mount", this.processRaidMessage);
+    this.UserNoticeLine.off("update", this.processRaidMessage);
 
     this.UserNoticeLine.each(inst => {
-      if (inst.trubbel_raid_processed) {
-        delete inst.trubbel_raid_processed;
-      }
-      if (inst.trubbel_raid_click_handler) {
-        delete inst.trubbel_raid_click_handler;
-      }
+      delete inst._trubbel_raid_msg_id;
+      delete inst._trubbel_raid_click_handler;
     });
   }
 }
