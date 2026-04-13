@@ -4,6 +4,7 @@ class SpoilerHider extends Addon {
 
 		this.inject('chat');
 		this.inject('site');
+		this.tag = "||";
 
 		const outerThis = this;
 
@@ -12,12 +13,13 @@ class SpoilerHider extends Addon {
 			priority: 9,
 
 			render(token, createElement) {
-				return (<span 
+				return (<span
 					style={{
 						"background-color": token.revealed ? "var(--color-background-button-text-hover)" : "var(--color-background-alt)",
 						"borderRadius": "var(--border-radius-medium)",
 						"cursor": "pointer",
 						"display": "inline-block",
+						"transition": "all 0.2s ease",
 					}} onClick={
 					() => {
 						token.revealed = !token.revealed;
@@ -25,105 +27,71 @@ class SpoilerHider extends Addon {
 						//outerThis.emit("chat:update-line", token.message.id, false);
 						outerThis.emit("chat:rerender-lines");
 					}
-				}>{token.revealed ? this.renderTokens(token.data, createElement) : '×××'}</span>)
+				}>{token.revealed ? this.renderTokens(token.children, createElement) : '×××'}</span>)
 			},
 
 			process(tokens, msg) {
-				let i = 0;
-
 				// FIXME: Is there a better way of doing this? I don't think modifying msg object here is valid
 				// This is meant to prevent Twitch by showing the message, this overrides message body.
 				if (msg.reply)
 				{
 					const replyText = msg.reply.parentMessageBody;
-
-					const [_, startPos] = outerThis.findSpoilerTag([{type: "text", text: replyText}]);
-					if (startPos != null)
+					
+					if (replyText.indexOf(outerThis.tag) !== -1)
 					{
 						msg.reply.parentMessageBody = "(spoiler)";
 					}
 				}
-
-				while (i < tokens.length)
-				{
-					// first find start of spoiler tag
-					const [startIndex, startPos] = outerThis.findSpoilerTag(tokens);
-					if (startPos == null)
-						break;
-
-					if (msg.messageBody)
-						msg.messageBody = "(spoiler)";
 				
-					const token = tokens[startIndex];
-
-					const visibleText = token.text.substring(0, startPos);
-					const spoilerText = token.text.substring(startPos + 2);
-					const newTokens = [
-						{ type: 'text', text: visibleText },
-					];
-
-					const afterTokens = 
-					[
-						{type: 'text', text: spoilerText},
-						...tokens.slice(startIndex + 1)
-					]
-
-					const [endIndex, endPos] = outerThis.findSpoilerTag(afterTokens);
-
-					const spoilerToken = {
-						type: 'spoiler_hidden',
-						revealed: false,
-						message: msg,
-						data: afterTokens.slice(0, endIndex)
-					};
-
-					newTokens.push(spoilerToken)
-
-					if (endPos != null)
+				const tokenized = [];
+				
+				for (const token of tokens)
+				{
+					if (token.type === 'text')
 					{
-						// found a closing tag
-						const endToken = afterTokens[endIndex];
-
-						const beforeEnd = endToken.text.substring(0, endPos);
-						const afterEnd = endToken.text.substring(endPos + 2);
-
-						if (beforeEnd)
-						{
-							spoilerToken.data.push(
-								{type: 'text', text: beforeEnd}
-							);
+						let i = 0;
+						let j = 0;
+						while ((j = token.text.indexOf(outerThis.tag, i)) !== -1)
+						{	
+							tokenized.push({type: 'text', text: token.text.slice(i, j)});
+							tokenized.push({type: 'text', text: outerThis.tag, tag: true});
+							
+							i = j + 2;
 						}
 						
-						if (afterEnd) newTokens.push({ type: 'text', text: afterEnd });
+						tokenized.push({type: 'text', text: token.text.slice(i)});
 					}
-
-					// Replace tokens
-            		tokens.splice(i, endIndex + 1, ...newTokens);
-            		i += newTokens.length - 1; // process the text token again for another spoiler  
+					else
+					{
+						tokenized.push(token);
+					}
 				}
-				return tokens;
+				
+				const root = [{type: 'root', children: []}];
+				
+				for (const token of tokenized)
+				{
+					if (token.tag)
+					{					
+						if (root[root.length - 1].type !== 'spoiler_hidden') {
+							root.push({
+								type: "spoiler_hidden",
+								children: [],
+								revealed: false
+							});
+						} else {
+						  const node = root.pop();
+						  root[root.length - 1].children.push(node);
+						}
+					}
+					else {
+						root[root.length - 1].children.push(token);
+					}
+				}
+
+				return root[0].children;
 			}
 		}
-	}
-
-	findSpoilerTag(tokens)
-	{
-		let i = 0;
-
-		while (i < tokens.length)
-		{
-			const token = tokens[i];
-
-			if (token.type === 'text')
-			{
-				const spoiler_tag = "||";
-				const spoiler_pos = token.text.indexOf(spoiler_tag);
-				if (spoiler_pos >= 0)
-					return [i, spoiler_pos];	
-			}
-			i++;
-		}
-		return [i, null]
 	}
 
 	async onLoad() {
