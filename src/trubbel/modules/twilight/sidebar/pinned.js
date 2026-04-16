@@ -443,7 +443,7 @@ export class SidebarPinned {
       return (
         <div
           aria-label="Pinned Channels"
-          className="side-nav-section trubbel-pinned-channels-section"
+          className="trubbel-pinned-channels-section"
           role="group"
         >
           <div
@@ -510,7 +510,7 @@ export class SidebarPinned {
       return (
         <div
           aria-label="Pinned Channels"
-          className="side-nav-section trubbel-pinned-channels-section"
+          className="trubbel-pinned-channels-section"
           role="group"
         >
           <div

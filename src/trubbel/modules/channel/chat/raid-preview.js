@@ -330,10 +330,56 @@ export default class RaidPreview {
       );
     };
 
+    const createUptime = () => {
+      if (!user.stream?.createdAt) return null;
+
+      const { duration_to_string } = FrankerFaceZ.utilities.time;
+      const upSince = new Date(user.stream.createdAt);
+      const uptimeSeconds = Math.floor((Date.now() - upSince.getTime()) / 1000);
+
+      if (uptimeSeconds < 1) return null;
+
+      const uptimeText = duration_to_string(uptimeSeconds, false, false, false, true);
+      const sinceText = this.i18n.formatDateTime(upSince);
+
+      return (
+        <div class="tw-mg-y-05 ffz-uptime-element tw-relative ffz-il-tooltip__container">
+          <div class="tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-pd-x-05">
+            <div class="tw-flex tw-c-text-live">
+              <figure class="ffz-i-clock" />
+            </div>
+            <p>{uptimeText}</p>
+          </div>
+          <div class="ffz-il-tooltip ffz-il-tooltip--down ffz-il-tooltip--align-right">
+            Stream Uptime
+            <div class="tw-pd-t-05">{sinceText}</div>
+          </div>
+        </div>
+      );
+    };
+
+    const createFlags = () => {
+      if (!this.settings.get("directory.show-flags")) return null;
+      const flags = user.stream?.contentClassificationLabels;
+      if (!flags?.length) return null;
+
+      const tooltipText = "Intended for certain audiences.\nMay contain:\n\n"
+        + flags.map(f => f.localizedName || f.id).join("\n");
+
+      return (
+        <div class="tw-mg-y-05 ffz-flags-element tw-relative ffz-il-tooltip__container">
+          <div class="tw-border-radius-small tw-c-background-overlay tw-c-text-overlay tw-flex tw-pd-x-05">
+            <figure class="ffz-i-flag" />
+          </div>
+          <div class="ffz-il-tooltip ffz-il-tooltip--pre ffz-il-tooltip--down ffz-il-tooltip--align-right">
+            {tooltipText}
+          </div>
+        </div>
+      );
+    };
+
     const createPreviewMedia = () => {
-      if (!user.stream || previewType === 0) {
-        return null;
-      }
+      if (!user.stream || previewType === 0) return null;
 
       const mediaStyle = {
         maxWidth: "440px",
@@ -343,9 +389,18 @@ export default class RaidPreview {
       };
 
       const blurOverlay = createBlurOverlay();
+      const showUptime = this.settings.get("addon.trubbel.channel.chat.raids.previews.uptime");
+      const uptimeEl = showUptime ? createUptime() : null;
+      const flagsEl = showUptime ? createFlags() : null;
+
+      const topRight = (uptimeEl || flagsEl) ? (
+        <div class="tw-absolute tw-mg-1 tw-right-0 tw-top-0 tw-flex tw-flex-column tw-align-items-end">
+          {uptimeEl}
+          {flagsEl}
+        </div>
+      ) : null;
 
       if (previewType === 1) {
-        // Image preview
         return (
           <div class="trubbel-preview-container">
             <img
@@ -355,10 +410,10 @@ export default class RaidPreview {
               style={mediaStyle}
             />
             {blurOverlay}
+            {topRight}
           </div>
         );
       } else if (previewType === 2) {
-        // Video preview
         const params = new URLSearchParams({
           channel: targetLogin,
           enableExtensions: false,
@@ -382,6 +437,7 @@ export default class RaidPreview {
               title={`${targetLogin} Stream Preview`}
             />
             {blurOverlay}
+            {topRight}
           </div>
         );
       }
@@ -541,7 +597,9 @@ export default class RaidPreview {
     };
 
     const previewMedia = createPreviewMedia();
-    const chatSettings = createChatSettings();
+    const chatSettings = this.settings.get("addon.trubbel.channel.chat.raids.previews.chat_settings")
+      ? createChatSettings()
+      : null;
 
     const infoElement = (
       <div class="trubbel-raid-stream-info" style={{ width: "100%", padding: "4px 2px", fontSize: "13px" }}>

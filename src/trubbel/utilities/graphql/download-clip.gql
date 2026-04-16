@@ -1,0 +1,16 @@
+query Trubbel_DownloadClip($slug: ID!) {
+  clip(slug: $slug) {
+    id
+    title
+    thumbnailURL(width: 480, height: 272)
+    videoQualities {
+      frameRate
+      quality
+      sourceURL
+    }
+    playbackAccessToken(params: { platform: "web", playerType: "site" }) {
+      signature
+      value
+    }
+  }
+}

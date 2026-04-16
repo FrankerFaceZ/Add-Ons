@@ -28,7 +28,14 @@
           <span class="tw-flex-grow-1 tw-font-size-6 tw-flex tw-align-items-center">
             {{ emote.name }}
 
-            <img :src="emoteURL(emote)" :alt="emote.name" class="tw-mg-l-1" style="height: 28px;" />
+            <img
+              :src="staticEmoteURL(emote)"
+              :alt="emote.name"
+              class="tw-mg-l-1"
+              style="height: 28px;"
+              @mouseenter="e => e.target.src = emoteURL(emote)"
+              @mouseleave="e => e.target.src = staticEmoteURL(emote)"
+            />
           </span>
 
           <button class="tw-button tw-button--text ffz-il-tooltip__container" @click="remove(emote)">
@@ -89,9 +96,7 @@ export default {
     emoteURL(emote) {
       if (!emote || !emote.id) return "";
 
-      const source = emote.source;
-
-      switch (source) {
+      switch (emote.source) {
         case "ffz":
           return `https://cdn.frankerfacez.com/emote/${emote.id}/4`;
 
@@ -104,6 +109,25 @@ export default {
         case "twitch":
         default:
           return `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/4.0`;
+      }
+    },
+
+    staticEmoteURL(emote) {
+      if (!emote || !emote.id) return "";
+
+      switch (emote.source) {
+        case "ffz":
+          return `https://cdn.frankerfacez.com/emote/${emote.id}/4`;
+
+        case "7tv":
+          return `https://cdn.7tv.app/emote/${emote.id}/4x_static.webp`;
+
+        case "bttv":
+          return `https://cdn.betterttv.net/emote/${emote.id}/static/3x.webp`;
+
+        case "twitch":
+        default:
+          return `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/static/dark/4.0`;
       }
     }
   }

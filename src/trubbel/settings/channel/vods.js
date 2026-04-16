@@ -1,4 +1,5 @@
 import AutoSkipMutedSegments from "../../modules/channel/vods/auto-skip-muted-segments";
+import VODClickPause from "../../modules/channel/vods/click-pause";
 import CustomSeeking from "../../modules/channel/vods/custom-seeking";
 import ProgressBar from "../../modules/channel/vods/progress-bar";
 
@@ -15,8 +16,23 @@ export class Channel_VODs extends FrankerFaceZ.utilities.module.Module {
     this.inject("site.router");
 
     this.autoSkipMutedSegments = new AutoSkipMutedSegments(this);
+    this.vodClickPause = new VODClickPause(this);
     this.customSeeking = new CustomSeeking(this);
     this.progressBar = new ProgressBar(this);
+
+    // Channel - VODs - Playback - Disable click-to-pause on VODs
+    this.settings.add("addon.trubbel.channel.vods.playback.pause", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > VODs >> Playback",
+        title: "Disable click-to-pause on VODs",
+        component: "setting-check-box"
+      },
+      changed: val => this.vodClickPause.handleSettingChange(val)
+    });
+
+
 
     // Channel - VODs - Progress Bar - Enable Custom Progress Bar
     this.settings.add("addon.trubbel.channel.vods.progress_bar", {
@@ -128,12 +144,14 @@ export class Channel_VODs extends FrankerFaceZ.utilities.module.Module {
   onEnable() {
     this.router.on(":route", this.navigate, this);
     this.autoSkipMutedSegments.initialize();
+    this.vodClickPause.initialize();
     this.customSeeking.initialize();
     this.progressBar.initialize();
   }
 
   async navigate() {
     this.autoSkipMutedSegments.handleNavigation();
+    this.vodClickPause.handleNavigation();
     this.customSeeking.handleNavigation();
     this.progressBar.handleNavigation();
   }
