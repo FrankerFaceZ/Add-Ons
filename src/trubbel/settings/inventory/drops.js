@@ -1,5 +1,6 @@
 import AutoClaimDrops from "../../modules/inventory/claim";
 import CollapsibleDrops from "../../modules/inventory/collapsible";
+import DetailedDrops from "../../modules/inventory/detailed";
 
 const { ManagedStyle } = FrankerFaceZ.utilities.dom;
 
@@ -11,10 +12,12 @@ export class Inventory_Drops extends FrankerFaceZ.utilities.module.Module {
 
     this.inject("settings");
     this.inject("site");
+    this.inject("i18n");
     this.inject("site.router");
 
     this.autoClaimDrops = new AutoClaimDrops(this);
     this.collapsibleDrops = new CollapsibleDrops(this);
+    this.detailedDrops = new DetailedDrops(this);
 
     // Inventory - Drops - Claim - Enable auto claim
     this.settings.add("addon.trubbel.inventory.drops.claim", {
@@ -64,15 +67,32 @@ export class Inventory_Drops extends FrankerFaceZ.utilities.module.Module {
       },
       changed: val => this.collapsibleDrops.handleSettingChange(val)
     });
+
+
+
+    // Inventory - Drops - Progress - Display detailed drops information
+    this.settings.add("addon.trubbel.inventory.drops.detailed", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Inventory > Drops >> Progress",
+        title: "Display detailed drops information",
+        description: "Show more accurate drop information and progress.",
+        component: "setting-check-box"
+      },
+      changed: val => this.detailedDrops.handleSettingChange(val)
+    });
   }
 
   onEnable() {
     this.router.on(":route", this.navigate, this);
     this.autoClaimDrops.initialize();
     this.collapsibleDrops.initialize();
+    this.detailedDrops.initialize();
   }
 
   async navigate() {
     this.collapsibleDrops.handleNavigation();
+    this.detailedDrops.handleNavigation();
   }
 }

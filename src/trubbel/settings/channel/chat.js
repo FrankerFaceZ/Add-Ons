@@ -1,3 +1,4 @@
+import AutoHidePinnedMessage from "../../modules/channel/chat/hide-pinned-message";
 import BTTVModeration from "../../modules/channel/chat/bttv";
 import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
@@ -8,12 +9,14 @@ import MessageHighlight from "../../modules/channel/chat/message-highlight";
 import OldClipFormat from "../../modules/channel/chat/old-clip-format";
 import OldViewerList from "../../modules/channel/chat/old-viewer-list";
 import PopoutChatName from "../../modules/channel/chat/popout-header-name";
+import PredictionNotifications from "../../modules/channel/chat/prediction-notifications";
 import RaidMessage from "../../modules/channel/chat/raid-message";
 import RaidPreview from "../../modules/channel/chat/raid-preview";
 import RecentMessages from "../../modules/channel/chat/recent-messages";
 import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import StopEmoteAnimate from "../../modules/channel/chat/stop-emote-animate";
+import TextReplace from "../../modules/channel/chat/text-replace";
 import TimestampHandler from "../../modules/channel/chat/timestamps";
 
 const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
@@ -34,6 +37,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.inject("site.twitch_data");
     this.inject("site.chat.scroller");
 
+    this.autoHidePinnedMessage = new AutoHidePinnedMessage(this);
     this.bttvModeration = new BTTVModeration(this);
     this.chatTranslate = new ChatTranslate(this);
     this.customCommands = new Commands(this);
@@ -44,12 +48,14 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.oldClipFormat = new OldClipFormat(this);
     this.oldViewerList = new OldViewerList(this);
     this.popoutChatName = new PopoutChatName(this);
+    this.predictionNotifications = new PredictionNotifications(this);
     this.raidMessage = new RaidMessage(this);
     this.raidPreview = new RaidPreview(this);
     this.recentMessages = new RecentMessages(this);
     this.sharedChatMessage = new SharedChatMessage(this);
     this.steamInspect = new SteamInspect(this);
     this.stopEmoteAnimate = new StopEmoteAnimate(this);
+    this.textReplace = new TextReplace(this);
     this.timestampHandler = new TimestampHandler(this);
 
     // Channel - Chat - Accessibility - Enable Animated Emotes Blocklist
@@ -301,6 +307,20 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Pinned Message - Auto-hide pinned messages
+    this.settings.add("addon.trubbel.channel.chat.hide_pinned_message", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Pinned Messages",
+        title: "Auto-hide Pinned Messages",
+        component: "setting-check-box"
+      },
+      changed: val => this.autoHidePinnedMessage.handleSettingChange(val)
+    });
+
+
+
     // Channel - Chat - Popout - Display channel name in Popout Chat
     this.settings.add("addon.trubbel.channel.chat.popout.title_name", {
       default: false,
@@ -316,6 +336,57 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Predictions - Prediction Started Notifications
+    this.settings.add("addon.trubbel.channel.chat.prediction.notifications", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        title: "Prediction Started Notifications",
+        description:
+          "Send a browser notification when a prediction starts in the current channel.\n\n" +
+          "**Note:** Your browser will ask for notification permission the first time you enable this.",
+        component: "setting-check-box"
+      },
+      changed: val => this.predictionNotifications.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Predictions - Only notify when tab is unfocused
+    this.settings.add("addon.trubbel.channel.chat.prediction.notifications.only_unfocused", {
+      default: true,
+      requires: ["addon.trubbel.channel.chat.prediction.notifications"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.prediction.notifications")) return false;
+        return val;
+      },
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        title: "Only notify when tab is unfocused",
+        description: "Skip the notification if you already have the Twitch tab in focus.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Predictions - Keep notification until dismissed
+    this.settings.add("addon.trubbel.channel.chat.prediction.notifications.require_interaction", {
+      default: false,
+      requires: ["addon.trubbel.channel.chat.prediction.notifications"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.prediction.notifications")) return false;
+        return val;
+      },
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        title: "Keep notification until dismissed",
+        description: "Prevent the notification from auto-dismissing, it will stay visible until you explicitly close it.\n\n**Note:** Behaviour may vary depending on your browser and OS.",
+        component: "setting-check-box"
+      }
+    });
+
+
+
     // Channel - Chat - Raids - Show raid preview
     this.settings.add("addon.trubbel.channel.chat.raids.previews", {
       default: 0,
@@ -323,7 +394,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
         title: "Show raid preview",
-        description: "Display additional information when a raid is active, category, amount of viewers and preview media.",
+        description: "Display an image or video preview of the stream when a raid is active.",
         component: "setting-select-box",
         data: [
           { value: 0, title: "Off" },
@@ -332,6 +403,42 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         ]
       },
       changed: val => this.raidPreview.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Raids - Show uptime on raid preview
+    this.settings.add("addon.trubbel.channel.chat.raids.previews.uptime", {
+      default: true,
+      requires: ["addon.trubbel.channel.chat.raids.previews"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.raids.previews"))
+          return false;
+        return val;
+      },
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
+        title: "Show uptime on raid preview",
+        description: "Display the stream uptime (and content flags if enabled in FFZ settings) on the preview.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Raids - Show chat restrictions on raid preview
+    this.settings.add("addon.trubbel.channel.chat.raids.previews.chat_settings", {
+      default: true,
+      requires: ["addon.trubbel.channel.chat.raids.previews"],
+      process(ctx, val) {
+        if (!ctx.get("addon.trubbel.channel.chat.raids.previews"))
+          return false;
+        return val;
+      },
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
+        title: "Show chat restrictions on raid preview",
+        description: "Display chat restrictions (sub-only, followers-only, slow mode, etc.) below the preview.",
+        component: "setting-check-box"
+      }
     });
 
 
@@ -346,6 +453,30 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.sharedChatMessage.handleSettingChange(val)
+    });
+
+
+
+    // Channel - Chat - Text Replace - Enable text replacement for outgoing messages
+    this.settings.add("addon.trubbel.channel.chat.text_replace", {
+      default: false,
+      ui: {
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Text Replace",
+        title: "Enable text replacement for outgoing messages.",
+        component: "setting-check-box"
+      }
+    });
+
+    this.settings.add("addon.trubbel.channel.chat.text_replace.rules", {
+      default: [],
+    });
+
+    this.settings.addUI("addon.trubbel.channel.chat.text_replace.rules-editor", {
+      path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Text Replace @{\"profile_warning\": false}",
+      component: () => import("../../components/main_menu/text-replace.vue"),
+      force_seen: true,
+      getRules: () => this.textReplace.getRules(),
+      setRules: (rules) => this.textReplace.setRules(rules),
     });
 
 
@@ -477,6 +608,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
   onEnable() {
     this.router.on(":route", this.navigate, this);
+    this.autoHidePinnedMessage.initialize();
     this.bttvModeration.initialize();
     this.chatTranslate.initialize();
     this.customCommands.initialize();
@@ -487,16 +619,19 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.oldClipFormat.initialize();
     this.oldViewerList.initialize();
     this.popoutChatName.initialize();
+    this.predictionNotifications.initialize();
     this.raidMessage.initialize();
     this.raidPreview.initialize();
     this.recentMessages.initialize();
     this.sharedChatMessage.initialize();
     this.steamInspect.initialize();
     this.stopEmoteAnimate.initialize();
+    this.textReplace.initialize();
     this.timestampHandler.initialize();
   }
 
   async navigate() {
+    this.autoHidePinnedMessage.handleNavigation();
     this.bttvModeration.handleNavigation();
     this.chatTranslate.handleNavigation();
     this.customCommands.handleNavigation();
@@ -507,12 +642,14 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.oldClipFormat.handleNavigation();
     this.oldViewerList.handleNavigation();
     this.popoutChatName.handleNavigation();
+    this.predictionNotifications.handleNavigation();
     this.raidMessage.handleNavigation();
     this.raidPreview.handleNavigation();
     this.recentMessages.handleNavigation();
     this.sharedChatMessage.handleNavigation();
     this.steamInspect.handleNavigation();
     this.stopEmoteAnimate.handleNavigation();
+    this.textReplace.handleNavigation();
     this.timestampHandler.handleNavigation();
   }
 }

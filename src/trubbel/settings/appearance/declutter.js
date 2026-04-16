@@ -177,6 +177,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-sidebar-gift-discount", val)
     });
 
+    // Appearance - Declutter - Left Navigation - Hide sponsored content
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent", {
+      default: false,
+      ui: {
+        sort: 11,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        title: "Hide sponsored content",
+        description: "This will prevent any promoted streams from showing up at all in the sidebar.",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-sponsored-content", val)
+    });
+
 
 
     // Appearance - Declutter - Player - Hide the "Closed Captions"-button within the settings menu
