@@ -104,6 +104,11 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		s.sheet.insertRule(`.seventv-paint-tooltip {
 			font-weight: 700;
 		}`);
+
+		// Fix nametag paint tooltip in shared chats
+		s.sheet.insertRule(`.ffz-il-tooltip__container.seventv-painted-content .ffz-il-tooltip {
+			-webkit-text-fill-color: initial !important;
+		}`);
 		
 		return (this.paintSheet = s.sheet ?? null);
 	}
