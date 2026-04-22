@@ -1,0 +1,10 @@
+{
+    "enabled": false,
+    "requires": [],
+    "version": "1.0.0",
+    "short_name": "CpRedeemCode",
+    "name": "Copy Redeem Code",
+    "author": "Phoxsty",
+    "description": "Adds a simple button in the notifications tab to copy the redemption code for Twitch drops.",
+    "website": "https://www.twitch.tv/phoxsty"
+}
