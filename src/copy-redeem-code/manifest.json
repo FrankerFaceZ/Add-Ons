@@ -6,5 +6,7 @@
     "name": "Copy Redeem Code",
     "author": "Phoxsty",
     "description": "Adds a simple button in the notifications tab to copy the redemption code for Twitch drops.",
-    "website": "https://www.twitch.tv/phoxsty"
+    "website": "https://www.twitch.tv/phoxsty",
+    "created": "2026-04-22T20:43:00.000+2",
+    "updated": "2026-04-22T21:10:00.000+2"
 }
