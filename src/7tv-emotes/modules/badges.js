@@ -24,12 +24,12 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 
 		// Load the "1 Month" subscriber badge so it can be hidden in FFZ without having to be seen first
 		this.addBadge({
-			id: '62f97c05e46eb00e438a696a',
+			id: '01GAF8RWW8000E8VNG1S1RMTBA',
 			name: '7TV Subscriber - 1 Month',
 			tag: 'sub1',
 			tooltip: '7TV Subscriber (1 Month)',
 			host: {
-				url: '//cdn.7tv.app/badge/62f97c05e46eb00e438a696a'
+				url: '//cdn.7tv.app/badge/01GAF8RWW8000E8VNG1S1RMTBA'
 			}
 		});
 	}
