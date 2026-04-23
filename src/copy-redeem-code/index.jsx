@@ -80,7 +80,7 @@ class CopyRedeemCode extends Addon {
 	buildCopyButton(redeemCode){
 		const button = (<div class="persistent-notification__delete redeem-btn-container" style={buttonContainerStyling}>
 			<button class="huqecI copy-redeem-code-btn"
-			  title={this.i18n.t('addon.copy-mc-redeem-code.copy', 'Copy code')}
+			  title={this.i18n.t('addon.copy-redeem-code.copy', 'Copy code')}
 			  data-redeem-code={redeemCode} 
 			  onClick={(event)=>{navigator.clipboard.writeText(event.currentTarget.dataset.redeemCode)}}>
 				<span class="ffz--icon-holder">
