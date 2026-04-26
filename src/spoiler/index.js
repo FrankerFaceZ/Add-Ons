@@ -24,7 +24,7 @@ class SpoilerHider extends Addon {
 					() => {
 						token.revealed = !token.revealed;
 						// FIXME: is there anyways to render clicks in replies by messageId?
-						//outerThis.emit("chat:update-line", token.message.id, false);
+						// outerThis.emit("chat:update-line", token.message.id, false);
 						outerThis.emit("chat:rerender-lines");
 					}
 				}>{token.revealed ? this.renderTokens(token.children, createElement) : '×××'}</span>)
@@ -56,7 +56,7 @@ class SpoilerHider extends Addon {
 							tokenized.push({type: 'text', text: token.text.slice(i, j)});
 							tokenized.push({type: 'text', text: outerThis.tag, tag: true});
 							
-							i = j + 2;
+							i = j + outerThis.tag.length;
 						}
 						
 						tokenized.push({type: 'text', text: token.text.slice(i)});
@@ -66,30 +66,37 @@ class SpoilerHider extends Addon {
 						tokenized.push(token);
 					}
 				}
-				
-				const root = [{type: 'root', children: []}];
+
+				const stack = [{
+					type: 'root', children: []
+				}];
 				
 				for (const token of tokenized)
 				{
+					const current = stack[stack.length - 1];
+					
 					if (token.tag)
-					{					
-						if (root[root.length - 1].type !== 'spoiler_hidden') {
-							root.push({
+					{
+						if (current.type !== 'spoiler_hidden') {
+							const node = {
 								type: "spoiler_hidden",
 								children: [],
+								message: msg,
 								revealed: false
-							});
+							}
+							
+							current.children.push(node);
+							stack.push(node);
 						} else {
-						  const node = root.pop();
-						  root[root.length - 1].children.push(node);
+						    stack.pop();
 						}
 					}
 					else {
-						root[root.length - 1].children.push(token);
+						current.children.push(token);
 					}
 				}
 
-				return root[0].children;
+				return stack[0].children;
 			}
 		}
 	}
