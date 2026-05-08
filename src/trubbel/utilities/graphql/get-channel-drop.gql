@@ -1,0 +1,40 @@
+query Trubbel_ChannelDrops($login: String!) {
+  channel(name: $login) {
+    viewerDropCampaigns {
+      name
+      game {
+        name
+      }
+      detailsURL
+      timeBasedDrops {
+        id
+        requiredMinutesWatched
+        requiredSubs
+        benefitEdges {
+          benefit {
+            name
+            imageAssetURL
+          }
+        }
+      }
+    }
+  }
+  currentUser {
+    dropCurrentSession {
+      currentMinutesWatched
+      dropID
+    }
+    inventory {
+      dropCampaignsInProgress {
+        timeBasedDrops {
+          id
+          self {
+            currentMinutesWatched
+            isClaimed
+            hasPreconditionsMet
+          }
+        }
+      }
+    }
+  }
+}

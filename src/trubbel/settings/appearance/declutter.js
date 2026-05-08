@@ -52,7 +52,10 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
         title: "Hide the \"For You\"-text",
         component: "setting-check-box"
       },
-      changed: val => this.declutter.toggleHide("hide-sidebar-for-you", val)
+      changed: (val) => {
+        this.declutter.toggleHide("hide-sidebar-for-you", val);
+        this.declutter.updateCSS();
+      }
     });
 
     // Appearance - Declutter - Left Navigation - Hide the "Viewers (High to Low)"-text

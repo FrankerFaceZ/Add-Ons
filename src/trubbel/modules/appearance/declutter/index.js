@@ -26,7 +26,7 @@ export default class Declutter {
       "hide-stream-monthly-recap": "div > div:has(> article a[href*=\"/recaps/\"])",
       "hide-watch-streak": ".rewards-list > div:has([style*=\"cursor: pointer\"] svg [d*=\"M5.295 8.05 10 2l3 4 2-3 3.8 5.067a11 11 0 0 1 2.2 6.6A7.333 7.333 0 0 1 13.667 22h-3.405A7.262 7.262 0 0 1 3 14.738c0-2.423.807-4.776 2.295-6.688Zm7.801 1.411 2-3L17.2 9.267a9 9 0 0 1 1.8 5.4 5.334 5.334 0 0 1-4.826 5.31 3 3 0 0 0 .174-3.748L12 13l-2.348 3.229a3 3 0 0 0 .18 3.754A5.263 5.263 0 0 1 5 14.738c0-1.978.66-3.9 1.873-5.46l3.098-3.983 3.125 4.166Z\"])",
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
-      "hide-sidebar-sponsored-content": ".side-nav .tw-transition:has(a[class*=\"side-nav-card__link--promoted\"])",
+      "hide-sidebar-sponsored-content": ".side-nav .tw-transition:has(a[class*=\"side-nav-card__link--promoted\"]),.side-nav .tw-transition:has(a[class*=\"side-nav-card__collapsed\"])",
     };
   }
 
@@ -86,6 +86,29 @@ export default class Declutter {
   }
 
   updateCSS() {
+    // Appearance - Declutter - Left Navigation - Hide the "For You"-text
+    if (this.settings.get("addon.trubbel.appearance.declutter.sidebar.for_you")
+      && !this.settings.get("addon.trubbel.twilight.sidebar_extended.pinned_channels")) {
+      this.style.set("hide-sidebar-for-you", `
+        .followed-side-nav-header__dropdown-trigger {
+          display: flex !important;
+          justify-content: flex-start !important;
+          align-items: center !important;
+        }
+        .followed-side-nav-header__dropdown-trigger > :last-child {
+          order: -1 !important;
+        }
+        .followed-side-nav-header__dropdown-trigger [data-a-target="side-nav-header-expanded"] {
+          margin-left: 4px !important;
+        }
+        .followed-side-nav-header__dropdown-trigger > :last-child {
+          margin-right: 0 !important;
+          padding-right: 0 !important;
+        }
+      `);
+    } else {
+      this.style.delete("hide-sidebar-for-you");
+    }
     // Appearance - Declutter - Player - Hide the top gradient
     if (this.settings.get("addon.trubbel.appearance.declutter.player.top_gradient")) {
       this.style.set("hide-player-top-gradient", ".video-player .top-bar {background: transparent !important;}");
@@ -111,20 +134,24 @@ export default class Declutter {
     // Appearance - Declutter - Stream - Hide power-ups within the rewards popup
     if (this.settings.get("addon.trubbel.appearance.declutter.stream.power_ups")) {
       this.style.set("hide-stream-power-ups", `
-          .reward-center-body .rewards-list {
-            margin-inline: auto !important;
-          }
-          .reward-center-body .rewards-list > div:first-child:has(p) {
-            display: none !important;
-            padding-block-end: 0px !important;
-            padding-inline: 0px !important;
-            padding-block: 0px !important;
-          }
-          .reward-center-body .rewards-list > [class*="bitsRewardListItem--"] {
-            display: none !important;
-          }
-          .reward-center-body .rewards-list div:has(> div:first-child p) {
-            padding-block: 0px !important;
+          .reward-center__content {
+            &:has([role="radiogroup"] button[data-a-target="reward-filter-all"][aria-checked="true"]) {
+              .rewards-list {
+                margin-inline: auto !important;
+                > div:first-child:has(p) {
+                  display: none !important;
+                  padding-block-end: 0 !important;
+                  padding-inline: 0 !important;
+                  padding-block: 0 !important;
+                }
+                > [class*="bitsRewardListItem--"] {
+                  display: none !important;
+                }
+                div:has(> div:first-child p) {
+                  padding-block: 0 !important;
+                }
+              }
+            }
           }
         `);
     } else {
