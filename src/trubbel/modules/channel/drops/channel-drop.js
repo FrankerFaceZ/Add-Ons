@@ -15,9 +15,10 @@ export default class ChannelDrops {
     this.log = parent.log;
 
     this.isActive = false;
-
     this.lastProcessedChannel = null;
+    this.currentChannelID = null;
     this.dropContainer = null;
+    this.pubsubEventsHandler = null;
 
     this.handleNavigation = this.handleNavigation.bind(this);
     this.enableChannelDrops = this.enableChannelDrops.bind(this);
@@ -83,6 +84,9 @@ export default class ChannelDrops {
       this.log.info("[ChannelDrops] Setting up channel drops functionality");
       this.isActive = true;
       this.injectStyle();
+
+      this.pubsubEventsHandler = e => this.onPubSubEvent(JSON.parse(e.detail));
+      window.__twitch_pubsub_events?.addEventListener("notification", this.pubsubEventsHandler);
     }
 
     this.processCurrentChannel();
@@ -108,48 +112,102 @@ export default class ChannelDrops {
     this.removeDropContainer();
 
     try {
+      const userData = await this.site.twitch_data.getUserBasic(null, user);
+      const channelID = userData?.id;
+      if (!channelID) {
+        this.log.info("[ChannelDrops] Could not resolve channel ID");
+        return;
+      }
+
+      this.currentChannelID = channelID;
+
       const result = await this.apollo.client.query({
         query: GET_CHANNEL_DROP,
-        variables: { login: user },
+        variables: { channelID },
         fetchPolicy: "network-only"
       });
 
       const data = result?.data;
       this.log.info("[ChannelDrops] data:", data);
 
-      const viewerDropCampaigns = data?.channel?.viewerDropCampaigns;
-      if (!viewerDropCampaigns || viewerDropCampaigns.length === 0) {
-        this.log.info("[ChannelDrops] No viewer drop campaigns found for this channel");
+      const campaigns = data?.channelDropCampaignsProgress;
+      if (!campaigns || campaigns.length === 0) {
+        this.log.info("[ChannelDrops] No drop campaigns found for this channel");
         return;
       }
 
-      const progressMap = {};
-      for (const campaign of (data?.currentUser?.inventory?.dropCampaignsInProgress ?? [])) {
-        for (const drop of (campaign.timeBasedDrops ?? [])) {
-          progressMap[drop.id] = drop.self;
-        }
-      }
-
-      const session = data?.currentUser?.dropCurrentSession;
-      if (session?.dropID) {
-        progressMap[session.dropID] = {
-          ...progressMap[session.dropID],
-          currentMinutesWatched: session.currentMinutesWatched,
-          isClaimed: progressMap[session.dropID]?.isClaimed ?? false,
-          hasPreconditionsMet: progressMap[session.dropID]?.hasPreconditionsMet ?? true,
-        };
-      }
-
-      this.log.info("[ChannelDrops] progressMap:", progressMap);
-
-      await this.injectDropUI(user, viewerDropCampaigns, progressMap);
+      await this.injectDropUI(user, campaigns);
 
     } catch (error) {
       this.log.info("[ChannelDrops] Error fetching drops:", error);
     }
   }
 
-  async injectDropUI(user, campaigns, progressMap) {
+  onPubSubEvent(msg) {
+    if (msg.type !== "drop-progress") return;
+    if (msg.data.channel_id !== this.currentChannelID) return;
+
+    if (msg.data.progress_type === "subs") {
+      this.updateSubDropProgress(msg.data.drop_id, msg.data.current_progress, msg.data.required_progress);
+    } else {
+      this.updateAllDropProgress(msg.data.current_progress_min);
+    }
+  }
+
+  updateAllDropProgress(current) {
+    if (!this.dropContainer) return;
+
+    for (const item of this.dropContainer.querySelectorAll("[data-drop-id]")) {
+      const required = parseInt(item.dataset.required, 10);
+      if (!required) continue;
+
+      const fill = item.querySelector(".trubbel-drops__item-bar-fill");
+      if (!fill || fill.classList.contains("trubbel-drops__item-bar-fill--claimed")) continue;
+
+      const progress = item.querySelector(".trubbel-drops__item-progress");
+      if (!progress || !progress.dataset.title) continue;
+
+      if (current >= required) {
+        fill.style.width = "100%";
+        progress.textContent = "Ready to claim!";
+        progress.dataset.title = `<strong>Ready to claim!</strong> · watched ${this.formatMinutes(required)} of ${this.formatMinutes(required)}`;
+        fill.style.backgroundColor = "var(--color-fill-info)";
+      } else {
+        const displayCurrent = Math.min(current, required);
+        const remaining = Math.max(0, required - current);
+        const pct = Math.min(100, Math.floor((current / required) * 100));
+
+        fill.style.width = `${pct}%`;
+        progress.textContent = `${this.formatMinutes(displayCurrent)} / ${this.formatMinutes(required)}`;
+        progress.dataset.title = `<strong>${this.formatMinutes(remaining)} remaining</strong>`;
+      }
+    }
+  }
+
+  updateSubDropProgress(dropId, current, required) {
+    if (!this.dropContainer) return;
+    const item = this.dropContainer.querySelector(`[data-drop-id="${dropId}"]`);
+    if (!item) return;
+
+    const fill = item.querySelector(".trubbel-drops__item-bar-fill");
+    const progress = item.querySelector(".trubbel-drops__item-progress");
+    if (!fill || !progress) return;
+
+    const pct = required > 0 ? Math.min(100, Math.floor((current / required) * 100)) : 0;
+    fill.style.width = `${pct}%`;
+
+    if (current >= required) {
+      progress.textContent = "Ready to claim!";
+      progress.dataset.title = "<strong>Ready to claim!</strong>";
+        fill.style.backgroundColor = "var(--color-fill-info)";
+    } else {
+      const remaining = required - current;
+      const subLabel = remaining === 1 ? "Sub or Gift Sub" : "Subs or Gift Subs";
+      progress.textContent = `${remaining} ${subLabel}`;
+    }
+  }
+
+  async injectDropUI(user, campaigns) {
     const section = await this.site.awaitElement(
       ".channel-info-content section#live-channel-stream-information"
     );
@@ -162,56 +220,49 @@ export default class ChannelDrops {
     const container = createElement("div", { className: "trubbel-drops" });
 
     for (const campaign of campaigns) {
-      container.appendChild(this.buildCampaignElement(campaign, progressMap));
+      const el = this.buildCampaignElement(campaign);
+      if (el) container.appendChild(el);
     }
+
+    if (!container.hasChildNodes()) return;
 
     section.parentNode.insertBefore(container, section.nextSibling);
     this.dropContainer = container;
   }
 
-  buildCampaignElement(campaign, progressMap) {
-    const { name, game, detailsURL, timeBasedDrops } = campaign;
-
-    const chevronEl = createElement("div", { className: "trubbel-drops__chevron" });
-
-    const headerEl = createElement("div", { className: "trubbel-drops__header" }, [
-      createElement("div", { className: "trubbel-drops__header-text" }, [
-        createElement("span", { className: "trubbel-drops__name" }, name),
-        createElement("span", { className: "trubbel-drops__game" }, game?.name ?? ""),
-      ]),
-      chevronEl,
-    ]);
+  buildCampaignElement(campaign) {
+    const { name, game, detailsURL, rewardGroups } = campaign;
 
     const dropsGrid = createElement("div", { className: "trubbel-drops__grid" });
 
-    for (const drop of (timeBasedDrops ?? [])) {
-      for (const edge of (drop.benefitEdges ?? [])) {
-        const benefit = edge.benefit;
-        const self = progressMap[drop.id];
-        const isClaimed = self?.isClaimed ?? false;
-        const requiredSubs = drop.requiredSubs ?? 0;
-        const isSubDrop = requiredSubs > 0;
+    for (const group of (rewardGroups ?? [])) {
+      // Skip fully claimed groups
+      if (group.self?.status === "CLAIMED") continue;
 
+      const criteria = group.progressCriteria;
+      const isSubDrop = criteria?.requirementType === "SUB";
+      const requiredMinutes = criteria?.requirements?.minutesWatched ?? 0;
+      const requiredSubs = criteria?.requirements?.subs ?? 0;
+
+      for (const reward of (group.rewards ?? [])) {
         let pct = 0;
         let progressText;
         let tooltipText;
 
-        if (isClaimed) {
-          const required = drop.requiredMinutesWatched;
-          progressText = "Claimed";
-          tooltipText = `<strong>Claimed</strong> · watched ${this.formatMinutes(required)} of ${this.formatMinutes(required)}`;
-          pct = 100;
-        } else if (isSubDrop) {
-          const subLabel = requiredSubs === 1 ? "Sub" : "Subs";
-          progressText = `Gift ${requiredSubs} ${subLabel}`;
-          tooltipText = null;
+        if (isSubDrop) {
+          // const subLabel = requiredSubs === 1 ? "Sub" : "Subs";
+          // progressText = `Gift ${requiredSubs} ${subLabel}`;
+          // 1 Sub or Gift Sub
+          const subLabel = requiredSubs === 1 ? "Sub or Gift Sub" : "Subs or Gift Subs";
+          progressText = `${requiredSubs} ${subLabel}`;
+          // tooltipText = null;
+          tooltipText = "Prime subs does not count";
         } else {
-          const current = self?.currentMinutesWatched ?? 0;
-          const required = drop.requiredMinutesWatched;
-          const displayCurrent = Math.min(current, required);
-          const remaining = Math.max(0, required - current);
-          pct = required > 0 ? Math.min(100, Math.floor((current / required) * 100)) : 0;
-          progressText = `${this.formatMinutes(displayCurrent)} / ${this.formatMinutes(required)}`;
+          const current = group.self?.currentMinutesWatched ?? 0;
+          const displayCurrent = Math.min(current, requiredMinutes);
+          const remaining = Math.max(0, requiredMinutes - current);
+          pct = requiredMinutes > 0 ? Math.min(100, Math.floor((current / requiredMinutes) * 100)) : 0;
+          progressText = `${this.formatMinutes(displayCurrent)} / ${this.formatMinutes(requiredMinutes)}`;
           tooltipText = `<strong>${this.formatMinutes(remaining)} remaining</strong>`;
         }
 
@@ -223,31 +274,48 @@ export default class ChannelDrops {
           }, progressText)
           : createElement("span", { className: "trubbel-drops__item-progress" }, progressText);
 
-        const dropEl = createElement("div", { className: "trubbel-drops__item" }, [
+        const dropEl = createElement("div", {
+          className: "trubbel-drops__item",
+          "data-drop-id": group.id,
+          "data-required": requiredMinutes,
+          "data-required-subs": requiredSubs,
+        }, [
           createElement("div", { className: "trubbel-drops__item-img-wrap" }, [
             createElement("img", {
               className: "trubbel-drops__item-img",
-              src: benefit.imageAssetURL,
-              alt: benefit.name,
+              src: reward.thumbnailURL,
+              alt: reward.name,
             }),
             createElement("div", { className: "trubbel-drops__item-bar" }, [
               createElement("div", {
-                className: `trubbel-drops__item-bar-fill${isClaimed ? " trubbel-drops__item-bar-fill--claimed" : ""}`,
+                className: "trubbel-drops__item-bar-fill",
                 style: { width: `${pct}%` },
               }),
             ]),
           ]),
           createElement("span", {
             className: "trubbel-drops__item-name tw-relative ffz-tooltip ffz-tooltip--no-mouse",
-            "data-title": benefit.name,
+            "data-title": reward.name,
             "data-tooltip-type": "html",
-          }, benefit.name),
+          }, reward.name),
           progressEl,
         ]);
 
         dropsGrid.appendChild(dropEl);
       }
     }
+
+    if (!dropsGrid.hasChildNodes()) return null;
+
+    const chevronEl = createElement("div", { className: "trubbel-drops__chevron" });
+
+    const headerEl = createElement("div", { className: "trubbel-drops__header" }, [
+      createElement("div", { className: "trubbel-drops__header-text" }, [
+        createElement("span", { className: "trubbel-drops__name" }, name),
+        createElement("span", { className: "trubbel-drops__game" }, game?.name ?? ""),
+      ]),
+      chevronEl,
+    ]);
 
     const actionsEl = createElement("div", { className: "trubbel-drops__actions" });
 
@@ -355,14 +423,12 @@ export default class ChannelDrops {
       .trubbel-drops__item {
         display: flex;
         flex-direction: column;
-        /*width: 16rem;*/
         width: 12rem;
       }
 
       .trubbel-drops__item-img-wrap {
         position: relative;
         width: 100%;
-        /*padding-bottom: 75%;*/
         padding-bottom: 100%;
         background-color: var(--color-background-alt);
         border-radius: 0.4rem;
@@ -383,19 +449,14 @@ export default class ChannelDrops {
         bottom: 0;
         left: 0;
         right: 0;
-        height: 0.3rem;
-        background-color: var(--color-background-alt-2);
+        height: var(--progress-bar-size-small);
+        background-color: var(--color-background-progress);
       }
 
       .trubbel-drops__item-bar-fill {
         height: 100%;
-        background-color: var(--color-background-progress-status, #a970ff);
+        background-color: var(--color-background-progress-status);
         transition: width 0.2s ease;
-      }
-
-      .trubbel-drops__item-bar-fill--claimed {
-        /*background-color: var(--color-background-success);*/
-        background-color: var(--color-text-success);
       }
 
       .trubbel-drops__item-name {
@@ -442,6 +503,12 @@ export default class ChannelDrops {
 
     this.isActive = false;
     this.lastProcessedChannel = null;
+    this.currentChannelID = null;
+
+    if (this.pubsubEventsHandler) {
+      window.__twitch_pubsub_events?.removeEventListener("notification", this.pubsubEventsHandler);
+      this.pubsubEventsHandler = null;
+    }
 
     this.removeDropContainer();
 

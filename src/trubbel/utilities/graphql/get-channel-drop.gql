@@ -1,40 +1,41 @@
-query Trubbel_ChannelDrops($login: String!) {
-  channel(name: $login) {
-    viewerDropCampaigns {
+query Trubbel_ChannelDrops($channelID: ID!) {
+  channelDropCampaignsProgress(channelID: $channelID) {
+    id
+    name
+    detailsURL
+    startAt
+    endAt
+    game {
+      id
       name
-      game {
-        name
+      __typename
+    }
+    rewardGroups {
+      id
+      name
+      progressCriteria {
+        requirementType
+        requirements {
+          minutesWatched
+          subs
+          __typename
+        }
+        __typename
       }
-      detailsURL
-      timeBasedDrops {
+      rewards {
         id
-        requiredMinutesWatched
-        requiredSubs
-        benefitEdges {
-          benefit {
-            name
-            imageAssetURL
-          }
-        }
+        name
+        thumbnailURL
+        __typename
       }
-    }
-  }
-  currentUser {
-    dropCurrentSession {
-      currentMinutesWatched
-      dropID
-    }
-    inventory {
-      dropCampaignsInProgress {
-        timeBasedDrops {
-          id
-          self {
-            currentMinutesWatched
-            isClaimed
-            hasPreconditionsMet
-          }
-        }
+      self {
+        status
+        currentMinutesWatched
+        currentSubs
+        __typename
       }
+      __typename
     }
+    __typename
   }
 }
