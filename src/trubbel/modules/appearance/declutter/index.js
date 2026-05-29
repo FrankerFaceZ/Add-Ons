@@ -144,7 +144,8 @@ export default class Declutter {
                   padding-inline: 0 !important;
                   padding-block: 0 !important;
                 }
-                > [class*="bitsRewardListItem--"] {
+                > [class*="bitsRewardListItem--"],
+                > [class*="bitsCustomRewardListItem--"] {
                   display: none !important;
                 }
                 div:has(> div:first-child p) {
