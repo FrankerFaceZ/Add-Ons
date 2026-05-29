@@ -247,7 +247,7 @@ export default class ChatMarkdown {
       { regex: /\*{2}([^*]+?)\*{2}/g, type: "bold" },
       { regex: /~{2}([^~]+?)~{2}/g, type: "strikethrough" },
       { regex: /\*([^*]+?)\*/g, type: "italic" },
-      { regex: /_([^_]+?)_/g, type: "italic" }
+      { regex: /(?<!\w)_([^_]+?)_(?!\w)/g, type: "italic" }
     ];
 
     let firstMatch = null;
