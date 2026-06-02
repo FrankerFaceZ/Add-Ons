@@ -6,6 +6,7 @@ export default class Declutter {
     this.style = parent.style;
 
     this.CLASSES = {
+      "hide-input-drops-button": ".chat-input__buttons-container div:has(> div > [data-a-target=\"drops-button\"])",
       "hide-stream-chat-header": ".stream-chat-header,.toggle-visibility__right-column--expanded",
       "hide-following-title": ".common-centered-column:has(section#following-page-main-content) h1.tw-title",
       "hide-sidebar-for-you": ".side-nav--expanded [aria-label] :is(.side-nav__title):has(h3[class*=\"tw-title\"]:first-child)",
@@ -31,6 +32,7 @@ export default class Declutter {
   }
 
   onEnable() {
+    this.toggleHide("hide-input-drops-button", this.settings.get("addon.trubbel.appearance.declutter.chat.drops_button"));
     this.toggleHide("hide-stream-chat-header", this.settings.get("addon.trubbel.appearance.declutter.chat.stream_header"));
     this.toggleHide("hide-following-title", this.settings.get("addon.trubbel.appearance.declutter.directory.following_title"));
     this.toggleHide("hide-sidebar-for-you", this.settings.get("addon.trubbel.appearance.declutter.sidebar.for_you"));
