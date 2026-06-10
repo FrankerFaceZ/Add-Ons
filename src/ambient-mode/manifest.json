@@ -1,0 +1,11 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "Ambient Mode",
+	"name": "Ambient Mode",
+	"author": "CoJIHLje_",
+	"website": "https://github.com/Baizer",
+	"description": "Projects the colors from the video onto the surrounding area for an immersive viewing experience, similar to YouTube's Ambient Mode. Also useful for OLED displays — fills the black letterbox bars with ambient light to reduce the risk of burn-in during long viewing sessions.",
+	"settings": "add_ons.ambient_mode"
+}
