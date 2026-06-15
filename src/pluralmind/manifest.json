@@ -1,0 +1,10 @@
+{
+    "enabled": true,
+    "requires": [],
+    "version": "1.1.1",
+    "short_name": "Pluralmind",
+    "name": "Pluralmind",
+    "author": "leahinmoonlight",
+    "description": "See proxied messages in Twitch chat from plural folks.\n\nTo set up proxies for yourself, visit https://pluralmind.chat/",
+    "website": "https://pluralmind.chat/"
+}

@@ -1,0 +1,26 @@
+// Hide the user's (login) when we update displayName to their proxied member
+.pm-proxied .chat-author__intl-login {
+	display: none !important;
+}
+
+// Hide the alejo pronouns badge (from the regular pronouns add-on) when the
+// proxied member has specified their own pronouns that we're displaying
+.pm-pronouns .ffz-badge[data-badge^="addon-pn-"] {
+	display: none !important;
+}
+
+// Pluralmind pronoun badges
+.chat-line__username[data-pm-pronouns]::before, .video-chat__message-author[data-pm-pronouns]::before {
+	content: attr(data-pm-pronouns);
+	display: inline-block;
+	margin-right: 0.3rem;
+	padding: 0 0.4rem;
+	border-radius: 0.5rem;
+	font-size: 1.4rem;
+	font-weight: 600;
+	line-height: 1.4;
+	background-color: var(--color-background-button-secondary-default, rgba(0, 0, 0, 0.3));
+	color: var(--color-text-button-secondary, currentColor);
+	-webkit-text-fill-color: initial;
+	background-clip: border-box;
+}
