@@ -1,0 +1,41 @@
+query Trubbel_ChannelDrops($channelID: ID!) {
+  channelDropCampaignsProgress(channelID: $channelID) {
+    id
+    name
+    detailsURL
+    startAt
+    endAt
+    game {
+      id
+      name
+      __typename
+    }
+    rewardGroups {
+      id
+      name
+      progressCriteria {
+        requirementType
+        requirements {
+          minutesWatched
+          subs
+          __typename
+        }
+        __typename
+      }
+      rewards {
+        id
+        name
+        thumbnailURL
+        __typename
+      }
+      self {
+        status
+        currentMinutesWatched
+        currentSubs
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

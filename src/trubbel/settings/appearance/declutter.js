@@ -13,6 +13,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
     this.declutter = new Declutter(this);
 
+    // Appearance - Declutter - Chat - Hide channel drops button
+    this.settings.add("addon.trubbel.appearance.declutter.chat.drops_button", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Chat",
+        title: "Hide channel drops button",
+        description: "This will hide the drops button under the chat input box.",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-input-drops-button", val)
+    });
+
     // Appearance - Declutter - Chat - Hide stream chat header
     this.settings.add("addon.trubbel.appearance.declutter.chat.stream_header", {
       default: false,
@@ -52,7 +65,10 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
         title: "Hide the \"For You\"-text",
         component: "setting-check-box"
       },
-      changed: val => this.declutter.toggleHide("hide-sidebar-for-you", val)
+      changed: (val) => {
+        this.declutter.toggleHide("hide-sidebar-for-you", val);
+        this.declutter.updateCSS();
+      }
     });
 
     // Appearance - Declutter - Left Navigation - Hide the "Viewers (High to Low)"-text
