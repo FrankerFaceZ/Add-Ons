@@ -492,10 +492,6 @@ class InlineTab extends Addon {
 		if ( event.ctrlKey || event.altKey ) // || ! inst.chatInputRef )
 			return;
 
-		const el = this.getElement(inst);
-		if ( ! el )
-			return;
-
 		const code = event.charCode || event.keyCode,
 			current = inst.ffzGetValue();
 
@@ -543,50 +539,7 @@ class InlineTab extends Addon {
 				);
 			}
 
-			if ( suggestions.length > 0 ) {
-				pos += event.shiftKey ? -1 : 1;
-				if ( pos >= suggestions.length )
-					pos = 0;
-				else if ( pos < 0 )
-					pos = suggestions.length - 1;
-
-				inst.ffztc_position = pos;
-
-				const suggestion = suggestions[pos];
-				if ( suggestion ) {
-					const parts = inst.ffztc_parts,
-						empty = parts[2].trim() === '';
-
-					// If the completion includes a specific
-					// selection, we select that. Otherwise
-					// we just put the caret after our
-					// tab-completion.
-					let caret = parts[0].length;
-					let end;
-
-					if ( suggestion.sel ) {
-						caret += suggestion.sel[0];
-						end = caret + suggestion.sel[1];
-					} else {
-						caret += suggestion.text.length + (empty ? 1 : 0);
-						end = caret;
-					}
-
-					inst.autocompleteInputRef.setValue(parts[0] + suggestion.text + (empty && ! suggestion.sel ? ' ' :  parts[2]));
-					inst.ffzSetSelection(caret, end);
-
-					if ( this.tt ) {
-						el._ffz_inst = inst;
-						const tip = el[this.tt._accessor];
-						if ( tip ) {
-							setChildren(tip.element, this.renderTooltip(inst, tip));
-							tip.update();
-						} else
-							this.tt._enter(el);
-					}
-				}
-			}
-
+			this.moveSelection(inst, event.shiftKey);
 			return;
 
 		} else if ( code === KEYS.Escape && inst.ffztc_position !== -1 ) {
@@ -600,12 +553,72 @@ class InlineTab extends Addon {
 			event.stopPropagation();
 			event.stopImmediatePropagation();
 			return;
+		} else if ( code === KEYS.ArrowUp || code === KEYS.ArrowDown ) {
+			event.preventDefault();
+			event.stopPropagation();
+			event.stopImmediatePropagation();
+
+			this.moveSelection(inst, code === KEYS.ArrowUp);
+			return;
 		}
 
 		if ( code !== KEYS.Shift ) {
 			// Any other key press means we accept tab-completion
 			// and move on. Delete our state.
 			this.clearAutocomplete(inst);
+		}
+	}
+
+	moveSelection(inst, downDirection) {
+		const el = this.getElement(inst);
+		if ( ! el )
+			return;
+
+		let pos = inst.ffztc_position,
+				suggestions = inst.ffztc_suggestions;
+
+		if ( suggestions && suggestions.length > 0 ) {
+			pos += downDirection ? -1 : 1;
+			if ( pos >= suggestions.length )
+				pos = 0;
+			else if ( pos < 0 )
+				pos = suggestions.length - 1;
+
+			inst.ffztc_position = pos;
+
+			const suggestion = suggestions[pos];
+			if ( suggestion ) {
+				const parts = inst.ffztc_parts,
+					empty = parts[2].trim() === '';
+
+				// If the completion includes a specific
+				// selection, we select that. Otherwise
+				// we just put the caret after our
+				// tab-completion.
+				let caret = parts[0].length;
+				let end;
+
+				if ( suggestion.sel ) {
+					caret += suggestion.sel[0];
+					end = caret + suggestion.sel[1];
+				} else {
+					caret += suggestion.text.length + (empty ? 1 : 0);
+					end = caret;
+				}
+
+				inst.autocompleteInputRef.setValue(parts[0] + suggestion.text + (empty && ! suggestion.sel ? ' ' :  parts[2]));
+				inst.ffzSetSelection(caret, end);
+
+				if ( this.tt ) {
+					el._ffz_inst = inst;
+					const tip = el[this.tt._accessor];
+					if ( tip ) {
+						setChildren(tip.element, this.renderTooltip(inst, tip));
+						tip.update();
+					} else
+						this.tt._enter(el);
+				}
+			}
 		}
 	}
 }
