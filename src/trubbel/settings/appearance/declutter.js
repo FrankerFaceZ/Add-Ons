@@ -10,10 +10,11 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
     this.inject("settings");
     this.inject("site.loadable");
+    this.inject("site");
 
     this.declutter = new Declutter(this);
 
-    // Appearance - Declutter - Stream - Hide celebration overlays
+    // Appearance - Declutter - Channel - Hide celebration overlays
     this.settings.add("addon.trubbel.appearance.declutter.channel.celebration", {
       default: false,
       ui: {
@@ -47,10 +48,10 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
         sort: 0,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Chat",
         title: "Hide stream chat header",
-        description: "**Note:** This also hides the collapse and viewer list buttons.",
+        description: "**Note:** This moves the header buttons within the chat settings menu.",
         component: "setting-check-box"
       },
-      changed: val => this.declutter.toggleHide("hide-stream-chat-header", val)
+      changed: () => this.declutter.updateCSS()
     });
 
 
@@ -159,11 +160,23 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-sidebar-golden-kappa-train", val)
     });
 
+    // Appearance - Declutter - Left Navigation - Hide Mythic Train
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.mythic_train", {
+      default: false,
+      ui: {
+        sort: 7,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        title: "Hide Mythic Train",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-mythic-train", val)
+    });
+
     // Appearance - Declutter - Left Navigation - Hide Shared Hype Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.shared_hype_train", {
       default: false,
       ui: {
-        sort: 7,
+        sort: 8,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Shared Hype Train",
         component: "setting-check-box"
@@ -175,7 +188,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.treasure_train", {
       default: false,
       ui: {
-        sort: 8,
+        sort: 9,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Treasure Train",
         component: "setting-check-box"
@@ -187,7 +200,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.hype_train", {
       default: false,
       ui: {
-        sort: 9,
+        sort: 10,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Hype Train",
         component: "setting-check-box"
@@ -199,7 +212,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.gift_discount", {
       default: false,
       ui: {
-        sort: 10,
+        sort: 11,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Gift Discount",
         component: "setting-check-box"
@@ -211,7 +224,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.watch_streak", {
       default: false,
       ui: {
-        sort: 11,
+        sort: 12,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Watch Streak",
         component: "setting-check-box"
@@ -223,7 +236,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent", {
       default: false,
       ui: {
-        sort: 12,
+        sort: 13,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide sponsored content",
         description: "This will prevent any promoted streams from showing up at all in the sidebar.",
