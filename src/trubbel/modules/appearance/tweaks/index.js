@@ -164,129 +164,82 @@ export default class Tweaks {
     }
     // Appearance - Tweaks - Unban Requests - Hide mod actions in Unban Requests
     if (this.settings.get("addon.trubbel.appearance.tweaks.unban_requests.hide_mod_actions")) {
-      // Hides the "Banned By"-text
-      this.style.set("unban-requests-hide1", `
-          .tw-root--theme-dark .mod-view-widget-popout .unban-requests-item-header-tab__banned-by-item button {
+      this.style.set("unban-requests-hide", `
+        .tw-root--theme-dark  { --trubbel-redact-bg: #adadb8; }
+        .tw-root--theme-light { --trubbel-redact-bg: black; }
+
+        .unban-requests-item-details {
+          .chat-line__message--deleted span + span {
+            display: none !important;
+          }
+          .viewer-card-mod-logs-comment-line a {
+            pointer-events: none !important;
+          }
+          .unban-requests-item-header-tab__banned-by-item button {
             color: transparent !important;
-            background-color: #adadb8 !important;
+            background-color: var(--trubbel-redact-bg) !important;
             -webkit-user-select: none !important;
             user-select: none !important;
             pointer-events: none !important;
             padding: 0 90px !important;
           }
-          .tw-root--theme-light .mod-view-widget-popout .unban-requests-item-header-tab__banned-by-item button {
+          .targeted-mod-action .message__timestamp + div {
+            > span:first-child {
+              color: transparent !important;
+              background-color: var(--trubbel-redact-bg) !important;
+              -webkit-user-select: none !important;
+              user-select: none !important;
+              pointer-events: none !important;
+              display: inline-block !important;
+              min-width: 320px !important;
+            }
+          }
+          .viewer-card-mod-logs-comment-line a span {
             color: transparent !important;
-            background-color: black !important;
+            background-color: var(--trubbel-redact-bg) !important;
             -webkit-user-select: none !important;
             user-select: none !important;
+            padding: 0 90px !important;
+          }
+        }
+
+        /* Viewer card opened within Unban Requests */
+        #root :has(.unban-requests-item-details__container) + .popout-widget__viewer-card-layer {
+          .chat-line__message--deleted span + span {
+            display: none !important;
+          }
+          .viewer-card-mod-logs-comment-line a {
             pointer-events: none !important;
-            padding: 0 90px !important;
           }
-        `);
-      // Removes the "(Deleted by moderator)"-text
-      this.style.set("unban-requests-hide2", ".mod-view-widget-popout .chat-line__message--deleted span+span {display: none !important;}");
-      // Hides the mod actions within the "Chat Logs"-tab
-      this.style.set("unban-requests-hide3", `
-          .tw-root--theme-dark .mod-view-widget-popout .targeted-mod-action .message__timestamp+span {
-            color: transparent !important;
-            background-color: #adadb8 !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 90px !important;
+          .targeted-mod-action .message__timestamp + div {
+            > span:first-child {
+              color: transparent !important;
+              background-color: var(--trubbel-redact-bg) !important;
+              -webkit-user-select: none !important;
+              user-select: none !important;
+              pointer-events: none !important;
+              display: inline-block !important;
+              min-width: 320px !important;
+            }
           }
-          .tw-root--theme-light .mod-view-widget-popout .targeted-mod-action .message__timestamp+span {
+          .viewer-card-mod-logs-comment-line a span {
             color: transparent !important;
-            background-color: black !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 90px !important;
-          }
-        `);
-      // Hides the mod actions within the "Mod Comments"-tab
-      this.style.set("unban-requests-hide4", `
-          .tw-root--theme-dark .mod-view-widget-popout .viewer-card-mod-logs-comment-line a span {
-            color: transparent !important;
-            background-color: #adadb8 !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 90px !important;
-          }
-          .tw-root--theme-light .mod-view-widget-popout .viewer-card-mod-logs-comment-line a span {
-            color: transparent !important;
-            background-color: black !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 90px !important;
-          }
-        `);
-      // Making sure the mod link within the "Mod Comments"-tab isn't clickable
-      this.style.set("unban-requests-hide5", ".mod-view-widget-popout .viewer-card-mod-logs-comment-line a {pointer-events: none !important;}");
-      // Removes the "(Deleted by moderator)"-text, if a User Card is opened within Unban Requests
-      this.style.set("unban-requests-hide6", "#root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .chat-line__message--deleted span+span {display: none !important;}");
-      // Hides the mod actions within the "Chat Logs"-tab, if a User Card is opened within Unban Requests
-      this.style.set("unban-requests-hide7", `
-          .tw-root--theme-dark #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .targeted-mod-action div>span.message__timestamp+span {
-            color: transparent !important;
-            background-color: #adadb8 !important;
+            background-color: var(--trubbel-redact-bg) !important;
             -webkit-user-select: none !important;
             user-select: none !important;
             padding: 0 50px !important;
           }
-          .tw-root--theme-light #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .targeted-mod-action div>span.message__timestamp+span {
+          .viewer-card-mod-logs > div:not([style]):not(.viewer-card-mod-logs-page) span + span > span {
             color: transparent !important;
-            background-color: black !important;
+            background-color: var(--trubbel-redact-bg) !important;
             -webkit-user-select: none !important;
             user-select: none !important;
             padding: 0 50px !important;
           }
-        `);
-      // Hides the moderation action at the bottom of a User Card
-      this.style.set("unban-requests-hide8", `
-          .tw-root--theme-dark #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .viewer-card-mod-logs>div:not([style]):not(.viewer-card-mod-logs-page) span+span>span {
-            color: transparent !important;
-            background-color: #adadb8 !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 50px !important;
-          }
-          .tw-root--theme-light #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .viewer-card-mod-logs>div:not([style]):not(.viewer-card-mod-logs-page) span+span>span {
-            color: transparent !important;
-            background-color: black !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 50px !important;
-          }
-        `);
-      // Hides the moderation action within User Card "Mod Comments"-tab
-      this.style.set("unban-requests-hide9", `
-          .tw-root--theme-dark #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .viewer-card-mod-logs-comment-line a span {
-            color: transparent !important;
-            background-color: #adadb8 !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 50px !important;
-          }
-          .tw-root--theme-light #root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .viewer-card-mod-logs-comment-line a span {
-            color: transparent !important;
-            background-color: black !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            padding: 0 50px !important;
-          }
-        `);
-      // Making sure the mod link within the "Mod Comments"-tab isn't clickable
-      this.style.set("unban-requests-hide10", "#root :has(.mod-view-widget-popout)+.popout-widget__viewer-card-layer .viewer-card-mod-logs-comment-line a {pointer-events: none !important;}");
+        }
+      `);
     } else {
-      this.style.delete("unban-requests-hide1");
-      this.style.delete("unban-requests-hide2");
-      this.style.delete("unban-requests-hide3");
-      this.style.delete("unban-requests-hide4");
-      this.style.delete("unban-requests-hide5");
-      this.style.delete("unban-requests-hide6");
-      this.style.delete("unban-requests-hide7");
-      this.style.delete("unban-requests-hide8");
-      this.style.delete("unban-requests-hide9");
-      this.style.delete("unban-requests-hide10");
+      this.style.delete("unban-requests-hide");
     }
     // Appearance - Tweaks - Unban Requests - Remove line-through text in Unban Requests & Viewer Cards
     if (this.settings.get("addon.trubbel.appearance.tweaks.unban_requests.hide_line_through")) {
