@@ -1,5 +1,6 @@
 import AutoHidePinnedMessage from "../../modules/channel/chat/hide-pinned-message";
 import BTTVModeration from "../../modules/channel/chat/bttv";
+import CharacterCounter from "../../modules/channel/chat/character-counter";
 import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
@@ -39,6 +40,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
     this.autoHidePinnedMessage = new AutoHidePinnedMessage(this);
     this.bttvModeration = new BTTVModeration(this);
+    this.characterCounter = new CharacterCounter(this);
     this.chatTranslate = new ChatTranslate(this);
     this.customCommands = new Commands(this);
     this.firstTimeChatter = new FirstTimeChatter(this);
@@ -146,6 +148,37 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.firstTimeChatter.handleSettingChange(val)
+    });
+
+
+
+    this.settings.add("addon.trubbel.channel.chat.input.character_counter", {
+      default: "disabled",
+      ui: {
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Input",
+        title: "Character Counter",
+        component: "setting-select-box",
+        data: [
+          { title: "Disabled", value: "disabled", },
+          { title: "Top Left", value: "top-left", },
+          { title: "Top Right", value: "top-right", },
+          { title: "Bottom Left", value: "bottom-left", },
+          { title: "Bottom Right", value: "bottom-right", },
+        ]
+      },
+      changed: val => this.characterCounter.handlePositionChange(val)
+    });
+
+    this.settings.add("addon.trubbel.channel.chat.input.character_counter.size", {
+      default: 11,
+      ui: {
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Input",
+        title: "Character Counter Font Size",
+        component: "setting-text-box",
+        process: "to_int",
+        bounds: [8, true, 20, true]
+      },
+      changed: val => this.characterCounter.handleFontSizeChange(val)
     });
 
 
@@ -610,6 +643,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.router.on(":route", this.navigate, this);
     this.autoHidePinnedMessage.initialize();
     this.bttvModeration.initialize();
+    this.characterCounter.initialize();
     this.chatTranslate.initialize();
     this.customCommands.initialize();
     this.firstTimeChatter.initialize();
@@ -633,6 +667,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
   async navigate() {
     this.autoHidePinnedMessage.handleNavigation();
     this.bttvModeration.handleNavigation();
+    this.characterCounter.handleNavigation();
     this.chatTranslate.handleNavigation();
     this.customCommands.handleNavigation();
     this.firstTimeChatter.handleNavigation();
