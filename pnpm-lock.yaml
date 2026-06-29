@@ -6602,6 +6602,8 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
+  pluralmind@1.1.0: {}
+
   possible-typed-array-names@1.1.0: {}
 
   postcss-modules-extract-imports@3.1.0(postcss@8.5.6):
