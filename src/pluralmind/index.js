@@ -1,6 +1,7 @@
 'use strict';
 
-import { getSystem } from './service';
+import { getCachedSystem, getProxiedMessage, getSystem } from 'pluralmind';
+
 import STYLE_URL from './styles.scss';
 
 const { createElement } = FrankerFaceZ.utilities.dom;
@@ -72,40 +73,52 @@ class Pluralmind extends Addon {
 		const targetToken = this.getTargetToken(tokens);
 		if (!id || !login || !targetToken) return tokens;
 
-		// Since the tokenizer is synchronous, we get any existing data we have
-		// and prepare a callback in case new data ends up being loaded
-		const system = getSystem(id, () => this.systemLoaded(id, login));
+		// Since the tokenizer is synchronous, we manually check if we have
+		// usable data
+		const cachedSystem = getCachedSystem(id)
+
+		// Kick off a fresh load if we don't have any data, or it has expired
+		if (!cachedSystem || cachedSystem.expired) {
+			getSystem(id).then(() => this.systemLoaded(id, login));
+		}
 
 		// Bail out if we don't have information on this system (yet)
 		// If we end up loading system info, onMessage will get re-run by the
-		// callback
+		// systemLoaded callback
+		const system = cachedSystem?.system;
 		if (!system) return tokens;
 
 		// Check if we should proxy this message
-		const { member, body } = this.getMessageProxyInfo(system, targetToken.text);
-		if (!member) return tokens;
+		const pm = getProxiedMessage(system, targetToken.text);
+		if (!pm) return tokens;
 
-		// Apply this member's info
+		// We have a proxied message! Prep a few FFZ things
 		msg.ffz_user_class = msg.ffz_user_class || new Set();
 		msg.ffz_user_style = msg.ffz_user_style || {};
 		msg.ffz_user_props = msg.ffz_user_props || {};
-		const pronouns = member.pronouns ?? system.pronouns;
-		const color = member.color ?? system.color;
-		if (!msg.ffz_user_props['data-pm-og-name']) msg.ffz_user_props['data-pm-og-name'] = msg.user.displayName || msg.user.login;
-		msg.user.displayName = member.name;
-		if (this.settings.get('addon.pluralmind.show-usernames')) {
-			msg.ffz_user_props['data-pm-username'] = msg.ffz_user_props['data-pm-og-name'];
-		} else {
-			delete msg.ffz_user_props['data-pm-username'];
+		const setUserProp = (key, value, condition) => {
+			if (condition) {
+				msg.ffz_user_props[key] = value;
+			} else {
+				delete msg.ffz_user_props[key];
+			}
+		};
+
+		// onMessage can get called multiple times for the same message, so
+		// we need to store a reference to the original display name
+		if (!msg.ffz_user_props['data-pm-og-name']) {
+			msg.ffz_user_props['data-pm-og-name'] = msg.user.displayName || msg.user.login;
 		}
-		if (pronouns) {
-			msg.ffz_user_props['data-pm-pronouns'] = pronouns;
-		} else {
-			delete msg.ffz_user_props['data-pm-pronouns'];
-		}
+
+		// Apply this member's info
+		msg.user.displayName = pm.member.name;
+		setUserProp('data-pm-username', msg.ffz_user_props['data-pm-og-name'], this.settings.get('addon.pluralmind.show-usernames'));
+		setUserProp('data-pm-pronouns', pm.pronouns, !!pm.pronouns);
+		if (pm.color) msg.ffz_user_style.color = pm.color;
+
+		// Mark the message as proxied and remove the proxy prefix (if present)
 		msg.ffz_user_class.add('pm-proxied');
-		if (color) msg.ffz_user_style.color = color;
-		targetToken.text = body;
+		targetToken.text = pm.body;
 
 		return tokens;
 	}
@@ -129,31 +142,6 @@ class Pluralmind extends Addon {
 		return null;
 	}
 
-	getMessageProxyInfo(system, body) {
-		if (!system) return { member: null, body };
-
-		// Start with the system's autoproxy, if one is set
-		let member = null;
-		if (system.autoproxy_member_id) member = system.members.find(m => m.id === system.autoproxy_member_id);
-
-		// Let's see if the user used a proxy
-		const splitByColon = body.split(': ');
-		if (splitByColon.length >= 2) {
-			const proxyPrefix = splitByColon[0];
-			const rest = splitByColon.slice(1).join(': ');
-			const proxiedMember = system.members.find(m => {
-				if (m.case_sensitive) return m.proxies.includes(proxyPrefix);
-				return m.proxies.some(p => p.toLowerCase() === proxyPrefix.toLowerCase());
-			});
-			if (proxiedMember) {
-				member = proxiedMember;
-				body = rest;
-			}
-		}
-
-		return { member, body };
-	}
-
 	updateLine(line) {
 		const node = this.fine.getHostNode(line);
 		if (!(node instanceof HTMLElement)) return;
@@ -162,13 +150,13 @@ class Pluralmind extends Addon {
 		const id = msg?.user?.id;
 		if (!id || !msg.message) return;
 
-		// Check if this is a proxied message that included custom pronouns
-		const system = getSystem(id);
-		const { member } = this.getMessageProxyInfo(system, msg.message);
-		const hasPmPronouns = member && !!(member.pronouns ?? system.pronouns);
+		// Check if this is a proxied message
+		const system = getCachedSystem(id)?.system;
+		const pm = getProxiedMessage(system, msg.message);
+		if (!pm) return;
 
-		// Mark that we're showing pronouns so we can hide alejo's
-		node.classList.toggle('pm-pronouns', hasPmPronouns);
+		// Indicate whether we're showing our own pronouns so we can hide alejo's
+		node.classList.toggle('pm-pronouns', !!pm.pronouns);
 	}
 }
 
