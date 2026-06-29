@@ -10,7 +10,8 @@
 }
 
 // Pluralmind pronoun badges
-.chat-line__username[data-pm-pronouns]::before, .video-chat__message-author[data-pm-pronouns]::before {
+.chat-line__username[data-pm-pronouns]::before,
+.video-chat__message-author[data-pm-pronouns]::before {
 	content: attr(data-pm-pronouns);
 	display: inline-block;
 	margin-right: 0.3rem;
@@ -23,4 +24,10 @@
 	color: var(--color-text-button-secondary, currentColor);
 	-webkit-text-fill-color: initial;
 	background-clip: border-box;
+}
+
+// Optional username display for proxied messages
+.chat-line__username[data-pm-username]::after,
+.video-chat__message-author[data-pm-username]::after {
+	content: " (" attr(data-pm-username) ")";
 }
