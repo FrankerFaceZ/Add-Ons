@@ -12,6 +12,7 @@ class Pluralmind extends Addon {
 		this.inject('chat');
 		this.inject('site');
 		this.inject('site.fine');
+		this.inject('settings');
 
 		this.ChatLine = this.fine.define(
 			'pm-chat-line',
@@ -21,6 +22,16 @@ class Pluralmind extends Addon {
 	}
 
 	onEnable() {
+		this.settings.add('addon.pluralmind.show-usernames', {
+			default: false,
+			ui: {
+				path: 'Add-Ons > Pluralmind',
+				title: 'Show Twitch usernames on proxied messages',
+				component: 'setting-check-box'
+			},
+			changed: () => this.emit('chat:update-lines'),
+		});
+
 		if (!this.styleLink) {
 			document.head.appendChild(this.styleLink = createElement('link', {
 				href: STYLE_URL,
@@ -80,7 +91,13 @@ class Pluralmind extends Addon {
 		msg.ffz_user_props = msg.ffz_user_props || {};
 		const pronouns = member.pronouns ?? system.pronouns;
 		const color = member.color ?? system.color;
+		if (!msg.ffz_user_props['data-pm-og-name']) msg.ffz_user_props['data-pm-og-name'] = msg.user.displayName || msg.user.login;
 		msg.user.displayName = member.name;
+		if (this.settings.get('addon.pluralmind.show-usernames')) {
+			msg.ffz_user_props['data-pm-username'] = msg.ffz_user_props['data-pm-og-name'];
+		} else {
+			delete msg.ffz_user_props['data-pm-username'];
+		}
 		if (pronouns) {
 			msg.ffz_user_props['data-pm-pronouns'] = pronouns;
 		} else {
