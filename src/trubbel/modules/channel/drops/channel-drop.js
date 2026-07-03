@@ -3,6 +3,8 @@ import { BAD_USERS } from "../../../utilities/constants/types";
 import GET_CHANNEL_DROP from "../../../utilities/graphql/get-channel-drop.gql";
 
 const { createElement } = FrankerFaceZ.utilities.dom;
+const { durationForChat } = FrankerFaceZ.utilities.time;
+const formatMins = m => durationForChat(m * 60) || "0m";
 
 export default class ChannelDrops {
   constructor(parent) {
@@ -150,37 +152,34 @@ export default class ChannelDrops {
     if (msg.data.progress_type === "subs") {
       this.updateSubDropProgress(msg.data.drop_id, msg.data.current_progress, msg.data.required_progress);
     } else {
-      this.updateAllDropProgress(msg.data.current_progress_min);
+      this.updateWatchDropProgress(msg.data.drop_id, msg.data.current_progress_min, msg.data.required_progress_min);
     }
   }
 
-  updateAllDropProgress(current) {
+  updateWatchDropProgress(dropId, current, required) {
     if (!this.dropContainer) return;
+    const item = this.dropContainer.querySelector(`[data-drop-id="${dropId}"]`);
+    if (!item) return;
 
-    for (const item of this.dropContainer.querySelectorAll("[data-drop-id]")) {
-      const required = parseInt(item.dataset.required, 10);
-      if (!required) continue;
+    const fill = item.querySelector(".trubbel-drops__item-bar-fill");
+    if (!fill || fill.classList.contains("trubbel-drops__item-bar-fill--claimed")) return;
 
-      const fill = item.querySelector(".trubbel-drops__item-bar-fill");
-      if (!fill || fill.classList.contains("trubbel-drops__item-bar-fill--claimed")) continue;
+    const progress = item.querySelector(".trubbel-drops__item-progress");
+    if (!progress || !progress.dataset.title) return;
 
-      const progress = item.querySelector(".trubbel-drops__item-progress");
-      if (!progress || !progress.dataset.title) continue;
+    if (current >= required) {
+      fill.style.width = "100%";
+      fill.style.backgroundColor = "var(--color-fill-info)";
+      progress.textContent = "Ready to claim!";
+      progress.dataset.title = `<strong>Ready to claim!</strong> · watched ${formatMins(required)} of ${formatMins(required)}`;
+    } else {
+      const displayCurrent = Math.min(current, required);
+      const remaining = Math.max(0, required - current);
+      const pct = Math.min(100, Math.floor((current / required) * 100));
 
-      if (current >= required) {
-        fill.style.width = "100%";
-        progress.textContent = "Ready to claim!";
-        progress.dataset.title = `<strong>Ready to claim!</strong> · watched ${this.formatMinutes(required)} of ${this.formatMinutes(required)}`;
-        fill.style.backgroundColor = "var(--color-fill-info)";
-      } else {
-        const displayCurrent = Math.min(current, required);
-        const remaining = Math.max(0, required - current);
-        const pct = Math.min(100, Math.floor((current / required) * 100));
-
-        fill.style.width = `${pct}%`;
-        progress.textContent = `${this.formatMinutes(displayCurrent)} / ${this.formatMinutes(required)}`;
-        progress.dataset.title = `<strong>${this.formatMinutes(remaining)} remaining</strong>`;
-      }
+      fill.style.width = `${pct}%`;
+      progress.textContent = `${formatMins(displayCurrent)} / ${formatMins(required)}`;
+      progress.dataset.title = `<strong>${formatMins(remaining)} remaining</strong>`;
     }
   }
 
@@ -199,7 +198,7 @@ export default class ChannelDrops {
     if (current >= required) {
       progress.textContent = "Ready to claim!";
       progress.dataset.title = "<strong>Ready to claim!</strong>";
-        fill.style.backgroundColor = "var(--color-fill-info)";
+      fill.style.backgroundColor = "var(--color-fill-info)";
     } else {
       const remaining = required - current;
       const subLabel = remaining === 1 ? "Sub or Gift Sub" : "Subs or Gift Subs";
@@ -236,7 +235,6 @@ export default class ChannelDrops {
     const dropsGrid = createElement("div", { className: "trubbel-drops__grid" });
 
     for (const group of (rewardGroups ?? [])) {
-      // Skip fully claimed groups
       if (group.self?.status === "CLAIMED") continue;
 
       const criteria = group.progressCriteria;
@@ -250,20 +248,16 @@ export default class ChannelDrops {
         let tooltipText;
 
         if (isSubDrop) {
-          // const subLabel = requiredSubs === 1 ? "Sub" : "Subs";
-          // progressText = `Gift ${requiredSubs} ${subLabel}`;
-          // 1 Sub or Gift Sub
           const subLabel = requiredSubs === 1 ? "Sub or Gift Sub" : "Subs or Gift Subs";
           progressText = `${requiredSubs} ${subLabel}`;
-          // tooltipText = null;
           tooltipText = "Prime subs does not count";
         } else {
           const current = group.self?.currentMinutesWatched ?? 0;
           const displayCurrent = Math.min(current, requiredMinutes);
           const remaining = Math.max(0, requiredMinutes - current);
           pct = requiredMinutes > 0 ? Math.min(100, Math.floor((current / requiredMinutes) * 100)) : 0;
-          progressText = `${this.formatMinutes(displayCurrent)} / ${this.formatMinutes(requiredMinutes)}`;
-          tooltipText = `<strong>${this.formatMinutes(remaining)} remaining</strong>`;
+          progressText = `${formatMins(displayCurrent)} / ${formatMins(requiredMinutes)}`;
+          tooltipText = `<strong>${formatMins(remaining)} remaining</strong>`;
         }
 
         const progressEl = tooltipText
@@ -347,15 +341,6 @@ export default class ChannelDrops {
       headerEl,
       bodyEl,
     ]);
-  }
-
-  formatMinutes(minutes) {
-    if (minutes >= 60) {
-      const h = Math.floor(minutes / 60);
-      const m = minutes % 60;
-      return m > 0 ? `${h}h ${m}m` : `${h}h`;
-    }
-    return `${minutes}m`;
   }
 
   injectStyle() {
