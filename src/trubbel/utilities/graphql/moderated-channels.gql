@@ -1,0 +1,38 @@
+query Trubbel_ModeratedChannels($after: Cursor, $first: Int) {
+  moderatedChannels(after: $after, first: $first) {
+    edges {
+      cursor
+      isLive
+      node {
+        id
+        displayName
+        login
+        profileImageURL(width: 70)
+        broadcastSettings {
+          id
+          title
+          game {
+            id
+            displayName
+            __typename
+          }
+          __typename
+        }
+        stream {
+          id
+          createdAt
+          previewImageURL(width: 440, height: 248)
+          viewersCount
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    pageInfo {
+      hasNextPage
+      __typename
+    }
+    __typename
+  }
+}
