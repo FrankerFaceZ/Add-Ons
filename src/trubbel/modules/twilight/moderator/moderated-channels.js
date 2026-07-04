@@ -485,7 +485,9 @@ export class ModeratedChannels {
         </div>
         <div className="tw-flex-grow-1 tw-overflow-hidden tw-flex tw-flex-column tw-justify-content-center">
           <div className="tw-flex tw-align-items-center tw-justify-content-between">
-            <span className="tw-semibold tw-ellipsis">isIntl(node.displayName, node.login)</span>
+            <span className="tw-semibold tw-ellipsis">
+              {isIntl(node.displayName, node.login)}
+            </span>
             {isLive && viewersCount != null && (
               <span
                 className="tw-flex-shrink-0 tw-mg-l-1 tw-flex tw-align-items-center"
