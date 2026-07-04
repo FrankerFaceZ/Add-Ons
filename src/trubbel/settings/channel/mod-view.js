@@ -1,6 +1,7 @@
 import ActivityFeedModeration from "../../modules/channel/mod-view/activity-feed-moderation";
 import ActivityFeedTooltip from "../../modules/channel/mod-view/activity-feed-tooltip";
 import AutoModView from "../../modules/channel/mod-view/auto";
+import ModViewLanding from "../../modules/channel/mod-view/landing-page";
 
 const { ManagedStyle } = FrankerFaceZ.utilities.dom;
 
@@ -20,6 +21,7 @@ export class Channel_ModView extends FrankerFaceZ.utilities.module.Module {
     this.activityFeedModeration = new ActivityFeedModeration(this);
     this.activityFeedTooltip = new ActivityFeedTooltip(this);
     this.autoModView = new AutoModView(this);
+    this.modViewLanding = new ModViewLanding(this);
 
     // Channel - Mod View - Activity Feed - Enable Right-Click Context Menu
     this.settings.add("addon.trubbel.channel.mod_view.activity_feed.context", {
@@ -72,6 +74,26 @@ export class Channel_ModView extends FrankerFaceZ.utilities.module.Module {
       },
       changed: () => this.autoModView.initialize()
     });
+
+
+
+    // Channel - Mod View - Landing Page - Better Landing Page
+    this.settings.add("addon.trubbel.channel.mod_view.landing", {
+      default: false,
+      // make sure the user is signed in
+      requires: ["context.session.user"],
+      process(ctx, val) {
+        return ctx.get("context.session.user") ? val : false;
+      },
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Mod View >> Landing Page",
+        title: "Better Landing Page",
+        description: "Replaces Twitch's landing page for [twitch.tv/moderator](https://www.twitch.tv/moderator) - the list of channels you moderate.",
+        component: "setting-check-box"
+      },
+      changed: val => this.modViewLanding.handleSettingChange(val)
+    });
   }
 
   onEnable() {
@@ -79,6 +101,7 @@ export class Channel_ModView extends FrankerFaceZ.utilities.module.Module {
     this.activityFeedModeration.initialize();
     this.activityFeedTooltip.initialize();
     this.autoModView.initialize();
+    this.modViewLanding.initialize();
   }
 
   async navigate() {
