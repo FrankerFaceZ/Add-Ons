@@ -29,8 +29,8 @@ importers:
         specifier: ^1.1.6
         version: 1.1.6
       pluralmind:
-        specifier: ^1.1.2
-        version: 1.1.2
+        specifier: ^1.2.1
+        version: 1.2.1
       reconnecting-websocket:
         specifier: ^4.4.0
         version: 4.4.0
@@ -2722,8 +2722,8 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  pluralmind@1.1.2:
-    resolution: {integrity: sha512-MOFQJKpBPONa4JMo3wWKWqWX8N0kfFPzNqH2cuYKd4eLKhKAryGC9VDzV3C2Y2mKC3BvOHSr7Tg9HfjzS03I9Q==}
+  pluralmind@1.2.1:
+    resolution: {integrity: sha512-DlBzI90JA95WqBcaNiCxxncPPcuJRpgpIIfHL51Jhjp09rYmB/mxoj5TWQu6k3IpyHPniRBfQc3xrTbx5e+pog==}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -6602,7 +6602,7 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
-  pluralmind@1.1.2: {}
+  pluralmind@1.2.1: {}
 
   possible-typed-array-names@1.1.0: {}
 
