@@ -6,9 +6,13 @@ export default class ChatMarkdown {
     this.settings = parent.settings;
     this.router = parent.router;
     this.style = parent.style;
+    this.chat = parent.chat;
     this.site = parent.site;
+    this.i18n = parent.i18n;
 
     this.isActive = false;
+    this.updateTimer = null;
+    this.hasRelativeTimestamps = false;
 
     this.handleNavigation = this.handleNavigation.bind(this);
     this.enableMarkdown = this.enableMarkdown.bind(this);
@@ -19,79 +23,84 @@ export default class ChatMarkdown {
     this.markdownTokenizer = {
       type: "chat-markdown",
       priority: 0,
+      tooltip(target) {
+        const markdownType = target.dataset.markdownType;
+        if (markdownType === "timestamp") {
+          const unix = parseInt(target.dataset.unix, 10);
+          return this.i18n.formatDateTime(new Date(unix * 1000), "full");
+        }
+
+        return null;
+      },
+
       render: (token, createElement) => {
         const renderInnerTokens = (innerTokens) => {
-          if (!innerTokens || !innerTokens.length) {
-            return token.text;
-          }
-
+          if (!innerTokens?.length) return token.text;
           return innerTokens.map(innerToken => {
-            if (innerToken.type === "text") {
-              return innerToken.text;
-            } else if (innerToken.type === "chat-markdown") {
-              return this.markdownTokenizer.render(innerToken, createElement);
-            }
+            if (innerToken.type === "text") return innerToken.text;
+            if (innerToken.type === "chat-markdown") return this.markdownTokenizer.render(innerToken, createElement);
             return innerToken.text || "";
           });
         };
 
         if (token.markdown_type === "spoiler") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
+          const content = this.chat.renderTokens(token.innerTokens || [], createElement);
           return createElement("span", {
-            className: "trubbel-spoiler trubbel-tooltip",
-            "data-tooltip-type": "html",
+            className: "trubbel-spoiler ffz-tooltip",
+            "data-tooltip-type": "text",
             "data-title": "Click to toggle spoiler",
             onClick: this.handleSpoilerClick
           }, content);
         }
 
+        if (token.markdown_type === "timestamp") {
+          const displayText = token.style === "R"
+            ? this.i18n.toRelativeTime(token.date)
+            : token.text;
+
+          return createElement("span", {
+            className: "ffz-timestamp ffz-tooltip",
+            "data-tooltip-type": "chat-markdown",
+            "data-markdown-type": "timestamp",
+            "data-unix": String(token.unix)
+          }, displayText);
+        }
+
         if (token.markdown_type === "bold") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
-          return createElement("strong", {}, content);
+          return createElement("strong", {}, renderInnerTokens(token.innerTokens));
         }
 
         if (token.markdown_type === "italic") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
-          return createElement("em", {}, content);
+          return createElement("em", {}, renderInnerTokens(token.innerTokens));
         }
 
         if (token.markdown_type === "underline") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
-          return createElement("u", {}, content);
+          return createElement("u", {}, renderInnerTokens(token.innerTokens));
         }
 
         if (token.markdown_type === "strikethrough") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
-          return createElement("s", {}, content);
+          return createElement("s", {}, renderInnerTokens(token.innerTokens));
         }
 
         if (token.markdown_type === "bold_italic") {
-          const content = token.innerTokens ? renderInnerTokens(token.innerTokens) : token.text;
           return createElement("strong", {},
-            createElement("em", {}, content)
+            createElement("em", {}, renderInnerTokens(token.innerTokens))
           );
         }
 
         return null;
       },
       process: (tokens, msg) => {
-        if (!tokens || !tokens.length) return tokens;
+        if (!tokens?.length) return tokens;
 
         const markdownEnabled = this.settings.get("addon.trubbel.channel.chat.markdown");
-        if (!markdownEnabled) {
-          return tokens;
-        }
+        if (!markdownEnabled) return tokens;
 
-        const out = [];
+        const withSpoilers = this.processSpoilers(tokens);
+        const out = this.applyInlineFormatting(withSpoilers);
 
-        for (const token of tokens) {
-          if (token.type !== "text") {
-            out.push(token);
-            continue;
-          }
-
-          const processedTokens = this.processMarkdownRecursive(token.text);
-          out.push(...processedTokens);
+        if (!this.hasRelativeTimestamps) {
+          this.checkForRelativeTimestamps(out);
         }
 
         return out;
@@ -99,60 +108,147 @@ export default class ChatMarkdown {
     };
   }
 
-  processMarkdownRecursive(text, depth = 0) {
+  findSpoilerOpener(text) {
+    for (let k = 0; k <= text.length - 2; k++) {
+      if (text[k] === "|" && text[k + 1] === "|") return k;
+    }
+    return -1;
+  }
+
+  findSpoilerCloser(text) {
+    for (let k = 0; k <= text.length - 2; k++) {
+      if (text[k] === "|" && text[k + 1] === "|") return k;
+    }
+    return -1;
+  }
+
+  processSpoilers(tokens) {
+    const result = [];
+    let i = 0;
+
+    while (i < tokens.length) {
+      const token = tokens[i];
+
+      if (token.type !== "text") {
+        result.push(token);
+        i++;
+        continue;
+      }
+
+      const openPos = this.findSpoilerOpener(token.text);
+
+      if (openPos === -1) {
+        result.push(token);
+        i++;
+        continue;
+      }
+
+      if (openPos > 0) {
+        result.push({ type: "text", text: token.text.slice(0, openPos) });
+      }
+
+      const afterOpen = token.text.slice(openPos + 2);
+      const sameClose = this.findSpoilerCloser(afterOpen);
+
+      if (sameClose !== -1) {
+        const innerText = afterOpen.slice(0, sameClose);
+        result.push({
+          type: "chat-markdown",
+          markdown_type: "spoiler",
+          innerTokens: [{ type: "text", text: innerText }],
+          text: innerText
+        });
+
+        const remaining = afterOpen.slice(sameClose + 2);
+        if (remaining) {
+          tokens = [...tokens.slice(0, i), { type: "text", text: remaining }, ...tokens.slice(i + 1)];
+        } else {
+          i++;
+        }
+        continue;
+      }
+
+      const innerTokens = [];
+      if (afterOpen) innerTokens.push({ type: "text", text: afterOpen });
+
+      let found = false;
+
+      for (let j = i + 1; j < tokens.length; j++) {
+        const t = tokens[j];
+
+        if (t.type === "text") {
+          const closePos = this.findSpoilerCloser(t.text);
+
+          if (closePos !== -1) {
+            if (closePos > 0) {
+              innerTokens.push({ type: "text", text: t.text.slice(0, closePos) });
+            }
+
+            result.push({
+              type: "chat-markdown",
+              markdown_type: "spoiler",
+              innerTokens,
+              text: ""
+            });
+
+            const remaining = t.text.slice(closePos + 2);
+            tokens = [
+              ...tokens.slice(0, j),
+              ...(remaining ? [{ type: "text", text: remaining }] : []),
+              ...tokens.slice(j + 1)
+            ];
+            i = j;
+            found = true;
+            break;
+          } else {
+            innerTokens.push(t);
+          }
+        } else {
+          innerTokens.push(t);
+        }
+      }
+
+      if (!found) {
+        if (openPos > 0) result.pop();
+        result.push(token);
+        i++;
+      }
+    }
+
+    return result;
+  }
+
+  applyInlineFormatting(tokens) {
+    const out = [];
+    for (const token of tokens) {
+      if (token.type === "chat-markdown" && token.markdown_type === "spoiler") {
+        out.push({
+          ...token,
+          innerTokens: this.applyInlineFormatting(token.innerTokens || [])
+        });
+      } else if (token.type === "text") {
+        out.push(...this.processInlineMarkdown(token.text));
+      } else {
+        out.push(token);
+      }
+    }
+    return out;
+  }
+
+  processInlineMarkdown(text, depth = 0) {
     if (!text || depth > 10) {
       return [{ type: "text", text: text || "" }];
     }
 
-    const patterns = [];
-
-    patterns.push({
-      regex: /(^|\s)\|{2}([^|]+?)\|{2}(\s|$)/g,
-      type: "spoiler",
-      priority: 1,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-
-    patterns.push({
-      regex: /(^|\s)\*{3}([^*]+?)\*{3}(\s|$)/g,
-      type: "bold_italic",
-      priority: 2,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-
-    patterns.push({
-      regex: /(^|\s)_{2}([^_]+?)_{2}(\s|$)/g,
-      type: "underline",
-      priority: 3,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-
-    patterns.push({
-      regex: /(^|\s)\*{2}([^*]+?)\*{2}(\s|$)/g,
-      type: "bold",
-      priority: 4,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-
-    patterns.push({
-      regex: /(^|\s)~{2}([^~]+?)~{2}(\s|$)/g,
-      type: "strikethrough",
-      priority: 5,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-
-    patterns.push({
-      regex: /(^|\s)\*{1}([^*]+?)\*{1}(\s|$)/g,
-      type: "italic",
-      priority: 6,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
-    patterns.push({
-      regex: /(^|\s)_{1}([^_]+?)_{1}(\s|$)/g,
-      type: "italic",
-      priority: 6,
-      captureGroups: { prefix: 1, content: 2, suffix: 3 }
-    });
+    const patterns = [
+      { regex: /<t:(\d{10})(?::([tTdDfFR]))?>/g, type: "timestamp" },
+      { regex: /\*{3}([^*]+?)\*{3}/g, type: "bold_italic" },
+      { regex: /_{2}([^_]+?)_{2}/g, type: "underline" },
+      { regex: /\*{2}([^*]+?)\*{2}/g, type: "bold" },
+      { regex: /~{2}([^~]+?)~{2}/g, type: "strikethrough" },
+      { regex: /\*([^*]+?)\*/g, type: "italic" },
+      { regex: /(?<!\w)_([^_]+?)_(?!\w)/g, type: "italic" }
+    ];
 
     let firstMatch = null;
     let firstPattern = null;
@@ -166,45 +262,83 @@ export default class ChatMarkdown {
       }
     }
 
-    if (!firstMatch) {
-      return [{ type: "text", text }];
-    }
+    if (!firstMatch) return [{ type: "text", text }];
 
     const result = [];
     const fullMatchStart = firstMatch.index;
     const fullMatchEnd = fullMatchStart + firstMatch[0].length;
 
-    const prefix = firstMatch[1];
-    const innerContent = firstMatch[2];
-    const suffix = firstMatch[3];
+    if (firstPattern.type === "timestamp") {
+      if (fullMatchStart > 0) {
+        result.push(...this.processInlineMarkdown(text.slice(0, fullMatchStart), depth + 1));
+      }
 
-    if (fullMatchStart > 0) {
-      const beforeText = text.slice(0, fullMatchStart);
-      result.push(...this.processMarkdownRecursive(beforeText, depth + 1));
-    }
+      const unix = parseInt(firstMatch[1], 10);
+      const style = firstMatch[2] || "f";
 
-    if (prefix) {
-      result.push({ type: "text", text: prefix });
-    }
+      result.push({
+        type: "chat-markdown",
+        markdown_type: "timestamp",
+        text: this.formatTimestamp(unix, style),
+        date: new Date(unix * 1000),
+        style,
+        unix
+      });
 
-    const innerTokens = this.processMarkdownRecursive(innerContent, depth + 1);
-    result.push({
-      type: "chat-markdown",
-      markdown_type: firstPattern.type,
-      innerTokens: innerTokens,
-      text: innerContent
-    });
+      if (fullMatchEnd < text.length) {
+        result.push(...this.processInlineMarkdown(text.slice(fullMatchEnd), depth + 1));
+      }
 
-    if (suffix) {
-      result.push({ type: "text", text: suffix });
-    }
+    } else {
+      const innerContent = firstMatch[1];
 
-    if (fullMatchEnd < text.length) {
-      const afterText = text.slice(fullMatchEnd);
-      result.push(...this.processMarkdownRecursive(afterText, depth + 1));
+      if (fullMatchStart > 0) {
+        result.push(...this.processInlineMarkdown(text.slice(0, fullMatchStart), depth + 1));
+      }
+
+      result.push({
+        type: "chat-markdown",
+        markdown_type: firstPattern.type,
+        innerTokens: this.processInlineMarkdown(innerContent, depth + 1),
+        text: innerContent
+      });
+
+      if (fullMatchEnd < text.length) {
+        result.push(...this.processInlineMarkdown(text.slice(fullMatchEnd), depth + 1));
+      }
     }
 
     return result;
+  }
+
+  checkForRelativeTimestamps(tokens) {
+    for (const t of tokens) {
+      if (t.type === "chat-markdown") {
+        if (t.markdown_type === "timestamp" && t.style === "R") {
+          this.hasRelativeTimestamps = true;
+          return;
+        }
+        if (t.innerTokens?.length) {
+          this.checkForRelativeTimestamps(t.innerTokens);
+          if (this.hasRelativeTimestamps) return;
+        }
+      }
+    }
+  }
+
+  formatTimestamp(unix, style) {
+    const date = new Date(unix * 1000);
+
+    switch (style) {
+      case "t": return this.i18n.formatTime(date, "short");
+      case "T": return this.i18n.formatTime(date, "medium");
+      case "d": return this.i18n.formatDate(date);
+      case "D": return this.i18n.formatDate(date, "long");
+      case "f": return this.i18n.formatDateTime(date, "medium");
+      case "F": return this.i18n.formatDateTime(date, "full");
+      case "R": return this.i18n.toRelativeTime(date);
+      default: return this.i18n.formatDateTime(date, "medium");
+    }
   }
 
   initialize() {
@@ -253,8 +387,13 @@ export default class ChatMarkdown {
   enableMarkdown() {
     if (this.isActive) return;
 
-    const chat = this.parent.resolve("site.chat").chat;
-    chat.addTokenizer(this.markdownTokenizer);
+    this.chat.addTokenizer(this.markdownTokenizer);
+
+    this.updateTimer = setInterval(() => {
+      if (!this.hasRelativeTimestamps) return;
+      this.hasRelativeTimestamps = false;
+      this.parent.emit("chat:update-lines");
+    }, 60000);
 
     this.style.set("md-spoilers", `
       .trubbel-spoiler {
@@ -263,9 +402,13 @@ export default class ChatMarkdown {
         cursor: pointer;
         border-radius: 3px;
         padding: 0 2px;
-        transition: all 0.2s ease;
+        transition: background-color 0.2s ease;
         user-select: none;
         white-space: pre-wrap !important;
+      }
+      .trubbel-spoiler:not(.trubbel-spoiler--revealed) * {
+        opacity: 0 !important;
+        pointer-events: none !important;
       }
       .trubbel-spoiler:hover:not(.trubbel-spoiler--revealed) {
         background-color: #9b9ca3 !important;
@@ -279,6 +422,14 @@ export default class ChatMarkdown {
       }
     `);
 
+    this.style.set("md-timestamps", `
+      .ffz-timestamp {
+        background-color: #42434a;
+        border-radius: 3px;
+        padding: 0 2px;
+      }
+    `);
+
     this.parent.emit("chat:update-lines");
     this.isActive = true;
   }
@@ -286,15 +437,19 @@ export default class ChatMarkdown {
   disableMarkdown() {
     if (!this.isActive) return;
 
-    const chat = this.parent.resolve("site.chat").chat;
-    chat.removeTokenizer(this.markdownTokenizer);
+    this.chat.removeTokenizer(this.markdownTokenizer);
 
-    if (this.style.has("md-spoilers")) {
-      this.style.delete("md-spoilers");
+    if (this.updateTimer) {
+      clearInterval(this.updateTimer);
+      this.updateTimer = null;
     }
+
+    if (this.style.has("md-spoilers")) this.style.delete("md-spoilers");
+    if (this.style.has("md-timestamps")) this.style.delete("md-timestamps");
 
     this.parent.emit("chat:update-lines");
     this.isActive = false;
+    this.hasRelativeTimestamps = false;
   }
 
   handleSpoilerClick(event) {

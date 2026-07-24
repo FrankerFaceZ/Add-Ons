@@ -167,7 +167,7 @@ const CODES = [
 ];
 
 export default {
-  props: ['item', 'context'],
+  props: ['item', 'context', 'filter'],
 
   data() {
     return {
@@ -221,15 +221,13 @@ export default {
     },
 
     visible_flags() {
-      const filter = this.context?.context?.search_filter;
-      if (!filter) return this.sorted_flags;
-
-      const lower = filter.toLowerCase();
+      const query = this.filter?.query;
+      if (!query) return this.sorted_flags;
 
       return this.sorted_flags.filter(({ key, flag }) => {
-        if (key.toLowerCase().includes(lower)) return true;
-        if (flag.variationType?.toLowerCase().includes(lower)) return true;
-        if (flag.variations?.some(v => v.key.toLowerCase().includes(lower))) return true;
+        if (key.toLowerCase().includes(query)) return true;
+        if (flag.variationType?.toLowerCase().includes(query)) return true;
+        if (flag.variations?.some(v => v.key.toLowerCase().includes(query))) return true;
         return false;
       });
     },

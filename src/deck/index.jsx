@@ -408,7 +408,7 @@ class BrowseDeck extends Addon {
 		const label = this.i18n.t('addon.deck.title', 'Deck'),
 			setting = this.settings.get('deck.link');
 
-		let cont = root.querySelector('.bd--browse-deck-link'), button, indicator;
+		let cont = root.querySelector('.bd--browse-deck-link'), button;
 		if ( ! cont ) {
 			if ( ! setting )
 				return;
@@ -430,12 +430,16 @@ class BrowseDeck extends Addon {
 			>
 				<div class="tw-flex-column tw-hide tw-sm-flex">
 					<div class="tw-hide tw-xl-flex">
-						<p class="tw-font-size-4 tw-line-height-heading tw-semibold tw-title">
+						<p class="tw-font-size-3 tw-line-height-heading tw-title"
+							style={{ fontWeight: 500 }}
+						>
 							{label}
 						</p>
 					</div>
 					<div class="tw-flex tw-xl-hide">
-						<p class="tw-font-size-5 tw-line-height-heading tw-semibold tw-title tw-title--inherit">
+						<p class="tw-font-size-4 tw-line-height-heading tw-title tw-title--inherit"
+							style={{ fontWeight: 500 }}
+						>
 							{label}
 						</p>
 					</div>
@@ -446,7 +450,6 @@ class BrowseDeck extends Addon {
 				<div class="tw-align-self-center tw-flex tw-full-height">
 					{button}
 				</div>
-				{indicator = <div class="bd--indicator navigation-link__indicator-container" />}
 			</div>), peer.nextElementSibling);
 
 		} else if ( ! setting ) {
@@ -455,16 +458,9 @@ class BrowseDeck extends Addon {
 
 		} else {
 			button = cont.querySelector('a');
-			indicator = root.querySelector('.bd--indicator');
 			for(const element of button.querySelectorAll('p'))
 				element.innerText = label;
 		}
-
-		const active_indicator = indicator.querySelector('.navigation-link__active-indicator');
-		if ( this.isActive && ! active_indicator )
-			indicator.appendChild(<div class="navigation-link__active-indicator" />);
-		else if ( ! this.isActive && active_indicator )
-			active_indicator.remove();
 
 		button.classList.toggle('active', this.isActive);
 	}

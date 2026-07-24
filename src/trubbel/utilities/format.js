@@ -88,3 +88,10 @@ export function formatTime(seconds) {
     return `${secs}s`;
   }
 }
+
+export function isIntl(displayName, login) {
+  if (displayName.toLowerCase() !== login.toLowerCase()) {
+    return `${displayName} (${login})`;
+  }
+  return displayName;
+}

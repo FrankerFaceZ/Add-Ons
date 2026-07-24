@@ -23,9 +23,11 @@ import { Inventory_Drops } from "./settings/inventory/drops";
 import { Twilight_Clips } from "./settings/twilight/clips";
 import { Twilight_Experiments } from "./settings/twilight/experiments";
 import { Twilight_IconFinder } from "./settings/twilight/icon-finder";
+import { Twilight_Moderator } from "./settings/twilight/moderator";
 import { Twilight_Prime } from "./settings/twilight/prime";
 import { Twilight_Sidebar } from "./settings/twilight/sidebar";
 import { Twilight_Timestamp } from "./settings/twilight/timestamp";
+import { Twilight_Tooltip } from "./settings/twilight/tooltips";
 import { Twilight_Whispers } from "./settings/twilight/whispers";
 
 import SETTING_SLIDER from "./components/main_menu/styles/setting-slider.scss";
@@ -63,9 +65,11 @@ class Trubbel extends Addon {
 
       // Twilight
       this.inject(Twilight_IconFinder);
+      this.inject(Twilight_Moderator);
       this.inject(Twilight_Prime);
       this.inject(Twilight_Sidebar);
       this.inject(Twilight_Timestamp);
+      this.inject(Twilight_Tooltip);
       this.inject(Twilight_Whispers);
     }
 
