@@ -21,6 +21,8 @@ function getSearchLinks(game) {
 	const encoded = encodeURIComponent(game);
 
 	return {
+		steam: `https://store.steampowered.com/search/?term=${encoded}`,
+		steamDB: `https://steamdb.info/search/?a=app&q=${encoded}`,
 		epic: `https://store.epicgames.com/en-US/browse?q=${encoded}&sortBy=relevancy&sortDir=DESC&count=40`,
 		itch: `https://itch.io/search?q=${encoded}`
 	};
@@ -204,7 +206,8 @@ class GameStoreLinks extends Addon {
 		}, createElement('span', {
 			className: 'ffz-game-store-links__stores'
 		}, [
-			makeStoreLink('Steam', `https://store.steampowered.com/search/?term=${encodeURIComponent(game)}`, 'ffz-game-store-links__steam-search'),
+			makeStoreLink('Steam', search.steam, 'ffz-game-store-links__steam-search'),
+			makeStoreLink('SteamDB', search.steamDB, 'ffz-game-store-links__steamdb-search'),
 			makeStoreLink('Epic', search.epic),
 			makeStoreLink('itch.io', search.itch)
 		]));
@@ -218,7 +221,8 @@ class GameStoreLinks extends Addon {
 		}, createElement('span', {
 			className: 'ffz-game-store-links__stores'
 		}, [
-			makeStoreLink('Steam', `https://store.steampowered.com/search/?term=${encodeURIComponent(game)}`, 'ffz-game-store-links__steam-search'),
+			makeStoreLink('Steam', search.steam, 'ffz-game-store-links__steam-search'),
+			makeStoreLink('SteamDB', search.steamDB, 'ffz-game-store-links__steamdb-search'),
 			makeStoreLink('Epic', search.epic),
 			makeStoreLink('itch.io', search.itch)
 		]));
@@ -228,41 +232,38 @@ class GameStoreLinks extends Addon {
 		if ( popup.dataset.loaded )
 			return;
 
-		const steamSearch = popup.querySelector('.ffz-game-store-links__steam-search');
-
 		try {
 			const result = await this.findSteamGame(game);
 			popup.dataset.loaded = 'true';
 
 			if ( result )
-				this.replaceSteamSearch(steamSearch, result);
+				this.replaceSteamLinks(popup, result);
 		} catch(err) {
-			this.log.warn('Unable to search Steam for game store links.', err);
+			this.log.warn('Unable to resolve Steam links for game store links.', err);
 			popup.dataset.loaded = 'true';
 		}
 	}
 
 	async populateTitleLinks(row, game) {
-		const steamSearch = row.querySelector('.ffz-game-store-links__steam-search');
-
 		try {
 			const result = await this.findSteamGame(game);
 
 			if ( result )
-				this.replaceSteamSearch(steamSearch, result);
+				this.replaceSteamLinks(row, result);
 		} catch(err) {
-			this.log.warn('Unable to search Steam for game directory links.', err);
+			this.log.warn('Unable to resolve Steam links for game directory links.', err);
 		}
 	}
 
-	replaceSteamSearch(steamSearch, result) {
-		if ( ! steamSearch?.isConnected )
+	replaceSteamLinks(container, result) {
+		if ( ! container?.isConnected )
 			return;
 
-		const steam = makeStoreLink('Steam', result.url, 'ffz-game-store-links__steam');
-		const steamDB = makeStoreLink('SteamDB', `https://steamdb.info/app/${result.id}/`, 'ffz-game-store-links__steamdb');
+		const steamSearch = container.querySelector('.ffz-game-store-links__steam-search');
+		const steamDBSearch = container.querySelector('.ffz-game-store-links__steamdb-search');
 
-		steamSearch.replaceWith(steam, steamDB);
+		steamSearch?.replaceWith(makeStoreLink('Steam', result.url, 'ffz-game-store-links__steam'));
+		steamDBSearch?.replaceWith(makeStoreLink('SteamDB', result.steamDB, 'ffz-game-store-links__steamdb'));
 	}
 
 	async findSteamGame(game) {
@@ -275,7 +276,7 @@ class GameStoreLinks extends Addon {
 		if ( this.pending.has(key) )
 			return this.pending.get(key);
 
-		const promise = this.searchSteam(game, key);
+		const promise = this.searchGameCatalog(game, key);
 		this.pending.set(key, promise);
 
 		try {
@@ -291,26 +292,29 @@ class GameStoreLinks extends Addon {
 		}
 	}
 
-	async searchSteam(game, normalized) {
-		const url = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(game)}&l=en&cc=us`;
+	async searchGameCatalog(game, normalized) {
+		const url = `https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(game)}&limit=10`;
 		const response = await fetch(url, {
 			credentials: 'omit'
 		});
 
 		if ( ! response.ok )
-			throw new Error(`Steam search failed: ${response.status}`);
+			throw new Error(`Game catalog search failed: ${response.status}`);
 
 		const data = await response.json();
-		const items = Array.isArray(data?.items) ? data.items : [];
-		const exact = items.find(item => normalizeGameName(item?.name) === normalized);
+		const items = Array.isArray(data) ? data : [];
+		const exact = items.find(item =>
+			item?.steamAppID && normalizeGameName(item.external) === normalized
+		);
 
-		if ( ! exact?.id )
+		if ( ! exact?.steamAppID )
 			return null;
 
 		return {
-			id: exact.id,
-			name: exact.name,
-			url: `https://store.steampowered.com/app/${exact.id}/`
+			id: exact.steamAppID,
+			name: exact.external,
+			url: `https://store.steampowered.com/app/${exact.steamAppID}/`,
+			steamDB: `https://steamdb.info/app/${exact.steamAppID}/`
 		};
 	}
 

@@ -1,11 +1,11 @@
 {
 	"enabled": true,
 	"requires": [],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"short_name": "GameStoreLinks",
 	"name": "Game Store Links",
 	"author": "jimmy",
-	"description": "Adds store links for Twitch game categories, preferring direct Steam links when a matching Steam game is found.",
+	"description": "Adds store links for Twitch game categories for Steam, SteamDB, Epic Games, and `itch.io`. Game data provided by CheapShark.",
 	"created": "2026-05-09T04:28:52.081Z",
-	"updated": "2026-07-24T03:23:44.120Z"
+	"updated": "2026-07-24T03:48:22.381Z"
 }
