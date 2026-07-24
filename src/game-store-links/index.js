@@ -62,6 +62,7 @@ class GameStoreLinks extends Addon {
 		this.injectStyle();
 		this.observer = new MutationObserver(this.handleMutations);
 		this.observer.observe(document.body, {
+			characterData: true,
 			childList: true,
 			subtree: true
 		});
@@ -96,8 +97,18 @@ class GameStoreLinks extends Addon {
 	}
 
 	scan() {
-		for(const anchor of document.querySelectorAll(`a[href^="${CATEGORY_PATH}"]:not([${PROCESSED_ATTR}])`))
-			this.attach(anchor);
+		for(const wrapper of document.querySelectorAll(`.${LINK_CLASS}`))
+			this.refreshWrapper(wrapper);
+
+		for(const anchor of document.querySelectorAll(`a[href^="${CATEGORY_PATH}"]:not([${PROCESSED_ATTR}])`)) {
+			const wrapper = anchor.closest(`.${LINK_CLASS}`);
+
+			if ( wrapper ) {
+				anchor.setAttribute(PROCESSED_ATTR, 'true');
+				this.refreshWrapper(wrapper);
+			} else
+				this.attach(anchor);
+		}
 
 		this.attachDirectoryTitle();
 	}
@@ -112,6 +123,7 @@ class GameStoreLinks extends Addon {
 		const wrapper = createElement('span', {
 			className: LINK_CLASS
 		});
+		wrapper.dataset.game = game;
 
 		anchor.parentNode?.insertBefore(wrapper, anchor);
 		wrapper.appendChild(anchor);
@@ -119,14 +131,35 @@ class GameStoreLinks extends Addon {
 		const popup = this.buildPopup(game);
 		wrapper.appendChild(popup);
 
-		wrapper.addEventListener('mouseenter', () => this.populatePopup(popup, game), { passive: true });
+		wrapper.addEventListener('mouseenter', () => this.refreshWrapper(wrapper, true), { passive: true });
+	}
+
+	refreshWrapper(wrapper, populate = false) {
+		const anchor = wrapper.querySelector(`a[href^="${CATEGORY_PATH}"]`);
+		const game = anchor && getAnchorGameName(anchor);
+		if ( ! game )
+			return;
+
+		anchor.setAttribute(PROCESSED_ATTR, 'true');
+
+		let popup = wrapper.querySelector(`.${POPUP_CLASS}`);
+
+		if ( wrapper.dataset.game !== game || ! popup ) {
+			const nextPopup = this.buildPopup(game);
+			popup?.replaceWith(nextPopup);
+			popup = nextPopup;
+			wrapper.dataset.game = game;
+		}
+
+		if ( populate )
+			this.populatePopup(popup, game);
 	}
 
 	attachDirectoryTitle() {
 		if ( ! location.pathname.startsWith(CATEGORY_PATH) )
 			return;
 
-		const heading = document.querySelector(`main h1:not([${PROCESSED_ATTR}]), h1:not([${PROCESSED_ATTR}])`);
+		const heading = document.querySelector('main h1, h1');
 		const game = heading?.textContent?.trim();
 
 		if ( ! heading || ! game )
@@ -134,9 +167,22 @@ class GameStoreLinks extends Addon {
 
 		heading.setAttribute(PROCESSED_ATTR, 'true');
 
-		const row = this.buildTitleLinks(game);
-		heading.insertAdjacentElement('afterend', row);
-		this.populateTitleLinks(row, game);
+		let row = heading.nextElementSibling?.classList.contains(TITLE_CLASS)
+			? heading.nextElementSibling
+			: null;
+
+		if ( ! row || row.dataset.game !== game ) {
+			const nextRow = this.buildTitleLinks(game);
+			nextRow.dataset.game = game;
+
+			if ( row )
+				row.replaceWith(nextRow);
+			else
+				heading.insertAdjacentElement('afterend', nextRow);
+
+			row = nextRow;
+			this.populateTitleLinks(row, game);
+		}
 	}
 
 	unwrapAnchor(wrapper) {
@@ -189,7 +235,7 @@ class GameStoreLinks extends Addon {
 			popup.dataset.loaded = 'true';
 
 			if ( result )
-				steamSearch.replaceWith(makeStoreLink('Steam', result.url, 'ffz-game-store-links__steam'));
+				this.replaceSteamSearch(steamSearch, result);
 		} catch(err) {
 			this.log.warn('Unable to search Steam for game store links.', err);
 			popup.dataset.loaded = 'true';
@@ -203,10 +249,20 @@ class GameStoreLinks extends Addon {
 			const result = await this.findSteamGame(game);
 
 			if ( result )
-				steamSearch.replaceWith(makeStoreLink('Steam', result.url, 'ffz-game-store-links__steam'));
+				this.replaceSteamSearch(steamSearch, result);
 		} catch(err) {
 			this.log.warn('Unable to search Steam for game directory links.', err);
 		}
+	}
+
+	replaceSteamSearch(steamSearch, result) {
+		if ( ! steamSearch?.isConnected )
+			return;
+
+		const steam = makeStoreLink('Steam', result.url, 'ffz-game-store-links__steam');
+		const steamDB = makeStoreLink('SteamDB', `https://steamdb.info/app/${result.id}/`, 'ffz-game-store-links__steamdb');
+
+		steamSearch.replaceWith(steam, steamDB);
 	}
 
 	async findSteamGame(game) {
@@ -252,6 +308,7 @@ class GameStoreLinks extends Addon {
 			return null;
 
 		return {
+			id: exact.id,
 			name: exact.name,
 			url: `https://store.steampowered.com/app/${exact.id}/`
 		};
@@ -268,8 +325,8 @@ class GameStoreLinks extends Addon {
 				position: relative;
 				display: inline-flex;
 				align-items: center;
-				padding-bottom: 0.55rem;
-				margin-bottom: -0.55rem;
+				padding: 0 0.75rem 1rem;
+				margin: 0 -0.75rem -1rem;
 			}
 
 			.${TITLE_CLASS} {
@@ -288,7 +345,7 @@ class GameStoreLinks extends Addon {
 				left: 0;
 				display: none;
 				min-width: max-content;
-				padding: 0.5rem;
+				padding: 0.7rem;
 				border-radius: 0.4rem;
 				background: #18181b;
 				box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.35);
