@@ -158,28 +158,36 @@ export default class ChannelDrops {
 
   updateWatchDropProgress(dropId, current, required) {
     if (!this.dropContainer) return;
-    const item = this.dropContainer.querySelector(`[data-drop-id="${dropId}"]`);
-    if (!item) return;
+    const trigger = this.dropContainer.querySelector(`[data-drop-id="${dropId}"]`);
+    if (!trigger) return;
 
-    const fill = item.querySelector(".trubbel-drops__item-bar-fill");
-    if (!fill || fill.classList.contains("trubbel-drops__item-bar-fill--claimed")) return;
+    const campaignId = trigger.dataset.campaignId;
+    const siblings = this.dropContainer.querySelectorAll(`[data-campaign-id="${campaignId}"]`);
 
-    const progress = item.querySelector(".trubbel-drops__item-progress");
-    if (!progress || !progress.dataset.title) return;
+    for (const item of siblings) {
+      const sibRequired = parseInt(item.dataset.required, 10);
+      if (!sibRequired) continue;
 
-    if (current >= required) {
-      fill.style.width = "100%";
-      fill.style.backgroundColor = "var(--color-fill-info)";
-      progress.textContent = "Ready to claim!";
-      progress.dataset.title = `<strong>Ready to claim!</strong> · watched ${formatMins(required)} of ${formatMins(required)}`;
-    } else {
-      const displayCurrent = Math.min(current, required);
-      const remaining = Math.max(0, required - current);
-      const pct = Math.min(100, Math.floor((current / required) * 100));
+      const fill = item.querySelector(".trubbel-drops__item-bar-fill");
+      if (!fill) continue;
 
-      fill.style.width = `${pct}%`;
-      progress.textContent = `${formatMins(displayCurrent)} / ${formatMins(required)}`;
-      progress.dataset.title = `<strong>${formatMins(remaining)} remaining</strong>`;
+      const progress = item.querySelector(".trubbel-drops__item-progress");
+      if (!progress || !progress.dataset.title) continue;
+
+      if (current >= sibRequired) {
+        fill.style.width = "100%";
+        fill.style.backgroundColor = "var(--color-fill-info)";
+        progress.textContent = "Ready to claim!";
+        progress.dataset.title = `<strong>Ready to claim!</strong> · watched ${formatMins(sibRequired)} of ${formatMins(sibRequired)}`;
+      } else {
+        const displayCurrent = Math.min(current, sibRequired);
+        const remaining = Math.max(0, sibRequired - current);
+        const pct = Math.min(100, Math.floor((current / sibRequired) * 100));
+
+        fill.style.width = `${pct}%`;
+        progress.textContent = `${formatMins(displayCurrent)} / ${formatMins(sibRequired)}`;
+        progress.dataset.title = `<strong>${formatMins(remaining)} remaining</strong>`;
+      }
     }
   }
 
@@ -271,6 +279,7 @@ export default class ChannelDrops {
         const dropEl = createElement("div", {
           className: "trubbel-drops__item",
           "data-drop-id": group.id,
+          "data-campaign-id": campaign.id,
           "data-required": requiredMinutes,
           "data-required-subs": requiredSubs,
         }, [
