@@ -1,34 +1,34 @@
-query Trubbel_ModeratedChannels($after: Cursor, $userID: ID!, $permission: String!) {
-	moderatedChannels(first: 100, after: $after) {
-		edges {
-			cursor
-			isLive
-			node {
-				id
-				displayName
-				login
+query Trubbel_ModViewLanding($after: Cursor, $userID: ID!, $permission: String!) {
+  moderatedChannels(first: 100, after: $after) {
+    edges {
+      cursor
+      isLive
+      node {
+        id
+        displayName
+        login
         channel {
           hasPermission(userID: $userID, permission: $permission)
         }
-				profileImageURL(width: 50)
-				broadcastSettings {
-					title
-					game {
-						id
-						displayName
-						boxArtURL
-					}
-				}
+        profileImageURL(width: 50)
+        broadcastSettings {
+          title
+          game {
+            id
+            displayName
+            boxArtURL
+          }
+        }
         chatColor
         primaryColorHex
         lastBroadcast {
           id
           startedAt
         }
-				stream {
-					createdAt
-					viewersCount
-				}
+        stream {
+          createdAt
+          viewersCount
+        }
         self {
           isEditor
           isFirstTimeChatter
@@ -57,10 +57,10 @@ query Trubbel_ModeratedChannels($after: Cursor, $userID: ID!, $permission: Strin
           }
           __typename
         }
-			}
-		}
-		pageInfo {
-			hasNextPage
-		}
-	}
+      }
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
 }

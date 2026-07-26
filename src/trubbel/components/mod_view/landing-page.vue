@@ -1,45 +1,45 @@
 <template>
-  <div class="ffz-mod-landing-page">
-    <div class="ffz-mod-landing-scroll">
-      <div class="ffz-mod-landing-inner">
-        <div class="ffz-mod-landing-toolbar">
-          <div class="ffz-mod-landing-count">{{ countLabel }}</div>
+  <div class="custom-mod-landing-page">
+    <div class="custom-mod-landing-scroll">
+      <div class="custom-mod-landing-inner">
+        <div class="custom-mod-landing-toolbar">
+          <div class="custom-mod-landing-count">{{ countLabel }}</div>
           <div style="flex:1;min-width:8px"></div>
-          <input class="ffz-mod-landing-search" type="search"
+          <input class="custom-mod-landing-search" type="search"
             :placeholder="t('trubbel.mod-landing.search-placeholder', 'Filter…')" :value="search"
             @input="search = $event.target.value">
-          <div class="ffz-mod-landing-sort-group">
-            <button v-for="mode in sortModes" :key="mode.key" class="ffz-mod-landing-sort-btn"
-              :class="{ 'ffz-mod-landing-sort-btn--active': sort === mode.key }" @click="onSortClick(mode.key)">{{
+          <div class="custom-mod-landing-sort-group">
+            <button v-for="mode in sortModes" :key="mode.key" class="custom-mod-landing-sort-btn"
+              :class="{ 'custom-mod-landing-sort-btn--active': sort === mode.key }" @click="onSortClick(mode.key)">{{
                 sortLabel(mode) }}</button>
           </div>
         </div>
 
-        <div v-if="channels === null" class="ffz-mod-landing-empty">
+        <div v-if="channels === null" class="custom-mod-landing-empty">
           {{ t('trubbel.mod-landing.loading', 'Loading channels…') }}
         </div>
 
-        <div v-else-if="hasError" class="ffz-mod-landing-empty">
+        <div v-else-if="hasError" class="custom-mod-landing-empty">
           {{ t('trubbel.mod-landing.error', 'Failed to load moderated channels.') }}
         </div>
 
-        <div v-else-if="sorted.length === 0" class="ffz-mod-landing-empty">
+        <div v-else-if="sorted.length === 0" class="custom-mod-landing-empty">
           {{ t('trubbel.mod-landing.no-results', 'No channels match your search.') }}
         </div>
 
         <template v-else>
-          <div v-if="liveChannels.length" class="ffz-mod-landing-section">
-            <div class="ffz-mod-landing-section-label ffz-mod-landing-section-label--live">
-              <span class="ffz-mod-landing-section-pip ffz-mod-landing-section-pip--live"></span>
+          <div v-if="liveChannels.length" class="custom-mod-landing-section">
+            <div class="custom-mod-landing-section-label custom-mod-landing-section-label--live">
+              <span class="custom-mod-landing-section-pip custom-mod-landing-section-pip--live"></span>
               {{ t('trubbel.mod-landing.section.live', 'Live ({count})', { count: liveChannels.length }) }}
             </div>
             <mod-landing-card v-for="edge in liveChannels" :key="edge.node.id" :edge="edge" :now="now"
               @navigate="onNavigate" />
           </div>
 
-          <div v-if="offlineChannels.length" class="ffz-mod-landing-section">
-            <div class="ffz-mod-landing-section-label">
-              <span class="ffz-mod-landing-section-pip"></span>
+          <div v-if="offlineChannels.length" class="custom-mod-landing-section">
+            <div class="custom-mod-landing-section-label">
+              <span class="custom-mod-landing-section-pip"></span>
               {{ t('trubbel.mod-landing.section.offline', 'Offline ({count})', { count: offlineChannels.length }) }}
             </div>
             <mod-landing-card v-for="edge in offlineChannels" :key="edge.node.id" :edge="edge" :now="now"

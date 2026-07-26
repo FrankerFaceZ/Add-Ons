@@ -182,74 +182,69 @@ export default class ModViewLanding {
 
     if (!this._vueState) return;
 
-    // Mutating root instance data triggers reactive updates down to the component.
     this._vueState.channels = edges;
   }
 
-  async _fetchAllPages(cursor = null, accumulated = []) {
+  // just get first page
+  async _fetchAllPages() {
     const currentUser = this.site.getUser();
     if (!currentUser?.id) {
       throw new Error("[ModViewLanding] No current user id found, unable to determine lead moderator role, aborting fetch");
     }
 
-    const variables = {
-      permission: "moderation.roles.vip:remove",
-      userID: currentUser.id,
-    };
-    if (cursor) variables.after = cursor;
-
     const result = await this.site.children.twitch_data.queryApollo(
       MODERATED_CHANNELS_QUERY,
-      variables,
+      {
+        permission: "moderation.roles.vip:remove",
+        userID: currentUser.id,
+      },
       { fetchPolicy: "network-only" }
     );
 
     const data = result?.data;
     const edges = get("moderatedChannels.edges", data) ?? [];
     const hasNextPage = get("moderatedChannels.pageInfo.hasNextPage", data);
-    const nextCursor = get("moderatedChannels.edges.@last.cursor", data);
 
-    const all = accumulated.concat(edges);
-    this.log.info(`[ModViewLanding] Page fetched: ${edges.length} channels (total so far: ${all.length}, hasNextPage: ${hasNextPage})`);
+    this.log.info(`[ModViewLanding] Fetched ${edges.length} channels (hasNextPage: ${hasNextPage})`);
 
-    if (hasNextPage && nextCursor)
-      return this._fetchAllPages(nextCursor, all);
+    if (hasNextPage)
+      this.log.warn(`[ModViewLanding] More than ${edges.length} moderated channels exist. List is capped at the first page due to a Twitch API pagination bug.`);
 
-    return all;
+    return edges;
   }
 
   applyCSS() {
     this.style.set("trubbel-mod-view-landing", `
-      .ffz-mod-landing-page {
+      .custom-mod-landing-page {
         height: 100%;
         width: 100%;
         background: var(--color-background-body);
         overflow: hidden;
       }
-      .ffz-mod-landing-scroll {
+      .custom-mod-landing-scroll {
         height: 100%;
         overflow-y: auto;
         position: relative;
         z-index: 0;
       }
-      .ffz-mod-landing-inner {
+      .custom-mod-landing-inner {
         max-width: 860px;
         margin: 0 auto;
         padding: 40px 24px 60px;
       }
-      .ffz-mod-landing-toolbar {
+      .custom-mod-landing-toolbar {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-bottom: 20px;
         flex-wrap: wrap;
       }
-      .ffz-mod-landing-count {
+      .custom-mod-landing-count {
         font-size: var(--font-size-6);
         color: var(--color-text-alt-2);
         white-space: nowrap;
       }
-      .ffz-mod-landing-search {
+      .custom-mod-landing-search {
         flex: 1;
         min-width: 160px;
         max-width: 240px;
@@ -270,33 +265,33 @@ export default class ModViewLanding {
         padding: 0 var(--input-padding-inline-default);
         transition: border var(--timing-short) ease-in, background-color var(--timing-short) ease-in;
       }
-      .ffz-mod-landing-search:hover {
+      .custom-mod-landing-search:hover {
         outline: none;
         box-shadow: inset 0 0 0 var(--input-border-width-default) var(--color-border-input-hover);
         background-color: var(--color-background-input);
       }
-      .ffz-mod-landing-search:focus {
+      .custom-mod-landing-search:focus {
         outline: solid 2px var(--color-border-input-focus);
         outline-offset: -1px;
         border-color: var(--color-border-input-focus);
         box-shadow: 0 0 0 var(--input-border-width-default) var(--color-border-input-focus), inset 0 0 0 var(--input-border-width-default) var(--color-border-input-focus);
         background-color: var(--color-background-input-focus);
       }
-      .ffz-mod-landing-search:focus:hover {
+      .custom-mod-landing-search:focus:hover {
         outline: solid 2px var(--color-border-input-focus);
         outline-offset: -1px;
         border-color: var(--color-border-input-focus);
         box-shadow: 0 0 0 var(--input-border-width-default) var(--color-border-input-focus), inset 0 0 0 var(--input-border-width-default) var(--color-border-input-focus);
         background-color: var(--color-background-input-focus);
       }
-      .ffz-mod-landing-search::-webkit-search-cancel-button {
+      .custom-mod-landing-search::-webkit-search-cancel-button {
         cursor: pointer;
       }
-      .ffz-mod-landing-sort-group {
+      .custom-mod-landing-sort-group {
         display: flex;
         gap: 4px;
       }
-      .ffz-mod-landing-sort-btn {
+      .custom-mod-landing-sort-btn {
         padding: 4px 10px;
         border-radius: var(--border-radius-medium);
         font-size: var(--font-size-7);
@@ -309,19 +304,19 @@ export default class ModViewLanding {
         transition: background 0.1s ease, color 0.1s ease;
         line-height: 1.4;
       }
-      .ffz-mod-landing-sort-btn:hover {
+      .custom-mod-landing-sort-btn:hover {
         background: var(--color-background-interactable-hover);
         color: var(--color-text-base);
       }
-      .ffz-mod-landing-sort-btn--active {
+      .custom-mod-landing-sort-btn--active {
         background: var(--color-background-button-secondary-default);
         color: var(--color-text-button-secondary);
         border-color: transparent;
       }
-      .ffz-mod-landing-section {
+      .custom-mod-landing-section {
         margin-bottom: 16px;
       }
-      .ffz-mod-landing-section-label {
+      .custom-mod-landing-section-label {
         display: flex;
         align-items: center;
         gap: 7px;
@@ -332,23 +327,23 @@ export default class ModViewLanding {
         letter-spacing: 0.06em;
         margin-bottom: 6px;
       }
-      .ffz-mod-landing-section-pip {
+      .custom-mod-landing-section-pip {
         width: 6px;
         height: 6px;
         border-radius: 50%;
         background: var(--color-border-base);
         flex-shrink: 0;
       }
-      .ffz-mod-landing-section-pip--live {
+      .custom-mod-landing-section-pip--live {
         background: var(--color-fill-live);
       }
-      .ffz-mod-landing-empty {
+      .custom-mod-landing-empty {
         padding: 24px;
         text-align: center;
         color: var(--color-text-alt-2);
         font-size: var(--font-size-6);
       }
-      .ffz-mod-landing-card {
+      .custom-mod-landing-card {
         position: relative;
         display: flex;
         align-items: center;
@@ -363,49 +358,49 @@ export default class ModViewLanding {
         transition: background 0.12s ease, border-color 0.12s ease;
         margin-bottom: 4px;
       }
-      .ffz-mod-landing-card:last-child {
+      .custom-mod-landing-card:last-child {
         margin-bottom: 0;
       }
-      .ffz-mod-landing-card:hover {
+      .custom-mod-landing-card:hover {
         background: var(--color-background-alt-2);
         border-color: var(--color-border-base);
         color: var(--color-text-base);
         text-decoration: none;
       }
-      .ffz-mod-landing-card--offline {
+      .custom-mod-landing-card--offline {
         opacity: 0.78;
       }
-      .ffz-mod-landing-card--offline:hover {
+      .custom-mod-landing-card--offline:hover {
         opacity: 1;
       }
-      .ffz-mod-landing-card::before {
+      .custom-mod-landing-card::before {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
         bottom: 0;
         width: 4px;
-        background: var(--ffz-mod-accent, #a970ff);
+        background: var(--custom-mod-accent, #a970ff);
       }
-      .ffz-mod-landing-avatar {
+      .custom-mod-landing-avatar {
         width: 44px;
         height: 44px;
         border-radius: 50%;
         display: block;
         object-fit: cover;
       }
-      .ffz-mod-landing-info {
+      .custom-mod-landing-info {
         flex: 1;
         min-width: 0;
       }
-      .ffz-mod-landing-name-row {
+      .custom-mod-landing-name-row {
         display: flex;
         align-items: center;
         gap: 4px;
         flex-wrap: wrap;
         margin-bottom: 2px;
       }
-      .ffz-mod-landing-name {
+      .custom-mod-landing-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-size-6);
         white-space: nowrap;
@@ -414,7 +409,7 @@ export default class ModViewLanding {
         color: var(--color-text-base);
         line-height: 1.3;
       }
-      .ffz-mod-landing-title {
+      .custom-mod-landing-title {
         font-size: var(--font-size-7);
         color: var(--color-text-alt);
         white-space: nowrap;
@@ -423,13 +418,13 @@ export default class ModViewLanding {
         margin-bottom: 2px;
         line-height: 1.4;
       }
-      .ffz-mod-landing-game-row {
+      .custom-mod-landing-game-row {
         display: flex;
         align-items: center;
         gap: 5px;
         margin-top: 1px;
       }
-      .ffz-mod-landing-game-thumb {
+      .custom-mod-landing-game-thumb {
         display: block;
         flex-shrink: 0;
         border-radius: 2px;
@@ -437,14 +432,14 @@ export default class ModViewLanding {
         width: 14px;
         height: 20px;
       }
-      .ffz-mod-landing-game {
+      .custom-mod-landing-game {
         font-size: var(--font-size-7);
         color: var(--color-text-alt-2);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .ffz-mod-landing-badge {
+      .custom-mod-landing-badge {
         display: inline-flex;
         align-items: center;
         gap: 3px;
@@ -457,46 +452,46 @@ export default class ModViewLanding {
         flex-shrink: 0;
         border: 1px solid transparent;
       }
-      .ffz-mod-landing-badge--lead {
+      .custom-mod-landing-badge--lead {
         color: #e6a817;
         background: rgba(230, 168, 23, 0.15);
         border-color: rgba(230, 168, 23, 0.35);
       }
-      .ffz-mod-landing-badge--editor {
+      .custom-mod-landing-badge--editor {
         color: #3a9de0;
         background: rgba(58, 157, 224, 0.15);
         border-color: rgba(58, 157, 224, 0.35);
       }
-      .ffz-mod-landing-badge--founder {
+      .custom-mod-landing-badge--founder {
         color: #e06b3a;
         background: rgba(224, 107, 58, 0.15);
         border-color: rgba(224, 107, 58, 0.35);
       }
-      .ffz-mod-landing-badge--sub {
+      .custom-mod-landing-badge--sub {
         color: #bf94ff;
         background: rgba(191, 148, 255, 0.15);
         border-color: rgba(191, 148, 255, 0.35);
       }
-      .ffz-mod-landing-badge--gifts {
+      .custom-mod-landing-badge--gifts {
         color: #4db6ac;
         background: rgba(77, 182, 172, 0.15);
         border-color: rgba(77, 182, 172, 0.35);
       }
-      .ffz-mod-landing-badge--sub-lapsed {
+      .custom-mod-landing-badge--sub-lapsed {
         color: var(--color-text-alt-2);
         background: transparent;
         border-color: var(--color-border-base);
       }
-      .ffz-mod-landing-badge--ftc {
+      .custom-mod-landing-badge--ftc {
         color: #ff75e6;
         background: rgba(255, 117, 230, 0.15);
         border-color: rgba(255, 117, 230, 0.35);
       }
-      .ffz-mod-landing-sub-icon {
+      .custom-mod-landing-sub-icon {
         flex-shrink: 0;
         display: block;
       }
-      .ffz-mod-landing-right {
+      .custom-mod-landing-right {
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -505,7 +500,7 @@ export default class ModViewLanding {
         margin-left: 8px;
         min-width: 60px;
       }
-      .ffz-mod-landing-viewers {
+      .custom-mod-landing-viewers {
         display: flex;
         align-items: center;
         gap: 5px;
@@ -514,14 +509,14 @@ export default class ModViewLanding {
         color: var(--color-text-alt-2);
         white-space: nowrap;
       }
-      .ffz-mod-landing-viewers-dot {
+      .custom-mod-landing-viewers-dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
         background: var(--color-fill-live);
         flex-shrink: 0;
       }
-      .ffz-mod-landing-uptime {
+      .custom-mod-landing-uptime {
         display: flex;
         align-items: center;
         gap: 3px;
@@ -529,7 +524,7 @@ export default class ModViewLanding {
         color: var(--color-text-alt-2);
         white-space: nowrap;
       }
-      .ffz-mod-landing-last-live {
+      .custom-mod-landing-last-live {
         font-size: var(--font-size-7);
         color: var(--color-text-alt-2);
         white-space: nowrap;

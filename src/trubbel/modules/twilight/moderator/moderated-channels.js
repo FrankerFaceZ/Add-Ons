@@ -293,8 +293,16 @@ export class ModeratedChannels {
   }
 
   handleProviderChange(key, value, deleted) {
-    if (key !== this.CACHE_KEY || deleted || !value) return;
+    if (key !== this.CACHE_KEY) return;
 
+    if (deleted || !value) {
+      this.edges = [];
+      this.liveCount = 0;
+      this.updatePill();
+      return;
+    }
+
+    this.log.info("[ModeratedChannels] Received cross-tab cache update:", value.liveCount, "live");
     this.edges = value.edges;
     this.liveCount = value.liveCount;
     this.updatePill();
@@ -306,6 +314,11 @@ export class ModeratedChannels {
 
     const age = Date.now() - cached.timestamp;
     if (age > 5 * 60 * 1000) return false;
+
+    if (cached.edges && cached.edges.some(e => !e.isLive)) {
+      this.settings.provider.delete(this.CACHE_KEY);
+      return false;
+    }
 
     this.edges = cached.edges;
     this.liveCount = cached.liveCount;
@@ -348,20 +361,23 @@ export class ModeratedChannels {
         }
 
         const edges = await this.fetchAllModeratedChannels(apollo);
+        this.log.info(`[ModeratedChannels] Fetched ${edges.length} moderated channels`);
 
-        edges.sort((a, b) => {
-          if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
-          return (a.node?.displayName || "").localeCompare(b.node?.displayName || "");
-        });
+        const liveEdges = edges.filter(e => e.isLive);
+        liveEdges.sort((a, b) => (a.node?.displayName || "").localeCompare(b.node?.displayName || ""));
 
-        this.edges = edges;
-        this.liveCount = edges.filter(e => e.isLive).length;
+        this.edges = liveEdges;
+        this.liveCount = liveEdges.length;
 
-        this.settings.provider.set(this.CACHE_KEY, {
-          edges: this.edges,
-          liveCount: this.liveCount,
-          timestamp: Date.now()
-        });
+        if (this.liveCount > 0) {
+          this.settings.provider.set(this.CACHE_KEY, {
+            edges: this.edges,
+            liveCount: this.liveCount,
+            timestamp: Date.now()
+          });
+        } else {
+          this.settings.provider.delete(this.CACHE_KEY);
+        }
 
         this.updatePill();
 
@@ -375,30 +391,26 @@ export class ModeratedChannels {
     return this.loadPromise;
   }
 
-  async fetchAllModeratedChannels(apollo, cursor = null, edges = []) {
+  async fetchAllModeratedChannels(apollo) {
     const result = await apollo.client.query({
       query: MODERATED_CHANNELS,
-      variables: { after: cursor, first: 100 },
+      variables: { after: null, first: 100 },
       fetchPolicy: "network-only"
     });
 
     const data = result?.data;
     if (!data?.moderatedChannels?.edges) {
       this.log.warn("[ModeratedChannels] No data received");
-      return edges;
+      return [];
     }
 
-    const currentEdges = get("moderatedChannels.edges", data) || [];
+    const edges = get("moderatedChannels.edges", data) || [];
     const hasNextPage = get("moderatedChannels.pageInfo.hasNextPage", data);
-    const nextCursor = get("moderatedChannels.edges.@last.cursor", data);
 
-    const allEdges = edges.concat(currentEdges);
+    if (hasNextPage)
+      this.log.warn(`[ModeratedChannels] More than ${edges.length} moderated channels exist. List is capped at the first page due to a Twitch API pagination bug.`);
 
-    if (hasNextPage && nextCursor) {
-      return this.fetchAllModeratedChannels(apollo, nextCursor, allEdges);
-    }
-
-    return allEdges;
+    return edges;
   }
 
   buildContent() {
@@ -413,23 +425,15 @@ export class ModeratedChannels {
 
     if (this.loadError) {
       setChildren(container, createElement("div", { className: "tw-pd-2 tw-align-center tw-c-text-error" }, "Failed to load moderated channels."));
-      this.log.info("[ModeratedChannels] Failed to load moderated channels.");
       return container;
     }
 
     if (!this.edges.length) {
-      setChildren(container, createElement("div", { className: "tw-pd-2 tw-align-center tw-c-text-alt-2" }, "You are not a moderator in any channels."));
-      this.log.info("[ModeratedChannels] You are not a moderator in any channels.");
-      return container;
-    }
-
-    const liveEdges = this.edges.filter(edge => edge.isLive);
-    if (!liveEdges.length) {
       setChildren(container, createElement("div", { className: "tw-pd-2 tw-align-center tw-c-text-alt-2" }, "No moderated channels are currently live."));
       return container;
     }
 
-    setChildren(container, liveEdges.map(edge => this.renderChannelRow(edge)));
+    setChildren(container, this.edges.map(edge => this.renderChannelRow(edge)));
     return container;
   }
 
@@ -485,9 +489,22 @@ export class ModeratedChannels {
         </div>
         <div className="tw-flex-grow-1 tw-overflow-hidden tw-flex tw-flex-column tw-justify-content-center">
           <div className="tw-flex tw-align-items-center tw-justify-content-between">
-            <span className="tw-semibold tw-ellipsis">
-              {isIntl(node.displayName, node.login)}
-            </span>
+            <div className="tw-flex tw-align-items-center tw-overflow-hidden">
+              <img
+                src={node.profileImageURL}
+                alt={node.displayName}
+                style={{
+                  width: "2rem",
+                  height: "2rem",
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  marginRight: "0.6rem"
+                }}
+              />
+              <span className="tw-semibold tw-ellipsis">
+                {isIntl(node.displayName, node.login)}
+              </span>
+            </div>
             {isLive && viewersCount != null && (
               <span
                 className="tw-flex-shrink-0 tw-mg-l-1 tw-flex tw-align-items-center"
