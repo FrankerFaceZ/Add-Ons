@@ -1,6 +1,7 @@
 import AutoHidePinnedMessage from "../../modules/channel/chat/hide-pinned-message";
 import BTTVModeration from "../../modules/channel/chat/bttv";
 import CharacterCounter from "../../modules/channel/chat/character-counter";
+import ChatHeaderInfo from "../../modules/channel/chat/custom-header-info";
 import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
@@ -41,6 +42,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.autoHidePinnedMessage = new AutoHidePinnedMessage(this);
     this.bttvModeration = new BTTVModeration(this);
     this.characterCounter = new CharacterCounter(this);
+    this.chatHeaderInfo = new ChatHeaderInfo(this);
     this.chatTranslate = new ChatTranslate(this);
     this.customCommands = new Commands(this);
     this.firstTimeChatter = new FirstTimeChatter(this);
@@ -152,6 +154,28 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Header - Display Stream Info in Chat Header
+    this.settings.add("addon.trubbel.channel.chat.header.info", {
+      default: "off",
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Header",
+        title: "Display Stream Info in Chat Header",
+        description: "Replace the \"Stream Chat\" title with live stream information - latency, uptime, or both.",
+        component: "setting-select-box",
+        data: [
+          { value: "off", title: "Off" },
+          { value: "latency", title: "Stream Latency" },
+          { value: "uptime", title: "Stream Uptime" },
+          { value: "both", title: "Both (Uptime \u0026 Latency)" },
+        ]
+      },
+      changed: val => this.chatHeaderInfo.handleSettingChange(val),
+    });
+
+
+
+    // Channel - Chat - Input - Character Counter
     this.settings.add("addon.trubbel.channel.chat.input.character_counter", {
       default: "disabled",
       ui: {
@@ -169,6 +193,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.characterCounter.handlePositionChange(val)
     });
 
+    // Channel - Chat - Input - Character Counter Font Size
     this.settings.add("addon.trubbel.channel.chat.input.character_counter.size", {
       default: 11,
       ui: {
@@ -644,6 +669,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.autoHidePinnedMessage.initialize();
     this.bttvModeration.initialize();
     this.characterCounter.initialize();
+    this.chatHeaderInfo.initialize();
     this.chatTranslate.initialize();
     this.customCommands.initialize();
     this.firstTimeChatter.initialize();
@@ -668,6 +694,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.autoHidePinnedMessage.handleNavigation();
     this.bttvModeration.handleNavigation();
     this.characterCounter.handleNavigation();
+    this.chatHeaderInfo.handleNavigation();
     this.chatTranslate.handleNavigation();
     this.customCommands.handleNavigation();
     this.firstTimeChatter.handleNavigation();
