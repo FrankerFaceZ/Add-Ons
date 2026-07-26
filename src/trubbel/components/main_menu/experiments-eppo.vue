@@ -8,35 +8,19 @@
       <div class="tw-flex-grow-1">
         {{ visible_flags.length }} flag{{ visible_flags.length === 1 ? '' : 's' }}
       </div>
+      <span class="tw-mg-l-1 tw-mg-r-05 tw-c-text-alt-2 ffz-font-size-6" style="font-weight: var(--font-weight-bold);">
+        Sort by
+      </span>
       <select
-        ref="sort_select"
-        class="tw-border-radius-medium ffz-font-size-6 ffz-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05 tw-mg-x-05"
-        @change="onSort"
+        v-model="sort_by"
+        class="tw-border-radius-medium ffz-font-size-6 ffz-select tw-pd-l-1 tw-pd-r-3 tw-pd-y-05"
       >
-        <option :selected="sort_by === 0">
-          Sort By: Name
-        </option>
-        <option :selected="sort_by === 1">
-          Sort By: Type
-        </option>
+        <option value="name_asc">Name (A-Z)</option>
+        <option value="name_desc">Name (Z-A)</option>
+        <option value="type">Type</option>
+        <option value="date_newest">Date Added (Newest)</option>
+        <option value="date_oldest">Date Added (Oldest)</option>
       </select>
-    </div>
-
-    <div class="tw-mg-b-2 tw-flex tw-align-items-center">
-      <div class="tw-flex-grow-1" />
-      <div class="ffz-checkbox tw-relative">
-        <input
-          id="show-disabled"
-          v-model="show_disabled"
-          type="checkbox"
-          class="ffz-checkbox__input"
-        >
-        <label for="show-disabled" class="ffz-checkbox__label">
-          <span class="tw-mg-l-1">
-            Show disabled flags
-          </span>
-        </label>
-      </div>
     </div>
 
     <h3 class="tw-mg-t-1 tw-mg-b-1 ffz-font-size-3">
@@ -77,10 +61,15 @@
                 (Overridden)
               </span>
             </h4>
-            <div class="description tw-c-text-alt-2">
+            <div class="description ffz-font-size-7 tw-c-text-alt-2">
               Type: {{ flag.variationType }}
-              <span v-if="flag.entityId"> • Entity ID: {{ flag.entityId }}</span>
+              <span v-if="flag.entity_label"> • Entity ID: {{ flag.entity_label }}</span>
               <span v-if="!flag.enabled"> • Disabled</span>
+              <span
+                v-if="flag.added_at !== null"
+                :data-title="tDateTime(flag.added_at, 'full')"
+                class="ffz-tooltip"
+              > • Added: {{ tDate(flag.added_at) }}</span>
             </div>
           </div>
 
@@ -166,6 +155,13 @@ const CODES = [
   'how do you turn this on'
 ];
 
+const ENTITY_LABELS = {
+  143: 'User',
+  144: 'Device',
+  145: 'Channel',
+  1026: 'Arbitrary',
+};
+
 export default {
   props: ['item', 'context', 'filter'],
 
@@ -173,8 +169,7 @@ export default {
     return {
       code: pick_random(CODES),
       experiments_locked: this.item.is_locked(),
-      sort_by: 0,
-      show_disabled: false,
+      sort_by: 'name_asc',
       eppo_data: {},
     };
   },
@@ -184,8 +179,6 @@ export default {
       const out = [];
 
       for (const [key, flag] of Object.entries(this.eppo_data)) {
-        if (!this.show_disabled && !flag.enabled) continue;
-
         const variationsList = flag.variations
           ? Object.entries(flag.variations).map(([varKey, varData]) => ({
               key: varKey,
@@ -200,21 +193,43 @@ export default {
             variations: variationsList,
             current_value: this.item.getAssignment?.(key),
             has_override: this.item.hasOverride?.(key) ?? false,
+            added_at: this.getAddedAt(flag),
+            entity_label: flag.entityId != null
+              ? (ENTITY_LABELS[flag.entityId] ?? String(flag.entityId))
+              : null,
           },
         });
       }
 
       out.sort((a, b) => {
-        if (a.flag.has_override !== b.flag.has_override) {
+        if (a.flag.has_override !== b.flag.has_override)
           return a.flag.has_override ? -1 : 1;
-        }
 
-        if (this.sort_by === 1) {
-          const typeCompare = (a.flag.variationType ?? '').localeCompare(b.flag.variationType ?? '');
-          if (typeCompare !== 0) return typeCompare;
-        }
+        switch (this.sort_by) {
+          case 'name_desc':
+            return b.key.localeCompare(a.key);
 
-        return a.key.localeCompare(b.key);
+          case 'type': {
+            const typeCompare = (a.flag.variationType ?? '').localeCompare(b.flag.variationType ?? '');
+            return typeCompare !== 0 ? typeCompare : a.key.localeCompare(b.key);
+          }
+
+          case 'date_newest':
+          case 'date_oldest': {
+            const a_val = a.flag.added_at, b_val = b.flag.added_at;
+
+            if (a_val === null || b_val === null) {
+              if (a_val === null && b_val === null) return 0;
+              return a_val === null ? 1 : -1;
+            }
+
+            return this.sort_by === 'date_newest' ? b_val - a_val : a_val - b_val;
+          }
+
+          case 'name_asc':
+          default:
+            return a.key.localeCompare(b.key);
+        }
       });
 
       return out;
@@ -251,16 +266,27 @@ export default {
       }
     },
 
+    getAddedAt(flag) {
+      if (!flag.allocations || !flag.allocations.length) return null;
+
+      let earliest = null;
+      for (const allocation of flag.allocations) {
+        if (allocation.key && allocation.key.startsWith('ffz-override-')) continue;
+
+        const ts = Date.parse(allocation.startAt);
+        if (isNaN(ts)) continue;
+        if (earliest === null || ts < earliest) earliest = ts;
+      }
+
+      return earliest;
+    },
+
     enterCode() {
       if (this.$refs.code.value !== this.code)
         return;
 
       this.experiments_locked = false;
       this.item.unlock();
-    },
-
-    onSort() {
-      this.sort_by = this.$refs.sort_select.selectedIndex;
     },
 
     onChange(event) {

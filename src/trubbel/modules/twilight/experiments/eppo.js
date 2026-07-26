@@ -75,11 +75,42 @@ export class EppoManager {
     const overrides = this._getOverrides();
     if (!Object.keys(overrides).length) return config;
 
+    const stale_keys = [];
+
     for (const [flagKey, overrideValue] of Object.entries(overrides)) {
+
+      if (!config.flags[flagKey]) {
+        stale_keys.push(flagKey);
+        continue;
+      }
+
       this._injectOverrideForKey(config, flagKey, overrideValue);
     }
 
+    if (stale_keys.length)
+      this._pruneStaleOverrides(stale_keys);
+
     return config;
+  }
+
+  _pruneStaleOverrides(flagKeys) {
+    const overrides = this._getOverrides();
+    let changed = false;
+
+    for (const flagKey of flagKeys) {
+      if (overrides[flagKey] === undefined) continue;
+
+      delete overrides[flagKey];
+      this._invalidateKey(flagKey);
+      changed = true;
+
+      this.log.info(`[Eppo Manager] Pruned stale override for missing flag: ${flagKey}`);
+    }
+
+    if (!changed) return;
+
+    this._saveOverrides(overrides);
+    this.parent.emit(":eppo-changed");
   }
 
   _injectOverrideForKey(config, flagKey, overrideValue) {
