@@ -70,12 +70,11 @@ class Pluralmind extends Addon {
 		// Sanity check this is a message we can work with
 		const id = msg?.user?.id;
 		const login = msg?.user?.login;
-		const targetToken = this.getTargetToken(tokens);
-		if (!id || !login || !targetToken) return tokens;
+		if (!id || !login) return tokens;
 
 		// Since the tokenizer is synchronous, we manually check if we have
 		// usable data
-		const cachedSystem = getCachedSystem(id)
+		const cachedSystem = getCachedSystem(id);
 
 		// Kick off a fresh load if we don't have any data, or it has expired
 		if (!cachedSystem || cachedSystem.expired) {
@@ -89,7 +88,7 @@ class Pluralmind extends Addon {
 		if (!system) return tokens;
 
 		// Check if we should proxy this message
-		const pm = getProxiedMessage(system, targetToken.text);
+		const pm = getProxiedMessage(system, tokens);
 		if (!pm) return tokens;
 
 		// We have a proxied message! Prep a few FFZ things
@@ -116,11 +115,10 @@ class Pluralmind extends Addon {
 		setUserProp('data-pm-pronouns', pm.pronouns, !!pm.pronouns);
 		if (pm.color) msg.ffz_user_style.color = pm.color;
 
-		// Mark the message as proxied and remove the proxy prefix (if present)
+		// Mark the message as proxied
 		msg.ffz_user_class.add('pm-proxied');
-		targetToken.text = pm.body;
 
-		return tokens;
+		return pm.cleanFragments;
 	}
 
 	systemLoaded(id, login) {
@@ -128,35 +126,24 @@ class Pluralmind extends Addon {
 
 		// Ensure our pronouns class gets added to the message's root element
 		// (which isn't affected by update-lines-by-user)
-		for (const line of this.ChatLine.instances) {
-			const user = line.props?.message?.user;
-			if (user && ((id && id == user.id) || (login && login == user.login))) this.updateLine(line);
-		}
-	}
-
-	getTargetToken(tokens) {
-		// Find the first text token
-		for (const token of tokens) {
-			if (token.type === 'text') return token;
-		}
-		return null;
+		setTimeout(() => {
+			for (const line of this.ChatLine.instances) {
+				const user = line.props?.message?.user;
+				if (user && ((id && id == user.id) || (login && login == user.login))) this.updateLine(line);
+			}
+		}, 250);
 	}
 
 	updateLine(line) {
 		const node = this.fine.getHostNode(line);
 		if (!(node instanceof HTMLElement)) return;
 
-		const msg = line.props?.message;
-		const id = msg?.user?.id;
-		if (!id || !msg.message) return;
-
 		// Check if this is a proxied message
-		const system = getCachedSystem(id)?.system;
-		const pm = getProxiedMessage(system, msg.message);
-		if (!pm) return;
+		const proxiedUsernameNode = node.querySelector('.pm-proxied');
+		if (!proxiedUsernameNode) return;
 
 		// Indicate whether we're showing our own pronouns so we can hide alejo's
-		node.classList.toggle('pm-pronouns', !!pm.pronouns);
+		node.classList.toggle('pm-pronouns', !!proxiedUsernameNode.dataset.pmPronouns);
 	}
 }
 
