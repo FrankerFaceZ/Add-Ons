@@ -38,7 +38,8 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 				{
 					...options,
 					headers: {
-						'Content-Type': 'application/json'
+						'Content-Type': 'application/json',
+						...options.headers
 					}
 				});
 	
@@ -80,7 +81,11 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 
 export class User extends FrankerFaceZ.utilities.module.Module {
 	fetchUserData(user_id) {
-		return this.parent.requestObject(`users/twitch/${user_id}`);
+		return this.parent.requestObject(`users/twitch/${user_id}`, {
+			headers: {
+				'X-7tv-Missing-EmoteSet-Aware': '1'
+			}
+		});
 	}
 
 	updateUserPresences(user_id, channel_id, self = undefined, session_id = undefined) {
@@ -104,9 +109,6 @@ export class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return this.parent.requestObject('emote-sets/global');
 	}
 
-	fetchChannelEmotes(channelId) {
-		return this.parent.requestObject(`users/twitch/${channelId}`);
-	}
 	
 	fetchEmoteSet(setID) {
 		return this.parent.requestObject(`emote-sets/${setID}`);

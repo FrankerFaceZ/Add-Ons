@@ -124,11 +124,11 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 
 		this._rooms[room.id] = {};
 
-		const stv_room = await this.stv_api.emotes.fetchChannelEmotes(room.id);
-		if (stv_room?.emote_set?.id) {
+		const stv_room = await this.stv_api.user.fetchUserData(room.id);
+		if (stv_room?.emote_set_id) {
 			this._rooms[room.id] = stv_room;
 	
-			const set_id = stv_room.emote_set.id;
+			const set_id = stv_room.emote_set_id;
 			this._active_channel_set = set_id;
 
 			this.subscribe('emote_set.update', {
@@ -169,9 +169,9 @@ export default class Socket extends FrankerFaceZ.utilities.module.Module {
 		const stv_room = this._rooms[room.id];
 		if (!stv_room) return;
 
-		if (stv_room?.emote_set?.id) {
+		if (stv_room?.emote_set_id) {
 			this.unsubscribe('emote_set.update', {
-				object_id: stv_room.emote_set.id
+				object_id: stv_room.emote_set_id
 			});
 
 			this.unsubscribe('user.*', {

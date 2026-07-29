@@ -200,19 +200,22 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
 			let channelEmotes = {};
 			if (setID) {
-				channelEmotes.emote_set = await this.api.emotes.fetchEmoteSet(setID);
+				channelEmotes = await this.api.emotes.fetchEmoteSet(setID);
 			}
 			else {
-				channelEmotes = await this.api.emotes.fetchChannelEmotes(channel.id);
+				const userData = await this.api.user.fetchUserData(channel.id);
+				if (!userData.emote_set_id) return false;
+
+				channelEmotes = await this.api.emotes.fetchEmoteSet(userData.emote_set_id);
 			}
 
 			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
-			if (!channelEmotes.emote_set) return false;
+			if (!channelEmotes.id) return false;
 
 			const ffzEmotes = [];
-			if (channelEmotes.emote_set.emotes) {
-				for (const emote of channelEmotes.emote_set.emotes) {
+			if (channelEmotes.emotes) {
+				for (const emote of channelEmotes.emotes) {
 					if (showUnlisted || !this.isEmoteUnlisted(emote)) {
 						const convertedEmote = this.convertEmote(emote);
 						if (!convertedEmote) continue;
@@ -222,7 +225,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				}
 			}
 
-			this.setToChannelMap.set(channelEmotes.emote_set.id, channel.id);
+			this.setToChannelMap.set(channelEmotes.id, channel.id);
 
 			this.setChannelSet(channel, ffzEmotes);
 			return true;
