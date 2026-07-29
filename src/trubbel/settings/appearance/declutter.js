@@ -14,6 +14,23 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
     this.declutter = new Declutter(this);
 
+    // Appearance - Declutter - Carousel - Hide front page carousel
+    this.settings.add("addon.trubbel.appearance.declutter.front-page.carousel", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Carousel",
+        title: "Hide front page carousel",
+        component: "setting-check-box"
+      },
+      changed: (val) => {
+        this.declutter.loadable.toggle("FeaturedContentCarousel_Available", !val)
+        this.declutter.toggleHide("hide-frontpage-carousel", val);
+      }
+    });
+
+
+
     // Appearance - Declutter - Channel - Hide celebration overlays
     this.settings.add("addon.trubbel.appearance.declutter.channel.celebration", {
       default: false,
