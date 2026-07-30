@@ -245,7 +245,7 @@ export default class ChatTranslate {
       }
 
       .trubbel-chat-translation__text {
-        color: rgba(255, 255, 255, 0.95);
+        color: var(--color-text-alt-2);
       }
     `);
 

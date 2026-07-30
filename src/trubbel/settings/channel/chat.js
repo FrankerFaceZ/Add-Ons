@@ -2,11 +2,11 @@ import AutoHidePinnedMessage from "../../modules/channel/chat/hide-pinned-messag
 import BTTVModeration from "../../modules/channel/chat/bttv";
 import CharacterCounter from "../../modules/channel/chat/character-counter";
 import ChatHeaderInfo from "../../modules/channel/chat/custom-header-info";
+import ChatMarkdown from "../../modules/channel/chat/markdown";
 import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
 import InfoMessage from "../../modules/channel/chat/info-message";
-import ChatMarkdown from "../../modules/channel/chat/markdown";
 import MessageHighlight from "../../modules/channel/chat/message-highlight";
 import OldClipFormat from "../../modules/channel/chat/old-clip-format";
 import OldViewerList from "../../modules/channel/chat/old-viewer-list";
@@ -19,6 +19,7 @@ import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import StopEmoteAnimate from "../../modules/channel/chat/stop-emote-animate";
 import TextReplace from "../../modules/channel/chat/text-replace";
+import TextToSpeech from "../../modules/channel/chat/tts";
 import TimestampHandler from "../../modules/channel/chat/timestamps";
 
 const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
@@ -43,11 +44,11 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.bttvModeration = new BTTVModeration(this);
     this.characterCounter = new CharacterCounter(this);
     this.chatHeaderInfo = new ChatHeaderInfo(this);
+    this.chatMarkdown = new ChatMarkdown(this);
     this.chatTranslate = new ChatTranslate(this);
     this.customCommands = new Commands(this);
     this.firstTimeChatter = new FirstTimeChatter(this);
     this.infoMessage = new InfoMessage(this);
-    this.chatMarkdown = new ChatMarkdown(this);
     this.messageHighlight = new MessageHighlight(this);
     this.oldClipFormat = new OldClipFormat(this);
     this.oldViewerList = new OldViewerList(this);
@@ -60,6 +61,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.steamInspect = new SteamInspect(this);
     this.stopEmoteAnimate = new StopEmoteAnimate(this);
     this.textReplace = new TextReplace(this);
+    this.textToSpeech = new TextToSpeech(this);
     this.timestampHandler = new TimestampHandler(this);
 
     // Channel - Chat - Accessibility - Enable Animated Emotes Blocklist
@@ -67,7 +69,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Accessibility",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Accessibility >> Emotes",
         title: "Enable Animated Emotes Blocklist",
         description: "You can selectively disable animated emotes by right-clicking on them and then press \"Disable Animation\"\n\n**Note:** If you want to disable **all** emotes from animating, please use [Chat > Appearance > Animated Emotes](~chat.appearance.emotes) instead.",
         component: "setting-check-box"
@@ -77,7 +79,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
     // Channel - Chat - Accessibility - Blocked Emotes
     this.settings.addUI("addon.trubbel.channel.chat.accessibility.stop_emote_animate.list", {
-      path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Accessibility",
+      path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Accessibility >> Emotes",
       title: "Blocked Emotes",
       component: () => import("../../components/main_menu/animated-emote-blocklist.vue"),
       force_seen: true,
@@ -95,7 +97,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Commands",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Commands >> Custom",
         title: "Enable custom commands",
         component: "setting-check-box"
       },
@@ -124,7 +126,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         },
         ui: {
           sort: 0,
-          path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Commands",
+          path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Commands >> Custom",
           title: command.charAt(0).toUpperCase() + command.slice(1),
           description: description,
           component: "setting-check-box"
@@ -144,7 +146,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> FirstTimeChatter",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Input >> FirstTimeChatter",
         title: "Show FirstTimeChatter Indicator",
         description: "Display a pink border around the chat box if you are a first-time chatter.\n\n**Note:** It will automatically remove the border if you send any chat messages.",
         component: "setting-check-box"
@@ -159,7 +161,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: "off",
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Header",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Header >> Info",
         title: "Display Stream Info in Chat Header",
         description: "Replace the \"Stream Chat\" title with live stream information - latency, uptime, or both.",
         component: "setting-select-box",
@@ -179,7 +181,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.input.character_counter", {
       default: "disabled",
       ui: {
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Input",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Input >> Counter",
         title: "Character Counter",
         component: "setting-select-box",
         data: [
@@ -197,7 +199,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.input.character_counter.size", {
       default: 11,
       ui: {
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Input",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Input >> Counter",
         title: "Character Counter Font Size",
         component: "setting-text-box",
         process: "to_int",
@@ -213,7 +215,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Links",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Links",
         title: "Replace clip URLs",
         description: "Replaces the `/clip/` links in chat with the `clips.twitch.tv` format.",
         component: "setting-check-box"
@@ -226,7 +228,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Links",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Links",
         title: "Clickable Steam inspect links",
         description: "Enabling this will make [Steam inspect links](https://developer.valvesoftware.com/wiki/Steam_browser_protocol) clickable in chat.",
         component: "setting-check-box"
@@ -240,7 +242,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.addUI("addon.trubbel.channel.chat.markdown.info", {
       ui: {
         sort: -1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Markdown",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Markdown",
         title: "Info",
         description: "⚠️ Please note that only users who has these settings enabled are able to see them.",
         component: () => import("../../components/main_menu/setting-info.vue"),
@@ -253,9 +255,9 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Markdown",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Markdown",
         title: "Enable Markdown",
-        description: "Very basic support for markdown, with limited combinations.",
+        description: "Support for markdown - bold, italics, underline, strikethrough, spoilers and timestamps.\n\n**Note:** Timestamps uses same format as Discord timestamps.",
         component: "setting-check-box"
       },
       changed: val => this.chatMarkdown.handleSettingChange(val)
@@ -267,7 +269,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.messages.highlight", {
       default: 0,
       ui: {
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Messages",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Highlights",
         title: "Highlight Messages on Hover",
         description: "Highlight all messages from a user.",
         component: "setting-select-box",
@@ -290,7 +292,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         return val;
       },
       ui: {
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Messages",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Highlights",
         title: "Hover Highlight",
         description: "Background color for highlighted messages.",
         component: "setting-color-box"
@@ -313,7 +315,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Context Menu",
         title: "Enable right-click context menu",
         description: "This gives you the ability to use a right-click context menu, *similar to BetterTTV (BTTV)*, to moderate chat with. Ban, timeout, purge, delete.",
         component: "setting-check-box"
@@ -326,7 +328,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: "rgba(123, 1, 0, 0.3)",
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Context Menu",
         title: "Message Highlight",
         description: "Highlight the message you right-click.",
         component: "setting-color-box"
@@ -338,7 +340,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: "0",
       ui: {
         sort: 2,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Context Menu",
         title: "Highlight Priority",
         description: "Priority of the message highlighting. See [Chat > Filtering > Highlight](~chat.filtering.highlight) for more details.",
         component: "setting-text-box",
@@ -352,7 +354,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: "usernames",
       ui: {
         sort: 3,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Moderation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Context Menu",
         title: "Right-click options",
         component: "setting-select-box",
         data: [
@@ -370,7 +372,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Pinned Messages",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Pinned Messages",
         title: "Auto-hide Pinned Messages",
         component: "setting-check-box"
       },
@@ -384,7 +386,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Popout",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Header >> Popout",
         title: "Display channel name in Popout Chat",
         description: "Enabling this will replace the \"Stream Chat\" text above chat with the streamers username.",
         component: "setting-check-box"
@@ -399,7 +401,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Notifications >> Predictions",
         title: "Prediction Started Notifications",
         description:
           "Send a browser notification when a prediction starts in the current channel.\n\n" +
@@ -419,7 +421,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Notifications >> Predictions",
         title: "Only notify when tab is unfocused",
         description: "Skip the notification if you already have the Twitch tab in focus.",
         component: "setting-check-box"
@@ -436,7 +438,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 2,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Predictions",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Notifications >> Predictions",
         title: "Keep notification until dismissed",
         description: "Prevent the notification from auto-dismissing, it will stay visible until you explicitly close it.\n\n**Note:** Behaviour may vary depending on your browser and OS.",
         component: "setting-check-box"
@@ -450,7 +452,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: 0,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Raids >> Preview",
         title: "Show raid preview",
         description: "Display an image or video preview of the stream when a raid is active.",
         component: "setting-select-box",
@@ -474,7 +476,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Raids >> Preview",
         title: "Show uptime on raid preview",
         description: "Display the stream uptime (and content flags if enabled in FFZ settings) on the preview.",
         component: "setting-check-box"
@@ -492,7 +494,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 2,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Raids",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Raids >> Preview",
         title: "Show chat restrictions on raid preview",
         description: "Display chat restrictions (sub-only, followers-only, slow mode, etc.) below the preview.",
         component: "setting-check-box"
@@ -506,7 +508,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Shared Chat",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Shared Chat",
         title: "Hide shared messages",
         component: "setting-check-box"
       },
@@ -519,7 +521,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.text_replace", {
       default: false,
       ui: {
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Text Replace",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text Replace",
         title: "Enable text replacement for outgoing messages.",
         component: "setting-check-box"
       }
@@ -530,11 +532,100 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     });
 
     this.settings.addUI("addon.trubbel.channel.chat.text_replace.rules-editor", {
-      path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Text Replace @{\"profile_warning\": false}",
+      path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text Replace @{\"profile_warning\": false}",
       component: () => import("../../components/main_menu/text-replace.vue"),
       force_seen: true,
       getRules: () => this.textReplace.getRules(),
       setRules: (rules) => this.textReplace.setRules(rules),
+    });
+
+
+
+    // Channel - Chat - Text-to-Speech - Enable Text-to-Speech
+    this.settings.add("addon.trubbel.channel.chat.tts", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Enable Text-to-Speech",
+        description: "After enabling this you need to set it up in [Chat > Actions](~chat.actions), then pick either, [In-Line](~chat.actions.in_line), [Message Hover](~chat.actions.message_hover), or [User Context](~chat.actions.user_context).",
+        component: "setting-check-box",
+      },
+      changed: (val) => this.textToSpeech.handleSettingChange(val),
+    });
+
+    // Channel - Chat - Text-to-Speech - Announce Username
+    this.settings.add("addon.trubbel.channel.chat.tts.announce_user", {
+      default: true,
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Announce Username",
+        description: "Prepend the sender's name before the message, e.g. \"Alice says: hello\".",
+        component: "setting-check-box",
+      },
+    });
+
+    // Channel - Chat - Text-to-Speech - Voice
+    this.settings.add("addon.trubbel.channel.chat.tts.voice", {
+      default: "",
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Voice",
+        description: "The voice to use for speech synthesis.",
+        component: "setting-select-box",
+        data: () => {
+          const voices = speechSynthesis.getVoices();
+          const entries = voices.map((v) => ({
+            value: v.voiceURI,
+            title: `${v.name} (${v.lang})`,
+          }));
+          return [{ value: "", title: "Browser Default" }, ...entries];
+        },
+      },
+    });
+
+    // Channel - Chat - Text-to-Speech - Volume
+    this.settings.add("addon.trubbel.channel.chat.tts.volume", {
+      default: 1,
+      ui: {
+        sort: 3,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Volume",
+        description: "Speech volume. 1 is full volume. Range: 0 - 1.",
+        component: "setting-text-box",
+        process: "to_float",
+        bounds: [0, 1],
+      },
+    });
+
+    // Channel - Chat - Text-to-Speech - Speed
+    this.settings.add("addon.trubbel.channel.chat.tts.rate", {
+      default: 1,
+      ui: {
+        sort: 4,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Speed",
+        description: "Speech rate. 1 is normal speed. Range: 0.1 - 10.",
+        component: "setting-text-box",
+        process: "to_float",
+        bounds: [0.1, 10],
+      },
+    });
+
+    // Channel - Chat - Text-to-Speech - Pitch
+    this.settings.add("addon.trubbel.channel.chat.tts.pitch", {
+      default: 1,
+      ui: {
+        sort: 5,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Text-to-Speech",
+        title: "Pitch",
+        description: "Speech pitch. 1 is normal pitch. Range: 0 - 2.",
+        component: "setting-text-box",
+        process: "to_float",
+        bounds: [0, 2],
+      },
     });
 
 
@@ -544,7 +635,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Timestamp",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Timestamp",
         title: "Display missing timestamps (Experimental)",
         description: "For certain chat events that lack timestamps.",
         component: "setting-check-box"
@@ -559,7 +650,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Translation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Translation",
         title: "Enable Simple Translate",
         description: "After enabling this you need to set it up in [Chat > Actions](~chat.actions), then pick either, [In-Line](~chat.actions.in_line), [Message Hover](~chat.actions.message_hover), or [User Context](~chat.actions.user_context).\n\n**Note:** This uses Google Translate.",
         component: "setting-check-box"
@@ -578,7 +669,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       },
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Translation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Translation",
         title: "Target Language",
         description: "The language to translate messages into.",
         component: "setting-select-box",
@@ -614,7 +705,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> UI",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > UI >> Viewer List",
         title: "Show old viewer list",
         description: "When enabled, clicking the chat viewer list button will display the old chat list instead.",
         component: "setting-check-box"
@@ -629,7 +720,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Viewer Cards",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
         title: "Clickable usernames in /mods and /vips",
         description: "This gives you the ability to click on the usernames when using the `/mods` and `/vips` commands, which will open up their viewer cards.\n\n**Notes:**\n\n• Might not work for every language.\n\n• There could be some instances where it might not apply correctly. Just send the command again, and it should work.",
         component: "setting-check-box"
@@ -642,7 +733,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Viewer Cards",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
         title: "Clickable raid messages",
         description: "This lets you click on the usernames in raid messages to open up their viewer cards.",
         component: "setting-check-box"
@@ -655,7 +746,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat >> Viewer Cards",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
         title: "Show recent messages in viewer cards",
         description: "Display up to 50 recent messages from a user when you open their viewer card.\n\n**Note:** This isn't perfect, nor meant to be used as moderation.",
         component: "setting-check-box"
@@ -670,11 +761,11 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.bttvModeration.initialize();
     this.characterCounter.initialize();
     this.chatHeaderInfo.initialize();
+    this.chatMarkdown.initialize();
     this.chatTranslate.initialize();
     this.customCommands.initialize();
     this.firstTimeChatter.initialize();
     this.infoMessage.initialize();
-    this.chatMarkdown.initialize();
     this.messageHighlight.initialize();
     this.oldClipFormat.initialize();
     this.oldViewerList.initialize();
@@ -687,6 +778,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.steamInspect.initialize();
     this.stopEmoteAnimate.initialize();
     this.textReplace.initialize();
+    this.textToSpeech.initialize();
     this.timestampHandler.initialize();
   }
 
@@ -695,11 +787,11 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.bttvModeration.handleNavigation();
     this.characterCounter.handleNavigation();
     this.chatHeaderInfo.handleNavigation();
+    this.chatMarkdown.handleNavigation();
     this.chatTranslate.handleNavigation();
     this.customCommands.handleNavigation();
     this.firstTimeChatter.handleNavigation();
     this.infoMessage.handleNavigation();
-    this.chatMarkdown.handleNavigation();
     this.messageHighlight.handleNavigation();
     this.oldClipFormat.handleNavigation();
     this.oldViewerList.handleNavigation();
@@ -712,6 +804,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.steamInspect.handleNavigation();
     this.stopEmoteAnimate.handleNavigation();
     this.textReplace.handleNavigation();
+    this.textToSpeech.handleNavigation();
     this.timestampHandler.handleNavigation();
   }
 }
