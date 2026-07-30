@@ -58,6 +58,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-input-drops-button", val)
     });
 
+    // Appearance - Declutter - Chat - Hide shared chat header avatars
+    this.settings.add("addon.trubbel.appearance.declutter.chat.shared_header.avatars", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Chat",
+        title: "Hide shared chat header avatars",
+        description: "This prevents the avatars from being displayed in the chat header.",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-shared-header-avatar", val)
+    });
+
     // Appearance - Declutter - Chat - Hide stream chat header
     this.settings.add("addon.trubbel.appearance.declutter.chat.stream_header", {
       default: false,
