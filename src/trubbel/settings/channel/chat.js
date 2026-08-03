@@ -18,9 +18,13 @@ import RecentMessages from "../../modules/channel/chat/recent-messages";
 import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import StopEmoteAnimate from "../../modules/channel/chat/stop-emote-animate";
+import StopAutoRotate from "../../modules/channel/chat/leaderboard";
+
 import TextReplace from "../../modules/channel/chat/text-replace";
 import TextToSpeech from "../../modules/channel/chat/tts";
 import TimestampHandler from "../../modules/channel/chat/timestamps";
+
+// A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 
 const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
 
@@ -60,6 +64,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.sharedChatMessage = new SharedChatMessage(this);
     this.steamInspect = new SteamInspect(this);
     this.stopEmoteAnimate = new StopEmoteAnimate(this);
+    this.stopAutoRotate = new StopAutoRotate(this);
     this.textReplace = new TextReplace(this);
     this.textToSpeech = new TextToSpeech(this);
     this.timestampHandler = new TimestampHandler(this);
@@ -700,6 +705,21 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - UI - Disable Leaderboard Auto-Rotate
+    this.settings.add("addon.trubbel.channel.chat.leaderboard.shouldAutoRotate", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > UI >> Leaderboard",
+        title: "Disable Leaderboard Auto-Rotate (Experimental)",
+        description: "Prevents the leaderboard (gift/cheer/clips/etc) from automatically cycling through pages on it's own.",
+        component: "setting-check-box"
+      },
+      changed: val => this.stopAutoRotate.handleSettingChange(val)
+    });
+
+
+
     // Channel - Chat - UI - Show old viewer list
     this.settings.add("addon.trubbel.channel.chat.ui.old_viewer_list", {
       default: false,
@@ -777,6 +797,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.sharedChatMessage.initialize();
     this.steamInspect.initialize();
     this.stopEmoteAnimate.initialize();
+    this.stopAutoRotate.initialize();
     this.textReplace.initialize();
     this.textToSpeech.initialize();
     this.timestampHandler.initialize();
@@ -803,6 +824,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.sharedChatMessage.handleNavigation();
     this.steamInspect.handleNavigation();
     this.stopEmoteAnimate.handleNavigation();
+    this.stopAutoRotate.handleNavigation();
     this.textReplace.handleNavigation();
     this.textToSpeech.handleNavigation();
     this.timestampHandler.handleNavigation();
