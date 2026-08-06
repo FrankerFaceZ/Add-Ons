@@ -58,6 +58,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-input-drops-button", val)
     });
 
+    // Appearance - Declutter - Chat - Hide send / reply button
+    this.settings.add("addon.trubbel.appearance.declutter.chat.send_reply", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Chat",
+        title: "Hide send / reply button",
+        description: "Messages can still be sent by pressing Enter",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-input-chat-reply", val)
+    });
+
     // Appearance - Declutter - Chat - Hide shared chat header avatars
     this.settings.add("addon.trubbel.appearance.declutter.chat.shared_header.avatars", {
       default: false,
