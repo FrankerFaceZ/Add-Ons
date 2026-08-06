@@ -99,6 +99,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-following-title", val)
     });
 
+    // Appearance - Declutter - Directory - Hide promoted event cards
+    this.settings.add("addon.trubbel.appearance.declutter.directory.promotional", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Directory",
+        title: "Hide promoted event cards",
+        description: "Hides special promotional cards that Twitch mixes into the category directory. Regular categories are not affected",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.loadable.toggle("PromotedEventCard", !val)
+    });
+
 
 
     // Appearance - Declutter - Left Navigation - Hide the "For You"-text

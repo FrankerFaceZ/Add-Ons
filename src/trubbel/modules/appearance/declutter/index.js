@@ -68,6 +68,11 @@ export default class Declutter {
       this.loadable.toggle("FeaturedContentCarousel_Available", !val);
     });
 
+    // Appearance - Declutter - Directory - Hide promoted event cards
+    this.settings.getChanges("addon.trubbel.appearance.declutter.directory.promotional", val => {
+      this.loadable.toggle("PromotedEventCard", !val);
+    });
+
     // Appearance - Declutter - Left Navigation - Hide sponsored content
     this.settings.getChanges("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent", val => {
       this.loadable.toggle("SideNavPromotedFollowedCardComponent", !val);
