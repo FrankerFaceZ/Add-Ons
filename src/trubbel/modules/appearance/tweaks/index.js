@@ -169,7 +169,7 @@ export default class Tweaks {
         .tw-root--theme-light { --trubbel-redact-bg: black; }
 
         .unban-requests-item-details {
-          .chat-line__message--deleted span + span {
+          .chat-line__message--deleted > span + span {
             display: none !important;
           }
           .viewer-card-mod-logs-comment-line a {
@@ -205,7 +205,7 @@ export default class Tweaks {
 
         /* Viewer card opened within Unban Requests */
         #root :has(.unban-requests-item-details__container) + .popout-widget__viewer-card-layer {
-          .chat-line__message--deleted span + span {
+          .chat-line__message--deleted > span + span {
             display: none !important;
           }
           .viewer-card-mod-logs-comment-line a {
