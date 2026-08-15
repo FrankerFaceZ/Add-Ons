@@ -276,11 +276,23 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.toggleHide("hide-sidebar-gift-discount", val)
     });
 
+    // Appearance - Declutter - Left Navigation - Hide Save your Streak
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.save_streak", {
+      default: false,
+      ui: {
+        sort: 12,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        title: "Hide Save your Streak",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-save-streak", val)
+    });
+
     // Appearance - Declutter - Left Navigation - Hide Watch Streak
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.watch_streak", {
       default: false,
       ui: {
-        sort: 12,
+        sort: 13,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide Watch Streak",
         component: "setting-check-box"
@@ -292,7 +304,7 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent", {
       default: false,
       ui: {
-        sort: 13,
+        sort: 14,
         path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
         title: "Hide sponsored content",
         description: "This will prevent any promoted streams from showing up at all in the sidebar.",
