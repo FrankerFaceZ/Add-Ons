@@ -6,6 +6,7 @@ import {clampOffset, formatOffset, parseOffset} from './time';
 const STORAGE_KEY = 'addon.vod-chat-sync.offsets';
 const MAX_SAVED_VODS = 100;
 const REFRESH_ACTION = '@@vod-chat-sync/OFFSET_CHANGED';
+const VIDEO_TIME_ACTION = 'vodChat.video.CURRENT_VIDEO_TIME_CHANGED';
 const VIDEO_ROUTES = ['video', 'user-video'];
 
 class VodChatSync extends Addon {
@@ -343,7 +344,9 @@ class VodChatSync extends Addon {
 			lastRawState: null,
 			lastOffset: null,
 			lastVideoID: null,
-			lastResult: null
+			lastResult: null,
+			lastActualVideoTime: null,
+			syntheticVideoTime: null
 		};
 
 		record.wrappedGetState = () => {
@@ -351,7 +354,23 @@ class VodChatSync extends Addon {
 				comments = rawState?.vodChat?.comments,
 				offset = record.videoID ? this.getOffset(record.videoID) : 0;
 
-			if ( ! comments || typeof comments.currentVideoTime !== 'number' || ! offset ) {
+			if ( ! comments || typeof comments.currentVideoTime !== 'number' ) {
+				record.syntheticVideoTime = null;
+				record.lastActualVideoTime = null;
+				record.lastRawState = rawState;
+				record.lastOffset = offset;
+				record.lastVideoID = record.videoID;
+				record.lastResult = rawState;
+				return rawState;
+			}
+
+			const isSynthetic = record.syntheticVideoTime === comments.currentVideoTime;
+			if ( ! isSynthetic ) {
+				record.syntheticVideoTime = null;
+				record.lastActualVideoTime = comments.currentVideoTime;
+			}
+
+			if ( isSynthetic || ! offset ) {
 				record.lastRawState = rawState;
 				record.lastOffset = offset;
 				record.lastVideoID = record.videoID;
@@ -408,16 +427,19 @@ class VodChatSync extends Addon {
 
 		if ( record.videoID !== videoID ) {
 			record.videoID = videoID;
+			record.syntheticVideoTime = null;
+			record.lastActualVideoTime = null;
 			record.lastRawState = null;
 			record.lastResult = null;
-			this.dispatchRefresh(record);
+			this.dispatchTimeChange(record);
 		}
 	}
 
 	restoreStore(record) {
-		if ( record.store.getState === record.wrappedGetState )
+		if ( record.store.getState === record.wrappedGetState ) {
+			this.restoreActualVideoTime(record);
 			record.store.getState = record.originalGetState;
-		else
+		} else
 			this.log.warn('Twitch Redux getState changed while VOD Chat Sync was active; leaving the newer implementation untouched.');
 
 		record.instances.clear();
@@ -428,6 +450,67 @@ class VodChatSync extends Addon {
 			record.store.dispatch({type: REFRESH_ACTION});
 		} catch(err) {
 			this.log.warn('Unable to refresh Chat on Videos while restoring Redux state.', err);
+		}
+	}
+
+	getActualVideoTime(record) {
+		let rawState;
+		try {
+			rawState = record.originalGetState.call(record.store);
+		} catch(err) {
+			return null;
+		}
+
+		const rawTime = rawState?.vodChat?.comments?.currentVideoTime;
+		if ( typeof rawTime !== 'number' )
+			return null;
+
+		if (
+			record.syntheticVideoTime === rawTime &&
+			typeof record.lastActualVideoTime === 'number'
+		)
+			return record.lastActualVideoTime;
+
+		record.syntheticVideoTime = null;
+		record.lastActualVideoTime = rawTime;
+		return rawTime;
+	}
+
+	dispatchTimeChange(record) {
+		const actualTime = this.getActualVideoTime(record);
+		if ( actualTime == null ) {
+			this.dispatchRefresh(record);
+			return;
+		}
+
+		const offset = record.videoID ? this.getOffset(record.videoID) : 0,
+			shiftedTime = Math.max(0, actualTime + offset);
+
+		record.lastActualVideoTime = actualTime;
+		record.syntheticVideoTime = shiftedTime;
+		record.lastRawState = null;
+		record.lastResult = null;
+
+		try {
+			record.store.dispatch({type: VIDEO_TIME_ACTION, updatedTime: shiftedTime});
+		} catch(err) {
+			record.syntheticVideoTime = null;
+			this.log.warn('Unable to update the native Chat on Videos time after changing its offset.', err);
+			this.dispatchRefresh(record);
+		}
+	}
+
+	restoreActualVideoTime(record) {
+		const actualTime = this.getActualVideoTime(record);
+		record.syntheticVideoTime = null;
+
+		if ( actualTime == null )
+			return;
+
+		try {
+			record.store.dispatch({type: VIDEO_TIME_ACTION, updatedTime: actualTime});
+		} catch(err) {
+			this.log.warn('Unable to restore the native Chat on Videos time.', err);
 		}
 	}
 
@@ -774,7 +857,8 @@ class VodChatSync extends Addon {
 
 		for(const record of this.storeRecords.values())
 			if ( record.videoID === videoID )
-				this.dispatchRefresh(record);
+				this.dispatchTimeChange(record);
+
 	}
 
 	pruneOffsets() {
