@@ -28,6 +28,7 @@ class VodChatSync extends Addon {
 		this._addonEnabled = false;
 		this._renderPatch = null;
 		this._controllerClass = null;
+		this._lineRefreshFrame = null;
 
 		this.onControllerReady = this.onControllerReady.bind(this);
 		this.onControllerMount = this.onControllerMount.bind(this);
@@ -39,6 +40,11 @@ class VodChatSync extends Addon {
 		this.VideoChatController = this.fine.define(
 			'vod-chat-sync-controller',
 			node => node.onError && node.videoData && node.props?.comments,
+			VIDEO_ROUTES
+		);
+		this.VideoChatLine = this.fine.define(
+			'vod-chat-sync-line',
+			node => node.onTimestampClickHandler && node.props?.messageContext,
 			VIDEO_ROUTES
 		);
 
@@ -246,6 +252,7 @@ class VodChatSync extends Addon {
 		this.ensureToolbar(instance);
 		this.updateToolbar(instance);
 		this.dispatchRefresh(storeRecord);
+		this.refreshRenderedMessages(videoID);
 	}
 
 	detachController(instance) {
@@ -269,6 +276,11 @@ class VodChatSync extends Addon {
 	}
 
 	deactivateAll() {
+		if ( this._lineRefreshFrame != null ) {
+			cancelAnimationFrame(this._lineRefreshFrame);
+			this._lineRefreshFrame = null;
+		}
+
 		for(const timer of this.retryTimers.values())
 			clearTimeout(timer);
 		this.retryTimers.clear();
@@ -523,6 +535,41 @@ class VodChatSync extends Addon {
 		} catch(err) {
 			this.log.warn('Unable to refresh Chat on Videos after changing its offset.', err);
 		}
+	}
+
+	refreshRenderedMessages(videoID) {
+		if ( ! this.isFeatureEnabled() || ! this.isSupportedVideo(videoID) )
+			return;
+
+		let controllerFound = false;
+		for(const [instance, controller] of this.controllerRecords) {
+			if ( controller.videoID !== videoID || typeof instance.forceUpdate !== 'function' )
+				continue;
+
+			controllerFound = true;
+			instance.forceUpdate(() => this.scheduleLineRefresh(videoID));
+		}
+
+		if ( ! controllerFound )
+			this.scheduleLineRefresh(videoID);
+	}
+
+	scheduleLineRefresh(videoID) {
+		if ( ! this.isFeatureEnabled() )
+			return;
+
+		if ( this._lineRefreshFrame != null )
+			cancelAnimationFrame(this._lineRefreshFrame);
+
+		this._lineRefreshFrame = requestAnimationFrame(() => {
+			this._lineRefreshFrame = null;
+			if ( ! this.isFeatureEnabled() || ! this.isSupportedVideo(videoID) )
+				return;
+
+			for(const instance of this.VideoChatLine.instances)
+				if ( typeof instance.forceUpdate === 'function' )
+					instance.forceUpdate();
+		});
 	}
 
 	installRenderPatch(cls) {
@@ -893,6 +940,7 @@ class VodChatSync extends Addon {
 			if ( record.videoID === videoID )
 				this.dispatchTimeChange(record);
 
+		this.refreshRenderedMessages(videoID);
 	}
 
 	pruneOffsets() {
