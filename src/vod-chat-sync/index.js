@@ -540,13 +540,13 @@ class VodChatSync extends Addon {
 			const videoID = addon.getControllerVideoID(this.props),
 				offset = videoID ? addon.getOffset(videoID) : 0;
 
-			if ( ! addon.isFeatureEnabled() || ! addon.isSupportedVideo(videoID) || ! offset || ! Array.isArray(this.props?.comments) )
+			if ( ! addon.isFeatureEnabled() || ! addon.isSupportedVideo(videoID) || ! Array.isArray(this.props?.comments) )
 				return originalRender.apply(this, args);
 
 			const originalProps = this.props;
 			this.props = {
 				...originalProps,
-				comments: originalProps.comments.map(context => addon.cloneMessageContext(context, offset))
+				comments: addon.cloneMessageContexts(originalProps.comments, offset)
 			};
 
 			try {
@@ -581,6 +581,40 @@ class VodChatSync extends Addon {
 			this.log.warn('The Chat on Videos render method changed while VOD Chat Sync was active; leaving the newer implementation untouched.');
 
 		this._renderPatch = null;
+	}
+
+	cloneMessageContexts(contexts, offset) {
+		const timed = [];
+		let outOfOrder = false,
+			previousOffset = -Infinity;
+
+		for(let index = 0; index < contexts.length; index++) {
+			const context = contexts[index],
+				contentOffset = context?.comment?.contentOffset;
+
+			if ( Number.isFinite(contentOffset) ) {
+				if ( contentOffset < previousOffset )
+					outOfOrder = true;
+				previousOffset = contentOffset;
+				timed.push({context, contentOffset, index});
+			}
+		}
+
+		if ( ! offset && ! outOfOrder )
+			return contexts;
+
+		// Twitch can merge newly fetched VOD ranges into the existing list out of order.
+		timed.sort((left, right) =>
+			left.contentOffset - right.contentOffset || left.index - right.index
+		);
+
+		let timedIndex = 0;
+		return contexts.map(context => {
+			if ( Number.isFinite(context?.comment?.contentOffset) )
+				context = timed[timedIndex++].context;
+
+			return this.cloneMessageContext(context, offset);
+		});
 	}
 
 	cloneMessageContext(context, offset) {
