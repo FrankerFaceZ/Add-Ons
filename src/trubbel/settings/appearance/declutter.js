@@ -476,6 +476,21 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Appearance - Declutter - Top Navigation - Hide Shouts button
+    this.settings.add("addon.trubbel.appearance.declutter.top_nav.CreatorMessagesNavButton", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Top Navigation",
+        title: "Hide Shouts button",
+        description: "Removes the Streamer Shouts button from the top navigation bar.",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.loadable.toggle("CreatorMessagesNavButton", !val)
+    });
+
+
+
     // Appearance - Declutter - VODs - Hide muted segments alerts popups
     this.settings.add("addon.trubbel.appearance.declutter.vods.muted_segment_popup", {
       default: false,
