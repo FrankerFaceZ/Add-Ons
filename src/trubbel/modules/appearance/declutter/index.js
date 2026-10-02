@@ -100,6 +100,11 @@ export default class Declutter {
       this.loadable.toggle("ChannelSkinsRibbon", !val);
     });
 
+    // Appearance - Declutter - Top Navigation - Hide Shouts button
+    this.settings.getChanges("addon.trubbel.appearance.declutter.top_nav.CreatorMessagesNavButton", val => {
+      this.loadable.toggle("CreatorMessagesNavButton", !val);
+    });
+
     // Appearance - Declutter - Chat - Hide stream chat header
     this.settings.getChanges("addon.trubbel.appearance.declutter.chat.stream_header", val => {
       if (val) {
