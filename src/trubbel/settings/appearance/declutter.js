@@ -14,6 +14,24 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
     this.declutter = new Declutter(this);
 
+    // Appearance - Declutter - Amazon - Hide Shopping ads
+    this.settings.add("addon.trubbel.appearance.declutter.amazon.ads", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Amazon",
+        title: "Hide Shopping ads",
+        description: "Hide most of the shopping related things.\n\n**Notes:**\n\n· To hide the Shopping event card in the directory use **Hide promoted event cards**.\n\n· Use the **Hide sponsored …**-settings to hide additional content.",
+        component: "setting-check-box"
+      },
+      changed: (val) => {
+        this.declutter.loadable.toggle("AmazonLiveCarousel", !val);
+        this.declutter.toggleHide("hide-amazon-ads", val);
+      }
+    });
+
+
+
     // Appearance - Declutter - Carousel - Hide front page carousel
     this.settings.add("addon.trubbel.appearance.declutter.front-page.carousel", {
       default: false,

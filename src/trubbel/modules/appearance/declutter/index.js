@@ -7,6 +7,7 @@ export default class Declutter {
     this.site = parent.site;
 
     this.CLASSES = {
+      "hide-amazon-ads": "#live-channel-stream-information div:has(> a[href=\"/directory/event/live-shopping-test\"]),#live-channel-stream-information div:has(> a[href=\"/directory/event/shopping-2026\"]),.tw-tower [data-target]:has(> a[href=\"/directory/event/shopping-2026\"]),.side-nav .side-nav-section:has(.side-nav-card-shopping-bottom),.top-nav div:has(> div > a[data-a-target=\"shopping-link\"])",
       "hide-frontpage-carousel": ".front-page-carousel",
       "hide-celebration-overlays": ".celebration__overlay,.celebration__overlay *,.confetti-layer,.confetti-layer *",
       "hide-input-drops-button": ".chat-input__buttons-container div:has(> div > [data-a-target=\"drops-button\"])",
@@ -38,6 +39,7 @@ export default class Declutter {
   }
 
   onEnable() {
+    this.toggleHide("hide-amazon-ads", this.settings.get("addon.trubbel.appearance.declutter.amazon.ads"));
     this.toggleHide("hide-frontpage-carousel", this.settings.get("addon.trubbel.appearance.declutter.front-page.carousel"));
     this.toggleHide("hide-celebration-overlays", this.settings.get("addon.trubbel.appearance.declutter.channel.celebration"));
     this.toggleHide("hide-input-drops-button", this.settings.get("addon.trubbel.appearance.declutter.chat.drops_button"));
@@ -66,6 +68,11 @@ export default class Declutter {
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
     this.toggleHide("hide-sidebar-sponsored-content", this.settings.get("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent"));
     this.updateCSS();
+
+    // Appearance - Declutter - Amazon - Hide Shopping ads
+    this.settings.getChanges("addon.trubbel.appearance.declutter.amazon.ads", val => {
+      this.loadable.toggle("AmazonLiveCarousel", !val);
+    });
 
     // Appearance - Declutter - Carousel - Hide front page carousel
     this.settings.getChanges("addon.trubbel.appearance.declutter.front-page.carousel", val => {
