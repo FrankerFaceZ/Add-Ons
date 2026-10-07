@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "Community",
+	"name": "Community",
+	"author": "Smoo Productions",
+	"description": "Shows chat flairs and team badges from Community, a toolkit for Twitch streamers. Badges only appear in channels that use Community.\n\nLearn more at https://communityapp.stream/",
+	"website": "https://communityapp.stream/",
+	"settings": "add_ons.community",
+	"created": "2026-04-02T20:29:13.393Z",
+	"updated": "2026-10-04T08:13:27.360Z"
+}
