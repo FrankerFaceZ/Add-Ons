@@ -1,5 +1,22 @@
 const { createElement, setChildren, on, off } = FrankerFaceZ.utilities.dom;
 
+const PIN_ICON_FILLED = () => (
+  <svg className="trubbel-pin-icon trubbel-pin-icon--filled" width="24" height="24" viewBox="0 0 24 24" focusable="false" aria-hidden="true" role="presentation">
+    <path d="M16 4h2V2H6v2h2v5a3 3 0 0 0-3 3v4h14v-4a3 3 0 0 0-3-3V4Zm-3 14h-2v4h2v-4Z" />
+  </svg>
+);
+
+const PIN_ICON_OUTLINE = () => (
+  <svg className="trubbel-pin-icon trubbel-pin-icon--outline" width="24" height="24" viewBox="0 0 24 24" focusable="false" aria-hidden="true" role="presentation">
+    <path
+      fill-rule="evenodd"
+      d="M18 4V2H6v2h2v5a3 3 0 0 0-3 3v4h14v-4a3 3 0 0 0-3-3V4h2Zm-1 10H7v-2a1 1 0 0 1 1-1h2V4h4v7h2a1 1 0 0 1 1 1v2Z"
+      clip-rule="evenodd"
+    />
+    <path d="M13 18h-2v4h2v-4Z" />
+  </svg>
+);
+
 export class SidebarPinned {
   constructor(parent) {
     this.parent = parent;
@@ -16,9 +33,8 @@ export class SidebarPinned {
     this.lastSidebarState = null;
     this.currentSidebarElement = null;
     this.currentReactProps = null;
-    this.currentContextMenu = null;
-    this.currentClickHandler = null;
-    this.currentKeyHandler = null;
+    this.currentAddPopup = null
+    this.pinButton = null;
 
     this._cardCache = new Map();
     this._lastDataHash = new Map();
@@ -26,7 +42,10 @@ export class SidebarPinned {
     this._lastSortOrder = null;
     this._lastCardCount = 0;
 
-    this.onRightClick = this.onRightClick.bind(this);
+    this.onPinButtonHover = this.onPinButtonHover.bind(this);
+    this.onPinButtonLeave = this.onPinButtonLeave.bind(this);
+    this.onPinButtonClick = this.onPinButtonClick.bind(this);
+
     this.updateSidebar = this.updateSidebar.bind(this);
     this.updatePinnedChannels = this.updatePinnedChannels.bind(this);
     this.clearSidebar = this.clearSidebar.bind(this);
@@ -162,12 +181,47 @@ export class SidebarPinned {
       return;
     }
 
-    // dirty "fix" for when hype trains etc sometimes does not display correctly and instead shows a placeholder
     this.style.set("pinned-placeholder", `
       .trubbel-pinned-channels-section .tw-placeholder-wrapper { display: none !important; }
     `);
+    this.style.set("add-channel-btn", `
+      .trubbel-add-channel-btn { color: var(--color-text-button-text); }
+      .trubbel-add-channel-btn:hover { color: var(--color-text-alt-2); }
+    `);
+    this.style.set("pin-button", `
+      a.side-nav-card__link:has(> .trubbel-pin-btn),
+      a.side-nav-card:has(> .trubbel-pin-btn) { position: relative; }
+      .trubbel-pin-btn {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        cursor: pointer;
+      }
+      .trubbel-pin-btn:hover { background: #9147ff; }
+      .trubbel-pin-btn svg { width: 1.4rem; height: 1.4rem; fill: currentColor; display: block; pointer-events: none; }
+      .side-nav--collapsed .trubbel-pin-btn { top: 0; left: 0; width: 1.6rem; height: 1.6rem; }
+      .side-nav--collapsed .trubbel-pin-btn svg { width: 1.1rem; height: 1.1rem; }
+      .trubbel-pin-btn .trubbel-pin-icon--filled { display: none; }
+      .trubbel-pin-btn:hover .trubbel-pin-icon--outline { display: none; }
+      .trubbel-pin-btn:hover .trubbel-pin-icon--filled { display: block; }
+      .trubbel-pin-btn--pinned .trubbel-pin-icon--filled { display: block; }
+      .trubbel-pin-btn--pinned .trubbel-pin-icon--outline { display: none; }
+      .trubbel-pin-btn--pinned:hover .trubbel-pin-icon--filled { display: none; }
+      .trubbel-pin-btn--pinned:hover .trubbel-pin-icon--outline { display: block; }
+    `);
 
-    on(document, "contextmenu", this.onRightClick);
+    this.registerListener();
     this.isActive = true;
   }
 
@@ -180,10 +234,14 @@ export class SidebarPinned {
     if (this.style.has("pinned-placeholder")) {
       this.style.delete("pinned-placeholder");
     }
+    if (this.style.has("add-channel-btn")) this.style.delete("add-channel-btn");
 
-    off(document, "contextmenu", this.onRightClick);
+    off(document, "mouseover", this.onPinButtonHover);
+    off(document, "mouseout", this.onPinButtonLeave);
+    this.removePinButton();
+    if (this.style.has("pin-button")) this.style.delete("pin-button");
 
-    this.removeCurrentContextMenu();
+    this.removeAddPopup()
 
     this._cardCache.clear();
     this._lastDataHash.clear();
@@ -199,137 +257,110 @@ export class SidebarPinned {
     this.isActive = false;
   }
 
-  onRightClick(event) {
-    if (!this.settings.get("addon.trubbel.twilight.sidebar_extended.pinned_channels")) {
-      this.log.info("[Sidebar Pinned] Feature disabled, ignoring right-click");
-      return;
+  registerListener() {
+    off(document, "mouseover", this.onPinButtonHover);
+    off(document, "mouseout", this.onPinButtonLeave);
+    this.removePinButton();
+
+    on(document, "mouseover", this.onPinButtonHover);
+    on(document, "mouseout", this.onPinButtonLeave);
+  }
+
+  getPinButtonLink(target) {
+    const link = target?.closest?.("a.side-nav-card__link, a.side-nav-card");
+    if (!link || !link.closest(".side-nav")) return null;
+
+    const href = link.getAttribute("href");
+    if (!href || !href.startsWith("/") || href.includes("/directory/")) return null;
+
+    return link;
+  }
+
+  getPinButton() {
+    if (this.pinButton) return this.pinButton;
+
+    const btn = (
+      <button type="button" className="trubbel-pin-btn ffz-tooltip">
+        {PIN_ICON_OUTLINE()}
+        {PIN_ICON_FILLED()}
+      </button>
+    );
+
+    on(btn, "click", this.onPinButtonClick);
+    on(btn, "mousedown", e => e.stopPropagation());
+
+    this.pinButton = btn;
+    return btn;
+  }
+
+  updatePinButton(login) {
+    const btn = this.pinButton;
+    if (!btn) return;
+
+    const pinned = this.isChannelPinned(login);
+    const label = pinned ? "Unpin channel" : "Pin channel";
+
+    btn.dataset.login = login;
+    btn.classList.toggle("trubbel-pin-btn--pinned", pinned);
+
+    if (btn.dataset.title !== label) {
+      btn.dataset.title = label;
+      btn.setAttribute("aria-label", label);
     }
+  }
 
-    if (!this.isActive) {
-      this.log.info("[Sidebar Pinned] Not active, ignoring right-click");
-      return;
-    }
+  removePinButton() {
+    if (!this.pinButton) return;
 
-    if (event.ctrlKey || event.shiftKey) return;
+    this.hidePinButtonTooltip();
+    this.pinButton.remove();
+  }
 
-    const sidebarCard = event.target.closest(".side-nav-card");
-    if (!sidebarCard) return;
+  hidePinButtonTooltip() {
+    const tips = this.parent.resolve("tooltips")?.tips;
+    const btn = this.pinButton;
+    if (!tips || !btn) return;
 
-    let link = sidebarCard.querySelector("a[href^=\"/\"]");
-    if (!link && sidebarCard.tagName === "A" && sidebarCard.href && sidebarCard.href.includes("/")) {
-      link = sidebarCard;
-    }
+    tips._exit(btn);
 
-    if (!link) {
-      this.log.info("[Sidebar Pinned] No link found in sidebar card");
-      return;
-    }
+    const tip = btn[tips._accessor];
+    if (tip?.visible) tips.hide(tip);
+  }
 
+  onPinButtonHover(event) {
+    if (!this.settings.get("addon.trubbel.twilight.sidebar_extended.pinned_channels")) return;
+
+    const link = this.getPinButtonLink(event.target);
+    if (!link) return;
+
+    const login = link.getAttribute("href").slice(1).split("?")[0].toLowerCase();
+    if (!login) return;
+
+    const btn = this.getPinButton();
+    if (btn.parentNode !== link) link.appendChild(btn);
+    this.updatePinButton(login);
+  }
+
+  onPinButtonLeave(event) {
+    const link = this.pinButton?.parentNode;
+
+    if (!link || !link.contains(event.target)) return;
+    if (link.contains(event.relatedTarget)) return;
+
+    this.removePinButton();
+  }
+
+  onPinButtonClick(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    const href = link.getAttribute("href");
-    const login = href.replace("/", "").split("?")[0];
+    this.hidePinButtonTooltip();
 
-    if (!login) {
-      this.log.info("[Sidebar Pinned] No login found in card");
-      return;
-    }
+    const login = this.pinButton?.dataset.login;
+    if (!login) return;
 
-    const isPinned = this.isChannelPinned(login);
-
-    this.showContextMenu(event, login, isPinned);
-  }
-
-  showContextMenu(event, login, isPinned) {
-    this.removeCurrentContextMenu();
-
-    const menu = (
-      <div
-        className="trubbel-pinned-context-menu"
-        style={{
-          position: "fixed",
-          top: `${event.clientY}px`,
-          left: `${event.clientX}px`,
-          background: "var(--color-background-base)",
-          border: "1px solid var(--color-border-base)",
-          borderRadius: "0.6rem",
-          padding: "0.5rem 0",
-          zIndex: 9999,
-          minWidth: "150px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)"
-        }}
-      >
-        <div
-          className="trubbel-context-menu-item"
-          style={{
-            padding: "0.5rem 1rem",
-            cursor: "pointer",
-            fontSize: "1.3rem",
-            color: "var(--color-text-base)",
-            transition: "background-color 0.1s ease"
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = "var(--color-background-alt)"}
-          onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
-          onClick={() => {
-            if (!isPinned) {
-              this.log.info(`[Sidebar Pinned] Pinning channel: ${login}`);
-              this.handlePinUnpin(login, true);
-              this.removeCurrentContextMenu();
-            } else if (isPinned) {
-              this.log.info(`[Sidebar Pinned] Unpinning channel: ${login}`);
-              this.handlePinUnpin(login, false);
-              this.removeCurrentContextMenu();
-            }
-          }}
-        >
-          {isPinned ? "Unpin Channel" : "Pin Channel"}
-        </div>
-      </div>
-    );
-
-    document.body.appendChild(menu);
-
-    this.currentContextMenu = menu;
-
-    const removeMenu = (e) => {
-      if (!menu.contains(e.target)) {
-        this.removeCurrentContextMenu();
-      }
-    };
-
-    const handleKeydown = (e) => {
-      if (e.key === "Escape") {
-        this.removeCurrentContextMenu();
-      }
-    };
-
-    this.currentClickHandler = removeMenu;
-    this.currentKeyHandler = handleKeydown;
-
-    setTimeout(() => {
-      on(document, "click", removeMenu);
-      on(document, "keydown", handleKeydown);
-    }, 0);
-  }
-
-  removeCurrentContextMenu() {
-    if (this.currentContextMenu) {
-      if (document.body.contains(this.currentContextMenu)) {
-        document.body.removeChild(this.currentContextMenu);
-      }
-      this.currentContextMenu = null;
-    }
-
-    if (this.currentClickHandler) {
-      off(document, "click", this.currentClickHandler);
-      this.currentClickHandler = null;
-    }
-
-    if (this.currentKeyHandler) {
-      off(document, "keydown", this.currentKeyHandler);
-      this.currentKeyHandler = null;
-    }
+    this.handlePinUnpin(login, !this.isChannelPinned(login));
+    this.updatePinButton(login);
   }
 
   updateReactProps(el) {
@@ -437,6 +468,138 @@ export class SidebarPinned {
     }
   }
 
+  showAddChannelPopup(anchorEl) {
+    if (this.currentAddPopup) {
+      this.removeAddPopup();
+      return;
+    }
+
+    const rect = anchorEl.getBoundingClientRect();
+
+    const inputEl = <input
+      className="tw-border-radius-medium tw-font-size-6 tw-pd-x-1 tw-pd-y-05 ffz-input tw-flex-grow-1"
+      type="text"
+      placeholder="channel name"
+      maxLength={25}
+    />;
+
+    const errorEl = <div
+      style={{
+        display: "none",
+        marginTop: "0.5rem",
+        color: "var(--color-text-error, #bf0000)",
+        fontSize: "1.2rem"
+      }}
+    />;
+
+    const sanitize = val =>
+      val.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 25).toLowerCase();
+
+    const doAdd = () => {
+      const login = sanitize(inputEl.value ?? "");
+
+      if (!login) {
+        errorEl.textContent = "Enter a valid username (letters, numbers, underscores).";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      if (this.isChannelPinned(login)) {
+        errorEl.textContent = `${login} is already pinned.`;
+        errorEl.style.display = "block";
+        return;
+      }
+
+      this.handlePinUnpin(login, true);
+      this.removeAddPopup();
+    };
+
+    on(inputEl, "input", () => {
+      const clean = sanitize(inputEl.value);
+      if (inputEl.value !== clean) inputEl.value = clean;
+      errorEl.style.display = "none";
+    });
+
+    on(inputEl, "keydown", e => {
+      if (e.key === "Enter") doAdd();
+      if (e.key === "Escape") this.removeAddPopup();
+    });
+
+    const addBtn = <button className="tw-button tw-button--primary">
+      <span className="tw-button__text">Add</span>
+    </button>;
+    on(addBtn, "click", doAdd);
+
+    const closeBtn = <button className="tw-button tw-button--text">
+      <span className="tw-button__text ffz-i-window-close" />
+    </button>;
+    on(closeBtn, "click", () => this.removeAddPopup());
+
+    const popup = (
+      <div
+        className="trubbel-add-channel-popup"
+        style={{
+          position: "fixed",
+          top: `${rect.bottom + 4}px`,
+          left: `${rect.left}px`,
+          background: "var(--color-background-base)",
+          border: "1px solid var(--color-border-base)",
+          borderRadius: "0.6rem",
+          padding: "1rem",
+          zIndex: 9999,
+          minWidth: "22rem",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)"
+        }}
+      >
+        <div
+          className="tw-flex tw-align-items-center tw-pd-b-05 tw-border-b tw-mg-b-1"
+          style={{ gap: "0.5rem" }}
+        >
+          <div className="tw-flex-grow-1" style={{ fontWeight: "var(--font-weight-semibold)", fontSize: "1.3rem" }}>
+            Add Pinned Channel
+          </div>
+          {closeBtn}
+        </div>
+        <div className="tw-flex tw-align-items-center" style={{ gap: "0.5rem" }}>
+          {inputEl}
+          {addBtn}
+        </div>
+        {errorEl}
+      </div>
+    );
+
+    document.body.appendChild(popup);
+    this.currentAddPopup = popup;
+
+    setTimeout(() => {
+      this.currentAddClickHandler = e => {
+        if (!popup.contains(e.target)) this.removeAddPopup();
+      };
+      this.currentAddKeyHandler = e => {
+        if (e.key === "Escape") this.removeAddPopup();
+      };
+      on(document, "click", this.currentAddClickHandler);
+      on(document, "keydown", this.currentAddKeyHandler);
+      inputEl.focus();
+    }, 0);
+  }
+
+  removeAddPopup() {
+    if (this.currentAddPopup) {
+      if (document.body.contains(this.currentAddPopup))
+        document.body.removeChild(this.currentAddPopup);
+      this.currentAddPopup = null;
+    }
+    if (this.currentAddClickHandler) {
+      off(document, "click", this.currentAddClickHandler);
+      this.currentAddClickHandler = null;
+    }
+    if (this.currentAddKeyHandler) {
+      off(document, "keydown", this.currentAddKeyHandler);
+      this.currentAddKeyHandler = null;
+    }
+  }
+
   createPinnedSection(isCollapsed) {
     if (isCollapsed) {
       // collapsed state
@@ -529,15 +692,6 @@ export class SidebarPinned {
             >
               Pinned Channels
             </h3>
-            <p
-              style={{
-                color: "var(--color-text-alt-2)",
-                lineHeight: "var(--line-height-body)",
-                fontSize: "var(--font-size-base)"
-              }}
-            >
-              Right-click to pin/unpin
-            </p>
           </div>
           <div
             className="trubbel-pinned-channels-content tw-transition-group"
@@ -655,6 +809,7 @@ export class SidebarPinned {
     try {
       const clonedCard = originalCard.cloneNode(true);
 
+      clonedCard.querySelectorAll(".trubbel-pin-btn").forEach(btn => btn.remove());
       clonedCard.classList.add("trubbel-pinned-channel-card");
       clonedCard.classList.remove("side-nav-card--expanded");
 
@@ -739,17 +894,30 @@ export class SidebarPinned {
 
       this.log.info("[Sidebar Pinned] Sidebar is expanded, showing empty message");
 
+      const addBtn = <span
+        className="trubbel-add-channel-btn"
+        style={{
+          display: "block",
+          marginTop: "0.2rem",
+          cursor: "pointer",
+          fontSize: "1.3rem"
+        }}
+      >
+        + Add a channel
+      </span>;
+      on(addBtn, "click", () => this.showAddChannelPopup(addBtn));
+
       const emptyMessage = (
         <div
           className="trubbel-pinned-empty"
           style={{
-            padding: "1rem",
-            textAlign: "center",
+            paddingLeft: "1rem",
             color: "var(--color-text-alt-2)",
             fontSize: "1.3rem"
           }}
         >
-          No pinned channels available
+          <div>Pinned channels are offline or hidden.</div>
+          {addBtn}
         </div>
       );
       setChildren(content, emptyMessage);
@@ -775,59 +943,9 @@ export class SidebarPinned {
 
     setChildren(content, wrappers);
 
-    setTimeout(() => {
-      sortedCards.forEach(({ card, originalCard }) => {
-        if (card && !card._trubbel_preview_added && this.parent.sidebarManager.previews &&
-          this.settings.get("addon.trubbel.twilight.sidebar.preview")) {
-          try {
-            card._trubbel_original_card = originalCard;
-            this.addPreviewEvents(card, originalCard);
-            card._trubbel_preview_added = true;
-          } catch (err) {
-            this.log.error("[Sidebar Pinned] Error adding preview events after render:", err);
-          }
-        }
-      });
-    }, 0);
+    this.parent.emit("tooltips:cleanup");
   }
 
-  addPreviewEvents(card, originalCard) {
-    const mouseEnterHandler = () => {
-      if (!this.settings.get("addon.trubbel.twilight.sidebar.preview")) {
-        return;
-      }
-
-      if (this.parent.sidebarManager.previews.hoverTimeout) {
-        clearTimeout(this.parent.sidebarManager.previews.hoverTimeout);
-      }
-
-      const delay = this.settings.get("addon.trubbel.twilight.sidebar.preview.delay");
-
-      if (delay > 0) {
-        this.parent.sidebarManager.previews.hoverTimeout = setTimeout(() => {
-          this.showPreviewWithCorrectPosition(card, originalCard);
-        }, delay);
-      } else {
-        this.showPreviewWithCorrectPosition(card, originalCard);
-      }
-    };
-
-    const mouseLeaveHandler = () => {
-      if (this.parent.sidebarManager.previews.hoverTimeout) {
-        clearTimeout(this.parent.sidebarManager.previews.hoverTimeout);
-        this.parent.sidebarManager.previews.hoverTimeout = null;
-      }
-      this.parent.sidebarManager.previews.hidePreview();
-    };
-
-    on(card, "mouseenter", mouseEnterHandler);
-    on(card, "mouseleave", mouseLeaveHandler);
-
-    card._trubbel_mouseEnterHandler = mouseEnterHandler;
-    card._trubbel_mouseLeaveHandler = mouseLeaveHandler;
-  }
-
-  // helper method to show preview with correct positioning
   showPreviewWithCorrectPosition(pinnedCard, originalCard) {
     const preview = this.parent.sidebarManager.previews;
 
@@ -904,26 +1022,38 @@ export class SidebarPinned {
   }
 
   clearPinnedContent() {
-    if (this.pinnedSection) {
-      const content = this.pinnedSection.querySelector(".trubbel-pinned-channels-content");
-      if (content) {
-        const emptyMessage = (
-          <div
-            className="trubbel-pinned-empty"
-            style={{
-              padding: "1rem",
-              textAlign: "center",
-              color: "var(--color-text-alt-2)",
-              fontSize: "1.3rem"
-            }}
-          >
-            No pinned channels
-          </div>
-        );
-        setChildren(content, emptyMessage);
-        this.log.info("[Sidebar Pinned] Pinned content cleared, empty message added");
-      }
-    }
+    if (!this.pinnedSection) return;
+    const content = this.pinnedSection.querySelector(".trubbel-pinned-channels-content");
+    if (!content) return;
+
+    const addBtn = <span
+      className="trubbel-add-channel-btn"
+      style={{
+        display: "block",
+        marginTop: "0.2rem",
+        cursor: "pointer",
+        fontSize: "1.3rem"
+      }}
+    >
+      + Add a channel
+    </span>;
+    on(addBtn, "click", () => this.showAddChannelPopup(addBtn));
+
+    const el = (
+      <div
+        className="trubbel-pinned-empty"
+        style={{
+          paddingLeft: "1rem",
+          color: "var(--color-text-alt-2)",
+          fontSize: "1.3rem"
+        }}
+      >
+        <div>No pinned channels yet.</div>
+        {addBtn}
+      </div>
+    );
+
+    setChildren(content, el);
   }
 
   clearPinnedSection() {
@@ -932,6 +1062,11 @@ export class SidebarPinned {
       this.pinnedSection = null;
       this.log.info("[Sidebar Pinned] Pinned section removed");
     }
+
+    this._cardCache.clear();
+    this._lastDataHash.clear();
+    this._lastSortOrder = null;
+    this._lastCardCount = 0;
   }
 
   clearSidebar(el) {
@@ -946,18 +1081,6 @@ export class SidebarPinned {
         if (link._trubbel_click_handler) {
           off(link, "click", link._trubbel_click_handler);
           delete link._trubbel_click_handler;
-        }
-      });
-
-      const cards = el.querySelectorAll(".trubbel-pinned-channel-card");
-      cards.forEach(card => {
-        if (card._trubbel_mouseEnterHandler) {
-          off(card, "mouseenter", card._trubbel_mouseEnterHandler);
-          delete card._trubbel_mouseEnterHandler;
-        }
-        if (card._trubbel_mouseLeaveHandler) {
-          off(card, "mouseleave", card._trubbel_mouseLeaveHandler);
-          delete card._trubbel_mouseLeaveHandler;
         }
       });
 

@@ -16,7 +16,7 @@ export default class Declutter {
       "hide-following-title": ".common-centered-column:has(section#following-page-main-content) h1.tw-title",
       "hide-sidebar-for-you": ".side-nav--expanded [aria-label] :is(.side-nav__title):has(h3[class*=\"tw-title\"]:first-child)",
       "hide-sidebar-sort-paragraph": "[data-a-target=\"side-nav-header-expanded\"] p",
-      "hide-sidebar-guest-avatar": ".side-nav-card :is(.primary-with-small-avatar__mini-avatar)",
+      "hide-sidebar-guest-avatar": ".side-nav-card .primary-with-small-avatar__mini-avatar:not(:has(img[src*=\"hype-train\"]))",
       "hide-sidebar-guest-number": ".side-nav-card [data-a-target=\"side-nav-card-metadata\"] :is(p):nth-child(2)",
       "hide-sidebar-all-time-high-train": ".side-nav-card div:has(> .hype-train-icon__trophy)",
       "hide-sidebar-community-train": ".side-nav-card div:has(> .hype-train-icon__train--community)",
