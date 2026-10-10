@@ -70,7 +70,8 @@ export class SidebarManager {
     }
 
     const reactInstance = this.fine.getReactInstance(el);
-    const reactElement = reactInstance.memoizedProps.children;
+    const reactElement = reactInstance?.memoizedProps?.children;
+    if (!reactElement) return;
 
     const targetElement = findReactFragment(
       reactElement,
@@ -110,6 +111,8 @@ export class SidebarManager {
     const previewsEnabled = this.settings.get("addon.trubbel.twilight.sidebar.preview");
     if (previewsEnabled) {
       this.previews.updateSidebar(el);
+    } else {
+      this.previews.disable();
     }
   }
 }
