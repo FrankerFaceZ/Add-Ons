@@ -882,7 +882,7 @@ export class SidebarPreviews {
               if (hypeTrainData.isGoldenKappaTrain) return prefix + "Golden Kappa Train";
               if (hypeTrainData.isSharedTrain) return "Shared Hype Train";
               if (hypeTrainData.isTreasureTrain) return prefix + "Treasure Train";
-              if (hypeTrainData.hypeTrainType === "COMMUNITY") return "Community Train";
+              if (hypeTrainData.hypeTrainType === "COMMUNITY") return prefix + "Community Train";
               if (hypeTrainData.hypeTrainType === "MYTHIC") return prefix + "Mythic Train";
               return "Hype Train";
             })()}
