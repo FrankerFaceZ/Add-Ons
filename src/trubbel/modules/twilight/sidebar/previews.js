@@ -21,6 +21,22 @@ export class SidebarPreviews {
     this.currentUptimeData = null;
     this.handleKeyDown = null;
 
+    this.hoverCard = null;
+    this.currentLogin = null;
+
+    this.streamMetaCache = new Map();
+    this.prefetchTimeout = null;
+
+    this.shiftHeld = false;
+    this.locked = false;
+
+    this.onMouseOver = this.onMouseOver.bind(this);
+    this.onMouseOut = this.onMouseOut.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
+    this.onWindowBlur = this.onWindowBlur.bind(this);
+    this.onLockedMouseMove = this.onLockedMouseMove.bind(this);
+
     this.updateSidebar = this.updateSidebar.bind(this);
     this.showPreview = this.showPreview.bind(this);
     this.hidePreview = this.hidePreview.bind(this);
@@ -41,6 +57,11 @@ export class SidebarPreviews {
     }
 
     this.log.info("[Sidebar Previews] Enabling sidebar previews functionality");
+    on(document, "mouseover", this.onMouseOver);
+    on(document, "mouseout", this.onMouseOut);
+    on(window, "keydown", this.onKeyDown);
+    on(window, "keyup", this.onKeyUp);
+    on(window, "blur", this.onWindowBlur);
     this.isActive = true;
   }
 
@@ -51,7 +72,19 @@ export class SidebarPreviews {
     }
 
     this.log.info("[Sidebar Previews] Disabling sidebar previews functionality");
+
+    off(document, "mouseover", this.onMouseOver);
+    off(document, "mouseout", this.onMouseOut);
+    off(window, "keydown", this.onKeyDown);
+    off(window, "keyup", this.onKeyUp);
+    off(window, "blur", this.onWindowBlur);
+
+    this.shiftHeld = false;
+    this.clearHoverTimeout();
+    this.clearPrefetchTimeout();
+    this.hoverCard = null;
     this.hidePreview();
+    this.streamMetaCache.clear();
     this.isActive = false;
   }
 
@@ -65,56 +98,246 @@ export class SidebarPreviews {
       return;
     }
 
-    try {
-      const cards = el.querySelectorAll(".side-nav-card");
-      if (cards.length > 0) {
-        for (const card of cards) {
-          if (!card._stream_processed) {
-            card._stream_processed = true;
+    this.enable();
+    this.schedulePrefetch(el);
+    return true;
+  }
 
-            const mouseEnterHandler = () => {
-              if (!this.settings.get("addon.trubbel.twilight.sidebar.preview")) {
-                this.log.info("[Sidebar Preview] Preview disabled in settings");
-                return;
-              }
-
-              if (this.hoverTimeout) {
-                clearTimeout(this.hoverTimeout);
-              }
-
-              const delay = this.settings.get("addon.trubbel.twilight.sidebar.preview.delay");
-
-              if (delay > 0) {
-                this.hoverTimeout = setTimeout(() => {
-                  this.showPreview(card);
-                }, delay);
-              } else {
-                this.showPreview(card);
-              }
-            };
-
-            const mouseLeaveHandler = () => {
-              if (this.hoverTimeout) {
-                clearTimeout(this.hoverTimeout);
-                this.hoverTimeout = null;
-              }
-
-              this.hidePreview();
-            };
-
-            card._mouseEnterHandler = mouseEnterHandler;
-            card._mouseLeaveHandler = mouseLeaveHandler;
-
-            on(card, "mouseenter", mouseEnterHandler);
-            on(card, "mouseleave", mouseLeaveHandler);
-          }
-        }
-      }
-      return true;
-    } catch (err) {
-      this.log.error("[Sidebar Preview] Error in updateSidebar:", err);
-      return false;
+  clearHoverTimeout() {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = null;
     }
+  }
+
+  clearPrefetchTimeout() {
+    if (this.prefetchTimeout) {
+      clearTimeout(this.prefetchTimeout);
+      this.prefetchTimeout = null;
+    }
+  }
+
+  schedulePrefetch(el) {
+    this.clearPrefetchTimeout();
+    this.prefetchTimeout = setTimeout(() => {
+      this.prefetchTimeout = null;
+      if (el.isConnected) this.prefetchUptimes(el);
+    }, 250);
+  }
+
+  prefetchUptimes(el) {
+    if (!this.settings.get("addon.trubbel.twilight.sidebar.preview.show_uptime")) return;
+
+    for (const card of el.querySelectorAll(".side-nav-card")) {
+      if (card.parentElement?.closest(".side-nav-card")) continue;
+      if (card.classList.contains("trubbel-pinned-channel-card")) continue;
+      if (card.classList.contains("ffz--side-nav-card-offline") ||
+        card.querySelector(".side-nav-card__avatar--offline")) continue;
+
+      const props = this.fine.getReactInstance(card)?.return?.return?.memoizedProps;
+      if (props?.userLogin) this.getCachedStreamMeta(props);
+    }
+  }
+
+  getStreamId(props) {
+    return props?.metadataRight?.props?.stream?.id ||
+      props?.tooltipContent?.props?.stream?.content?.id ||
+      null;
+  }
+
+  getCachedStreamMeta(props) {
+    const login = props.userLogin.toLowerCase();
+    const streamId = this.getStreamId(props);
+    const entry = this.streamMetaCache.get(login);
+
+    if (entry) {
+      const age = Date.now() - entry.fetched;
+      if (!entry.done || age < 60 * 1000) return entry;
+      if (entry.data && (!streamId || entry.data.id === streamId)) return entry;
+      if (!entry.data && age < 5 * 60 * 1000) return entry;
+    }
+
+    const fresh = { data: null, done: false, fetched: Date.now(), promise: null };
+    this.streamMetaCache.set(login, fresh);
+
+    fresh.promise = this.twitch_data.getStreamMeta(props.userID, props.userLogin)
+      .then(data => {
+        fresh.data = data || null;
+        return fresh.data;
+      })
+      .catch(err => {
+        this.log.error(`[Sidebar Preview] Failed to fetch uptime for ${props.userLogin}:`, err);
+        return null;
+      })
+      .finally(() => {
+        fresh.done = true;
+      });
+
+    return fresh;
+  }
+
+  getCardFromTarget(target) {
+    let card = target?.closest?.(".side-nav-card");
+    if (!card || !card.closest(".side-nav")) return null;
+
+    let parent;
+    while ((parent = card.parentElement?.closest(".side-nav-card")))
+      card = parent;
+
+    return card;
+  }
+
+  getCardLogin(card) {
+    const href = card?.querySelector("a[href^=\"/\"]")?.getAttribute("href");
+    return href ? href.slice(1).split("?")[0].toLowerCase() : null;
+  }
+
+  findOriginalCard(login) {
+    for (const link of document.querySelectorAll(`.side-nav a[href="/${login}"]`)) {
+      if (!link.closest(".trubbel-pinned-channels-section"))
+        return this.getCardFromTarget(link);
+    }
+    return null;
+  }
+
+  onMouseOver(event) {
+    if (!event.shiftKey) this.shiftHeld = false;
+
+    if (this.locked) return;
+
+    const card = this.getCardFromTarget(event.target);
+    if (!card || card === this.hoverCard) return;
+
+    this.startHover(card);
+  }
+
+  startHover(card) {
+    this.hoverCard = card;
+    this.clearHoverTimeout();
+
+    if (!this.settings.get("addon.trubbel.twilight.sidebar.preview")) return;
+
+    if (this.previewPopup && this.currentLogin === this.getCardLogin(card)) {
+      this.currentHoverCard = card;
+      return;
+    }
+
+    const delay = this.settings.get("addon.trubbel.twilight.sidebar.preview.delay");
+    if (delay > 0) {
+      this.hoverTimeout = setTimeout(() => {
+        this.hoverTimeout = null;
+        this.showPreviewForCard(card);
+      }, delay);
+    } else {
+      this.showPreviewForCard(card);
+    }
+  }
+
+  onMouseOut(event) {
+    if (this.locked) return;
+
+    const card = this.getCardFromTarget(event.target);
+    if (!card || card.contains(event.relatedTarget)) return;
+
+    if (card === this.hoverCard) this.hoverCard = null;
+    this.clearHoverTimeout();
+    this.hidePreview();
+  }
+
+  onKeyDown(event) {
+    if (event.code !== "ShiftLeft" || event.repeat) return;
+
+    this.shiftHeld = true;
+    if (this.previewPopup && !this.locked) this.lockPreview();
+  }
+
+  onKeyUp(event) {
+    if (event.code !== "ShiftLeft") return;
+
+    this.shiftHeld = false;
+    this.unlockPreview();
+  }
+
+  onWindowBlur() {
+    this.shiftHeld = false;
+
+    setTimeout(() => {
+      if (!this.locked) return;
+
+      const active = document.activeElement;
+      if (active?.tagName === "IFRAME" && this.previewPopup?.contains(active)) return;
+
+      this.unlockPreview();
+    }, 0);
+  }
+
+  onLockedMouseMove(event) {
+    if (!event.shiftKey) {
+      this.shiftHeld = false;
+      this.unlockPreview();
+    }
+  }
+
+  lockPreview() {
+    if (!this.previewPopup || this.locked) return;
+
+    this.locked = true;
+    this.clearHoverTimeout();
+
+    this.previewPopup.style.pointerEvents = "auto";
+    this.previewPopup.style.outline = "2px solid #9147ff";
+
+    on(document, "mousemove", this.onLockedMouseMove);
+  }
+
+  unlockPreview() {
+    if (!this.locked) return;
+
+    this.releaseLock();
+
+    const hovered = this.getCardFromTarget(document.querySelector(".side-nav .side-nav-card:hover"));
+    if (hovered && this.currentLogin && this.getCardLogin(hovered) === this.currentLogin) {
+      this.hoverCard = hovered;
+      return;
+    }
+
+    this.hidePreview();
+    this.hoverCard = null;
+
+    if (hovered) this.startHover(hovered);
+  }
+
+  releaseLock() {
+    if (!this.locked) return;
+
+    this.locked = false;
+    off(document, "mousemove", this.onLockedMouseMove);
+
+    if (this.previewPopup) {
+      this.previewPopup.style.pointerEvents = "none";
+      this.previewPopup.style.outline = "";
+    }
+  }
+
+  showPreviewForCard(card) {
+    if (!card.isConnected) {
+      card = this.getCardFromTarget(document.querySelector(".side-nav .side-nav-card:hover"));
+      if (!card) return;
+      this.hoverCard = card;
+    }
+
+    if (card.classList.contains("trubbel-pinned-channel-card")) {
+      let original = card._trubbel_original_card;
+      if (!original?.isConnected) {
+        const login = this.getCardLogin(card);
+        original = login && this.findOriginalCard(login);
+      }
+      if (original)
+        this.parent.sidebarManager.pinned.showPreviewWithCorrectPosition(card, original);
+      return;
+    }
+
+    this.showPreview(card);
   }
 
   updatePreviewSize() {
@@ -221,6 +444,14 @@ export class SidebarPreviews {
       return;
     }
 
+    const link = card.querySelector("a[href]");
+    if (card.classList.contains("ffz--side-nav-card-offline") ||
+      card.querySelector(".side-nav-card__avatar--offline") ||
+      link?.getAttribute("href")?.includes("/directory/")) {
+      return;
+    }
+
+    this.hidePreview();
     this.currentHoverCard = card;
 
     const react = this.fine.getReactInstance(card);
@@ -231,6 +462,11 @@ export class SidebarPreviews {
       this.log.error("[Sidebar Preview] props:", props);
       return;
     }
+
+    this.log.info("[Sidebar Preview] props:", props);
+
+    const login = props.userLogin.toLowerCase();
+    this.currentLogin = login;
 
     let streamTitle = "";
     if (props.metadataRight?.props?.stream?.broadcaster?.broadcastSettings?.title) {
@@ -272,6 +508,52 @@ export class SidebarPreviews {
 
     const sponsorshipData = props?.sponsorship?.sponsoredSideNavChannel;
 
+    const showCostreamers = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_costreamers");
+    const costreamDetails =
+      props.metadataRight?.props?.stream?.costreamDetails ||
+      props.tooltipContent?.props?.stream?.content?.costreamDetails ||
+      props.tooltipContent?.props?.stream?.costreamDetails ||
+      props.tooltipContent?.props?.costreamDetails ||
+      props.costreamDetails ||
+      null;
+
+    let costreamers = [];
+    if (showCostreamers && Array.isArray(costreamDetails?.topCostreamers)) {
+      costreamers = costreamDetails.topCostreamers.filter(costreamer =>
+        costreamer?.__typename === "User" &&
+        costreamer?.displayName &&
+        costreamer?.profileImageURL
+      );
+
+      if (showCostreamers === 2) {
+        costreamers.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      } else if (showCostreamers === 3 || showCostreamers === 4) {
+        const online = costreamers.filter(c => c.stream?.viewersCount != null);
+        const offline = costreamers.filter(c => c.stream?.viewersCount == null);
+
+        if (showCostreamers === 3) {
+          online.sort((a, b) => b.stream.viewersCount - a.stream.viewersCount);
+        } else {
+          online.sort((a, b) => a.stream.viewersCount - b.stream.viewersCount);
+        }
+
+        costreamers = [...online, ...offline];
+      }
+    }
+
+    let costreamersRemaining = 0;
+    let costreamersRemainingViewers = 0;
+    if (costreamers.length > 0 && costreamDetails) {
+      costreamersRemaining = (costreamDetails.costreamersCount || 0) - costreamers.length;
+
+      const totalViewers = costreamDetails.totalViewersCount || 0;
+      const organizerViewers = costreamDetails.organizer?.stream?.viewersCount || 0;
+      const shownViewers = costreamers.reduce((sum, c) => sum + (c.stream?.viewersCount || 0), 0);
+      costreamersRemainingViewers = totalViewers - organizerViewers - shownViewers;
+    }
+
+    const watchStreakData = props?.watchStreak;
+
     const quality = this.settings.get("addon.trubbel.twilight.sidebar.preview.quality");
     const muted = !this.settings.get("addon.trubbel.twilight.sidebar.preview.audio");
     const showTitle = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_title");
@@ -282,27 +564,27 @@ export class SidebarPreviews {
     const showGuests = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_guests");
     const showUptime = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_uptime");
     const showSponsorship = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_sponsorship");
+    const showWatchStreak = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_watch_streak");
 
     let uptimeData = null;
     let uptimeText = null;
 
     if (showUptime) {
-      if (card._stream_meta === undefined) {
-        card._stream_meta = null;
-        this.twitch_data.getStreamMeta(null, props.userLogin).then(data => {
-          card._stream_meta = data;
-          this.currentUptimeData = data;
-          this.updateUptimeDisplay();
-          if (data && !this.uptimeUpdateInterval) {
-            this.uptimeUpdateInterval = setInterval(this.updateUptimeDisplay, 1000);
-          }
-        }).catch(err => {
-          this.log.error(`[Sidebar Preview] Failed to fetch uptime for ${props.userLogin}:`, err);
-        });
-      } else if (card._stream_meta) {
-        uptimeData = card._stream_meta;
+      const entry = this.getCachedStreamMeta(props);
+
+      if (entry.data) {
+        uptimeData = entry.data;
         uptimeText = this.calculateUptime(uptimeData.createdAt);
         this.currentUptimeData = uptimeData;
+      } else if (!entry.done) {
+        entry.promise.then(data => {
+          if (!data || this.currentLogin !== login || !this.previewPopup) return;
+          this.currentUptimeData = data;
+          this.updateUptimeDisplay();
+          if (!this.uptimeUpdateInterval) {
+            this.uptimeUpdateInterval = setInterval(this.updateUptimeDisplay, 1000);
+          }
+        });
       }
     }
 
@@ -321,8 +603,6 @@ export class SidebarPreviews {
       disable_frankerfacez: true
     });
     const playerUrl = `https://player.twitch.tv/?${params}`;
-
-    this.hidePreview();
 
     const formatNumber = (num) => {
       if (typeof this.parent.resolve === "function" && this.parent.resolve("i18n")?.formatNumber) {
@@ -519,6 +799,8 @@ export class SidebarPreviews {
                 if (hypeTrainData.isGoldenKappaTrain) return "trubbel-hype-train-golden";
                 if (hypeTrainData.isSharedTrain) return "trubbel-hype-train-shared";
                 if (hypeTrainData.isTreasureTrain) return "trubbel-hype-train-treasure";
+                if (hypeTrainData.hypeTrainType === "MYTHIC") return "trubbel-hype-train-mythic";
+                if (hypeTrainData.hypeTrainType === "COMMUNITY") return "trubbel-hype-train-community";
                 return "trubbel-hype-train-regular";
               })()}
               style={{
@@ -564,6 +846,22 @@ export class SidebarPreviews {
                     };
                   }
 
+                  if (hypeTrainData.hypeTrainType === "COMMUNITY") {
+                    return {
+                      background: "#1e69ff",
+                      WebkitMaskImage: "url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg)",
+                      maskImage: "url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg)"
+                    };
+                  }
+
+                  if (hypeTrainData.hypeTrainType === "MYTHIC") {
+                    return {
+                      background: "linear-gradient(90deg, #976700, #ffd760, #fff9eb, #ffd760)",
+                      WebkitMaskImage: "url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg)",
+                      maskImage: "url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg)"
+                    };
+                  }
+
                   return {
                     background: "#bf94ff",
                     WebkitMaskImage: "url(https://static-cdn.jtvnw.net/c3-vg/leftnav/hype-train.svg)",
@@ -573,16 +871,19 @@ export class SidebarPreviews {
               }}
             />
             {(() => {
-              if (hypeTrainData.isAllTimeHighTrain) {
-                if (hypeTrainData.isGoldenKappaTrain) return "Golden Kappa Train";
-                if (hypeTrainData.isSharedTrain) return "Shared Hype Train";
-                if (hypeTrainData.isTreasureTrain) return "Treasure Train";
-                return "All-Time High Train";
-              }
+              const hasOtherTrain = hypeTrainData.isAllTimeHighTrain ||
+                hypeTrainData.isGoldenKappaTrain ||
+                hypeTrainData.isTreasureTrain ||
+                hypeTrainData.hypeTrainType === "MYTHIC";
 
-              if (hypeTrainData.isGoldenKappaTrain) return "Golden Kappa Train";
+              const prefix = (hypeTrainData.isSharedTrain && hasOtherTrain) ? "Shared " : "";
+
+              if (hypeTrainData.isAllTimeHighTrain) return prefix + "All-Time High Train";
+              if (hypeTrainData.isGoldenKappaTrain) return prefix + "Golden Kappa Train";
               if (hypeTrainData.isSharedTrain) return "Shared Hype Train";
-              if (hypeTrainData.isTreasureTrain) return "Treasure Train";
+              if (hypeTrainData.isTreasureTrain) return prefix + "Treasure Train";
+              if (hypeTrainData.hypeTrainType === "COMMUNITY") return "Community Train";
+              if (hypeTrainData.hypeTrainType === "MYTHIC") return prefix + "Mythic Train";
               return "Hype Train";
             })()}
             {" • Level " + (hypeTrainData.level || 1)}
@@ -708,7 +1009,6 @@ export class SidebarPreviews {
                         }}
                       />
                     </div>
-
                     {/* Guest Name */}
                     <div
                       className="trubbel-sidebar-preview-guest-name"
@@ -720,7 +1020,6 @@ export class SidebarPreviews {
                     >
                       {username}
                     </div>
-
                     {/* Guest Viewer count */}
                     <div
                       className="trubbel-sidebar-preview-guest-viewers"
@@ -754,6 +1053,184 @@ export class SidebarPreviews {
             </div>
           </div>
         )}
+
+        {/* Co-streamers Preview */}
+        {costreamers.length > 0 && (
+          <div
+            className="trubbel-sidebar-preview-costreamers"
+            style={{
+              padding: "4px 8px",
+              fontSize: "1.2rem",
+              color: `${this.settings.get("addon.trubbel.twilight.sidebar.preview.tooltip_text")}`,
+              width: "100%",
+              boxSizing: "border-box",
+              overflow: "hidden",
+              borderTop: `1px solid ${this.settings.get("addon.trubbel.twilight.sidebar.preview.tooltip_border")}`
+            }}
+          >
+            <div
+              className="trubbel-sidebar-preview-costreamers-label"
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                marginBottom: "6px"
+              }}
+            >
+              Co-streamers
+            </div>
+            <div
+              className="trubbel-sidebar-preview-costreamers-list"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px"
+              }}
+            >
+              {costreamers.map((costreamer, index) => {
+                const displayName = costreamer.displayName;
+                const login = costreamer.login;
+                const username = login && displayName.toLowerCase() !== login ?
+                  `${displayName} (${login})` : displayName;
+
+                const borderColor = costreamer.primaryColorHex ?
+                  `#${costreamer.primaryColorHex}` : "#9147ff";
+
+                return (
+                  <div
+                    key={costreamer.id || index}
+                    className="trubbel-sidebar-preview-costreamer-item"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    {/* Co-streamer Avatar */}
+                    <div
+                      className="trubbel-sidebar-preview-costreamer-avatar"
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        flexShrink: 0,
+                        position: "relative",
+                        boxSizing: "content-box"
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-3px",
+                          left: "-3px",
+                          right: "-3px",
+                          bottom: "-3px",
+                          borderRadius: "50%",
+                          pointerEvents: "none",
+                          zIndex: 1,
+                          border: `0.2rem solid ${borderColor}`
+                        }}
+                      />
+                      <img
+                        src={costreamer.profileImageURL}
+                        alt={costreamer.displayName}
+                        className="tw-image-avatar"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: "50%",
+                          position: "relative",
+                          zIndex: 0
+                        }}
+                      />
+                    </div>
+                    {/* Co-streamer Name */}
+                    <div
+                      className="trubbel-sidebar-preview-costreamer-name"
+                      style={{
+                        flexGrow: 1,
+                        fontSize: "1.1rem",
+                        color: "inherit",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      {username}
+                    </div>
+                    {/* Co-streamer Viewer count */}
+                    <div
+                      className="trubbel-sidebar-preview-costreamer-viewers"
+                      style={{
+                        fontSize: "1.1rem",
+                        color: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flexShrink: 0
+                      }}
+                    >
+                      {costreamer.stream && costreamer.stream.viewersCount != null ? [
+                        <span
+                          key="indicator"
+                          className="trubbel-sidebar-preview-costreamer-online-indicator"
+                          style={{
+                            display: "inline-block",
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: "#eb0400",
+                            marginRight: "4px"
+                          }}
+                        />,
+                        formatNumber(costreamer.stream.viewersCount)
+                      ] : "offline"}
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Remaining Co-streamers Summary */}
+              {costreamersRemaining > 0 && (
+                <div
+                  className="trubbel-sidebar-preview-costreamers-remaining"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "1.1rem"
+                  }}
+                >
+                  <div style={{ flexGrow: 1, fontWeight: 600 }}>
+                    + {formatNumber(costreamersRemaining)} more co-streamer{costreamersRemaining !== 1 ? "s" : ""}
+                  </div>
+                  {costreamersRemainingViewers > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flexShrink: 0
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: "#eb0400",
+                          marginRight: "4px"
+                        }}
+                      />
+                      {formatNumber(costreamersRemainingViewers)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Sponsorship Preview */}
         {showSponsorship && sponsorshipData && sponsorshipData.brandName && (
           <div
@@ -786,6 +1263,45 @@ export class SidebarPreviews {
             Sponsored by {sponsorshipData.brandName}
           </div>
         )}
+
+        {/* Watch Streak Preview */}
+        {showWatchStreak && watchStreakData && (
+          <div
+            className="trubbel-sidebar-preview-watchstreak"
+            style={{
+              padding: "4px 8px",
+              fontSize: "1.2rem",
+              color: `${this.settings.get("addon.trubbel.twilight.sidebar.preview.tooltip_text")}`,
+              width: "100%",
+              boxSizing: "border-box",
+              overflow: "hidden",
+              borderTop: `1px solid ${this.settings.get("addon.trubbel.twilight.sidebar.preview.tooltip_border")}`,
+              display: "flex",
+              alignItems: "center"
+            }}
+          >
+            <svg
+              viewBox="0 0 18 18"
+              fill="none"
+              width="14"
+              height="14"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              style={{
+                flexShrink: 0,
+                marginRight: "6px"
+              }}
+            >
+              <path
+                fill-rule="evenodd"
+                d="M11 4.5L9 2L4.80069 6.8992C3.63871 8.25484 3 9.98143 3 11.7669C3 15.2094 5.79065 18 9.23308 18H10.8803C14.2601 18 17 15.2601 17 11.8803C17 10.0192 16.3475 8.21702 15.1561 6.78728L12 3L11 4.5ZM6.3192 8.20078L9 5L11 7.5L12 6L13.6196 8.06765C14.5115 9.13795 15 10.4871 15 11.8803C15 13.965 13.4516 15.688 11.4421 15.962C11.7975 15.4931 12 14.9133 12 14.3028C12 13.7831 11.8231 13.2789 11.4985 12.8731L10 11L8.50148 12.8731C8.17686 13.2789 8 13.7831 8 14.3028C8 14.9057 8.19744 15.4786 8.5446 15.9443C6.53418 15.6155 5 13.8704 5 11.7669C5 10.4589 5.46792 9.19394 6.3192 8.20078Z"
+                clip-rule="evenodd"
+                fill="#FFB31A"
+              />
+            </svg>
+            Watch Streak {formatNumber(watchStreakData.value)}
+          </div>
+        )}
       </div>
     );
 
@@ -796,14 +1312,18 @@ export class SidebarPreviews {
       this.uptimeUpdateInterval = setInterval(this.updateUptimeDisplay, 1000);
     }
 
-    document.addEventListener("keydown", this.handleKeyDown = (e) => {
+    on(document, "keydown", this.handleKeyDown = (e) => {
       if (e.key === "Escape" && this.previewPopup) {
         this.hidePreview();
       }
     });
+
+    if (this.shiftHeld) this.lockPreview();
   }
 
   hidePreview() {
+    this.releaseLock();
+
     if (this.previewPopup) {
       this.previewPopup.remove();
       this.previewPopup = null;
@@ -821,33 +1341,14 @@ export class SidebarPreviews {
 
     this.currentUptimeData = null;
     this.currentHoverCard = null;
+    this.currentLogin = null;
   }
 
-  clearSidebar(el) {
-    try {
-      const cards = el.querySelectorAll(".side-nav-card");
-      if (cards.length > 0) {
-        for (const card of cards) {
-          if (card._stream_processed) {
-            if (card._mouseEnterHandler) {
-              off(card, "mouseenter", card._mouseEnterHandler);
-              delete card._mouseEnterHandler;
-            }
+  clearSidebar() {
+    this.clearHoverTimeout();
+    this.clearPrefetchTimeout();
+    this.hoverCard = null;
 
-            if (card._mouseLeaveHandler) {
-              off(card, "mouseleave", card._mouseLeaveHandler);
-              delete card._mouseLeaveHandler;
-            }
-
-            delete card._stream_processed;
-            delete card._stream_meta;
-          }
-        }
-      }
-    } catch (err) {
-      this.log.error("[Sidebar Preview] Error in clearSidebar:", err);
-    }
-
-    this.hidePreview();
+    if (!this.locked) this.hidePreview();
   }
 }
