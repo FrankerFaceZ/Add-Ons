@@ -17,7 +17,6 @@ export class SidebarPreviews {
     this.previewPopup = null;
     this.currentHoverCard = null;
     this.hoverTimeout = null;
-    this.uptimeUpdateInterval = null;
     this.currentUptimeData = null;
     this.handleKeyDown = null;
 
@@ -72,13 +71,11 @@ export class SidebarPreviews {
     }
 
     this.log.info("[Sidebar Previews] Disabling sidebar previews functionality");
-
     off(document, "mouseover", this.onMouseOver);
     off(document, "mouseout", this.onMouseOut);
     off(window, "keydown", this.onKeyDown);
     off(window, "keyup", this.onKeyUp);
     off(window, "blur", this.onWindowBlur);
-
     this.shiftHeld = false;
     this.clearHoverTimeout();
     this.clearPrefetchTimeout();
@@ -126,7 +123,7 @@ export class SidebarPreviews {
   }
 
   prefetchUptimes(el) {
-    if (!this.settings.get("addon.trubbel.twilight.sidebar.preview.show_uptime")) return;
+    if (!this.getUptimePosition()) return;
 
     for (const card of el.querySelectorAll(".side-nav-card")) {
       if (card.parentElement?.closest(".side-nav-card")) continue;
@@ -365,6 +362,11 @@ export class SidebarPreviews {
     return Math.round(width / aspectRatio);
   }
 
+  getUptimePosition() {
+    const value = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_uptime");
+    return ["top-left", "top-right", "bottom-right", "bottom-left"].includes(value) ? value : null;
+  }
+
   calculateUptime(createdAt) {
     if (!createdAt) return null;
 
@@ -464,7 +466,6 @@ export class SidebarPreviews {
     }
 
     this.log.info("[Sidebar Preview] props:", props);
-
     const login = props.userLogin.toLowerCase();
     this.currentLogin = login;
 
@@ -555,6 +556,7 @@ export class SidebarPreviews {
     const watchStreakData = props?.watchStreak;
 
     const quality = this.settings.get("addon.trubbel.twilight.sidebar.preview.quality");
+    const previewType = this.settings.get("addon.trubbel.twilight.sidebar.preview.type");
     const muted = !this.settings.get("addon.trubbel.twilight.sidebar.preview.audio");
     const showTitle = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_title");
     const showCategory = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_category");
@@ -562,7 +564,8 @@ export class SidebarPreviews {
     const showHypeTrain = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_hype_train");
     const showDiscount = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_gift_discount");
     const showGuests = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_guests");
-    const showUptime = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_uptime");
+    const uptimePosition = this.getUptimePosition();
+    const showUptime = !!uptimePosition;
     const showSponsorship = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_sponsorship");
     const showWatchStreak = this.settings.get("addon.trubbel.twilight.sidebar.preview.show_watch_streak");
 
@@ -581,9 +584,6 @@ export class SidebarPreviews {
           if (!data || this.currentLogin !== login || !this.previewPopup) return;
           this.currentUptimeData = data;
           this.updateUptimeDisplay();
-          if (!this.uptimeUpdateInterval) {
-            this.uptimeUpdateInterval = setInterval(this.updateUptimeDisplay, 1000);
-          }
         });
       }
     }
@@ -599,8 +599,7 @@ export class SidebarPreviews {
       quality: quality,
       muted: muted,
       volume: localStorage.getItem("volume"),
-      controls: false,
-      disable_frankerfacez: true
+      controls: false
     });
     const playerUrl = `https://player.twitch.tv/?${params}`;
 
@@ -669,48 +668,72 @@ export class SidebarPreviews {
             position: "relative"
           }}
         >
-          <iframe
-            src={playerUrl}
-            style={{
-              width: "100%",
-              height: "100%",
-              border: 0,
-              display: "block",
-              backgroundColor: "black"
-            }}
-            allow="autoplay; fullscreen"
-            frameBorder="0"
-          />
+          {previewType === "image" ? (
+            <img
+              src={`https://static-cdn.jtvnw.net/previews-ttv/live_user_${login}-${width > 640 ? "1280x720" : "640x360"}.jpg?t=${Math.floor(Date.now() / 60000)}`}
+              alt={`${props.userLogin} preview`}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                backgroundColor: "black"
+              }}
+            />
+          ) : (
+            <iframe
+              src={playerUrl}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: 0,
+                display: "block",
+                backgroundColor: "black"
+              }}
+              allow="autoplay; fullscreen"
+              frameBorder="0"
+            />
+          )}
 
           {/* Uptime Preview */}
           {showUptime && (
             <div
               className="trubbel-sidebar-preview-uptime"
               style={{
-                position: "absolute",
-                bottom: "8px",
-                right: "8px",
-                background: "rgba(0, 0, 0, 0.6)",
-                color: "#fff",
-                padding: "4px 6px",
-                borderRadius: "0.2rem",
-                fontSize: "0.9rem",
                 display: uptimeText ? "flex" : "none",
-                alignItems: "center",
-                gap: "4px",
+                pointerEvents: "none",
+                position: "absolute",
+                margin: "1rem",
+                ...(uptimePosition.startsWith("top") ? { top: "0px" } : { bottom: "0px" }),
+                ...(uptimePosition.endsWith("left") ? { left: "0px" } : { right: "0px" })
               }}
             >
-              <figure
-                className="ffz-i-clock"
-                style={{
-                  width: "1em",
-                  color: "#ff8280",
-                  flexShrink: 0
-                }}
-              />
-              <span className="trubbel-sidebar-preview-uptime-text">
-                {uptimeText || "Loading..."}
-              </span>
+              <div style={{
+                padding: "0px 0.4rem",
+                display: "flex",
+                MozBoxAlign: "center",
+                alignItems: "center",
+                MozBoxPack: "center",
+                justifyContent: "center",
+                background: "var(--color-background-overlay-alt)",
+                color: "var(--color-text-overlay)",
+                fontSize: "var(--font-size-4)",
+                borderRadius: "var(--border-radius-small)"
+              }}>
+                <span
+                  style={{
+                    whiteSpace: "nowrap",
+                    lineHeight: "var(--line-height-body)"
+                  }}
+                >
+                  <figure className="ffz-i-clock" style={{
+                    display: "inline-block",
+                  }} />
+                  <span className="trubbel-sidebar-preview-uptime-text">
+                    {uptimeText || "Loading..."}
+                  </span>
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -1308,10 +1331,6 @@ export class SidebarPreviews {
     document.body.appendChild(this.previewPopup);
     this.positionPreview(card);
 
-    if (showUptime && this.currentUptimeData) {
-      this.uptimeUpdateInterval = setInterval(this.updateUptimeDisplay, 1000);
-    }
-
     on(document, "keydown", this.handleKeyDown = (e) => {
       if (e.key === "Escape" && this.previewPopup) {
         this.hidePreview();
@@ -1332,11 +1351,6 @@ export class SidebarPreviews {
         off(document, "keydown", this.handleKeyDown);
         this.handleKeyDown = null;
       }
-    }
-
-    if (this.uptimeUpdateInterval) {
-      clearInterval(this.uptimeUpdateInterval);
-      this.uptimeUpdateInterval = null;
     }
 
     this.currentUptimeData = null;

@@ -33,11 +33,27 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
       }
     });
 
+    // Twilight - Sidebar - Preview - Preview Type
+    this.settings.add("addon.trubbel.twilight.sidebar.preview.type", {
+      default: "video",
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
+        title: "Preview Type",
+        description: "**Video** shows a live player.\n\n**Image** shows a thumbnail of the stream instead, which is lighter and has no sound or content warnings.",
+        component: "setting-select-box",
+        data: [
+          { title: "Video (Live Player)", value: "video" },
+          { title: "Image (Thumbnail)", value: "image" }
+        ]
+      }
+    });
+
     // Twilight - Sidebar - Preview - Preview Delay
     this.settings.add("addon.trubbel.twilight.sidebar.preview.delay", {
       default: 500,
       ui: {
-        sort: 1,
+        sort: 2,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Preview Delay",
         description: "How long to hover before showing the preview (in milliseconds). Use `0` for no delay.",
@@ -55,7 +71,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.size", {
       default: 480,
       ui: {
-        sort: 2,
+        sort: 3,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Preview Size",
         description: "Adjust the size of the preview popup.",
@@ -72,7 +88,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.audio", {
       default: false,
       ui: {
-        sort: 3,
+        sort: 4,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Enable Audio for Previews",
         description: "Please keep in mind that this is using your default volume for streams. Some streams may be loud.",
@@ -84,7 +100,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.quality", {
       default: "160p30",
       ui: {
-        sort: 4,
+        sort: 5,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Preview Quality",
         component: "setting-select-box",
@@ -103,12 +119,20 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
 
     // Twilight - Sidebar - Preview - Show Stream Uptime
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_uptime", {
-      default: false,
+      default: "disabled",
       ui: {
-        sort: 5,
+        sort: 6,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Stream Uptime",
-        component: "setting-check-box"
+        description: "Where to show the stream uptime on the preview.",
+        component: "setting-select-box",
+        data: [
+          { title: "Disabled", value: "disabled" },
+          { title: "Top Left", value: "top-left" },
+          { title: "Top Right", value: "top-right" },
+          { title: "Bottom Right", value: "bottom-right" },
+          { title: "Bottom Left", value: "bottom-left" }
+        ]
       },
       changed: () => {
         this.Sidebar.each(el => this.sidebarManager.onSidebarUpdate(el));
@@ -119,7 +143,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_title", {
       default: false,
       ui: {
-        sort: 5,
+        sort: 7,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Stream Title",
         description: "Display the stream title below the preview.",
@@ -131,7 +155,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_category", {
       default: false,
       ui: {
-        sort: 6,
+        sort: 8,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Stream Category",
         description: "Display the stream category below the preview.",
@@ -143,7 +167,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_viewer_count", {
       default: false,
       ui: {
-        sort: 7,
+        sort: 9,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Viewer Count",
         description: "Display the viewer count below the preview.",
@@ -155,7 +179,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_hype_train", {
       default: false,
       ui: {
-        sort: 8,
+        sort: 10,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Hype Train",
         description: "Display hype train information when available.",
@@ -167,7 +191,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_gift_discount", {
       default: false,
       ui: {
-        sort: 9,
+        sort: 11,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Gift Discount",
         description: "Display gift discount information when available.",
@@ -179,7 +203,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_guests", {
       default: false,
       ui: {
-        sort: 10,
+        sort: 12,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Stream Guests",
         description: "Display guest information when available.",
@@ -191,7 +215,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_sponsorship", {
       default: false,
       ui: {
-        sort: 11,
+        sort: 13,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Sponsorship",
         description: "Display sponsorship information when available.",
@@ -203,7 +227,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_costreamers", {
       default: 0,
       ui: {
-        sort: 12,
+        sort: 14,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Co-streamers",
         description: "Display co-streaming watch party participants when available.",
@@ -222,7 +246,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.show_watch_streak", {
       default: false,
       ui: {
-        sort: 13,
+        sort: 15,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Show Watch Streak",
         description: "Display your watch streak for the channel when available.",
@@ -234,7 +258,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.tooltip_background", {
       default: "#1f1f23",
       ui: {
-        sort: 14,
+        sort: 16,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Tooltip background",
         component: "setting-color-box",
@@ -246,7 +270,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.tooltip_title", {
       default: "#dedee3",
       ui: {
-        sort: 15,
+        sort: 17,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Tooltip title",
         component: "setting-color-box",
@@ -258,7 +282,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.tooltip_text", {
       default: "#adadb8",
       ui: {
-        sort: 16,
+        sort: 18,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Tooltip text",
         component: "setting-color-box",
@@ -270,7 +294,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.tooltip_border", {
       default: "#26262c",
       ui: {
-        sort: 17,
+        sort: 19,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Tooltip border",
         component: "setting-color-box",
@@ -282,7 +306,7 @@ export class Twilight_Sidebar extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.twilight.sidebar.preview.hide_native_tooltips", {
       default: false,
       ui: {
-        sort: 18,
+        sort: 20,
         path: "Add-Ons > Trubbel\u2019s Utilities > Overall > Sidebar >> Preview",
         title: "Hide native sidebar tooltips",
         description: "This is recommended to be enabled.",
