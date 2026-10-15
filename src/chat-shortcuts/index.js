@@ -1,12 +1,13 @@
 'use strict';
 
 import { parseShortcuts, findExact, findMatches } from './matcher.js';
+import { buildPreview } from './preview.js';
 
 const KeyHandler = Symbol('ChatShortcutsKeyHandler');
 const OriginalMatches = Symbol('ChatShortcutsOriginalMatches');
+const FFZCacheKey = Symbol('ChatShortcutsFFZCacheKey');
 
 const DEFAULT_PREFIX = ';';
-const PREVIEW_LENGTH = 60;
 
 class ChatShortcuts extends Addon {
 	constructor(...args) {
@@ -154,7 +155,7 @@ class ChatShortcuts extends Addon {
 
 		provider.getMatches = function(input, ...rest) {
 			try {
-				const items = t.getSuggestions(input);
+				const items = t.getSuggestions(input, this);
 				if ( items )
 					return items;
 			} catch(err) {
@@ -211,7 +212,7 @@ class ChatShortcuts extends Addon {
 
 	// Autocomplete menu
 
-	getSuggestions(input) {
+	getSuggestions(input, provider) {
 		const prefix = this.prefix;
 		if ( typeof input !== 'string' || ! input.startsWith(prefix) || input.length <= prefix.length )
 			return null;
@@ -220,24 +221,80 @@ class ChatShortcuts extends Addon {
 		if ( ! matches.length )
 			return null;
 
+		let lookup = null;
+		try {
+			lookup = this.getEmoteLookup(provider);
+		} catch(err) {
+			this.log.error('Unable to build emote lookup for previews.', err);
+		}
+
 		return matches.map(match => ({
 			current: input,
 			replacement: match.text,
-			element: this.renderSuggestion(prefix + match.name, match.text)
+			element: this.renderSuggestion(prefix + match.name, match.text, lookup)
 		}));
 	}
 
-	renderSuggestion(token, text) {
+	// Map of emote name -> srcSet from the tab-completion caches FFZ keeps on the
+	// emote provider, building them with FFZ's own functions if FFZ hasn't yet.
+	// FFZ nulls its caches when emotes change; we additionally track the channel
+	// ourselves since FFZ's cache objects don't record it. Twitch emotes win name
+	// clashes, as in chat.
+	getEmoteLookup(provider) {
+		if ( ! provider )
+			return null;
+
+		const input = this.input;
+
+		let twitch = provider.ffz_twitch_cache;
+		if ( twitch?.length !== provider.props?.emotes?.length )
+			twitch = provider.ffz_twitch_cache = input.buildTwitchCache(provider.props?.emotes);
+
+		const user = provider._ffz_user,
+			channel_id = provider._ffz_channel_id,
+			channel_login = provider._ffz_channel_login;
+
+		const ffz_key = `${user?.id}|${user?.login}|${channel_id}|${channel_login}`;
+
+		let ffz = provider.ffz_ffz_cache;
+		if ( channel_login && (! ffz || provider[FFZCacheKey] !== ffz_key) ) {
+			ffz = provider.ffz_ffz_cache = input.buildFFZCache(user?.id, user?.login, channel_id, channel_login);
+			provider[FFZCacheKey] = ffz_key;
+		}
+
+		if ( this._lookup && this._lookup_twitch === twitch && this._lookup_ffz === ffz )
+			return this._lookup;
+
+		const lookup = new Map;
+		for(const cache of [twitch, ffz])
+			for(const emote of cache?.emotes ?? [])
+				if ( emote?.token && emote.srcSet && ! lookup.has(emote.token) )
+					lookup.set(emote.token, emote.srcSet);
+
+		this._lookup = lookup;
+		this._lookup_twitch = twitch;
+		this._lookup_ffz = ffz;
+		return lookup;
+	}
+
+	renderSuggestion(token, text, lookup) {
 		const createElement = this.site.getReact()?.createElement;
 		if ( ! createElement )
 			return token;
 
-		const preview = text.length > PREVIEW_LENGTH
-			? `${text.slice(0, PREVIEW_LENGTH - 1)}…`
-			: text;
+		const segments = buildPreview(text, lookup).map((seg, idx) => seg.emote
+			? createElement('img', {
+				key: idx,
+				srcSet: seg.srcSet,
+				alt: seg.emote,
+				title: seg.emote,
+				style: { height: '2rem', verticalAlign: 'middle' }
+			})
+			: createElement('span', { key: idx }, seg.text)
+		);
 
 		const name = createElement('span', { className: 'tw-semibold tw-flex-shrink-0 tw-mg-r-1' }, token),
-			body = createElement('span', { className: 'tw-c-text-alt-2 tw-ellipsis' }, preview);
+			body = createElement('span', { className: 'tw-c-text-alt-2 tw-ellipsis' }, ...segments);
 
 		return createElement('div', {
 			className: 'tw-ellipsis tw-flex tw-align-items-center tw-pd-05',
