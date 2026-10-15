@@ -1,11 +1,14 @@
 'use strict';
 
-import { parseShortcuts, findExact, findMatches } from './matcher.js';
+import { parseShortcuts, findMatches, expandAt } from './matcher.js';
 import { buildPreview } from './preview.js';
 
 const KeyHandler = Symbol('ChatShortcutsKeyHandler');
 const OriginalMatches = Symbol('ChatShortcutsOriginalMatches');
 const FFZCacheKey = Symbol('ChatShortcutsFFZCacheKey');
+const LastExpansion = Symbol('ChatShortcutsLastExpansion');
+
+const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
 
 const DEFAULT_PREFIX = ';';
 
@@ -105,6 +108,8 @@ class ChatShortcuts extends Addon {
 				inst[KeyHandler] = null;
 			}
 
+			inst[LastExpansion] = null;
+
 			const provider = this.getEmoteProvider(inst);
 			if ( provider?.[OriginalMatches] ) {
 				provider.getMatches = provider[OriginalMatches];
@@ -170,10 +175,22 @@ class ChatShortcuts extends Addon {
 
 	handleKey(inst, event) {
 		try {
-			const is_space = event.key === ' ',
-				is_tab = event.key === 'Tab';
+			if ( MODIFIER_KEYS.has(event.key) )
+				return;
 
-			if ( ! (is_space || is_tab) || event.ctrlKey || event.altKey || event.metaKey || (is_tab && event.shiftKey) )
+			// Any key other than an immediate Backspace forgets the last expansion.
+			const last = inst[LastExpansion];
+			inst[LastExpansion] = null;
+
+			const plain = ! event.ctrlKey && ! event.altKey && ! event.metaKey;
+			if ( ! plain )
+				return;
+
+			const is_space = event.key === ' ',
+				is_tab = event.key === 'Tab' && ! event.shiftKey,
+				is_backspace = event.key === 'Backspace';
+
+			if ( ! (is_space || is_tab || is_backspace) )
 				return;
 
 			const value = inst.ffzGetValue?.();
@@ -181,33 +198,32 @@ class ChatShortcuts extends Addon {
 			if ( typeof value !== 'string' || start !== end || start == null )
 				return;
 
-			const before = value.slice(0, start),
-				after = value.slice(start),
-				word = /\S+$/.exec(before);
+			if ( is_backspace ) {
+				// Undo: only if the input is still exactly what we produced.
+				if ( last && value === last.to ) {
+					this.applyValue(inst, event, last.from, last.from_caret);
+				}
+				return;
+			}
 
-			if ( ! word )
+			const result = expandAt(value, start, this.prefix, this.shortcuts, is_space);
+			if ( ! result )
 				return;
 
-			const prefix = this.prefix;
-			if ( ! word[0].startsWith(prefix) )
-				return;
-
-			const text = findExact(this.shortcuts, word[0].slice(prefix.length));
-			if ( text == null )
-				return;
-
-			const pad = is_space && ! /^\s/.test(after) ? ' ' : '',
-				head = before.slice(0, word.index) + text + pad;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			inst.autocompleteInputRef.setValue(head + after);
-			inst.ffzSetSelection?.(head.length, head.length);
+			this.applyValue(inst, event, result.value, result.caret);
+			inst[LastExpansion] = { from: value, from_caret: start, to: result.value };
 
 		} catch(err) {
-			this.log.error('Error expanding shortcut.', err);
+			this.log.error('Error handling shortcut key.', err);
 		}
+	}
+
+	applyValue(inst, event, value, caret) {
+		event.preventDefault();
+		event.stopPropagation();
+
+		inst.autocompleteInputRef.setValue(value);
+		inst.ffzSetSelection?.(caret, caret);
 	}
 
 	// Autocomplete menu
@@ -233,6 +249,22 @@ class ChatShortcuts extends Addon {
 			replacement: match.text,
 			element: this.renderSuggestion(prefix + match.name, match.text, lookup)
 		}));
+	}
+
+	// Emote lookup for the settings editor's previews, from whichever chat input
+	// is currently mounted. Null when no chat is open.
+	getPreviewLookup() {
+		try {
+			for(const inst of this.input.ChatInput.instances) {
+				const provider = this.getEmoteProvider(inst);
+				if ( provider )
+					return this.getEmoteLookup(provider);
+			}
+		} catch(err) {
+			this.log.error('Unable to build emote lookup for the editor.', err);
+		}
+
+		return null;
 	}
 
 	// Map of emote name -> srcSet from the tab-completion caches FFZ keeps on the
