@@ -17,7 +17,8 @@ class ChatShortcuts extends Addon {
 		this.inject('site.fine');
 		this.inject('site.chat.input');
 
-		this.shortcuts = [];
+		this._raw_list = undefined;
+		this._shortcuts = [];
 
 		this.settings.add('addon.chat-shortcuts.prefix', {
 			default: DEFAULT_PREFIX,
@@ -29,9 +30,10 @@ class ChatShortcuts extends Addon {
 			}
 		});
 
+		// Written by shortcut-list-editor.vue directly on the provider (global, not
+		// per-profile), so it must be read with provider.get(), not settings.get().
 		this.settings.add('addon.chat-shortcuts.list', {
-			default: [],
-			changed: () => this.loadShortcuts()
+			default: []
 		});
 
 		this.settings.addUI('addon.chat-shortcuts.list-editor', {
@@ -41,8 +43,6 @@ class ChatShortcuts extends Addon {
 	}
 
 	onEnable() {
-		this.loadShortcuts();
-
 		this.input.ChatInput.on('mount', this.install, this);
 		this.input.ChatInput.on('update', this.install, this);
 		this.input.ChatInput.ready((cls, instances) => {
@@ -59,8 +59,16 @@ class ChatShortcuts extends Addon {
 			this.uninstall(inst);
 	}
 
-	loadShortcuts() {
-		this.shortcuts = parseShortcuts(this.settings.get('addon.chat-shortcuts.list'));
+	// The provider only emits 'changed' for other tabs, so read on demand and
+	// re-parse only when the stored array changes.
+	get shortcuts() {
+		const raw = this.settings.provider.get('addon.chat-shortcuts.list');
+		if ( raw !== this._raw_list ) {
+			this._raw_list = raw;
+			this._shortcuts = parseShortcuts(raw);
+		}
+
+		return this._shortcuts;
 	}
 
 	get prefix() {
