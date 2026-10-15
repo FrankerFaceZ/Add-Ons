@@ -292,7 +292,8 @@ class ChatShortcuts extends Addon {
 			limit: get('chat.tab-complete.limit-results') ? 25 : null,
 			preferFavorites: !! get('chat.tab-complete.prioritize-favorites'),
 			prioritizePrefix: !! get('chat.tab-complete.prioritize-prefix-matches'),
-			withoutColon: !! get('chat.tab-complete.emotes-without-colon')
+			withoutColon: !! get('chat.tab-complete.emotes-without-colon'),
+			showSource: get('chat.tab-complete.show-source') || 0
 		};
 	}
 

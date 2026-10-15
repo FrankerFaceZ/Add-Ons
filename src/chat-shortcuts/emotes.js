@@ -116,3 +116,17 @@ export function emoteQuery(value, caret, { withoutColon = false, pressedTab = fa
 
 	return null;
 }
+
+// Label for an emote's origin, following FFZ's chat.tab-complete.show-source
+// setting: 0 = none, 1 = short provider name, 2 = channel / set name.
+export function sourceLabel(entry, mode) {
+	if ( ! mode )
+		return null;
+
+	const source = entry?.source,
+		short = typeof source === 'string' && source.startsWith('twitch')
+			? 'Twitch'
+			: source === 'ffz' ? 'FFZ' : (source || null);
+
+	return mode === 2 ? (entry?.extra || short) : short;
+}

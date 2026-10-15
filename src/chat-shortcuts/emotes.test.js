@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { emoteMatchType, findEmotes, buildEmoteIndex, emoteQuery, MATCH } from './emotes.js';
+import { emoteMatchType, findEmotes, buildEmoteIndex, emoteQuery, sourceLabel, MATCH } from './emotes.js';
 
 const e = (token, extra = {}) => ({ token, srcSet: `${token}.png 1x`, source: 'ffz', ...extra });
 
@@ -102,4 +102,30 @@ test('emoteQuery ignores bare words unless no-colon tab completion applies', () 
 
 test('emoteQuery only considers the word ending at the caret', () => {
 	assert.equal(emoteQuery(':kek x', 6), null);
+});
+
+// sourceLabel — mirrors FFZ's chat.tab-complete.show-source (0 off, 1 short, 2 long)
+
+test('sourceLabel returns null when show-source is disabled', () => {
+	assert.equal(sourceLabel(e('x', { source: 'BTTV' }), 0), null);
+});
+
+test('sourceLabel short mode names the provider', () => {
+	assert.equal(sourceLabel(e('x', { source: 'ffz' }), 1), 'FFZ');
+	assert.equal(sourceLabel(e('x', { source: 'BTTV' }), 1), 'BTTV');
+	assert.equal(sourceLabel(e('x', { source: 'twitch-123' }), 1), 'Twitch');
+});
+
+test('sourceLabel long mode uses the channel or set name', () => {
+	assert.equal(sourceLabel(e('x', { source: 'twitch-123', extra: 'nofairy' }), 2), 'nofairy');
+	assert.equal(sourceLabel(e('x', { source: 'BTTV', extra: 'BetterTTV Channel Emotes' }), 2), 'BetterTTV Channel Emotes');
+});
+
+test('sourceLabel long mode falls back to the short label', () => {
+	assert.equal(sourceLabel(e('x', { source: 'twitch-global' }), 2), 'Twitch');
+});
+
+test('buildEmoteIndex keeps extra for long labels', () => {
+	const { entries } = buildEmoteIndex([{ emotes: [e('x', { extra: 'nofairy' })] }]);
+	assert.equal(entries[0].extra, 'nofairy');
 });

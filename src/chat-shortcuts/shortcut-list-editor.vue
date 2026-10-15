@@ -62,7 +62,7 @@
 								class="tw-mg-r-1"
 							>
 							<span class="tw-flex-grow-1 tw-ellipsis">{{ emote.token }}</span>
-							<span class="tw-c-text-alt-2 tw-font-size-7 tw-mg-l-1">{{ sourceLabel(emote) }}</span>
+							<span v-if="label(emote)" class="tw-c-text-alt-2 tw-font-size-7 tw-mg-l-1">{{ label(emote) }}</span>
 						</div>
 					</div>
 				</div>
@@ -114,7 +114,7 @@
 <script>
 import { validateShortcuts } from './matcher.js';
 import { buildPreview } from './preview.js';
-import { findEmotes, emoteQuery } from './emotes.js';
+import { findEmotes, emoteQuery, sourceLabel } from './emotes.js';
 
 const KEY = 'addon.chat-shortcuts.list';
 
@@ -168,10 +168,8 @@ export default {
 			return buildPreview(text, this.lookup);
 		},
 
-		sourceLabel(item) {
-			if ( isTwitch(item) )
-				return 'Twitch';
-			return item.source === 'ffz' ? 'FFZ' : item.source;
+		label(emote) {
+			return sourceLabel(emote, this.options.showSource);
 		},
 
 		// Emote autocomplete
