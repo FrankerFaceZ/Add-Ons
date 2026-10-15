@@ -1,0 +1,13 @@
+{
+	"enabled": false,
+	"requires": [],
+
+	"version": "0.1.0",
+
+	"short_name": "Shortcuts",
+	"name": "Chat Shortcuts",
+	"author": "abodnar",
+	"description": "Define shortcuts like ;gg that expand into text in the chat input. Expand inline with Space or Tab, or pick from the autocomplete menu. Nothing is ever sent automatically.",
+
+	"settings": "add_ons.chat_shortcuts"
+}
