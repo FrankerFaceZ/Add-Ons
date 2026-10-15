@@ -2,6 +2,7 @@
 
 import { parseShortcuts, findMatches, expandAt } from './matcher.js';
 import { buildPreview } from './preview.js';
+import { buildEmoteIndex } from './emotes.js';
 
 const KeyHandler = Symbol('ChatShortcutsKeyHandler');
 const OriginalMatches = Symbol('ChatShortcutsOriginalMatches');
@@ -239,7 +240,7 @@ class ChatShortcuts extends Addon {
 
 		let lookup = null;
 		try {
-			lookup = this.getEmoteLookup(provider);
+			lookup = this.getEmoteIndex(provider)?.lookup ?? null;
 		} catch(err) {
 			this.log.error('Unable to build emote lookup for previews.', err);
 		}
@@ -251,28 +252,56 @@ class ChatShortcuts extends Addon {
 		}));
 	}
 
-	// Emote lookup for the settings editor's previews, from whichever chat input
-	// is currently mounted. Null when no chat is open.
-	getPreviewLookup() {
+	// Emotes for the settings editor: the open chat's (Twitch + channel) if any,
+	// otherwise the user's global and personal FFZ/BTTV/7TV sets. Twitch emotes are
+	// only known while a chat is mounted. Returns {entries, lookup} or null.
+	getEditorEmotes() {
 		try {
 			for(const inst of this.input.ChatInput.instances) {
 				const provider = this.getEmoteProvider(inst);
 				if ( provider )
-					return this.getEmoteLookup(provider);
+					return this.getEmoteIndex(provider);
 			}
+
+			const user = this.site.getUser?.(),
+				key = `${user?.id}|${user?.login}`;
+
+			if ( ! this._global_cache || this._global_key !== key ) {
+				this._global_cache = this.input.buildFFZCache(user?.id, user?.login, null, null);
+				this._global_key = key;
+			}
+
+			return buildEmoteIndex([this._global_cache]);
+
 		} catch(err) {
-			this.log.error('Unable to build emote lookup for the editor.', err);
+			this.log.error('Unable to build emotes for the editor.', err);
 		}
 
 		return null;
 	}
 
-	// Map of emote name -> srcSet from the tab-completion caches FFZ keeps on the
-	// emote provider, building them with FFZ's own functions if FFZ hasn't yet.
+	// The user's FFZ tab-completion settings, for the editor's emote autocomplete.
+	getEmoteCompletionOptions() {
+		const get = key => this.settings.get(key),
+			enabled = get('chat.emotes.enabled');
+
+		return {
+			twitch: !! enabled,
+			ffz: enabled > 1 && !! get('chat.tab-complete.ffz-emotes'),
+			matching: get('chat.tab-complete.matching') || 1,
+			limit: get('chat.tab-complete.limit-results') ? 25 : null,
+			preferFavorites: !! get('chat.tab-complete.prioritize-favorites'),
+			prioritizePrefix: !! get('chat.tab-complete.prioritize-prefix-matches'),
+			withoutColon: !! get('chat.tab-complete.emotes-without-colon')
+		};
+	}
+
+	// Emote index ({entries, lookup}) from the tab-completion caches FFZ keeps on
+	// the emote provider, building them with FFZ's own functions if FFZ hasn't yet.
 	// FFZ nulls its caches when emotes change; we additionally track the channel
 	// ourselves since FFZ's cache objects don't record it. Twitch emotes win name
 	// clashes, as in chat.
-	getEmoteLookup(provider) {
+	getEmoteIndex(provider) {
 		if ( ! provider )
 			return null;
 
@@ -294,19 +323,13 @@ class ChatShortcuts extends Addon {
 			provider[FFZCacheKey] = ffz_key;
 		}
 
-		if ( this._lookup && this._lookup_twitch === twitch && this._lookup_ffz === ffz )
-			return this._lookup;
+		if ( this._index && this._index_twitch === twitch && this._index_ffz === ffz )
+			return this._index;
 
-		const lookup = new Map;
-		for(const cache of [twitch, ffz])
-			for(const emote of cache?.emotes ?? [])
-				if ( emote?.token && emote.srcSet && ! lookup.has(emote.token) )
-					lookup.set(emote.token, emote.srcSet);
-
-		this._lookup = lookup;
-		this._lookup_twitch = twitch;
-		this._lookup_ffz = ffz;
-		return lookup;
+		this._index = buildEmoteIndex([twitch, ffz]);
+		this._index_twitch = twitch;
+		this._index_ffz = ffz;
+		return this._index;
 	}
 
 	renderSuggestion(token, text, lookup) {
