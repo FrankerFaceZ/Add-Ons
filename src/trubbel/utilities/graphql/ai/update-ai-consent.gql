@@ -1,0 +1,13 @@
+mutation Trubbel_UpdateAiConsent($input: UpdateAiConsentInput!) {
+  updateAiConsent(input: $input) {
+    aiConsent {
+      isAiTrainingAllowed
+      __typename
+    }
+    error {
+      code
+      __typename
+    }
+    __typename
+  }
+}

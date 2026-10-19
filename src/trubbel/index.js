@@ -20,6 +20,7 @@ import { Directory_Thumbnails } from "./settings/directory/thumbnails";
 import { Inventory_Drops } from "./settings/inventory/drops";
 
 // Twilight
+import { Twilight_AiConsent } from "./settings/twilight/ai-consent";
 import { Twilight_Clips } from "./settings/twilight/clips";
 import { Twilight_Experiments } from "./settings/twilight/experiments";
 import { Twilight_IconFinder } from "./settings/twilight/icon-finder";
@@ -64,6 +65,7 @@ class Trubbel extends Addon {
       this.inject(Inventory_Drops);
 
       // Twilight
+      this.inject(Twilight_AiConsent);
       this.inject(Twilight_IconFinder);
       this.inject(Twilight_Moderator);
       this.inject(Twilight_Prime);
