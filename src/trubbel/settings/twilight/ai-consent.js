@@ -198,20 +198,20 @@ export class Twilight_AiConsent extends FrankerFaceZ.utilities.module.Module {
           this.disableAiTraining(button, status);
         }}
       >
-        Disable AI training
+        Disable AI Generative Training
       </button>
     );
 
     return (
       <div className="tw-pd-1" style={{ width: "30rem" }}>
         <p className="tw-mg-b-05">
-          <strong>AI training is enabled.</strong>
+          <strong>AI Generative Training is enabled.</strong>
         </p>
         <p className="tw-mg-b-05">
-          Twitch is collecting your data to train AI without your consent.
+          Twitch has automatically enabled this setting by default, allowing channel content to be used to train generative AI content models at Amazon.
         </p>
         <p className="tw-c-text-alt-2 tw-mg-b-1" style={{ fontSize: "1.2rem" }}>
-          You can turn it off under <strong>Settings</strong> → <strong>Security and Privacy</strong> → <strong>Training for Generative AI</strong>, or just click the button below.
+          You can opt out under <strong>Settings</strong> → <strong>Security and Privacy</strong> → <strong>Training for Generative AI</strong>, or just click the button below.
         </p>
         {button}
         {status}
