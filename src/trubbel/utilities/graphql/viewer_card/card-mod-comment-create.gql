@@ -1,0 +1,12 @@
+mutation Trubbel_CreateModComment($input: CreateModeratorCommentInput!) {
+  createModeratorComment(input: $input) {
+    comment {
+      id
+      timestamp
+      text
+      isShareable
+      channel { id login }
+      author { id login displayName chatColor }
+    }
+  }
+}

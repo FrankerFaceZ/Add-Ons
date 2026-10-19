@@ -1,0 +1,110 @@
+query Trubbel_ViewerCard(
+  $targetLogin: String!,
+  $channelID: ID,
+  $channelIDStr: String!,
+  $badgeChannelLogin: String!,
+  $hasChannel: Boolean!
+) {
+  targetUser: user(login: $targetLogin, lookupType: ALL) {
+    id
+    login
+    displayName
+    chatColor
+    profileImageURL(width: 600)
+    bannerImageURL
+    primaryColorHex
+    createdAt
+    isModerator(channelID: $channelIDStr)
+    roles {
+      isPartner
+      isStaff
+    }
+    self {
+      canFollow
+      follower {
+        followedAt
+        disableNotifications
+      }
+    }
+    relationship(targetUserID: $channelID) @include(if: $hasChannel) {
+      followedAt
+      subscriptionBenefit {
+        id
+        tier
+        purchasedWithPrime
+        gift {
+          isGift
+          giftDate
+          gifter {
+            id
+            login
+            displayName
+          }
+        }
+      }
+      cumulativeTenure: subscriptionTenure(tenureMethod: CUMULATIVE) {
+        daysRemaining
+        months
+      }
+    }
+    broadcastSettings {
+      id
+      game {
+        id
+        displayName
+      }
+    }
+    stream {
+      id
+      viewersCount
+    }
+  }
+
+  activeTargetUser: user(login: $targetLogin) {
+    id
+  }
+
+  targetStatus: userResultByLogin(login: $targetLogin) {
+    __typename
+    ... on UserDoesNotExist {
+      reason
+    }
+  }
+
+  channelUser: user(id: $channelID) @include(if: $hasChannel) {
+    id
+    login
+    displayName
+    self {
+      isModerator
+    }
+  }
+
+  channel(id: $channelID) @include(if: $hasChannel) {
+    id
+    moderationSettings {
+      canAccessViewerCardModLogs
+    }
+  }
+
+  currentUser {
+    id
+    login
+  }
+
+  channelViewer(userLogin: $targetLogin, channelLogin: $badgeChannelLogin) @include(if: $hasChannel) {
+    id
+    earnedBadges {
+      id
+      setID
+      version
+      title
+      image1x: imageURL(size: NORMAL)
+      image2x: imageURL(size: DOUBLE)
+      image4x: imageURL(size: QUADRUPLE)
+      clickAction
+      clickURL
+      description
+    }
+  }
+}

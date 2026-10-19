@@ -1,0 +1,10 @@
+query Trubbel_AI_Didnt_Consent {
+  currentUser {
+    id
+    aiConsent {
+      isAiTrainingAllowed
+      __typename
+    }
+    __typename
+  }
+}

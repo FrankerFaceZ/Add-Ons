@@ -1,0 +1,25 @@
+query Trubbel_ChatModeratorStrikeStatus($channelID: ID!, $targetUserID: ID!) {
+  chatModeratorStrikeStatus(channelID: $channelID, userID: $targetUserID) {
+    id
+    banDetails {
+      id
+      bannedBy { id displayName login }
+      createdAt
+      reason
+    }
+    timeoutDetails {
+      id
+      timedOutBy { id displayName login }
+      createdAt
+      expiresAt
+      expiresInMs
+      reason
+    }
+    warningDetails {
+      id
+      warnedBy { id displayName login }
+      createdAt
+      reason
+    }
+  }
+}

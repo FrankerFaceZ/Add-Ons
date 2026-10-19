@@ -1,0 +1,6 @@
+query Trubbel_UserHasChannelPermission($channelID: ID!, $userID: ID!, $permission: String!) {
+  channel(id: $channelID) {
+    id
+    hasPermission(userID: $userID, permission: $permission)
+  }
+}

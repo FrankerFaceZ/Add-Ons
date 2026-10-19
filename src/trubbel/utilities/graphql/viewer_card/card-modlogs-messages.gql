@@ -1,0 +1,114 @@
+query Trubbel_ViewerCardModLogsMessagesBySender($channelID: ID!, $senderID: ID!, $cursor: Cursor) {
+  viewerCardModLogs(channelID: $channelID, targetID: $senderID) {
+    messages(first: 50, after: $cursor) {
+      ... on ViewerCardModLogsMessagesConnection {
+        edges {
+          cursor
+          node {
+            ... on ViewerCardModLogsChatMessage {
+              id
+              sentAt
+              content {
+                text
+                fragments {
+                  text
+                  content {
+                    ... on Emote {
+                      emoteID: id
+                      setID
+                      token
+                      __typename
+                    }
+                    ... on User {
+                      id
+                      login
+                      __typename
+                    }
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              isDeleted
+              lastUpdatedBy {
+                id
+                displayName
+              }
+              originatorChannel {
+                id
+                displayName
+                profileImageURL(width: 28)
+                __typename
+              }
+              sender {
+                id
+                login
+                chatColor
+                displayName
+                displayBadges(channelID: $channelID) {
+                  setID
+                  version
+                  title
+                  image1x: imageURL(size: NORMAL)
+                }
+              }
+            }
+            ... on ViewerCardModLogsModActionsMessage {
+              timestamp
+              content {
+                fallbackString
+                localizedStringFragments {
+                  token {
+                    ... on ModActionsLocalizedTextToken {
+                      text
+                      __typename
+                    }
+                    ... on User {
+                      displayName
+                      login
+                      id
+                      __typename
+                    }
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            ... on ViewerCardModLogsCaughtMessage {
+              id
+              status
+              sentAt
+              content {
+                text
+                __typename
+              }
+              sender {
+                id
+                login
+                chatColor
+                displayName
+                displayBadges(channelID: $channelID) {
+                  setID
+                  version
+                  title
+                  image1x: imageURL(size: NORMAL)
+                }
+              }
+              __typename
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+        }
+      }
+      ... on ViewerCardModLogsMessagesError {
+        code
+      }
+    }
+  }
+}

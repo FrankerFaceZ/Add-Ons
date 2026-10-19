@@ -1,0 +1,117 @@
+query Trubbel_ViewerCardModData($channelID: ID!, $targetID: ID!) {
+  chatModeratorStrikeStatus(channelID: $channelID, userID: $targetID) {
+    id
+    banDetails {
+      id
+      bannedBy { id displayName login }
+      createdAt
+      reason
+    }
+    timeoutDetails {
+      id
+      timedOutBy { id displayName login }
+      createdAt
+      expiresAt
+      expiresInMs
+      reason
+    }
+    warningDetails {
+      id
+      warnedBy { id displayName login }
+      createdAt
+      reason
+    }
+  }
+
+  channel(id: $channelID) {
+    id
+    moderationSettings {
+      bansSharingSettings {
+        ... on BansSharingSettings {
+          id
+          isEnabled
+          isModCommentsSharingDisabled
+        }
+      }
+    }
+  }
+
+  viewerCardModLogs(channelID: $channelID, targetID: $targetID) {
+    messages: messages(first: 1000, excludeModActions: true) {
+      ... on ViewerCardModLogsMessagesError { code }
+      ... on ViewerCardModLogsMessagesConnection {
+        count
+        pageInfo { hasNextPage }
+      }
+    }
+
+    bans: targetedActions(first: 99, type: BAN) { ...modLogsTargetedActions }
+    unbans: targetedActions(first: 99, type: UNBAN) { ...modLogsTargetedActions }
+    timeouts: targetedActions(first: 99, type: TIMEOUT) { ...modLogsTargetedActions }
+    untimeouts: targetedActions(first: 99, type: UNTIMEOUT) { ...modLogsTargetedActions }
+    warnings: targetedActions(first: 99, type: WARN) { ...modLogsTargetedActions }
+    warningacknowledgements: targetedActions(first: 99, type: ACKNOWLEDGE_WARNING) { ...modLogsTargetedActions }
+    unbanrequestcreations: targetedActions(first: 99, type: UNBAN_REQUEST_CREATED) { ...modLogsTargetedActions }
+    unbanrequestapprovals: targetedActions(first: 99, type: UNBAN_REQUEST_APPROVED) { ...modLogsTargetedActions }
+    unbanrequestdenials: targetedActions(first: 99, type: UNBAN_REQUEST_DENIED) { ...modLogsTargetedActions }
+
+    comments(first: 100) {
+      ... on ModLogsCommentConnection {
+        pageInfo { hasNextPage }
+        edges {
+          node {
+            id
+            timestamp
+            text
+            isShareable
+            channel { id login primaryColorHex }
+            author { id login displayName chatColor }
+          }
+        }
+      }
+      ... on ModLogsCommentsError { code }
+    }
+    sharedComments(first: 100) {
+      ... on SharedModLogsCommentConnection {
+        pageInfo { hasNextPage }
+        edges {
+          node {
+            id
+            timestamp
+            text
+            isShareable
+            channel { id login primaryColorHex }
+            author { id login displayName chatColor }
+          }
+        }
+      }
+      ... on SharedModLogsCommentsError { code }
+    }
+  }
+}
+
+fragment modLogsTargetedActions on ModLogsTargetedActionsResult {
+  __typename
+  ... on ModLogsTargetedActionsError { code }
+  ... on ModLogsTargetedActionsConnection {
+    count
+    pageInfo { hasNextPage }
+    edges {
+      node {
+        id
+        timestamp
+        type
+        localizedLabel {
+          fallbackString
+          localizedStringFragments {
+            token {
+              __typename
+              ... on User { id login displayName }
+              ... on ModActionsLocalizedTextToken { text }
+            }
+          }
+        }
+      }
+    }
+  }
+}

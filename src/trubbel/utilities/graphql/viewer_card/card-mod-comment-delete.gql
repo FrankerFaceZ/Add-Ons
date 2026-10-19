@@ -1,0 +1,7 @@
+mutation Trubbel_DeleteModComment($input: DeleteModeratorCommentInput!) {
+  deleteModeratorComment(input: $input) {
+    comment {
+      id
+    }
+  }
+}
