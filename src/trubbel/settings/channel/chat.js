@@ -7,6 +7,7 @@ import ChatTranslate from "../../modules/channel/chat/translate";
 import Commands from "../../modules/channel/chat/commands-handler";
 import FirstTimeChatter from "../../modules/channel/chat/ftc";
 import InfoMessage from "../../modules/channel/chat/info-message";
+import InputLatency from "../../modules/channel/chat/input-latency";
 import MessageHighlight from "../../modules/channel/chat/message-highlight";
 import OldClipFormat from "../../modules/channel/chat/old-clip-format";
 import OldViewerList from "../../modules/channel/chat/old-viewer-list";
@@ -77,6 +78,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.customCommands = new Commands(this);
     this.firstTimeChatter = new FirstTimeChatter(this);
     this.infoMessage = new InfoMessage(this);
+    this.inputLatency = new InputLatency(this);
     this.messageHighlight = new MessageHighlight(this);
     this.oldClipFormat = new OldClipFormat(this);
     this.oldViewerList = new OldViewerList(this);
@@ -167,7 +169,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
-    // Channel - Chat - FirstTimeChatter - Show FirstTimeChatter Indicator
+    // Channel - Chat - Input - FirstTimeChatter - Show FirstTimeChatter Indicator
     this.settings.add("addon.trubbel.channel.chat.ftc", {
       default: false,
       requires: ["context.session.user"],
@@ -182,6 +184,19 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.firstTimeChatter.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Input - Latency - Show Stream Latency in Chat Input
+    this.settings.add("addon.trubbel.channel.chat.input.latency_placeholder", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Input >> Latency",
+        title: "Show Stream Latency in Chat Input",
+        description: "Replaces the \"Send a message\" placeholder with the stream's current latency while the chat box is empty.",
+        component: "setting-check-box"
+      },
+      changed: val => this.inputLatency.handleSettingChange(val)
     });
 
 
@@ -1038,6 +1053,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.customCommands.initialize();
     this.firstTimeChatter.initialize();
     this.infoMessage.initialize();
+    this.inputLatency.initialize();
     this.messageHighlight.initialize();
     this.oldClipFormat.initialize();
     this.oldViewerList.initialize();
@@ -1066,6 +1082,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.customCommands.handleNavigation();
     this.firstTimeChatter.handleNavigation();
     this.infoMessage.handleNavigation();
+    this.inputLatency.handleNavigation();
     this.messageHighlight.handleNavigation();
     this.oldClipFormat.handleNavigation();
     this.oldViewerList.handleNavigation();
