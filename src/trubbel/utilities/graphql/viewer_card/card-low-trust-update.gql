@@ -1,0 +1,17 @@
+mutation Trubbel_UpdateLowTrustUserTreatment($input: UpdateLowTrustUserTreatmentInput!) {
+  updateLowTrustUserTreatment(input: $input) {
+    properties {
+      id
+      treatment {
+        type
+        updatedAt
+        updatedBy {
+          id
+          login
+          displayName
+        }
+      }
+    }
+    error
+  }
+}

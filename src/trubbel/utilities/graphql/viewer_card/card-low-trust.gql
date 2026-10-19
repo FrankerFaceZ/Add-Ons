@@ -1,0 +1,14 @@
+query Trubbel_LowTrustUserProperties($channelID: ID!, $targetUserID: ID!) {
+  lowTrustUserProperties(channelID: $channelID, targetUserID: $targetUserID) {
+    id
+    treatment {
+      type
+      updatedAt
+      updatedBy {
+        id
+        login
+        displayName
+      }
+    }
+  }
+}

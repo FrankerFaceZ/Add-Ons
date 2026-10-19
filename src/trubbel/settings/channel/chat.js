@@ -19,14 +19,38 @@ import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import StopEmoteAnimate from "../../modules/channel/chat/stop-emote-animate";
 import StopAutoRotate from "../../modules/channel/chat/leaderboard";
-
 import TextReplace from "../../modules/channel/chat/text-replace";
 import TextToSpeech from "../../modules/channel/chat/tts";
 import TimestampHandler from "../../modules/channel/chat/timestamps";
-
-// A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+import ViewerCards from "../../modules/channel/chat/viewer-card";
 
 const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
+
+const VC_MOD_TABS = [
+  { id: "messages", name: "Messages", enabled: true },
+  { id: "warnings", name: "Warnings", enabled: true },
+  { id: "timeouts", name: "Timeouts", enabled: true },
+  { id: "bans", name: "Bans", enabled: true },
+  { id: "requests", name: "Appeals", enabled: false },
+  { id: "comments", name: "Mod Comments", enabled: true }
+];
+
+function normalizeViewerCardTabs(val) {
+  const out = [], seen = new Set();
+  if (Array.isArray(val))
+    for (const t of val) {
+      const def = t && VC_MOD_TABS.find(d => d.id === t.id);
+      if (!def || seen.has(def.id)) continue;
+      seen.add(def.id);
+      out.push({ id: def.id, enabled: t.enabled !== false });
+    }
+
+  for (const def of VC_MOD_TABS)
+    if (!seen.has(def.id))
+      out.push({ id: def.id, enabled: def.enabled });
+
+  return out;
+}
 
 export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
@@ -68,6 +92,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.textReplace = new TextReplace(this);
     this.textToSpeech = new TextToSpeech(this);
     this.timestampHandler = new TimestampHandler(this);
+    this.viewerCards = new ViewerCards(this);
 
     // Channel - Chat - Accessibility - Enable Animated Emotes Blocklist
     this.settings.add("addon.trubbel.channel.chat.accessibility.stop_emote_animate", {
@@ -735,7 +760,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
-    // Channel - Chat - Viewer Cards - Clickable usernames in /mods and /vips
+    // Channel - Chat - Messages - Viewer Cards - Clickable usernames in /mods and /vips
     this.settings.add("addon.trubbel.channel.chat.viewer_cards.clickable_mods_vips", {
       default: false,
       ui: {
@@ -748,7 +773,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.infoMessage.handleSettingChange(val)
     });
 
-    // Channel - Chat - Viewer Cards - Clickable raid messages
+    // Channel - Chat - Messages - Viewer Cards - Clickable raid messages
     this.settings.add("addon.trubbel.channel.chat.viewer_cards.clickable_raid", {
       default: false,
       ui: {
@@ -761,7 +786,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.raidMessage.handleSettingChange(val)
     });
 
-    // Channel - Chat - Viewer Cards - Show recent messages in viewer cards
+    // Channel - Chat - Messages - Viewer Cards - Show recent messages in viewer cards
     this.settings.add("addon.trubbel.channel.chat.viewer_cards.recent_messages", {
       default: false,
       ui: {
@@ -772,6 +797,233 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.recentMessages.handleSettingChange(val)
+    });
+
+
+
+    // Channel - Chat - Viewer Cards - General - Enable custom viewer cards
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.enabled", {
+      default: false,
+      requires: ["context.session.user"],
+      process(ctx, val) {
+        return ctx.get("context.session.user") ? val : false;
+      },
+      ui: {
+        sort: 0,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> General @{"sort": 0}',
+        title: "Enable Custom viewer cards",
+        component: "setting-check-box"
+      },
+      changed: val => this.viewerCards.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Viewer Cards - General - Handle Mention clicks
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.handle-mentions", {
+      default: false,
+      requires: ["context.session.user"],
+      process(ctx, val) {
+        return ctx.get("context.session.user") ? val : false;
+      },
+      ui: {
+        sort: 1,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> General @{"sort": 0}',
+        title: "Handle Mention clicks",
+        description: "Open custom viewer cards when clicking @mentions in chat.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - General - Handle Pinned Message clicks
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.handle-pinned-messages", {
+      default: false,
+      requires: ["context.session.user"],
+      process(ctx, val) {
+        return ctx.get("context.session.user") ? val : false;
+      },
+      ui: {
+        sort: 2,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> General @{"sort": 0}',
+        title: "Handle Pinned Message clicks",
+        description: "Open custom viewer cards when clicking usernames in pinned chat messages.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - General - Handle Viewer List clicks
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.handle-viewer-list", {
+      default: false,
+      requires: ["context.session.user"],
+      process(ctx, val) {
+        return ctx.get("context.session.user") ? val : false;
+      },
+      ui: {
+        sort: 4,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> General @{"sort": 0}',
+        title: "Handle Viewer List clicks",
+        description: "Open custom viewer cards when clicking usernames in the viewer list.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Highlighting - Highlight messages when viewer card is opened
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.highlight-chat", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Highlighting @{"sort": 1}',
+        title: "Highlight messages when viewer card is opened",
+        component: "setting-check-box"
+      },
+      changed: () => this.viewerCards.refreshHighlight()
+    });
+
+    // Channel - Chat - Viewer Cards - Highlighting - Highlight Color
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.highlight-color", {
+      default: "",
+      ui: {
+        sort: 1,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Highlighting @{"sort": 1}',
+        title: "Highlight Color",
+        component: "setting-color-box"
+      },
+      changed: () => this.viewerCards.refreshHighlight()
+    });
+
+    // Channel - Chat - Viewer Cards - Highlighting - Temporary Highlight Color
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.temp-highlight-color", {
+      default: "",
+      ui: {
+        sort: 2,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Highlighting @{"sort": 1}',
+        title: "Temp. Highlight Color",
+        description: "Color used by **Highlight** in a custom viewer card's **More options**-menu.\n\nThese highlights are temporary and are cleared when you refresh or navigate to another page.\n\nFor a permanent highlight, use [Chat > Filtering > Highlight >> Users](~chat.filtering.highlight) instead.",
+        component: "setting-color-box"
+      },
+      changed: () => this.viewerCards.updateTempHighlights()
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display native card button
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-native-button", {
+      default: true,
+      ui: {
+        sort: 0,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display native card button",
+        description: "Show the button that opens Twitch's own viewer card.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display popout button
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-popout-button", {
+      default: true,
+      ui: {
+        sort: 1,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display popout button",
+        description: "Show the button that opens Twitch's viewer card in a popout window.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display user banner
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-banner", {
+      default: true,
+      ui: {
+        sort: 2,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display user banner",
+        description: "Show the user's profile banner image in the background of the card header.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display user badges
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-badges", {
+      default: true,
+      ui: {
+        sort: 3,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display user badges",
+        description: "Show the user's earned badges in the custom viewer card.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Moderation - Timeout Buttons
+    this.settings.addUI("addon.trubbel.channel.chat.viewer-cards.timeout-buttons", {
+      sort: 0,
+      path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Moderation @{"sort": 3}',
+      title: "Timeout Buttons",
+      description: "Configure custom timeout buttons that appear in custom viewer cards.",
+      component: () => import("../../components/main_menu/setting-timeout-buttons.vue"),
+      getTimeoutButtons: () => {
+        try {
+          const data = this.settings.provider.get("addon.trubbel.channel.chat.viewer-cards.timeout-buttons.config");
+          if (data && Array.isArray(data) && data.length === 8) {
+            return data;
+          }
+          return [
+            { value: 1, unit: "second" },
+            { value: 5, unit: "minute" },
+            { value: 10, unit: "minute" },
+            { value: 1, unit: "hour" },
+            { value: 2, unit: "hour" },
+            { value: 1, unit: "day" },
+            { value: 1, unit: "week" },
+            { value: 2, unit: "week" }
+          ];
+        } catch (error) {
+          console.error("[ViewerCards] Error reading timeout buttons:", error);
+          return [
+            { value: 1, unit: "second" },
+            { value: 5, unit: "minute" },
+            { value: 10, unit: "minute" },
+            { value: 1, unit: "hour" },
+            { value: 2, unit: "hour" },
+            { value: 1, unit: "day" },
+            { value: 1, unit: "week" },
+            { value: 2, unit: "week" }
+          ];
+        }
+      },
+      setTimeoutButtons: (buttons) => {
+        try {
+          this.settings.provider.set("addon.trubbel.channel.chat.viewer-cards.timeout-buttons.config", buttons);
+        } catch (error) {
+          console.error("[ViewerCards] Error storing timeout buttons:", error);
+        }
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Moderation - Moderation Tabs
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.mod-tabs", {
+      default: VC_MOD_TABS.map(t => ({ id: t.id, enabled: t.enabled })),
+      process(ctx, val) {
+        return normalizeViewerCardTabs(val);
+      },
+      ui: {
+        sort: 1,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Moderation @{"sort": 3}',
+        title: "Moderation Tabs",
+        description: "Choose which tabs are shown on custom viewer cards. Drag to change their order.",
+        component: () => import("../../components/main_menu/setting-mod-tabs.vue"),
+        tabs: VC_MOD_TABS,
+        normalize: normalizeViewerCardTabs
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - User Notes
+    this.settings.addUI("addon.trubbel.channel.chat.viewer-cards.notes", {
+      sort: 0,
+      path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> User Notes @{"sort": 4}',
+      description: "Private notes you've written about users from their custom viewer cards. Notes are stored locally and included in FFZ's settings backups.",
+      component: () => import("../../components/main_menu/setting-user-notes.vue"),
+      getNotes: () => this.viewerCards.notes,
+      setNote: (user, text) => this.viewerCards.setNote(user, text),
+      deleteNote: id => this.viewerCards.deleteNote(id),
+      on: (...args) => this.on(...args),
+      off: (...args) => this.off(...args)
     });
   }
 
@@ -801,6 +1053,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.textReplace.initialize();
     this.textToSpeech.initialize();
     this.timestampHandler.initialize();
+    this.viewerCards.initialize();
   }
 
   async navigate() {
@@ -828,5 +1081,6 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.textReplace.handleNavigation();
     this.textToSpeech.handleNavigation();
     this.timestampHandler.handleNavigation();
+    this.viewerCards.handleNavigation();
   }
 }
