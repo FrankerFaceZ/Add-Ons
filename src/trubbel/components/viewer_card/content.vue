@@ -1,8 +1,8 @@
 <template>
-<div class="card-content">
-  <div v-if="showModActions" class="mod-actions-container">
+<div class="cvc-card-content">
+  <div v-if="showModActions" class="cvc-mod-actions-container">
 
-    <button @click="toggleWarnForm" class="mod-action-button warn tw-relative ffz-tooltip"
+    <button @click="toggleWarnForm" class="cvc-mod-action-button warn tw-relative ffz-tooltip"
       :class="{ active: showWarnForm }" data-title="Warn"
       :disabled="!!currentlyBanned || banBusy || strikeLoading">
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -11,90 +11,109 @@
     </button>
 
     <button v-for="button in timeoutButtonsList" :key="button.label" @click="timeoutUser(button)"
-      class="mod-action-button tw-relative ffz-tooltip" :disabled="!!currentlyBanned || banBusy || strikeLoading"
+      class="cvc-mod-action-button tw-relative ffz-tooltip" :disabled="!!currentlyBanned || banBusy || strikeLoading"
       :data-title="'Timeout for ' + button.value + ' ' + button.unit + (button.value !== 1 ? 's' : '')">
       {{ button.label }}
     </button>
 
     <button v-if="currentlyBanned" key="unban" @click="unbanUser"
-      class="mod-action-button unban tw-relative ffz-tooltip" data-title="Unban" :disabled="banBusy">
+      class="cvc-mod-action-button unban tw-relative ffz-tooltip" data-title="Unban" :disabled="banBusy">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12Zm11 9A9 9 0 0 1 4.968 6.382l12.65 12.65A8.962 8.962 0 0 1 12 21Zm7.032-3.382a9 9 0 0 0-12.65-12.65l12.65 12.65Z" />
       </svg>
     </button>
     <button v-else key="ban" @click="banUser"
-      class="mod-action-button ban tw-relative ffz-tooltip" data-title="Ban" :disabled="banBusy || strikeLoading">
+      class="cvc-mod-action-button ban tw-relative ffz-tooltip" data-title="Ban" :disabled="banBusy || strikeLoading">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12Zm11 9A9 9 0 0 1 4.968 6.382l12.65 12.65A8.962 8.962 0 0 1 12 21Zm7.032-3.382a9 9 0 0 0-12.65-12.65l12.65 12.65Z" />
       </svg>
     </button>
   </div>
 
-  <div v-if="showModActions && showWarnForm" class="warn-form">
-    <input ref="warnInput" v-model="warnReason" class="warn-input" maxlength="500"
+  <div v-if="showModActions && showWarnForm" class="cvc-warn-form">
+    <input ref="warnInput" v-model="warnReason" class="cvc-warn-input" maxlength="500"
       placeholder="Reason for warning (required)"
       @keydown.enter.prevent="submitWarn"
       @keyup.esc.stop="closeWarnForm">
-    <button class="warn-submit" :disabled="!warnReason.trim()" @click="submitWarn">Warn</button>
-    <button class="warn-cancel" @click="closeWarnForm">Cancel</button>
+    <button class="cvc-warn-submit" :disabled="!warnReason.trim()" @click="submitWarn">Warn</button>
+    <button class="cvc-warn-cancel" @click="closeWarnForm">Cancel</button>
   </div>
 
-  <div v-if="user && !canLoadModData" class="tab-content active">
-    <live-messages :user="user" :room="room" :get-f-f-z="getFFZ" />
+  <div v-if="user && !canLoadModData" class="cvc-tab-content active">
+    <live-messages :user="user" :room="room" :get-f-f-z="getFFZ" :paint="messagePaint" />
   </div>
 
-  <div v-if="showTabs" class="tabs-container">
-    <div class="tabs">
-      <div v-for="tab in tabList" :key="tab.id" :class="['tab', { active: activeTab === tab.id }]"
+  <div v-if="showTabs" class="cvc-tabs-container">
+    <div class="cvc-tabs">
+      <div v-for="tab in tabList" :key="tab.id" :class="['cvc-tab', { active: activeTab === tab.id }]"
         @click="activeTab = activeTab === tab.id ? null : tab.id">
-        <span class="tab-badge">{{ tab.count || 0 }}</span>
+        <span class="cvc-tab-badge">{{ tab.count || 0 }}</span>
         {{ tab.name }}
       </div>
     </div>
   </div>
 
-  <div v-if="showTabs && activeTab" class="tab-content active">
+  <div v-if="showTabs && activeTab" class="cvc-tab-content active">
 
     <div v-if="activeTab === 'messages'">
-      <div v-if="modLogsMessagesLoading && visibleMessages.length === 0" class="empty-state">Loading...</div>
-      <div v-else-if="visibleMessages.length === 0" class="empty-state">
+      <div v-if="modLogsMessagesLoading && visibleMessages.length === 0" class="cvc-empty-state">Loading...</div>
+      <div v-else-if="visibleMessages.length === 0" class="cvc-empty-state">
         This user hasn't chatted in the channel.
       </div>
-      <div v-else class="messages-scroll-container" ref="messagesContainer">
-        <div v-if="modLogsMessagesHasMore" class="load-more-sentinel">
-          <button v-if="!modLogsMessagesLoading" @click="loadMoreMessages" class="badges-toggle">
+      <div v-else class="cvc-messages-scroll-container" ref="messagesContainer">
+        <div v-if="modLogsMessagesHasMore" class="cvc-load-more-sentinel">
+          <button v-if="!modLogsMessagesLoading" @click="loadMoreMessages" class="cvc-badges-toggle">
             Load older messages
           </button>
-          <div v-else class="empty-state" style="padding: 8px 0;">Loading older...</div>
+          <div v-else class="cvc-empty-state" style="padding: 8px 0;">Loading older...</div>
         </div>
         <div v-for="item in messagesWithDateSeparators" :key="item.key">
-          <div v-if="item.isSeparator" class="message-date-separator">
-            <span class="message-date-separator__line"></span>
-            <span class="message-date-separator__date">{{ item.date }}</span>
-            <span class="message-date-separator__line"></span>
+          <div v-if="item.isSeparator" class="cvc-message-date-separator">
+            <span class="cvc-message-date-separator__line"></span>
+            <span class="cvc-message-date-separator__date">{{ item.date }}</span>
+            <span class="cvc-message-date-separator__line"></span>
+          </div>
+          <div v-else-if="item.action" class="cvc-chat-line">
+            <div class="cvc-msg">
+              <span class="cvc-msg__time">{{ formatTime(item.action.timestamp) }}</span><span class="cvc-msg__body"><template v-for="(part, i) in modActionParts(item.action)"><span v-if="part.user" :key="i" class="cvc-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+            </div>
+          </div>
+          <div v-else-if="item.caught" class="cvc-automod">
+            <div class="cvc-automod__header">
+              <a href="https://link.twitch.tv/automod_blog" target="_blank" rel="noopener noreferrer"><img class="cvc-msg__badge" alt="AutoMod badge"
+                src="https://static-cdn.jtvnw.net/badges/v1/df9095f6-a8a0-4cc2-bb33-d908c0adffb8/1"
+                srcset="https://static-cdn.jtvnw.net/badges/v1/df9095f6-a8a0-4cc2-bb33-d908c0adffb8/1 1x, https://static-cdn.jtvnw.net/badges/v1/df9095f6-a8a0-4cc2-bb33-d908c0adffb8/2 2x, https://static-cdn.jtvnw.net/badges/v1/df9095f6-a8a0-4cc2-bb33-d908c0adffb8/3 4x"></a><span class="cvc-automod__name">AutoMod</span>: {{ automodText(item.caught) }}
+            </div>
+            <ffz-card-chat-line class="cvc-automod__message"
+              :msg="item.caught"
+              :room="room"
+              :get-f-f-z="getFFZ"
+              :paint="messagePaint" />
           </div>
           <ffz-card-chat-line v-else
             :msg="item.msg"
             :room="room"
             :get-f-f-z="getFFZ"
-            :class="{ 'message-deleted': item.msg.isDeleted }" />
+            :can-delete="canDeleteMessages"
+            :paint="messagePaint"
+            :class="{ 'message-deleted': item.msg.isDeleted }"
+            @delete="deleteMessage" />
         </div>
       </div>
     </div>
 
     <div v-if="activeTab === 'warnings'">
-      <div v-if="activeActionEdges.length === 0" class="empty-state">No warnings on record.</div>
-      <div v-else class="messages-scroll-container" ref="actionContainer">
+      <div v-if="activeActionEdges.length === 0" class="cvc-empty-state">No warnings on record.</div>
+      <div v-else class="cvc-messages-scroll-container" ref="actionContainer">
         <div v-for="item in actionEdgesWithDateSeparators" :key="item.key">
-          <div v-if="item.isSeparator" class="message-date-separator">
-            <span class="message-date-separator__line"></span>
-            <span class="message-date-separator__date">{{ item.date }}</span>
-            <span class="message-date-separator__line"></span>
+          <div v-if="item.isSeparator" class="cvc-message-date-separator">
+            <span class="cvc-message-date-separator__line"></span>
+            <span class="cvc-message-date-separator__date">{{ item.date }}</span>
+            <span class="cvc-message-date-separator__line"></span>
           </div>
-          <div v-else class="trubbel-chat-line">
-            <div class="trubbel-msg">
-              <span class="trubbel-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span>
-              <span class="trubbel-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="trubbel-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+          <div v-else class="cvc-chat-line">
+            <div class="cvc-msg">
+              <span class="cvc-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span><span class="cvc-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="cvc-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
             </div>
           </div>
         </div>
@@ -102,18 +121,17 @@
     </div>
 
     <div v-if="activeTab === 'timeouts'">
-      <div v-if="activeActionEdges.length === 0" class="empty-state">No timeouts on record.</div>
-      <div v-else class="messages-scroll-container" ref="actionContainer">
+      <div v-if="activeActionEdges.length === 0" class="cvc-empty-state">No timeouts on record.</div>
+      <div v-else class="cvc-messages-scroll-container" ref="actionContainer">
         <div v-for="item in actionEdgesWithDateSeparators" :key="item.key">
-          <div v-if="item.isSeparator" class="message-date-separator">
-            <span class="message-date-separator__line"></span>
-            <span class="message-date-separator__date">{{ item.date }}</span>
-            <span class="message-date-separator__line"></span>
+          <div v-if="item.isSeparator" class="cvc-message-date-separator">
+            <span class="cvc-message-date-separator__line"></span>
+            <span class="cvc-message-date-separator__date">{{ item.date }}</span>
+            <span class="cvc-message-date-separator__line"></span>
           </div>
-          <div v-else class="trubbel-chat-line">
-            <div class="trubbel-msg">
-              <span class="trubbel-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span>
-              <span class="trubbel-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="trubbel-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+          <div v-else class="cvc-chat-line">
+            <div class="cvc-msg">
+              <span class="cvc-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span><span class="cvc-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="cvc-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
             </div>
           </div>
         </div>
@@ -121,18 +139,17 @@
     </div>
 
     <div v-if="activeTab === 'bans'">
-      <div v-if="activeActionEdges.length === 0" class="empty-state">No bans on record.</div>
-      <div v-else class="messages-scroll-container" ref="actionContainer">
+      <div v-if="activeActionEdges.length === 0" class="cvc-empty-state">No bans on record.</div>
+      <div v-else class="cvc-messages-scroll-container" ref="actionContainer">
         <div v-for="item in actionEdgesWithDateSeparators" :key="item.key">
-          <div v-if="item.isSeparator" class="message-date-separator">
-            <span class="message-date-separator__line"></span>
-            <span class="message-date-separator__date">{{ item.date }}</span>
-            <span class="message-date-separator__line"></span>
+          <div v-if="item.isSeparator" class="cvc-message-date-separator">
+            <span class="cvc-message-date-separator__line"></span>
+            <span class="cvc-message-date-separator__date">{{ item.date }}</span>
+            <span class="cvc-message-date-separator__line"></span>
           </div>
-          <div v-else class="trubbel-chat-line">
-            <div class="trubbel-msg">
-              <span class="trubbel-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span>
-              <span class="trubbel-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="trubbel-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+          <div v-else class="cvc-chat-line">
+            <div class="cvc-msg">
+              <span class="cvc-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span><span class="cvc-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="cvc-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
             </div>
           </div>
         </div>
@@ -140,18 +157,17 @@
     </div>
 
     <div v-if="activeTab === 'requests'">
-      <div v-if="activeActionEdges.length === 0" class="empty-state">No unban requests on record.</div>
-      <div v-else class="messages-scroll-container" ref="actionContainer">
+      <div v-if="activeActionEdges.length === 0" class="cvc-empty-state">No unban requests on record.</div>
+      <div v-else class="cvc-messages-scroll-container" ref="actionContainer">
         <div v-for="item in actionEdgesWithDateSeparators" :key="item.key">
-          <div v-if="item.isSeparator" class="message-date-separator">
-            <span class="message-date-separator__line"></span>
-            <span class="message-date-separator__date">{{ item.date }}</span>
-            <span class="message-date-separator__line"></span>
+          <div v-if="item.isSeparator" class="cvc-message-date-separator">
+            <span class="cvc-message-date-separator__line"></span>
+            <span class="cvc-message-date-separator__date">{{ item.date }}</span>
+            <span class="cvc-message-date-separator__line"></span>
           </div>
-          <div v-else class="trubbel-chat-line">
-            <div class="trubbel-msg">
-              <span class="trubbel-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span>
-              <span class="trubbel-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="trubbel-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+          <div v-else class="cvc-chat-line">
+            <div class="cvc-msg">
+              <span class="cvc-msg__time">{{ formatTime(item.edge.node.timestamp) }}</span><span class="cvc-msg__body"><template v-for="(part, i) in modActionParts(item.edge.node)"><span v-if="part.user" :key="i" class="cvc-msg__name">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
             </div>
           </div>
         </div>
@@ -159,61 +175,64 @@
     </div>
 
     <div v-if="activeTab === 'comments'">
-      <div v-if="modLogsCommentsLoading" class="empty-state">Loading comments...</div>
-      <div v-else-if="modLogsCommentsError" class="empty-state">
+      <div v-if="modLogsCommentsLoading" class="cvc-empty-state">Loading comments...</div>
+      <div v-else-if="modLogsCommentsError" class="cvc-empty-state">
         Unable to load comments ({{ modLogsCommentsError }})
       </div>
-      <div v-else-if="modLogsComments !== null && modLogsComments.length === 0" class="empty-state">
+      <div v-else-if="modLogsComments !== null && modLogsComments.length === 0" class="cvc-empty-state">
         No comments on record.
       </div>
-      <div v-else-if="modLogsComments" class="messages-scroll-container" ref="actionContainer">
+      <div v-else-if="modLogsComments" class="cvc-messages-scroll-container" ref="actionContainer">
         <div v-for="comment in modLogsComments" :key="comment.id">
 
-          <div v-if="comment._isShared" class="shared-comment" :style="sharedCommentStyle(comment)">
-            <div class="shared-comment-header">
+          <div v-if="comment._isShared" class="cvc-shared-comment" :style="sharedCommentStyle(comment)">
+            <div class="cvc-shared-comment-header">
               <img v-if="comment.channel && sharedChannelAvatars[comment.channel.id]"
-                class="shared-comment-avatar" :src="sharedChannelAvatars[comment.channel.id]" alt="">
+                class="cvc-shared-comment-avatar" :src="sharedChannelAvatars[comment.channel.id]" alt="">
               <span>
                 Shared comment from
-                <a class="shared-comment-channel" :href="'/' + comment.channel.login"
+                <a class="cvc-shared-comment-channel" :href="'/' + comment.channel.login"
                   target="_blank" rel="noopener noreferrer">{{ comment.channel.login }}</a>'s channel
               </span>
             </div>
-            <div class="comment-log-row">
-              <svg class="comment-log-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <div class="cvc-comment-log-row">
+              <svg class="cvc-comment-log-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path fill-rule="evenodd" d="M9.828 17 12 19.172 14.172 17H19V5H5v12h4.828ZM12 22l-3-3H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-3 3Z" clip-rule="evenodd" />
               </svg>
-              <div class="comment-log-body">
-                <div class="comment-log-text">{{ comment.text }}</div>
-                <div class="comment-log-meta">
-                  <span :style="{ color: comment.author.chatColor || undefined }">{{ comment.author.displayName }}</span>
-                  <span class="comment-log-sep"> • </span>
+              <div class="cvc-comment-log-body">
+                <div class="cvc-comment-log-text">{{ comment.text }}</div>
+                <div class="cvc-comment-log-meta">
+                  <a class="cvc-comment-log-author" :href="'https://www.twitch.tv/' + comment.author.login" target="_blank" rel="noopener noreferrer"
+                  :style="{ color: comment.author.chatColor || undefined }">{{ comment.author.displayName }}</a>
+                  <span class="cvc-comment-log-sep"> • </span>
                   <span>{{ formatCommentDate(comment.timestamp) }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else class="comment-log-row">
-            <svg class="comment-log-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <div v-else class="cvc-comment-log-row">
+            <svg class="cvc-comment-log-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path fill-rule="evenodd" d="M9.828 17 12 19.172 14.172 17H19V5H5v12h4.828ZM12 22l-3-3H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-3 3Z" clip-rule="evenodd" />
               </svg>
-            <div class="comment-log-body">
-              <div class="comment-log-text">{{ comment.text }}</div>
+            <div class="cvc-comment-log-body">
+              <div class="cvc-comment-log-text">{{ comment.text }}</div>
 
-              <div class="comment-log-meta">
-                <span :style="{ color: comment.author.chatColor || undefined }">{{ comment.author.displayName }}</span>
-                <span class="comment-log-sep"> • </span>
+              <div class="cvc-comment-log-meta">
+                <a class="cvc-comment-log-author" :href="'https://www.twitch.tv/' + comment.author.login" target="_blank" rel="noopener noreferrer"
+                  :style="{ color: comment.author.chatColor || undefined }">{{ comment.author.displayName }}</a>
+                <span class="cvc-comment-log-sep"> • </span>
                 <span>{{ formatCommentDate(comment.timestamp) }}</span>
-                <span class="comment-log-sep"> • </span>
-                <span class="ffz-tooltip"
+                <span class="cvc-comment-log-sep"> • </span>
+                <span class="cvc-comment-log-visibility ffz-tooltip"
+                  :class="{ 'cvc-comment-log-visibility--shared': comment.isShareable }"
                   :data-title="comment.isShareable
                     ? 'This comment can be viewed by mods in the channels you are sharing ban info with.'
                     : 'This comment cannot be viewed by mods in the channels you are sharing ban info with.'">{{ comment.isShareable ? 'Shared' : 'Private' }}</span>
               </div>
             </div>
 
-            <button v-if="isBroadcaster" class="comment-action comment-report ffz-tooltip"
+            <button v-if="isBroadcaster" class="cvc-comment-action cvc-comment-report ffz-tooltip"
               data-title="Report moderator comment" @click="reportComment(comment)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11 14a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm2-7h-2v4h2V7Z" />
@@ -221,7 +240,7 @@
               </svg>
             </button>
 
-            <button v-if="canDeleteComment(comment)" class="comment-action comment-delete ffz-tooltip"
+            <button v-if="canDeleteComment(comment)" class="cvc-comment-action cvc-comment-delete ffz-tooltip"
               data-title="Delete moderator comment" :disabled="deletingCommentId === comment.id"
               @click="deleteComment(comment)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -233,17 +252,17 @@
         </div>
       </div>
 
-      <div v-if="!modLogsCommentsLoading && !modLogsCommentsError" class="comment-composer">
-        <input v-model="newCommentText" type="text" class="comment-input"
+      <div v-if="!modLogsCommentsLoading && !modLogsCommentsError" class="cvc-comment-composer">
+        <input v-model="newCommentText" type="text" class="cvc-comment-input"
           placeholder="Add a comment about this user"
           :disabled="commentSubmitting"
           @keydown.enter.prevent="submitComment"
           @keyup.esc.stop>
-        <div class="comment-composer-row">
-          <label v-if="canShareComments" class="comment-share">
+        <div class="cvc-comment-composer-row">
+          <label v-if="canShareComments" class="cvc-comment-share">
             <input type="checkbox" v-model="newCommentShare" :disabled="commentSubmitting">
             Share this comment
-            <span class="comment-share-info ffz-tooltip"
+            <span class="cvc-comment-share-info ffz-tooltip"
               data-title="Shared comments can be viewed by Mods in channels you share ban info with.">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11 9h2V7h-2v2Zm0 8h2v-6h-2v6Z" />
@@ -251,11 +270,11 @@
               </svg>
             </span>
           </label>
-          <button class="comment-submit" :disabled="!newCommentText.trim() || commentSubmitting" @click="submitComment">
+          <button class="cvc-comment-submit" :disabled="!newCommentText.trim() || commentSubmitting" @click="submitComment">
             {{ commentSubmitting ? 'Adding...' : 'Add' }}
           </button>
         </div>
-        <div v-if="commentActionError" class="comment-error">{{ commentActionError }}</div>
+        <div v-if="commentActionError" class="cvc-comment-error">{{ commentActionError }}</div>
       </div>
     </div>
 
@@ -290,7 +309,7 @@ export default {
   props: [
     "user", "getFFZ", "room", "timeoutButtons",
     "isMod", "isOwn", "isBroadcaster", "isTargetBroadcaster", "canAccessModLogs",
-    "modTabs"
+    "modTabs", "isLeadMod", "isTargetLeadMod", "messagePaint"
   ],
 
   data() {
@@ -336,6 +355,20 @@ export default {
 
     canLoadModData() {
       return !!(this.user && this.isMod && this.canAccessModLogs);
+    },
+
+    canDeleteMessages() {
+      if (!this.canLoadModData || this.isTargetBroadcaster) return false;
+      if (this.isBroadcaster || this.isOwn || !this.user.isModerator) return true;
+      return !!(this.isLeadMod && !this.targetIsLeadMod);
+    },
+
+    targetIsLeadMod() {
+      if (this.isTargetLeadMod) return true;
+      return this.modLogsMessages.some(function(m) {
+        var badges = m && m.sender && m.sender.displayBadges;
+        return Array.isArray(badges) && badges.some(function(b) { return b && b.setID === "lead_moderator"; });
+      });
     },
 
     enabledTabIds() {
@@ -406,13 +439,21 @@ export default {
     },
 
     visibleMessages() {
-      return this.modLogsMessages.filter(function(m) { return m && m.id; });
+      return this.modLogsMessages.filter(function(m) {
+        return m && (m.id || (m.__typename === 'ViewerCardModLogsModActionsMessage' && m.timestamp));
+      });
     },
 
     messagesWithDateSeparators() {
       return withDateSeparators(this.visibleMessages,
-        function(m) { return m.sentAt; },
-        function(m) { return { msg: m, key: 'msg-' + m.id }; });
+        function(m) { return m.id ? m.sentAt : m.timestamp; },
+        function(m) {
+          if (m.__typename === 'ViewerCardModLogsCaughtMessage')
+            return { caught: m, key: 'caught-' + m.id };
+          return m.id
+            ? { msg: m, key: 'msg-' + m.id }
+            : { action: m, key: 'act-' + m.timestamp };
+        });
     },
 
     actionEdgesWithDateSeparators() {
@@ -515,7 +556,7 @@ export default {
       const channelID = this.room && this.room.id;
       const targetID = this.user.id;
       if (!channelID || !targetID) {
-        console.warn("ViewerCards: Missing required IDs for mod data");
+        console.warn("[ViewerCards] Missing required IDs for mod data");
         return;
       }
 
@@ -561,7 +602,7 @@ export default {
           this.loadSharedChannelAvatars(sharedNodes);
         }
       } catch (err) {
-        console.error("ViewerCards: Failed to load mod data:", err);
+        console.error("[ViewerCards] Failed to load mod data:", err);
         this.modLogsCommentsError = "FETCH_ERROR";
       } finally {
         this.modLogsCommentsLoading = false;
@@ -594,7 +635,7 @@ export default {
         if (!messagesResult) return;
 
         if (messagesResult.__typename === 'ViewerCardModLogsMessagesError') {
-          console.error('ViewerCards: Messages error:', messagesResult.code);
+          console.error('[ViewerCards] Messages error:', messagesResult.code);
           return;
         }
 
@@ -618,7 +659,7 @@ export default {
           });
         }
       } catch (err) {
-        console.error('ViewerCards: Failed to load messages:', err);
+        console.error('[ViewerCards] Failed to load messages:', err);
       } finally {
         this.modLogsMessagesLoading = false;
       }
@@ -659,10 +700,26 @@ export default {
       this._messagesScrollBound = null;
     },
 
-    modActionParts(node) {
-      if (!node || !node.localizedLabel) return [{ text: node ? (node.type || '?') : '?' }];
+    automodText(m) {
+      var reason = m.caughtMessageReason || {};
+      var text;
+      if (reason.mainReason === 'CHANNEL_BLOCKED_TERMS')
+        text = 'Held a message for using channel blocked terms.';
+      else if (reason.automodFailure && reason.automodFailure.category && reason.automodFailure.category !== 'INVALID')
+        text = 'Held a message for reason: ' + reason.automodFailure.category.toLowerCase() + '.';
+      else
+        text = 'Held a message.';
 
-      var fragments = node.localizedLabel.localizedStringFragments;
+      if (m.status === 'EXPIRED') return text + ' (Expired and not posted to Chat)';
+      if (m.status === 'DENIED') return text + ' (Denied and not posted to Chat)';
+      return text;
+    },
+
+    modActionParts(node) {
+      var label = node && (node.localizedLabel || node.content);
+      if (!label) return [{ text: node ? (node.type || '?') : '?' }];
+
+      var fragments = label.localizedStringFragments;
       if (fragments && fragments.length) {
         var parts = [];
         fragments.forEach(function(f) {
@@ -675,7 +732,31 @@ export default {
         if (parts.some(function(p) { return p.text && p.text.trim(); })) return parts;
       }
 
-      return [{ text: node.localizedLabel.fallbackString || node.type || '?' }];
+      return [{ text: label.fallbackString || node.type || '?' }];
+    },
+
+    deleteMessage(id) {
+      var room = this.room && this.room.login;
+      var chat = this.getFFZ().resolve('site.chat');
+      if (!id || !room || !chat) return;
+
+      chat.sendMessage(room, '/delete ' + id);
+
+      var i = this.modLogsMessages.findIndex(function(m) { return m && m.id === id; });
+      if (i !== -1) {
+        var me = this.user && this.user.currentUser;
+        this.$set(this.modLogsMessages, i, Object.assign({}, this.modLogsMessages[i], {
+          isDeleted: true,
+          lastUpdatedBy: me ? { id: me.id, login: me.login, displayName: me.login } : null
+        }));
+      }
+
+      this.$nextTick(function() {
+        requestAnimationFrame(function() {
+          var ffz = FrankerFaceZ.get();
+          if (ffz) ffz.emit("tooltips:cleanup");
+        });
+      });
     },
 
     sendModCommand(command) {
@@ -707,7 +788,7 @@ export default {
           this.strikeStatus = status || null;
           if (isDone(this.strikeStatus)) return;
         } catch (err) {
-          console.warn('ViewerCards: Unable to refresh strike status:', err);
+          console.warn('[ViewerCards] Unable to refresh strike status:', err);
           return;
         }
       }
@@ -784,7 +865,7 @@ export default {
         var channel = result && result.data && result.data.channel;
         this.canDeleteComments = channel ? !!channel.hasPermission : null;
       } catch (err) {
-        console.warn('ViewerCards: Unable to check mod_comments:delete permission:', err);
+        console.warn('[ViewerCards] Unable to check mod_comments:delete permission:', err);
         this.canDeleteComments = null;
       }
     },
@@ -851,7 +932,7 @@ export default {
           if (container) container.scrollTop = container.scrollHeight;
         });
       } catch (err) {
-        console.error('ViewerCards: Failed to add mod comment:', err);
+        console.error('[ViewerCards] Failed to add mod comment:', err);
         this.commentActionError = 'Unable to add comment.';
       } finally {
         this.commentSubmitting = false;
@@ -881,7 +962,7 @@ export default {
         this.modLogsComments = (this.modLogsComments || []).filter(function(c) { return c.id !== comment.id; });
         this.getFFZ().emit('tooltips:cleanup');
       } catch (err) {
-        console.error('ViewerCards: Failed to delete mod comment:', err);
+        console.error('[ViewerCards] Failed to delete mod comment:', err);
         this.commentActionError = 'Unable to delete comment.';
         if (this.canDeleteComments === null) this.canDeleteComments = false;
       } finally {

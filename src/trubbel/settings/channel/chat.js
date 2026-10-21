@@ -36,22 +36,40 @@ const VC_MOD_TABS = [
   { id: "comments", name: "Mod Comments", enabled: true }
 ];
 
-function normalizeViewerCardTabs(val) {
+const VC_MORE_OPTIONS = [
+  { id: "pin", name: "Pin", enabled: true },
+  { id: "edit", name: "Edit (name & color overrides)", enabled: true },
+  { id: "notes", name: "Notes", enabled: true },
+  { id: "follow", name: "Follow / Unfollow", enabled: true },
+  { id: "mention", name: "Mention", enabled: true },
+  { id: "mod", name: "Mod / Unmod", enabled: true },
+  { id: "edit-profile", name: "Edit Profile (own card)", enabled: true },
+  { id: "edit-chat-identity", name: "Edit Chat Identity (own card)", enabled: true },
+  { id: "highlight", name: "Highlight", enabled: true },
+  { id: "block", name: "Block", enabled: true },
+  { id: "report", name: "Report", enabled: true },
+  { id: "whisper", name: "Whisper", enabled: true }
+];
+
+function normalizeOrderedList(defs, val) {
   const out = [], seen = new Set();
   if (Array.isArray(val))
     for (const t of val) {
-      const def = t && VC_MOD_TABS.find(d => d.id === t.id);
+      const def = t && defs.find(d => d.id === t.id);
       if (!def || seen.has(def.id)) continue;
       seen.add(def.id);
       out.push({ id: def.id, enabled: t.enabled !== false });
     }
 
-  for (const def of VC_MOD_TABS)
+  for (const def of defs)
     if (!seen.has(def.id))
       out.push({ id: def.id, enabled: def.enabled });
 
   return out;
 }
+
+const normalizeViewerCardTabs = val => normalizeOrderedList(VC_MOD_TABS, val);
+const normalizeMoreOptions = val => normalizeOrderedList(VC_MORE_OPTIONS, val);
 
 export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
   constructor(...args) {
@@ -904,7 +922,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
       changed: () => this.viewerCards.refreshHighlight()
     });
 
-    // Channel - Chat - Viewer Cards - Highlighting - Temporary Highlight Color
+    // Channel - Chat - Viewer Cards - Highlighting - Temp. Highlight Color
     this.settings.add("addon.trubbel.channel.chat.viewer-cards.temp-highlight-color", {
       default: "",
       ui: {
@@ -962,6 +980,48 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         title: "Display user badges",
         description: "Show the user's earned badges in the custom viewer card.",
         component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display Avatar Tooltip
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-avatar-tooltip", {
+      default: true,
+      ui: {
+        sort: 4,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display avatar tooltip",
+        description: "Show a larger version of the avatar when hovering the user's avatar or the \"Chatting from\" channel avatar in the custom viewer card.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - Display 7TV name paints
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.show-paints", {
+      default: true,
+      ui: {
+        sort: 5,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "Display 7TV name paints",
+        description: "Show the user's 7TV name paint on their username in the custom viewer card, and on their name in the Messages-tab and live messages.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Viewer Cards - Appearance - More Options Menu
+    this.settings.add("addon.trubbel.channel.chat.viewer-cards.more-options", {
+      default: VC_MORE_OPTIONS.map(t => ({ id: t.id, enabled: t.enabled })),
+      process(ctx, val) {
+        return normalizeMoreOptions(val);
+      },
+      ui: {
+        sort: 6,
+        path: 'Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Viewer Cards >> Appearance @{"sort": 2}',
+        title: "More Options Menu",
+        description: "Choose which actions are shown in the custom viewer card's \"More options\" menu. Drag to change their order.",
+        component: () => import("../../components/main_menu/setting-mod-tabs.vue"),
+        tabs: VC_MORE_OPTIONS,
+        normalize: normalizeMoreOptions,
+        itemLabel: "Display {name}"
       }
     });
 
