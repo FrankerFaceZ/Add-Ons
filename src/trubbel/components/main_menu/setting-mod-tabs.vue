@@ -48,7 +48,7 @@
               @change="toggle(index, $event.target.checked)"
             >
             <label :for="item.full_key + ':' + tab.id" class="ffz-checkbox__label">
-              <span class="tw-mg-l-1">Display {{ tab.name }} tab</span>
+              <span class="tw-mg-l-1">{{ label(tab) }}</span>
             </label>
           </div>
         </div>
@@ -85,6 +85,10 @@ export default {
   },
 
   methods: {
+    label(tab) {
+      return (this.item.itemLabel || "Display {name} tab").replace("{name}", tab.name);
+    },
+
     save(list) {
       this.set(list.map(function(t) { return { id: t.id, enabled: t.enabled }; }));
     },

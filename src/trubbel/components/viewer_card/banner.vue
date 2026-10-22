@@ -1,24 +1,24 @@
 <template>
-<div class="user-banner" :style="bannerStyle">
-  <div class="avatar" :style="avatarBorder">
-    <div v-if="loaded && user && !user.profileImageURL" class="avatar-default">
+<div class="cvc-user-banner" :style="bannerStyle">
+  <div class="cvc-avatar" :style="avatarBorder">
+    <div v-if="loaded && user && !user.profileImageURL" class="cvc-avatar-default">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M6 8a6 6 0 1 1 7.025 5.913l.012.036A3 3 0 0 0 15.883 16H17a4 4 0 0 1 4 4v2h-2v-2a2 2 0 0 0-2-2h-1.117A5 5 0 0 1 12 16.15 5 5 0 0 1 8.117 18H7a2 2 0 0 0-2 2v2H3v-2a4 4 0 0 1 4-4h1.117a3 3 0 0 0 2.846-2.051l.012-.036A6.002 6.002 0 0 1 6 8Zm6 4a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z" />
       </svg>
     </div>
     <img v-else-if="loaded && user"
-      class="ffz-tooltip"
-      data-tooltip-type="html"
-      :data-title="'<img src=\'' + user.profileImageURL + '\'>'"
-      :src="user.profileImageURL"
+      :class="{ 'ffz-tooltip': showAvatarTooltip !== false }"
+      :data-tooltip-type="showAvatarTooltip !== false ? 'html' : undefined"
+      :data-title="showAvatarTooltip !== false ? '<img src=\'' + (avatarURL || user.profileImageURL) + '\'>' : undefined"
+      :src="avatarURL || user.profileImageURL"
       :alt="user.displayName">
-    <span v-if="loaded && isLive" class="live-badge ffz-tooltip" data-tooltip-type="html"
+    <span v-if="loaded && isLive" class="cvc-live-badge ffz-tooltip" data-tooltip-type="html"
       :data-title="'Streaming <strong>' + streamCategory + '</strong> to <strong>' + viewerCount + '</strong> viewers'">
       LIVE
     </span>
   </div>
-  <div class="user-info">
-    <div class="username"
+  <div class="cvc-user-info">
+    <a class="cvc-username" :href="channelURL" target="_blank" rel="noopener noreferrer"
       :class="{ 'seventv-painted-content': !!seventvPaint, 'ffz-tooltip': !!seventvPaint }"
       :style="usernameStyle"
       :data-tooltip-type="seventvPaint ? 'html' : undefined"
@@ -35,18 +35,18 @@
         <title>Twitch Staff</title>
         <path d="m2 18 9-9-.586-.586a2 2 0 0 1 0-2.828L14 2h3l1 1-4 4 3 3 4-4 1 1v3l-3.586 3.586a2 2 0 0 1-2.828 0L15 13l-9 9H5a3 3 0 0 1-3-3v-1Zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" />
       </svg>
-    </div>
+    </a>
 
-    <div v-if="loaded && user && user.sourceChannel" class="user-detail">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path fill-rule="evenodd"
-          d="M7 2h10v2H7V2ZM3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Zm16 0H5v12h14V8Zm-9 3h-4v2h4v-2Zm8 0h-6v2h6v-2Zm-8 4H6v2h4v-2Zm8 0h-6v2h6v-2Z"
-          clip-rule="evenodd" />
-      </svg>
+    <div v-if="loaded && user && user.sourceChannel" class="cvc-user-detail">
+      <img v-if="user.sourceChannel.profileImageURL" class="cvc-user-detail__avatar"
+        :class="{ 'ffz-tooltip': showAvatarTooltip !== false }"
+        :data-tooltip-type="showAvatarTooltip !== false ? 'html' : undefined"
+        :data-title="showAvatarTooltip !== false ? '<img src=\'' + sourceAvatarLarge + '\'>' : undefined"
+        :src="user.sourceChannel.profileImageURL" alt="">
       Chatting from {{ user.sourceChannel.displayName || user.sourceChannel.login }}
     </div>
 
-    <div v-if="loaded && user && user.createdAt" class="user-detail">
+    <div v-if="loaded && user && user.createdAt" class="cvc-user-detail">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path fill-rule="evenodd"
           d="M11 2h2v4h7a2 2 0 0 1 2 2v14H2V8a2 2 0 0 1 2-2h7V2Zm9 6H4v4.773l1.507-1.34a3 3 0 0 1 3.986 0l1.843 1.639a1 1 0 0 0 1.328 0l1.843-1.638a3 3 0 0 1 3.986 0L20 12.774V8Zm0 7.449-2.836-2.52a1 1 0 0 0-1.328 0l-1.843 1.637a3 3 0 0 1-3.986 0l-1.843-1.638a1 1 0 0 0-1.328 0L4 15.45V20h16v-4.551Z"
@@ -55,7 +55,7 @@
       Account created {{ formatSince(user.createdAt) }}
     </div>
 
-    <div v-if="loaded && hasFollow" class="user-detail">
+    <div v-if="loaded && hasFollow" class="cvc-user-detail">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path fill-rule="evenodd"
           d="M10.964 5.422A5.075 5.075 0 0 0 7.429 4H7C4.239 4 2 6.175 2 8.857v.417a4.79 4.79 0 0 0 1.464 3.434L12 21l8.535-8.292A4.788 4.788 0 0 0 22 9.274v-.417C22 6.175 19.761 4 17 4h-.429a5.076 5.076 0 0 0-3.536 1.423L12 6.429l-1.036-1.007Z"
@@ -64,7 +64,7 @@
       Following since {{ formatSince(user.relationship.followedAt) }}
     </div>
 
-    <div v-if="loaded && subText" class="user-detail" :class="{ 'ffz-tooltip': subTooltip }"
+    <div v-if="loaded && subText" class="cvc-user-detail" :class="{ 'ffz-tooltip': subTooltip }"
       data-tooltip-type="html" :data-title="subTooltip || undefined">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path v-if="subIcon === 'hollow-star'" fill-rule="evenodd"
@@ -84,12 +84,38 @@
 </template>
 
 <script>
-import { formatDate, formatSince } from "./card-utils";
+import { formatDate, formatSince, paintStyle } from "./card-utils";
+
+const { FFZWaitableEvent } = FrankerFaceZ.utilities.events;
 
 export default {
-  props: ["user", "rawUser", "loaded", "showBanner", "seventvData", "getFFZ"],
+  props: ["user", "rawUser", "loaded", "showBanner", "showAvatarTooltip", "seventvData", "getFFZ"],
+
+  data() {
+    return {
+      avatarURL: null
+    }
+  },
+
+  watch: {
+    user: {
+      handler: "updateAvatar",
+      immediate: true
+    }
+  },
 
   computed: {
+    channelURL() {
+      var login = (this.user && this.user.login) || (this.rawUser && this.rawUser.login);
+      if (!login || (this.user && this.user.notFound)) return null;
+      return "https://www.twitch.tv/" + encodeURIComponent(login);
+    },
+
+    sourceAvatarLarge() {
+      var url = this.user && this.user.sourceChannel && this.user.sourceChannel.profileImageURL;
+      return url ? url.replace(/-\d+x\d+\./, "-300x300.") : "";
+    },
+
     bannerStyle() {
       if (this.showBanner === false) return { backgroundImage: "none" };
       if (!this.loaded || !this.user || !this.user.bannerImageURL) return {};
@@ -103,68 +129,7 @@ export default {
 
     usernameStyle() {
       var paint = this.seventvPaint;
-
-      if (paint) {
-        var gradients = paint.gradients;
-        if (!gradients || !gradients.length) {
-          if (paint.function) {
-            gradients = [{
-              function: paint.function,
-              canvas_repeat: '',
-              size: [1, 1],
-              shape: paint.shape,
-              image_url: paint.image_url,
-              stops: paint.stops || [],
-              repeat: paint.repeat || false,
-              angle: paint.angle,
-              at: null
-            }];
-          } else {
-            gradients = [];
-          }
-        }
-
-        var self = this;
-        var gradientData = gradients.map(function(g) { return self.stv_createGradient(g); });
-        var filter = paint.shadows && paint.shadows.length
-          ? paint.shadows.map(function(s) { return self.stv_dropShadow(s); }).join(' ')
-          : '';
-
-        var style = {
-          color: paint.color ? this.stv_colorFromInt(paint.color) : 'inherit',
-          backgroundImage: gradientData.map(function(v) { return v[0]; }).join(', ') || 'none',
-          filter: filter || 'inherit',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          fontWeight: '700'
-        };
-
-        var pos = gradientData.map(function(v) { return v[1]; }).filter(Boolean).join(', ');
-        var size = gradientData.map(function(v) { return v[2]; }).filter(Boolean).join(', ');
-        var repeat = gradientData.map(function(v) { return v[3]; }).join(', ');
-        if (pos) style.backgroundPosition = pos;
-        if (size) style.backgroundSize = size;
-        if (repeat) style.backgroundRepeat = repeat;
-
-        if (paint.text) {
-          if (paint.text.weight)
-            style.fontWeight = String(paint.text.weight * 100);
-          if (paint.text.stroke) {
-            style.WebkitTextStrokeWidth = paint.text.stroke.width + "px";
-            style.WebkitTextStrokeColor = this.stv_colorFromInt(paint.text.stroke.color);
-          }
-          if (paint.text.shadows && paint.text.shadows.length) {
-            style.textShadow = paint.text.shadows
-              .map(function(s) { return s.x_offset + "px " + s.y_offset + "px " + s.radius + "px " + self.stv_colorFromInt(s.color); })
-              .join(', ');
-          }
-          if (paint.text.transform)
-            style.textTransform = paint.text.transform;
-        }
-
-        return style;
-      }
+      if (paint) return paintStyle(paint);
 
       if (!this.loaded || !this.user || !this.user.chatColor) return {};
       return { color: this.user.chatColor };
@@ -276,48 +241,30 @@ export default {
   },
 
   methods: {
+    updateAvatar() {
+      this.avatarURL = null;
+      var user = this.user;
+      if (!user || !user.login || !user.profileImageURL) return;
+
+      var event = new FFZWaitableEvent({ user: user, url: user.profileImageURL });
+      this.getFFZ().emit("common:update-avatar", event);
+
+      var self = this;
+      var apply = function() {
+        if (self.user === user && event.url !== user.profileImageURL) self.avatarURL = event.url;
+      };
+
+      var result = event._wait();
+      if (result) result.then(apply);
+      else apply();
+    },
+
     formatDate: formatDate,
 
     formatSince(date) {
       return this.getFFZ ? formatSince(this.getFFZ(), date) : formatDate(date);
     },
 
-    stv_colorFromInt(int) {
-      var r = int >>> 24 & 0xFF;
-      var g = int >>> 16 & 0xFF;
-      var b = int >>> 8 & 0xFF;
-      var a = int & 0xFF;
-      return "rgba(" + r + ", " + g + ", " + b + ", " + (a / 255) + ")";
-    },
-
-    stv_createGradient(gradient) {
-      var args = [];
-      switch (gradient.function) {
-        case 'LINEAR_GRADIENT': args.push((gradient.angle || 0) + "deg"); break;
-        case 'RADIAL_GRADIENT': args.push(gradient.shape || 'circle'); break;
-        case 'URL':             args.push(gradient.image_url || ''); break;
-      }
-
-      var funcPrefix = '';
-      if (gradient.function !== 'URL') {
-        funcPrefix = gradient.repeat ? 'repeating-' : '';
-        for (var i = 0; i < gradient.stops.length; i++) {
-          var stop = gradient.stops[i];
-          args.push(this.stv_colorFromInt(stop.color) + " " + (stop.at * 100) + "%");
-        }
-      }
-
-      var image = funcPrefix + gradient.function.toLowerCase().replace('_', '-') + "(" + args.join(', ') + ")";
-      var pos   = gradient.at && gradient.at.length === 2   ? (gradient.at[0] * 100) + "% " + (gradient.at[1] * 100) + "%" : '';
-      var size  = gradient.size && gradient.size.length === 2 ? (gradient.size[0] * 100) + "% " + (gradient.size[1] * 100) + "%" : '';
-      var rep   = gradient.canvas_repeat || 'unset';
-
-      return [image, pos, size, rep];
-    },
-
-    stv_dropShadow(shadow) {
-      return "drop-shadow(" + shadow.x_offset + "px " + shadow.y_offset + "px " + shadow.radius + "px " + this.stv_colorFromInt(shadow.color) + ")";
-    },
   }
 }
 </script>

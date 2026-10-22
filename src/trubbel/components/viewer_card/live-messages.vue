@@ -1,21 +1,21 @@
 <template>
-<div class="live-messages">
-  <div v-if="history.length === 0 && live.length === 0" class="empty-state">
+<div class="cvc-live-messages">
+  <div v-if="history.length === 0 && live.length === 0" class="cvc-empty-state">
     No messages from {{ user.displayName || user.login }} in chat yet.
   </div>
-  <div v-else class="messages-scroll-container" ref="container" @scroll="onScroll">
+  <div v-else class="cvc-messages-scroll-container" ref="container" @scroll="onScroll">
     <ffz-card-chat-line v-for="item in history" :key="'h-' + item.id"
-      :msg="item" :room="room" :get-f-f-z="getFFZ"
+      :msg="item" :room="room" :get-f-f-z="getFFZ" :paint="paint"
       :class="{ 'message-deleted': item.isDeleted }" />
 
-    <div v-if="history.length" class="message-date-separator">
-      <span class="message-date-separator__line"></span>
-      <span class="message-date-separator__date">LIVE</span>
-      <span class="message-date-separator__line"></span>
+    <div v-if="history.length" class="cvc-message-date-separator">
+      <span class="cvc-message-date-separator__line"></span>
+      <span class="cvc-message-date-separator__date">LIVE</span>
+      <span class="cvc-message-date-separator__line"></span>
     </div>
 
     <ffz-card-chat-line v-for="item in live" :key="'l-' + item.id"
-      :msg="item" :room="room" :get-f-f-z="getFFZ"
+      :msg="item" :room="room" :get-f-f-z="getFFZ" :paint="paint"
       :class="{ 'message-deleted': item.isDeleted }" />
   </div>
 </div>
@@ -32,7 +32,7 @@ export default {
     "ffz-card-chat-line": ChatLine
   },
 
-  props: ["user", "room", "getFFZ"],
+  props: ["user", "room", "getFFZ", "paint"],
 
   data() {
     return {
@@ -113,7 +113,7 @@ export default {
           out.push(m);
         }
       } catch (err) {
-        console.warn("ViewerCards: Unable to read chat history:", err);
+        console.warn("[ViewerCards] Unable to read chat history:", err);
       }
 
       out.sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });

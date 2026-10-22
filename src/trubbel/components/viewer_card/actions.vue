@@ -1,8 +1,8 @@
 <template>
-  <div class="card-actions-root">
-    <div class="card-actions">
-      <div class="card-actions-row">
-        <button v-if="showFlagButton" @click="toggleFlag" class="action-btn flag-btn tw-relative ffz-tooltip"
+  <div class="cvc-card-actions-root">
+    <div class="cvc-card-actions">
+      <div class="cvc-card-actions-row">
+        <button v-if="showFlagButton" @click="toggleFlag" class="cvc-action-btn cvc-flag-btn tw-relative ffz-tooltip"
           data-title="Manage Suspicious User" :disabled="lowTrustBusy">
           <svg v-if="lowTrustTreatment === 'ACTIVE_MONITORING'" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11 14v2h2v-2h-2Z" />
@@ -19,8 +19,8 @@
             <path fill-rule="evenodd" d="M2 2h19.723l-4.571 8 4.571 8H4v4H2V2Zm2 14h14.277l-3.429-6 3.429-6H4v12Z"
               clip-rule="evenodd" />
           </svg>
-          <div v-if="showFlag" class="flag-popup show" @click.stop>
-            <div v-if="lowTrustTreatment !== 'ACTIVE_MONITORING'" class="popup-item warning"
+          <div v-if="showFlag" class="cvc-flag-popup show" @click.stop>
+            <div v-if="lowTrustTreatment !== 'ACTIVE_MONITORING'" class="cvc-popup-item warning"
               @click.stop="setLowTrustTreatment('ACTIVE_MONITORING')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
@@ -30,7 +30,7 @@
               </svg>
               Monitor User
             </div>
-            <div v-if="lowTrustTreatment !== 'RESTRICTED'" class="popup-item danger"
+            <div v-if="lowTrustTreatment !== 'RESTRICTED'" class="cvc-popup-item danger"
               @click.stop="setLowTrustTreatment('RESTRICTED')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path fill-rule="evenodd"
@@ -39,7 +39,7 @@
               </svg>
               Restrict User
             </div>
-            <div v-if="lowTrustTreatment === 'ACTIVE_MONITORING' || lowTrustTreatment === 'RESTRICTED'" class="popup-item"
+            <div v-if="lowTrustTreatment === 'ACTIVE_MONITORING' || lowTrustTreatment === 'RESTRICTED'" class="cvc-popup-item"
               @click.stop="setLowTrustTreatment('NONE')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path fill-rule="evenodd"
@@ -52,26 +52,26 @@
           </div>
         </button>
 
-        <button v-if="showNativeButton !== false && !(user && user.notFound)" @click="openNativeCard" class="action-btn tw-relative ffz-tooltip" data-title="Open native card">
+        <button v-if="showNativeButton !== false && !(user && user.notFound)" @click="openNativeCard" class="cvc-action-btn tw-relative ffz-tooltip" data-title="Open native card">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6h2v5h-2V6Zm4 0h2v5h-2V6Z" />
             <path fill-rule="evenodd" clip-rule="evenodd" d="M6 1h16v12l-7 7h-4l-4 4v-4H2V5l4-4Zm14 2H7v12h3v4l4-4h3l3-3V3Z" />
           </svg>
         </button>
-        <button v-if="showPopoutButton !== false" @click="openNative" class="action-btn tw-relative ffz-tooltip" data-title="Popout">
+        <button v-if="showPopoutButton !== false" @click="openNative" class="cvc-action-btn tw-relative ffz-tooltip" data-title="Popout">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14 2v2h4.586l-8.293 8.293 1.414 1.414L20 5.414V10h2V2h-8Z" />
             <path d="M4 4h8v2H4v14h14v-8h2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
           </svg>
         </button>
         <button @click="$emit('close')" @contextmenu.prevent="toggleCloseMenu"
-          class="action-btn close-btn tw-relative ffz-tooltip" data-title="Close">
+          class="cvc-action-btn cvc-close-btn tw-relative ffz-tooltip" data-title="Close">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M6.414 5 5 6.414l5.588 5.588L5 17.59l1.414 1.414 5.588-5.588 5.588 5.588 1.414-1.414-5.588-5.588 5.588-5.588L17.59 5l-5.588 5.588L6.414 5Z" />
           </svg>
-          <div v-if="showCloseMenu" class="more-options-popup show" @click.stop>
-            <div class="popup-item" @click.stop="closeAll">
+          <div v-if="showCloseMenu" class="cvc-more-options-popup show" @click.stop>
+            <div class="cvc-popup-item" @click.stop="closeAll">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6.414 5 5 6.414l5.588 5.588L5 17.59l1.414 1.414 5.588-5.588 5.588 5.588 1.414-1.414-5.588-5.588 5.588-5.588L17.59 5l-5.588 5.588L6.414 5Z" />
               </svg>
@@ -80,14 +80,14 @@
           </div>
         </button>
       </div>
-      <button v-if="!(user && user.notFound)" ref="moreButton" @click="toggleMore" class="action-btn tw-relative ffz-tooltip" data-title="More options">
+      <button v-if="!(user && user.notFound)" ref="moreButton" @click="toggleMore" class="cvc-action-btn tw-relative ffz-tooltip" data-title="More options">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path
             d="M10 5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 7a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
         </svg>
-        <div v-if="showMore" class="more-options-popup show" @click.stop>
+        <div v-if="showMore" class="cvc-more-options-popup show" @click.stop>
 
-          <div v-if="!pinned" class="popup-item" @click.stop="onPin">
+          <div v-if="menuShown('pin') && !pinned" :style="menuStyle('pin')" class="cvc-popup-item" @click.stop="onPin">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
                 d="M18 4V2H6v2h2v5a3 3 0 0 0-3 3v4h14v-4a3 3 0 0 0-3-3V4h2Zm-1 10H7v-2a1 1 0 0 1 1-1h2V4h4v7h2a1 1 0 0 1 1 1v2Z"
@@ -97,7 +97,7 @@
             Pin
           </div>
 
-          <div class="popup-item" @click.stop="action('edit')">
+          <div v-if="menuShown('edit')" :style="menuStyle('edit')" class="cvc-popup-item" @click.stop="action('edit')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
                 d="M13.207 7.621 4 16.828V20h3.172l9.207-9.207-3.172-3.172Zm4.586 1.758L14.62 6.207l1.88-1.879L19.672 7.5l-1.88 1.879ZM8 21.999H2v-6L15.086 2.915a2 2 0 0 1 2.828 0l3.172 3.172a2 2 0 0 1 0 2.828L8 22Z"
@@ -106,7 +106,7 @@
             Edit
           </div>
 
-          <div class="popup-item" @click.stop="action('notes')">
+          <div v-if="menuShown('notes')" :style="menuStyle('notes')" class="cvc-popup-item" @click.stop="action('notes')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M8 7h8v2H8V7Zm0 5h8v2H8v-2Z" />
               <path fill-rule="evenodd" clip-rule="evenodd" d="m17 22 4-4V2H3v20h14ZM5 4h14v13h-3v3H5V4Z" />
@@ -114,7 +114,7 @@
             Notes
           </div>
 
-          <div v-if="canShowFollow" class="popup-item" @click.stop="handleFollowClick">
+          <div v-if="menuShown('follow') && canShowFollow" :style="menuStyle('follow')" class="cvc-popup-item" @click.stop="handleFollowClick">
             <svg v-if="isFollowing" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11.033 5.49 8.63 13h3.983l-2.165 6.493-6.984-6.785A4.788 4.788 0 0 1 2 9.274v-.417C2 6.175 4.239 4 7 4h.429c1.326 0 2.597.512 3.535 1.422l.07.068Z" />
               <path d="M13.205 5.266 11.37 11h4.017l-3.307 9.922 8.455-8.214A4.788 4.788 0 0 0 22 9.274v-.417C22 6.175 19.761 4 17 4h-.429a5.083 5.083 0 0 0-3.366 1.266Z" />
@@ -127,7 +127,7 @@
             {{ isFollowing ? "Unfollow" : "Follow" }}
           </div>
 
-          <div class="popup-item" @click.stop="action('mention')">
+          <div v-if="menuShown('mention')" :style="menuStyle('mention')" class="cvc-popup-item" @click.stop="action('mention')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 10h2v2H9v-2Zm6 0h-2v2h2v-2Z" />
               <path fill-rule="evenodd"
@@ -137,7 +137,7 @@
             Mention
           </div>
 
-          <div v-if="canModUser" class="popup-item" @click.stop="toggleMod">
+          <div v-if="menuShown('mod') && canModUser" :style="menuStyle('mod')" class="cvc-popup-item" @click.stop="toggleMod">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd" d="M3 7a5 5 0 1 1 6 4.9v.1a1 1 0 0 0 1 1h1a3 3 0 0 1 3 3v6h-2v-6a1 1 0 0 0-1-1h-1a2.99 2.99 0 0 1-2-.764A2.99 2.99 0 0 1 6 15H5a1 1 0 0 0-1 1v6H2v-6a3 3 0 0 1 3-3h1a1 1 0 0 0 1-1v-.1A5.002 5.002 0 0 1 3 7Zm5 3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" clip-rule="evenodd" />
               <path v-if="user.isModerator" fill-rule="evenodd" clip-rule="evenodd" d="M16.5 8.5 15 10l2 2-2 2 1.5 1.5 2-2 2 2L22 14l-2-2 2-2-1.5-1.5-2 2-2-2Z" />
@@ -146,14 +146,14 @@
             {{ user.isModerator ? "Unmod" : "Mod" }}
           </div>
 
-          <div v-if="isOwn" class="popup-item" @click.stop="editProfile">
+          <div v-if="menuShown('edit-profile') && isOwn" :style="menuStyle('edit-profile')" class="cvc-popup-item" @click.stop="editProfile">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd" d="M3 7a5 5 0 1 1 6 4.9v.1a1 1 0 0 0 1 1h1a3 3 0 0 1 3 3v6h-2v-6a1 1 0 0 0-1-1h-1a2.99 2.99 0 0 1-2-.764A2.99 2.99 0 0 1 6 15H5a1 1 0 0 0-1 1v6H2v-6a3 3 0 0 1 3-3h1a1 1 0 0 0 1-1v-.1A5.002 5.002 0 0 1 3 7Zm5 3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" clip-rule="evenodd" />
             </svg>
             Edit Profile
           </div>
 
-          <div v-if="isOwn" class="popup-item" @click.stop="editChatIdentity">
+          <div v-if="menuShown('edit-chat-identity') && isOwn" :style="menuStyle('edit-chat-identity')" class="cvc-popup-item" @click.stop="editChatIdentity">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
                 d="m12 22-3-3H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-3 3Zm-2.172-5L12 19.172 14.172 17H19V5H5v12h4.828Z"
@@ -163,7 +163,7 @@
             Edit Chat Identity
           </div>
 
-          <div class="popup-item" @click.stop="action('highlight-user')">
+          <div v-if="menuShown('highlight')" :style="menuStyle('highlight')" class="cvc-popup-item" @click.stop="action('highlight-user')">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd"
                 d="M4 2V4H16V2H18V6.28078L17.0299 6.52331C15.2492 6.96848 14 8.56841 14 10.4039V15.7808L6 17.7808V10.4039C6 8.56841 4.75081 6.96848 2.97014 6.52331L2 6.28078V2H4ZM8 12V15.2192L12 14.2192V12H8ZM6.07534 6H13.9247C12.823 7.02027 12.118 8.44067 12.0135 10H7.98651C7.88205 8.44067 7.17701 7.02027 6.07534 6Z"
@@ -171,7 +171,7 @@
             </svg>
             {{ tempHighlighted ? "Remove highlight" : "Highlight" }}
           </div>
-          <div v-if="!isOwn" class="popup-item danger2" @click.stop="action('block')">
+          <div v-if="menuShown('block') && !isOwn" :style="menuStyle('block')" class="cvc-popup-item danger2" @click.stop="action('block')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
                 d="m2.293 3.707 18 18 1.414-1.414-3.683-3.683a7.98 7.98 0 0 0 .37-.404L22 12l-3.605-4.206A8 8 0 0 0 12.32 5h-.64a8 8 0 0 0-4.122 1.144l-3.85-3.851-1.415 1.414Zm6.738 3.91 2.45 2.45a2.003 2.003 0 0 1 2.451 2.451l2.678 2.678c.091-.094.18-.191.266-.291L19.366 12l-2.49-2.905A6 6 0 0 0 12.32 7h-.64a6 6 0 0 0-2.65.616Z"
@@ -181,7 +181,7 @@
             </svg>
             Block
           </div>
-          <div v-if="!isOwn" class="popup-item danger2" @click.stop="action('report')">
+          <div v-if="menuShown('report') && !isOwn" :style="menuStyle('report')" class="cvc-popup-item danger2" @click.stop="action('report')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11 14a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm2-7h-2v4h2V7Z" />
               <path fill-rule="evenodd"
@@ -190,7 +190,7 @@
             </svg>
             Report
           </div>
-          <div v-if="!isOwn && !isSuspended" class="popup-item" @click.stop="action('whisper', $event)">
+          <div v-if="menuShown('whisper') && !isOwn && !isSuspended" :style="menuStyle('whisper')" class="cvc-popup-item" @click.stop="action('whisper', $event)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
                 d="M9.828 17 12 19.172 14.172 17H19V5H5v12h4.828ZM12 22l-3-3H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-3 3Z"
@@ -202,22 +202,22 @@
       </button>
     </div>
 
-    <div v-if="showUnfollowWarning" class="unfollow-modal-overlay" @click="cancelUnfollow">
-      <div class="unfollow-modal" role="dialog" aria-modal="true" aria-labelledby="trubbel-unfollow-title"
+    <div v-if="showUnfollowWarning" class="cvc-unfollow-modal-overlay" @click="cancelUnfollow">
+      <div class="cvc-unfollow-modal" role="dialog" aria-modal="true" aria-labelledby="cvc-unfollow-title"
         @click.stop @keydown.esc.stop="cancelUnfollow">
-        <div class="unfollow-modal__head">
-          <img v-if="user.profileImageURL" class="unfollow-modal__avatar" :src="user.profileImageURL" alt="">
-          <h3 id="trubbel-unfollow-title" class="unfollow-modal__title">Unfollow {{ formatUsername(user) }}?</h3>
+        <div class="cvc-unfollow-modal__head">
+          <img v-if="user.profileImageURL" class="cvc-unfollow-modal__avatar" :src="user.profileImageURL" alt="">
+          <h3 id="cvc-unfollow-title" class="cvc-unfollow-modal__title">Unfollow {{ formatUsername(user) }}?</h3>
         </div>
 
-        <div v-if="followInfo" class="unfollow-modal__stat">
-          <span class="unfollow-modal__stat-label">Following since</span>
-          <span class="unfollow-modal__stat-value ffz-tooltip" :data-title="followInfo.exact">{{ followInfo.date }}</span>
+        <div v-if="followInfo" class="cvc-unfollow-modal__stat">
+          <span class="cvc-unfollow-modal__stat-label">Following since</span>
+          <span class="cvc-unfollow-modal__stat-value ffz-tooltip" :data-title="followInfo.exact">{{ followInfo.date }}</span>
         </div>
 
-        <div class="unfollow-modal__actions">
-          <button ref="unfollowCancel" @click="cancelUnfollow" class="unfollow-modal__btn unfollow-modal__btn--cancel">Cancel</button>
-          <button @click="confirmUnfollow" class="unfollow-modal__btn unfollow-modal__btn--danger">Unfollow</button>
+        <div class="cvc-unfollow-modal__actions">
+          <button ref="unfollowCancel" @click="cancelUnfollow" class="cvc-unfollow-modal__btn cvc-unfollow-modal__btn--cancel">Cancel</button>
+          <button @click="confirmUnfollow" class="cvc-unfollow-modal__btn cvc-unfollow-modal__btn--danger">Unfollow</button>
         </div>
       </div>
     </div>
@@ -229,7 +229,7 @@ import { isIntl } from "../../utilities/format";
 import { openReportModal } from "./card-utils";
 
 export default {
-  props: ["user", "rawUser", "loaded", "getFFZ", "room", "isMod", "isOwn", "isTargetBroadcaster", "pinned", "showNativeButton", "showPopoutButton", "isBroadcaster"],
+  props: ["user", "rawUser", "loaded", "getFFZ", "room", "isMod", "isOwn", "isTargetBroadcaster", "pinned", "showNativeButton", "showPopoutButton", "isBroadcaster", "canManageMods", "menuItems"],
 
   data() {
     return {
@@ -244,6 +244,14 @@ export default {
   },
 
   computed: {
+    menuLayout() {
+      var out = {};
+      (Array.isArray(this.menuItems) ? this.menuItems : []).forEach(function(t, i) {
+        if (t && t.id) out[t.id] = { order: i, enabled: t.enabled !== false };
+      });
+      return out;
+    },
+
     canFlag() {
       return !!(this.loaded && this.user && !this.user.notFound && !this.isOwn && !this.isTargetBroadcaster && this.isMod);
     },
@@ -259,7 +267,7 @@ export default {
     },
 
     canModUser() {
-      return !!(this.loaded && this.user && this.isBroadcaster && !this.isOwn && !this.isSuspended);
+      return !!(this.loaded && this.user && (this.isBroadcaster || this.canManageMods) && !this.isOwn && !this.isTargetBroadcaster && !this.isSuspended);
     },
 
     isFollowing() {
@@ -316,21 +324,21 @@ export default {
     this._clickHandler = function(e) {
       var target = e.target;
 
-      var clickedInFlagPopup = target.closest(".flag-popup");
-      var clickedOnFlagButton = target.closest(".flag-btn");
+      var clickedInFlagPopup = target.closest(".cvc-flag-popup");
+      var clickedOnFlagButton = target.closest(".cvc-flag-btn");
       if (self.showFlag && !clickedOnFlagButton && !clickedInFlagPopup)
         self.showFlag = false;
 
-      var clickedInMorePopup = target.closest(".more-options-popup");
-      var clickedOnMoreButton = target.closest(".action-btn[data-title=\"More options\"]");
+      var clickedInMorePopup = target.closest(".cvc-more-options-popup");
+      var clickedOnMoreButton = target.closest(".cvc-action-btn[data-title=\"More options\"]");
       if (self.showMore && !clickedOnMoreButton && !clickedInMorePopup)
         self.showMore = false;
 
-      var clickedInCloseMenu = target.closest(".close-btn .more-options-popup");
+      var clickedInCloseMenu = target.closest(".cvc-close-btn .cvc-more-options-popup");
       if (self.showCloseMenu && !clickedInCloseMenu)
         self.showCloseMenu = false;
 
-      var clickedInUnfollowModal = target.closest(".unfollow-modal");
+      var clickedInUnfollowModal = target.closest(".cvc-unfollow-modal");
       if (self.showUnfollowWarning && !clickedInUnfollowModal)
         self.showUnfollowWarning = false;
     };
@@ -347,6 +355,16 @@ export default {
   },
 
   methods: {
+    menuShown(id) {
+      var t = this.menuLayout[id];
+      return !t || t.enabled;
+    },
+
+    menuStyle(id) {
+      var t = this.menuLayout[id];
+      return t ? { order: t.order } : null;
+    },
+
     formatUsername(user) {
       if (!user) return "";
       return isIntl(user.displayName, user.login);
@@ -450,7 +468,7 @@ export default {
       this.showMore = false;
       var btn = document.querySelector('button[data-a-target="chat-badge-carousel-badge-icon"]');
       if (btn) btn.click();
-      else console.warn('ViewerCards: Chat Identity button not found');
+      else console.warn('[ViewerCards] Chat Identity button not found');
     },
 
     mentionUser() {
@@ -537,7 +555,7 @@ export default {
         var props = result && result.data && result.data.lowTrustUserProperties;
         this.lowTrustTreatment = (props && props.treatment && props.treatment.type) || 'NONE';
       } catch (err) {
-        console.warn('ViewerCards: Unable to load low-trust treatment:', err);
+        console.warn('[ViewerCards] Unable to load low-trust treatment:', err);
       }
     },
 
@@ -556,13 +574,13 @@ export default {
         );
         var payload = result && result.data && result.data.updateLowTrustUserTreatment;
         if (payload && payload.error) {
-          console.error('ViewerCards: Low-trust update failed:', payload.error);
+          console.error('[ViewerCards] Low-trust update failed:', payload.error);
           return;
         }
         var props = payload && payload.properties;
         this.lowTrustTreatment = (props && props.treatment && props.treatment.type) || treatment;
       } catch (err) {
-        console.error('ViewerCards: Low-trust update failed:', err);
+        console.error('[ViewerCards] Low-trust update failed:', err);
       } finally {
         this.lowTrustBusy = false;
       }
@@ -603,7 +621,7 @@ export default {
       if (!ffz) return;
       var chatContainer = ffz.resolve("site.chat") && ffz.resolve("site.chat").ChatContainer;
       if (!chatContainer || !chatContainer.first || !chatContainer.first.onUsernameClick) {
-        console.warn("ViewerCards: Could not find ChatContainer.first.onUsernameClick");
+        console.warn("[ViewerCards] Could not find ChatContainer.first.onUsernameClick");
         return;
       }
       var login = this.user ? this.user.login : this.rawUser.login;
@@ -640,7 +658,7 @@ export default {
           this.$set(this.user.self, "follower", null);
         }
       } catch (err) {
-        console.error("ViewerCards: Error unfollowing:", err);
+        console.error("[ViewerCards] Error unfollowing:", err);
       }
     },
 
@@ -656,7 +674,7 @@ export default {
           __typename: "FollowerEdge"
         });
       } catch (err) {
-        console.error("ViewerCards: Error following:", err);
+        console.error("[ViewerCards] Error following:", err);
       }
     },
   }

@@ -367,13 +367,15 @@ export default class ViewerCards {
       const channelID = room?.id || null;
       const channelLogin = room?.login || "";
 
-      if (source && source.id && !source.login) {
+      // Shared Chat: resolve the source channel natively (login, display name and avatar)
+      if (source && (source.id || source.login)) {
         try {
-          const basic = await this.resolve("site.twitch_data")?.getUserBasic(source.id);
-          if (basic) source = { id: basic.id, login: basic.login, displayName: basic.displayName };
+          const basic = await this.resolve("site.twitch_data")?.getUserBasic(source.id || null, source.id ? null : source.login);
+          if (basic) source = { id: basic.id, login: basic.login, displayName: basic.displayName, profileImageURL: basic.profileImageURL };
         } catch (err) { /* */ }
       }
       const badgeChannelLogin = source?.login || channelLogin;
+      const currentUserID = this.resolve("site")?.getUser?.()?.id || null;
 
       const result = await apollo.client.query({
         query: await import(/* webpackChunkName: "queries" */ "../../../utilities/graphql/viewer_card/card.gql"),
@@ -382,7 +384,9 @@ export default class ViewerCards {
           channelID,
           channelIDStr: channelID ? String(channelID) : "",
           badgeChannelLogin,
-          hasChannel: !!channelID
+          hasChannel: !!channelID,
+          currentUserID: currentUserID ? String(currentUserID) : "0",
+          hasViewer: !!(channelID && currentUserID)
         },
         fetchPolicy: "network-only"
       });
@@ -437,7 +441,7 @@ export default class ViewerCards {
         } : null,
 
         sourceChannel: source?.login && source.login !== channelLogin
-          ? { id: source.id, login: source.login, displayName: source.displayName || source.login }
+          ? { id: source.id, login: source.login, displayName: source.displayName || source.login, profileImageURL: source.profileImageURL || null }
           : null,
 
         self: targetUser.self ? {
@@ -463,7 +467,9 @@ export default class ViewerCards {
           displayName: channelUser.displayName,
           subscriptionProducts: channelUser.subscriptionProducts,
           moderatorAccess: channelUser.self,
-          moderationSettings: data.channel?.moderationSettings
+          moderationSettings: data.channel?.moderationSettings,
+          canAddMods: !!data.channel?.canAddMods,
+          canRemoveMods: !!data.channel?.canRemoveMods
         } : null,
 
         channelUser: channelUser ? {
@@ -581,11 +587,16 @@ export default class ViewerCards {
     }
 
     try {
-      const [data, , seventvData] = await Promise.all([
+      const showPaints = this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-paints");
+      const [data, , knownSeventv] = await Promise.all([
         this.loadData(user, room, source),
         this.loadVue(),
-        user.id ? this.fetch7TVData(user.id) : Promise.resolve(null)
+        showPaints && user.id ? this.fetch7TVData(user.id) : Promise.resolve(null)
       ]);
+
+      const seventvData = !showPaints ? null
+        : user.id ? knownSeventv
+        : (data?.id ? await this.fetch7TVData(data.id) : null);
 
       const card = this.buildCard(pos_x, pos_y, user, data, seventvData);
       this.open_cards.set(card_key, card);
@@ -618,9 +629,12 @@ export default class ViewerCards {
       settings: {
         showBanner: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-banner"),
         showBadges: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-badges"),
+        showAvatarTooltip: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-avatar-tooltip"),
         showNativeButton: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-native-button"),
         showPopoutButton: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-popout-button"),
         modTabs: this.settings.get("addon.trubbel.channel.chat.viewer-cards.mod-tabs"),
+        menuItems: this.settings.get("addon.trubbel.channel.chat.viewer-cards.more-options"),
+        showPaints: this.settings.get("addon.trubbel.channel.chat.viewer-cards.show-paints"),
         timeoutButtons: timeoutButtons
       },
       onClose: () => {
@@ -772,9 +786,12 @@ class ViewerCard {
             getZ: getDialogNextZ,
             showBanner: this.settings.showBanner,
             showBadges: this.settings.showBadges,
+            showAvatarTooltip: this.settings.showAvatarTooltip,
             showNativeButton: this.settings.showNativeButton,
             showPopoutButton: this.settings.showPopoutButton,
             modTabs: this.settings.modTabs,
+            menuItems: this.settings.menuItems,
+            showPaints: this.settings.showPaints,
             timeoutButtons: this.settings.timeoutButtons
           },
           on: {

@@ -1,5 +1,5 @@
 <template>
-  <div :style="{ zIndex: z, overflow: 'visible' }" class="card-wrapper" tabindex="0" @focusin="onFocus"
+  <div :style="{ zIndex: z, overflow: 'visible' }" class="cvc-card-wrapper" tabindex="0" @focusin="onFocus"
     @keyup.esc="close" ref="card">
     <card-actions
       :user="user"
@@ -12,6 +12,8 @@
       :is-target-broadcaster="isTargetBroadcaster"
       :pinned="pinned"
       :is-broadcaster="isBroadcaster"
+      :can-manage-mods="canManageMods"
+      :menu-items="menuItems"
       :show-native-button="showNativeButton"
       :show-popout-button="showPopoutButton"
       @close="close"
@@ -25,10 +27,11 @@
       :raw-user="raw_user"
       :loaded="loaded"
       :show-banner="showBanner !== false"
-      :seventv-data="seventvData"
+      :seventv-data="showPaints === false ? null : seventvData"
+      :show-avatar-tooltip="showAvatarTooltip !== false"
       :get-f-f-z="getFFZ" />
 
-    <div v-if="loaded && user && (user.suspended || user.notFound)" class="account-status-banner ffz-tooltip"
+    <div v-if="loaded && user && (user.suspended || user.notFound)" class="cvc-account-status-banner ffz-tooltip"
       :data-title="suspendedInfo.detail">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path v-if="user.notFound" fill-rule="evenodd" clip-rule="evenodd" d="M13.226 2.72a1.404 1.404 0 0 0-2.452 0L2.192 17.84c-.545.96.136 2.16 1.226 2.16h17.164c1.09 0 1.771-1.2 1.226-2.16L13.226 2.72ZM13 7h-2v7h2V7Zm0 9h-2v2h2v-2Z" />
@@ -52,8 +55,11 @@
       :is-own="isOwn"
       :is-broadcaster="isBroadcaster"
       :is-target-broadcaster="isTargetBroadcaster"
+      :is-lead-mod="isLeadMod"
+      :is-target-lead-mod="isTargetLeadMod"
       :can-access-mod-logs="canAccessModLogs"
-      :mod-tabs="modTabs" />
+      :mod-tabs="modTabs"
+      :message-paint="messagePaint" />
   </div>
 </template>
 
@@ -64,6 +70,7 @@ import CardBanner from "./banner.vue";
 import CardBadges from "./badges.vue";
 import CardNotes from "./notes.vue";
 import CardContent from "./content.vue";
+import { paintStyle, styleToCss } from "./card-utils";
 
 const SUSPENDED_REASONS = {
   DEACTIVATED: { label: "Account deactivated", detail: "This channel has been closed by the user." },
@@ -82,7 +89,7 @@ export default {
     "card-content": CardContent
   },
 
-  props: ["raw_user", "data", "getZ", "getFFZ", "showBanner", "showBadges", "showNativeButton", "showPopoutButton", "timeoutButtons", "modTabs", "seventvData"],
+  props: ["raw_user", "data", "getZ", "getFFZ", "showBanner", "showBadges", "showAvatarTooltip", "showNativeButton", "showPopoutButton", "timeoutButtons", "modTabs", "menuItems", "seventvData", "showPaints"],
 
   data() {
     return {
@@ -97,6 +104,12 @@ export default {
   },
 
   computed: {
+    messagePaint() {
+      if (this.showPaints === false) return null;
+      var paint = this.seventvData && this.seventvData.paint;
+      return paint ? styleToCss(paintStyle(paint)) : null;
+    },
+
     badges() {
       if (!this.loaded || !this.user) return [];
       if (this.user.channelViewer && Array.isArray(this.user.channelViewer.earnedBadges))
@@ -123,6 +136,20 @@ export default {
         return { label: "Unable to fetch account", detail: "This account doesn't exist." };
       var reason = this.user && this.user.suspended && this.user.suspended.reason;
       return SUSPENDED_REASONS[reason] || SUSPENDED_REASONS.UNKNOWN;
+    },
+
+    isLeadMod() {
+      var c = this.user && this.user.channel;
+      return !this.isBroadcaster && !!(c && (c.canAddMods || c.canRemoveMods));
+    },
+
+    canManageMods() {
+      var c = this.user && this.user.channel;
+      return this.isBroadcaster || !!(c && (c.canAddMods || c.canRemoveMods));
+    },
+
+    isTargetLeadMod() {
+      return this.badges.some(function(b) { return b && b.setID === "lead_moderator"; });
     },
 
     isOwn() {
@@ -215,15 +242,18 @@ export default {
       var self = this;
       this.$nextTick(function() {
         if (self._destroyed || !self._mounted) return;
-        var banner = self.$el.querySelector(".user-banner");
-        if (!banner) return;
+
         self.displace = displace(self.$el, {
-          handle: banner,
+          handle: self.$el,
           highlightInputs: true,
           constrain: true,
           onMouseDown: function() { self.onFocus(); },
           onTouchStart: function() { self.onFocus(); },
-          ignoreFn: function(e) { return e.target.closest(".action-btn, .badge-item, .mod-action-button, .tab, .badges-toggle") != null; }
+          ignoreFn: function(e) {
+            var t = e.target;
+            if (!t || !t.closest || !t.closest(".cvc-user-banner, .cvc-user-badges")) return true;
+            return t.closest(".cvc-action-btn, .cvc-card-actions, .cvc-badge-item, .cvc-badges-toggle, .cvc-username, a, button") != null;
+          }
         });
       });
     },

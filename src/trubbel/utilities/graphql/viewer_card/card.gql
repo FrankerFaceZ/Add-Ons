@@ -3,7 +3,9 @@ query Trubbel_ViewerCard(
   $channelID: ID,
   $channelIDStr: String!,
   $badgeChannelLogin: String!,
-  $hasChannel: Boolean!
+  $hasChannel: Boolean!,
+  $currentUserID: ID!,
+  $hasViewer: Boolean!
 ) {
   targetUser: user(login: $targetLogin, lookupType: ALL) {
     id
@@ -85,6 +87,8 @@ query Trubbel_ViewerCard(
     moderationSettings {
       canAccessViewerCardModLogs
     }
+    canAddMods: hasPermission(permission: "moderation.roles.mod:add", userID: $currentUserID) @include(if: $hasViewer)
+    canRemoveMods: hasPermission(permission: "moderation.roles.mod:remove", userID: $currentUserID) @include(if: $hasViewer)
   }
 
   currentUser {

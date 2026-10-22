@@ -33,6 +33,7 @@ query Trubbel_ViewerCardModLogsMessagesBySender($channelID: ID!, $senderID: ID!,
               isDeleted
               lastUpdatedBy {
                 id
+                login
                 displayName
               }
               originatorChannel {
@@ -82,6 +83,12 @@ query Trubbel_ViewerCardModLogsMessagesBySender($channelID: ID!, $senderID: ID!,
               id
               status
               sentAt
+              caughtMessageReason {
+                mainReason
+                automodFailure {
+                  category
+                }
+              }
               content {
                 text
                 __typename

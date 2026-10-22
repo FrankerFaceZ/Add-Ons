@@ -145,12 +145,12 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
 
 
-    // Appearance - Declutter - Left Navigation - Hide the "For You"-text
+    // Appearance - Declutter - Sidebar - Hide the "For You"-text
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.for_you", {
       default: false,
       ui: {
         sort: 0,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide the \"For You\"-text",
         component: "setting-check-box"
       },
@@ -160,36 +160,36 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       }
     });
 
-    // Appearance - Declutter - Left Navigation - Hide the "Viewers (High to Low)"-text
+    // Appearance - Declutter - Sidebar - Hide the "Viewers (High to Low)"-text
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.sort_paragraph", {
       default: false,
       ui: {
         sort: 1,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide the \"Viewers (High to Low)\"-text",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-sort-paragraph", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide the guest avatars
+    // Appearance - Declutter - Sidebar - Hide the guest avatars
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.guest_avatar", {
       default: false,
       ui: {
         sort: 2,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide the guest avatars",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-guest-avatar", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide the guest +number text
+    // Appearance - Declutter - Sidebar - Hide the guest +number text
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.guest_number", {
       default: false,
       ui: {
         sort: 3,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide the guest +number text",
         component: "setting-check-box"
       },
@@ -198,137 +198,149 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
 
 
 
-    // Appearance - Declutter - Left Navigation - Hide All-Time High Train
+    // Appearance - Declutter - Sidebar - Hide All-Time High Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.all_time_high_train", {
       default: false,
       ui: {
         sort: 4,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide All-Time High Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-all-time-high-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Community Train
+    // Appearance - Declutter - Sidebar - Hide Community Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.community_train", {
       default: false,
       ui: {
         sort: 5,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Community Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-community-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Golden Kappa Train
+    // Appearance - Declutter - Sidebar - Hide Golden Kappa Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.golden_kappa_train", {
       default: false,
       ui: {
         sort: 6,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Golden Kappa Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-golden-kappa-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Mythic Train
+    // Appearance - Declutter - Sidebar - Hide Mythic Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.mythic_train", {
       default: false,
       ui: {
         sort: 7,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Mythic Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-mythic-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Shared Hype Train
+    // Appearance - Declutter - Sidebar - Hide Shared Hype Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.shared_hype_train", {
       default: false,
       ui: {
         sort: 8,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Shared Hype Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-shared-hype-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Treasure Train
+    // Appearance - Declutter - Sidebar - Hide Treasure Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.treasure_train", {
       default: false,
       ui: {
         sort: 9,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Treasure Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-treasure-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Hype Train
+    // Appearance - Declutter - Sidebar - Hide Hype Train
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.hype_train", {
       default: false,
       ui: {
         sort: 10,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Hype Train",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-hype-train", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Gift Discount
+    // Appearance - Declutter - Sidebar - Hide Gift Discount
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.gift_discount", {
       default: false,
       ui: {
         sort: 11,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Gift Discount",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-gift-discount", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Save your Streak
+    // Appearance - Declutter - Sidebar - Hide Save your Streak
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.save_streak", {
       default: false,
       ui: {
         sort: 12,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Save your Streak",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-save-streak", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide Watch Streak
+    // Appearance - Declutter - Sidebar - Hide Watch Streak
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.watch_streak", {
       default: false,
       ui: {
         sort: 13,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide Watch Streak",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-watch-streak", val)
     });
 
-    // Appearance - Declutter - Left Navigation - Hide sponsored content
+    // Appearance - Declutter - Sidebar - Hide sponsored content
     this.settings.add("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent", {
       default: false,
       ui: {
         sort: 14,
-        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Left Navigation",
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
         title: "Hide sponsored content",
         description: "This will prevent any promoted streams from showing up at all in the sidebar.",
         component: "setting-check-box"
       },
       changed: val => this.declutter.toggleHide("hide-sidebar-sponsored-content", val)
+    });
+
+    // Appearance - Declutter - Sidebar - Hide Play on Luna
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.play_luna", {
+      default: false,
+      ui: {
+        sort: 15,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
+        title: "Hide Play on Luna",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-play-luna", val)
     });
 
 
