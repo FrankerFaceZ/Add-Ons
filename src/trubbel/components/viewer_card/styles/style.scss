@@ -21,6 +21,7 @@
   align-items: flex-end;
   gap: 4px;
   z-index: 10;
+  pointer-events: none;
 }
 
 .cvc-card-actions-row {
@@ -42,6 +43,11 @@
   transition: all 0.15s ease;
   backdrop-filter: blur(4px);
   position: relative;
+  pointer-events: auto;
+}
+
+.cvc-action-btn--open {
+  z-index: 1;
 }
 
 .cvc-action-btn:hover {
@@ -78,6 +84,17 @@
 .cvc-more-options-popup.show {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+  background: #2f2f35;
+}
+
+.cvc-more-options-popup .cvc-popup-item {
+  border-bottom: none;
+  background: #18181b;
+}
+
+.cvc-more-options-popup .cvc-popup-item:hover {
+  background: #2f2f35;
 }
 
 .cvc-popup-item {
