@@ -130,6 +130,7 @@ export class SidebarPreviews {
       if (card.classList.contains("trubbel-pinned-channel-card")) continue;
       if (card.classList.contains("ffz--side-nav-card-offline") ||
         card.querySelector(".side-nav-card__avatar--offline")) continue;
+      if (!this.getCardLogin(card)) continue;
 
       const props = this.fine.getReactInstance(card)?.return?.return?.memoizedProps;
       if (props?.userLogin) this.getCachedStreamMeta(props);
@@ -180,6 +181,8 @@ export class SidebarPreviews {
     let parent;
     while ((parent = card.parentElement?.closest(".side-nav-card")))
       card = parent;
+
+    if (!this.getCardLogin(card)) return null;
 
     return card;
   }

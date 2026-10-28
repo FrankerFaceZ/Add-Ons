@@ -3,6 +3,7 @@
     <div class="cvc-card-actions">
       <div class="cvc-card-actions-row">
         <button v-if="showFlagButton" @click="toggleFlag" class="cvc-action-btn cvc-flag-btn tw-relative ffz-tooltip"
+          :class="{ 'cvc-action-btn--open': showFlag }"
           data-title="Manage Suspicious User" :disabled="lowTrustBusy">
           <svg v-if="lowTrustTreatment === 'ACTIVE_MONITORING'" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11 14v2h2v-2h-2Z" />
@@ -65,7 +66,7 @@
           </svg>
         </button>
         <button @click="$emit('close')" @contextmenu.prevent="toggleCloseMenu"
-          class="cvc-action-btn cvc-close-btn tw-relative ffz-tooltip" data-title="Close">
+          class="cvc-action-btn cvc-close-btn tw-relative ffz-tooltip" :class="{ 'cvc-action-btn--open': showCloseMenu }" data-title="Close">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M6.414 5 5 6.414l5.588 5.588L5 17.59l1.414 1.414 5.588-5.588 5.588 5.588 1.414-1.414-5.588-5.588 5.588-5.588L17.59 5l-5.588 5.588L6.414 5Z" />
@@ -80,7 +81,7 @@
           </div>
         </button>
       </div>
-      <button v-if="!(user && user.notFound)" ref="moreButton" @click="toggleMore" class="cvc-action-btn tw-relative ffz-tooltip" data-title="More options">
+      <button v-if="!(user && user.notFound)" ref="moreButton" @click="toggleMore" class="cvc-action-btn tw-relative ffz-tooltip" :class="{ 'cvc-action-btn--open': showMore }" data-title="More options">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path
             d="M10 5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 7a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
