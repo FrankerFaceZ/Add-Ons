@@ -172,6 +172,7 @@
             </svg>
             {{ tempHighlighted ? "Remove highlight" : "Highlight" }}
           </div>
+
           <div v-if="menuShown('block') && !isOwn" :style="menuStyle('block')" class="cvc-popup-item danger2" @click.stop="action('block')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
@@ -182,6 +183,7 @@
             </svg>
             Block
           </div>
+
           <div v-if="menuShown('report') && !isOwn" :style="menuStyle('report')" class="cvc-popup-item danger2" @click.stop="action('report')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M11 14a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm2-7h-2v4h2V7Z" />
@@ -191,6 +193,7 @@
             </svg>
             Report
           </div>
+
           <div v-if="menuShown('whisper') && !isOwn && !isSuspended" :style="menuStyle('whisper')" class="cvc-popup-item" @click.stop="action('whisper', $event)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd"
@@ -198,6 +201,15 @@
                 clip-rule="evenodd" />
             </svg>
             Whisper
+          </div>
+
+          <div v-if="menuShown('settings')" :style="menuStyle('settings')" class="cvc-popup-item" @click.stop="openSettings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M10.9 1h2.2v.228a3.362 3.362 0 0 0 5.739 2.378L19 3.444l1.556 1.555-.161.162a3.362 3.362 0 0 0 2.377 5.739H23v2.2h-.228a3.362 3.362 0 0 0-2.377 5.74l.161.16L19 20.557l-.16-.161a3.362 3.362 0 0 0-5.74 2.377V23h-2.2v-.228a3.362 3.362 0 0 0-5.74-2.377l-.16.16L3.444 19l.161-.16a3.362 3.362 0 0 0-2.377-5.74H1v-2.2h.228a3.362 3.362 0 0 0 2.377-5.739L3.445 5 5 3.444l.161.161A3.362 3.362 0 0 0 10.9 1.228V1ZM4.929 12 7 17l5 2.07L17 17l2.071-5L17 7l-5-2.071-5 2.07-2.071 5Z" />
+            </svg>
+            Settings
           </div>
         </div>
       </button>
@@ -228,6 +240,8 @@
 <script>
 import { isIntl } from "../../utilities/format";
 import { openReportModal } from "./card-utils";
+
+const SETTINGS_PAGE = "add_ons.trubbel_s_utilities.channel.chat.viewer_cards";
 
 export default {
   props: ["user", "rawUser", "loaded", "getFFZ", "room", "isMod", "isOwn", "isTargetBroadcaster", "pinned", "showNativeButton", "showPopoutButton", "isBroadcaster", "canManageMods", "menuItems"],
@@ -596,6 +610,12 @@ export default {
       var room = chat.ChatService.first && chat.ChatService.first.props && chat.ChatService.first.props.channelLogin;
       if (!room) return;
       chat.sendMessage(room, "/block " + login);
+    },
+
+    // Same event FFZ's own "open settings" links use (Ctrl/Shift click opens it in a popout)
+    openSettings(event) {
+      this.showMore = false;
+      this.getFFZ().emit("main_menu:open", { item: SETTINGS_PAGE, event: event, errored: false });
     },
 
     openNative() {

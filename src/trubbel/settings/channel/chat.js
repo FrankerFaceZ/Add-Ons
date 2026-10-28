@@ -48,7 +48,8 @@ const VC_MORE_OPTIONS = [
   { id: "highlight", name: "Highlight", enabled: true },
   { id: "block", name: "Block", enabled: true },
   { id: "report", name: "Report", enabled: true },
-  { id: "whisper", name: "Whisper", enabled: true }
+  { id: "whisper", name: "Whisper", enabled: true },
+  { id: "settings", name: "Settings", enabled: true }
 ];
 
 function normalizeOrderedList(defs, val) {
