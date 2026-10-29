@@ -1,6 +1,8 @@
 import { BAD_USERS } from "../../../utilities/constants/types";
 
-const { createElement } = FrankerFaceZ.utilities.dom;
+const { createElement, on, setChildren } = FrankerFaceZ.utilities.dom;
+
+const MAX_MESSAGES = 50;
 
 export default class RecentMessages {
   constructor(parent) {
@@ -14,31 +16,20 @@ export default class RecentMessages {
     this.log = parent.log;
 
     this.isActive = false;
+    this.expanded = false;
+    this.state = null;
+    this.siteChat = null;
+    this.ViewerCardElement = null;
 
     this.handleNavigation = this.handleNavigation.bind(this);
     this.enableRecentMessages = this.enableRecentMessages.bind(this);
     this.disableRecentMessages = this.disableRecentMessages.bind(this);
     this.handleSettingChange = this.handleSettingChange.bind(this);
-    this.checkViewerCard = this.checkViewerCard.bind(this);
-    this.onNewMessage = this.onNewMessage.bind(this);
 
-    this.ChatLine = this.fine.define(
-      "chat-line",
-      n => n.onExtensionMessageClick || (n.props && n.props.message && n.props.message.user),
-      this.site.constructor.CHAT_ROUTES
+    this.ViewerCard = this.fine.define(
+      "chat-viewer-card",
+      n => n.props?.targetLogin && (n.props?.hideViewerCard || n.props?.modUserMutationResult)
     );
-
-    this.activeViewerCard = {
-      targetLogin: null,
-      container: null,
-      messageList: null,
-      isListening: false,
-      messageCount: 0,
-      processedMessageIds: new Set()
-    };
-
-    this.observer = null;
-    this.pollInterval = null;
   }
 
   initialize() {
@@ -94,63 +85,89 @@ export default class RecentMessages {
     this.log.info("[Recent Messages] Setting up viewer card recent messages");
     this.isActive = true;
 
-    this.chat.on("chat:receive-message", this.onNewMessage);
-    this.startDOMObserver();
+    this.siteChat = this.parent.resolve("site.chat");
+
+    if (!this.ViewerCardElement) {
+      this.ViewerCardElement = this.site.children.elemental.define(
+        "trubbel-recent-messages-viewer-card",
+        "div.viewer-card",
+        this.site.constructor.CHAT_ROUTES,
+        { childList: true },
+        0,
+        0
+      );
+    }
+
+    this.ViewerCardElement.on("mount", this.syncCard, this);
+    this.ViewerCardElement.on("mutate", this.syncCard, this);
+    this.ViewerCardElement.on("unmount", this.onCardUnmount, this);
+    this.ViewerCard.on("update", this.syncAllCards, this);
+    this.chat.on("chat:receive-message", this.onNewMessage, this);
+
     this.style.set("trubbel-previous-messages", `
         .trubbel-previous-messages {
-          border-top: 1px solid #222;
-          background-color: var(--color-background-base) !important;
+          border-top: 1px solid var(--color-border-base);
+          background-color: var(--color-background-base);
         }
-        .trubbel-previous-messages .message-list {
-          overflow-y: auto;
-          max-height: 200px;
+        .trubbel-previous-messages__header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           width: 100%;
-          display: none;
-        }
-        .trubbel-previous-messages .message-list::-webkit-scrollbar {
-          width: 5px;
-        }
-        .trubbel-previous-messages .message-list::-webkit-scrollbar-thumb {
-          border-radius: 10px;
-          box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-          background-color: #777;
-        }
-        .trubbel-previous-messages .label {
           padding: 5px 8px;
-          position: relative;
+          border: none;
+          background: none;
           font-size: 12px;
           font-weight: bold;
+          color: var(--color-text-base);
           cursor: pointer;
           user-select: none;
         }
-        .trubbel-previous-messages .triangle {
-          width: 0;
-          height: 0;
+        .trubbel-previous-messages__chevron {
+          display: flex;
+          width: 14px;
+          height: 14px;
+          fill: currentColor;
           opacity: 0.5;
-          position: absolute;
-          right: 8px;
-          top: 8px;
-          border-top: 7px solid transparent;
-          border-bottom: 7px solid transparent;
-          border-left: 7px solid #6441a4;
-          transition: all 50ms ease-in;
+          transition: transform 50ms ease-in;
         }
-        .trubbel-previous-messages .triangle.open {
+        .trubbel-previous-messages--open .trubbel-previous-messages__chevron {
           transform: rotate(90deg);
         }
-        .tw-root--theme-dark .trubbel-previous-messages .triangle {
-          border-left-color: white;
+        .trubbel-previous-messages__list {
+          display: none;
+          overflow-y: auto;
+          max-height: 200px;
+          width: 100%;
         }
-        .trubbel-previous-messages .message-list .chat-line__mod-icons {
-          display: none !important;
+        .trubbel-previous-messages--open .trubbel-previous-messages__list {
+          display: flex;
+          flex-direction: column;
         }
-        .trubbel-previous-messages .message-list .chat-line__message--deleted > a {
-          pointer-events: none;
+        .trubbel-previous-messages--oldest-first .trubbel-previous-messages__list {
+          flex-direction: column-reverse;
         }
-        .trubbel-previous-messages .message-list .ffz--hover-actions {
-          display: none !important;
+        .trubbel-previous-messages__list::-webkit-scrollbar {
+          width: 5px;
+        }
+        .trubbel-previous-messages__list::-webkit-scrollbar-thumb {
+          border-radius: 10px;
+          background-color: var(--color-text-alt-2);
+        }
+        .trubbel-previous-messages__reply {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          font-size: 12px;
+          color: var(--color-text-alt-2);
+        }
+        .trubbel-previous-messages__line--deleted .message {
+          opacity: 0.5;
+          text-decoration: line-through;
         }
       `);
+
+    this.syncAllCards();
   }
 
   disableRecentMessages() {
@@ -159,294 +176,206 @@ export default class RecentMessages {
     this.log.info("[Recent Messages] Removing viewer card recent messages");
     this.isActive = false;
 
-    this.chat.off("chat:receive-message", this.onNewMessage);
+    this.chat.off("chat:receive-message", this.onNewMessage, this);
+    this.ViewerCard.off("update", this.syncAllCards, this);
 
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
-    }
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
-      this.pollInterval = null;
+    if (this.ViewerCardElement) {
+      this.ViewerCardElement.off("mount", this.syncCard, this);
+      this.ViewerCardElement.off("mutate", this.syncCard, this);
+      this.ViewerCardElement.off("unmount", this.onCardUnmount, this);
     }
 
     this.style.delete("trubbel-previous-messages");
     this.cleanupContainer();
   }
 
-  startDOMObserver() {
-    this.observer = new MutationObserver(() => {
-      this.checkViewerCard();
-    });
-
-    this.observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    this.pollInterval = setInterval(() => this.checkViewerCard(), 200);
+  syncAllCards() {
+    this.ViewerCardElement?.each(card => this.syncCard(card));
   }
 
-  checkViewerCard() {
+  getTargetLogin() {
+    for (const inst of this.ViewerCard.instances) {
+      const login = inst.props?.targetLogin;
+      if (login) return login.toLowerCase();
+    }
+    return null;
+  }
+
+  syncCard(card) {
     if (!this.isActive) return;
 
-    const cards = document.querySelectorAll("div.viewer-card");
+    const login = this.getTargetLogin();
+    if (!login) return;
 
-    if (cards.length === 0) {
-      if (this.activeViewerCard.targetLogin) {
-        this.log.info("[Recent Messages] Viewer card closed");
-        this.cleanupContainer();
-      }
+    if (this.state?.card === card && this.state.login === login) {
+      this.ensurePosition();
       return;
     }
 
-    for (const card of cards) {
-      const profileLink = card.querySelector("a[href^=\"/\"]");
-      if (profileLink) {
-        const href = profileLink.getAttribute("href");
-        const username = href?.replace(/^\//, "").split("/")[0].toLowerCase();
+    this.cleanupContainer();
+    this.log.info("[Recent Messages] Viewer card detected for:", login);
 
-        if (username && username !== this.activeViewerCard.targetLogin) {
-          this.log.info("[Recent Messages] Viewer card detected for:", username);
-          this.onViewerCardDetected(username, card);
-          return;
-        }
-      }
-    }
+    this.state = this.createContainer(card, login);
+
+    const messages = this.getUserMessages(login);
+    this.log.info("[Recent Messages] Found", messages.length, "messages");
+
+    for (let i = messages.length - 1; i >= 0; i--)
+      this.appendMessage(messages[i]);
+
+    this.updateHeader();
+    this.ensurePosition();
   }
 
-  onViewerCardDetected(targetLogin, viewerCard) {
-    if (this.activeViewerCard.targetLogin && this.activeViewerCard.targetLogin !== targetLogin) {
-      this.log.info("[Recent Messages] Switching from", this.activeViewerCard.targetLogin, "to", targetLogin);
+  isOldestFirst() {
+    return this.settings.get("addon.trubbel.channel.chat.viewer_cards.recent_messages.order") === "oldest";
+  }
+
+  handleOrderChange() {
+    this.state?.container.classList.toggle("trubbel-previous-messages--oldest-first", this.isOldestFirst());
+  }
+
+  onCardUnmount(card) {
+    if (this.state?.card === card) {
+      this.log.info("[Recent Messages] Viewer card closed");
       this.cleanupContainer();
     }
-
-    this.activeViewerCard.targetLogin = targetLogin;
-    this.activeViewerCard.isListening = true;
-
-    const userMessages = this.getUserMessages(targetLogin);
-    this.log.info("[Recent Messages] Found", userMessages.length, "messages");
-
-    if (userMessages.length > 0) {
-      this.displayMessages(userMessages, viewerCard);
-    }
-
-    this.log.info("[Recent Messages] Listening for real-time updates:", targetLogin);
   }
 
-  getUserMessages(targetLogin) {
-    const userMessages = [];
-    for (const inst of this.ChatLine.instances) {
-      const msg = inst.props?.message;
-      if (msg?.user?.login?.toLowerCase() === targetLogin) {
-        userMessages.push({
-          message: msg,
-          _instance: inst,
-          update: () => inst.forceUpdate()
-        });
-      }
-    }
+  ensurePosition() {
+    const state = this.state;
+    if (!state || state.ids.size === 0) return;
 
-    return userMessages;
+    if (state.card.lastElementChild !== state.container)
+      state.card.appendChild(state.container);
   }
 
-  displayMessages(messages, viewerCard) {
-    const container = this.createSimpleContainer(messages.length);
-    const messageList = container.querySelector(".message-list");
+  getUserMessages(login) {
+    const seen = new Set();
+    const out = [];
 
-    this.activeViewerCard.container = container;
-    this.activeViewerCard.messageList = messageList;
-    this.activeViewerCard.messageCount = messages.length;
-
-    let successCount = 0;
-
-    // show latest messages at the top
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msgObj = messages[i];
-      const messageElement = this.createOptimizedMessageElement(msgObj);
-      if (messageElement) {
-        messageList.appendChild(messageElement);
-        successCount++;
+    for (const { message: msg } of this.chat.iterateMessages(true, false, false)) {
+      if (msg?.user?.login?.toLowerCase() !== login) continue;
+      if (msg.id) {
+        if (seen.has(msg.id)) continue;
+        seen.add(msg.id);
       }
+      out.push(msg);
     }
 
-    this.log.info("[Recent Messages] Added", successCount, "out of", messages.length, "messages");
-
-    viewerCard.appendChild(container);
+    out.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    return out.slice(-MAX_MESSAGES);
   }
 
   onNewMessage(event) {
-    if (!this.isActive || !this.activeViewerCard.isListening || !this.activeViewerCard.targetLogin) {
-      return;
-    }
+    const state = this.state;
+    if (!this.isActive || !state) return;
 
     const msg = event?.message;
-    if (!msg || !msg.user) return;
+    if (msg?.user?.login?.toLowerCase() !== state.login) return;
 
-    const userLogin = msg.user.login?.toLowerCase();
-    if (userLogin !== this.activeViewerCard.targetLogin) return;
-
-    const messageId = msg.id;
-    const fallbackId = messageId || `${msg.timestamp || Date.now()}-${msg.message || ""}`;
-
-    if (messageId && this.activeViewerCard.processedMessageIds.has(messageId)) return;
-    if (this.activeViewerCard.processedMessageIds.has(fallbackId)) return;
-
-    this.activeViewerCard.processedMessageIds.add(messageId || fallbackId);
-
-    if (this.activeViewerCard.processedMessageIds.size > 50) {
-      const idsArray = Array.from(this.activeViewerCard.processedMessageIds);
-      const toRemove = idsArray.slice(0, idsArray.length - 50);
-      toRemove.forEach(id => this.activeViewerCard.processedMessageIds.delete(id));
-    }
-
-    setTimeout(() => {
-      this.findAndCloneNewMessage(msg);
-    }, 250);
+    this.addNewMessage(msg);
+    this.updateHeader();
+    this.ensurePosition();
   }
 
-  findAndCloneNewMessage(msg) {
-    let foundInstance = null;
-    let bestMatch = null;
-    let bestScore = 0;
-
-    for (const inst of this.ChatLine.instances) {
-      const instMsg = inst.props?.message;
-      if (!instMsg) continue;
-
-      let score = 0;
-
-      if (msg.id && instMsg.id === msg.id) {
-        foundInstance = inst;
-        break;
-      }
-
-      if (instMsg.user?.login?.toLowerCase() === msg.user?.login?.toLowerCase()) {
-        score += 10;
-
-        const msgContent = msg.message || msg.messageBody || "";
-        const instContent = instMsg.message || instMsg.messageBody || "";
-        if (msgContent && instContent && msgContent === instContent) {
-          score += 20;
-        }
-
-        const timeDiff = Math.abs((instMsg.timestamp || 0) - (msg.timestamp || Date.now()));
-        if (timeDiff < 2000) {
-          score += 15;
-        }
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = inst;
-        }
-      }
-    }
-
-    if (!foundInstance && bestMatch && bestScore >= 30) {
-      foundInstance = bestMatch;
-    }
-
-    if (!foundInstance) return;
-
-    const msgObj = {
-      message: msg,
-      _instance: foundInstance,
-      update: () => foundInstance.forceUpdate()
-    };
-
-    this.addNewMessageToDisplay(msgObj);
+  appendMessage(msg) {
+    const line = this.renderMessage(msg);
+    if (line) this.state.list.appendChild(line);
   }
 
-  addNewMessageToDisplay(msgObj) {
-    const { messageList, container } = this.activeViewerCard;
+  addNewMessage(msg) {
+    const { list } = this.state;
+    const line = this.renderMessage(msg);
+    if (!line) return;
 
-    if (!messageList || !container || !document.contains(container)) {
-      this.cleanupContainer();
-      return;
-    }
+    list.insertBefore(line, list.firstElementChild);
 
-    const messageElement = this.createOptimizedMessageElement(msgObj);
-    if (!messageElement) return;
-
-    if (messageList.firstElementChild) {
-      messageList.insertBefore(messageElement, messageList.firstElementChild);
-    } else {
-      messageList.appendChild(messageElement);
-    }
-
-    this.activeViewerCard.messageCount++;
-
-    // limit displayed messages to 50
-    const MAX_MESSAGES = 50;
-    while (messageList.children.length > MAX_MESSAGES) {
-      messageList.lastElementChild.remove();
-      this.activeViewerCard.messageCount--;
-    }
-
-    const header = container.querySelector(".label span");
-    if (header) {
-      header.textContent = `Recent Messages (${this.activeViewerCard.messageCount})`;
+    while (list.children.length > MAX_MESSAGES) {
+      const oldest = list.lastElementChild;
+      this.state.ids.delete(oldest.dataset.messageId);
+      oldest.remove();
     }
   }
 
-  createOptimizedMessageElement(msgObj) {
-    const instance = msgObj._instance;
-    if (!instance) return null;
+  renderMessage(msg) {
+    const { ids } = this.state;
+    const id = msg.id || `${msg.timestamp}-${msg.message}`;
+    if (ids.has(id)) return null;
+    ids.add(id);
 
-    const fiber = instance._reactInternals || instance._reactInternalFiber;
-    if (!fiber) return null;
+    const user = msg.user;
+    const tokens = msg.ffz_tokens = msg.ffz_tokens || this.chat.tokenizeMessage(msg, this.site.getUser());
 
-    const childFiber = this.fine.getFirstChild(fiber);
-    const sourceElement = childFiber?.stateNode;
+    const rawColor = this.chat.overrides.getColor(user.id) || user.color;
+    const color = rawColor ? this.siteChat.colors.process(rawColor) : null;
+    const overrideName = this.chat.overrides.getName(user.id);
+    const isAction = this.siteChat.message_types?.Action === msg.messageType;
+    const reply = msg.reply;
 
-    return (sourceElement && sourceElement.nodeType === Node.ELEMENT_NODE)
-      ? sourceElement.cloneNode(true)
-      : null;
+    const username = overrideName
+      ? <span class="chat-author__display-name">{overrideName}</span>
+      : this.chat.formatUser(user, createElement);
+
+    return (
+      <div
+        class={`chat-line__message tw-relative trubbel-previous-messages__line${msg.deleted ? " trubbel-previous-messages__line--deleted" : ""}`}
+        data-message-id={id}
+        data-room-id={msg.roomID}
+        data-room={msg.roomLogin}
+        data-user-id={user.id}
+        data-user={user.login}
+      >
+        <div class="chat-line__message-container tw-relative">
+          {reply?.parentDisplayName && (
+            <div class="trubbel-previous-messages__reply" title={reply.parentMessageBody}>
+              {`Replying to @${reply.parentDisplayName}: ${reply.parentMessageBody || ""}`}
+            </div>
+          )}
+          <span class="chat-line__timestamp">{this.chat.formatTime(msg.timestamp)}</span>
+          <span class="chat-line__message--badges">{this.chat.badges.render(msg, createElement)}</span>
+          <span class="chat-line__username notranslate" style={color ? { color } : null}>{username}</span>
+          <span aria-hidden="true">{isAction ? " " : ": "}</span>
+          <span class="message" style={isAction && color ? { color } : null}>
+            {this.chat.renderTokens(tokens, createElement)}
+          </span>
+        </div>
+      </div>
+    );
   }
 
-  createSimpleContainer(messageCount) {
-    const container = createElement("div");
-    container.classList.add("trubbel-previous-messages");
+  createContainer(card, login) {
+    const label = <span />;
+    const header = (
+      <button class="trubbel-previous-messages__header" aria-expanded={this.expanded ? "true" : "false"}>
+        {label}
+        <svg class="trubbel-previous-messages__chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M7.5 15.5 6 14l4-4-4-4 1.5-1.5L13 10l-5.5 5.5Z" />
+        </svg>
+      </button>
+    );
+    const list = <div class="trubbel-previous-messages__list" />;
+    const container = (
+      <div class={`trubbel-previous-messages${this.expanded ? " trubbel-previous-messages--open" : ""}${this.isOldestFirst() ? " trubbel-previous-messages--oldest-first" : ""}`}>
+        {header}
+        {list}
+      </div>
+    );
 
-    const header = createElement("div");
-    header.classList.add("label");
-    container.appendChild(header);
+    on(header, "click", () => {
+      this.expanded = container.classList.toggle("trubbel-previous-messages--open");
+      header.setAttribute("aria-expanded", this.expanded ? "true" : "false");    });
 
-    const headerText = createElement("span");
-    headerText.textContent = `Recent Messages (${messageCount})`;
-    header.appendChild(headerText);
+    return { card, login, container, header, label, list, ids: new Set() };
+  }
 
-    const triangle = createElement("div");
-    triangle.classList.add("triangle");
-    header.appendChild(triangle);
-
-    const messageList = createElement("div");
-    messageList.classList.add("message-list");
-    messageList.style.display = "none";
-    container.appendChild(messageList);
-
-    header.addEventListener("click", () => {
-      triangle.classList.toggle("open");
-      const isOpen = triangle.classList.contains("open");
-      messageList.style.display = isOpen ? "block" : "none";
-    });
-
-    return container;
+  updateHeader() {
+    const { label, list } = this.state;
+    setChildren(label, [`Recent Messages (${list.children.length})`]);
   }
 
   cleanupContainer() {
-    if (this.activeViewerCard.container && this.activeViewerCard.container.parentNode) {
-      this.activeViewerCard.container.remove();
-    }
-
-    const orphans = document.querySelectorAll(".trubbel-previous-messages");
-    orphans.forEach(el => el.remove());
-
-    this.activeViewerCard.targetLogin = null;
-    this.activeViewerCard.container = null;
-    this.activeViewerCard.messageList = null;
-    this.activeViewerCard.isListening = false;
-    this.activeViewerCard.messageCount = 0;
-    this.activeViewerCard.processedMessageIds.clear();
+    this.state?.container.remove();
+    this.state = null;
   }
 }
