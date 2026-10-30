@@ -10,4 +10,3 @@ export const FOLLOWAGE_USERCARD_SELECTOR = ".user-card strong[title]";
 export const POPOUT_CHAT_HEADER_SELECTOR = ".stream-chat-header [data-test-selector=\"chat-room-header-label\"]";
 export const MOD_POPOUT_CHAT_HEADER_SELECTOR = ".mod-view-panel-header div h3[title]";
 export const DASH_POPOUT_CHAT_HEADER_SELECTOR = ".stream-manager-panel-header div h2[title]";
-export const PLAYER_ERROR_OVERLAY_SELECTOR = ".content-overlay-gate";
