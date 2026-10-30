@@ -228,7 +228,7 @@ export default class RecentMessages {
   }
 
   isOldestFirst() {
-    return this.settings.get("addon.trubbel.channel.chat.viewer_cards.recent_messages.order") === "oldest";
+    return this.settings.get("addon.trubbel.channel.chat.viewer_cards.recent_messages.order") === "bottom";
   }
 
   handleOrderChange() {
