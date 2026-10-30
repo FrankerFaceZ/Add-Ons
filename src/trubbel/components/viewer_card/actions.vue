@@ -612,7 +612,6 @@ export default {
       chat.sendMessage(room, "/block " + login);
     },
 
-    // Same event FFZ's own "open settings" links use (Ctrl/Shift click opens it in a popout)
     openSettings(event) {
       this.showMore = false;
       this.getFFZ().emit("main_menu:open", { item: SETTINGS_PAGE, event: event, errored: false });
