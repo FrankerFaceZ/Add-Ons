@@ -48,7 +48,8 @@ const VC_MORE_OPTIONS = [
   { id: "highlight", name: "Highlight", enabled: true },
   { id: "block", name: "Block", enabled: true },
   { id: "report", name: "Report", enabled: true },
-  { id: "whisper", name: "Whisper", enabled: true }
+  { id: "whisper", name: "Whisper", enabled: true },
+  { id: "settings", name: "Settings", enabled: true }
 ];
 
 function normalizeOrderedList(defs, val) {
@@ -810,7 +811,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.viewer_cards.clickable_raid", {
       default: false,
       ui: {
-        sort: 0,
+        sort: 1,
         path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
         title: "Clickable raid messages",
         description: "This lets you click on the usernames in raid messages to open up their viewer cards.",
@@ -823,13 +824,30 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.settings.add("addon.trubbel.channel.chat.viewer_cards.recent_messages", {
       default: false,
       ui: {
-        sort: 0,
+        sort: 2,
         path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
         title: "Show recent messages in viewer cards",
-        description: "Display up to 50 recent messages from a user when you open their viewer card.\n\n**Note:** This isn't perfect, nor meant to be used as moderation.",
+        description: "Display up to 50 recent messages from a user when you open their viewer card.\n\n**Note:** This isn't meant to be used as moderation.",
         component: "setting-check-box"
       },
       changed: val => this.recentMessages.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Viewer Cards - Recent messages latest message position
+    this.settings.add("addon.trubbel.channel.chat.viewer_cards.recent_messages.order", {
+      default: "top",
+      ui: {
+        sort: 3,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Viewer Cards",
+        title: "Latest message position",
+        description: "Choose whether the latest message is shown at the top or at the bottom of the recent messages list.",
+        component: "setting-select-box",
+        data: [
+          { value: "top", title: "Top" },
+          { value: "bottom", title: "Bottom" }
+        ]
+      },
+      changed: () => this.recentMessages.handleOrderChange()
     });
 
 
