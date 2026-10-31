@@ -352,7 +352,43 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
         title: "Hide Play on Luna",
         component: "setting-check-box"
       },
-      changed: val => this.declutter.toggleHide("hide-play-luna", val)
+      changed: val => this.declutter.toggleHide("hide-sidebar-play-luna", val)
+    });
+
+    // Appearance - Declutter - Sidebar - Hide Affiliate/Partner Anniversary
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.ap_anniversary", {
+      default: false,
+      ui: {
+        sort: 16,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
+        title: "Hide Affiliate/Partner Anniversary",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-ap-anniversary", val)
+    });
+
+    // Appearance - Declutter - Sidebar - Hide Creator Badge Drop
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.creator_badge_drop", {
+      default: false,
+      ui: {
+        sort: 17,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
+        title: "Hide Creator Badge Drop",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-creator-badge-drop", val)
+    });
+
+    // Appearance - Declutter - Sidebar - Hide First Streamversary!
+    this.settings.add("addon.trubbel.appearance.declutter.sidebar.first_streamversary", {
+      default: false,
+      ui: {
+        sort: 18,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Sidebar",
+        title: "Hide First Streamversary!",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-sidebar-first-streamversary", val)
     });
 
 

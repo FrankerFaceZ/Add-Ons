@@ -28,14 +28,17 @@ export default class Declutter {
       "hide-sidebar-gift-discount": ".side-nav-card div:has(> [class*=\"giftGradient--\"])",
       "hide-sidebar-save-streak": ".side-nav div[role=\"group\"]:has(a[class*=\"saveYourStreakSideNavRow\"])",
       "hide-sidebar-watch-streak": ".side-nav-card div:has(> div > svg path[d=\"M11 4.5L9 2L4.80069 6.8992C3.63871 8.25484 3 9.98143 3 11.7669C3 15.2094 5.79065 18 9.23308 18H10.8803C14.2601 18 17 15.2601 17 11.8803C17 10.0192 16.3475 8.21702 15.1561 6.78728L12 3L11 4.5ZM6.3192 8.20078L9 5L11 7.5L12 6L13.6196 8.06765C14.5115 9.13795 15 10.4871 15 11.8803C15 13.965 13.4516 15.688 11.4421 15.962C11.7975 15.4931 12 14.9133 12 14.3028C12 13.7831 11.8231 13.2789 11.4985 12.8731L10 11L8.50148 12.8731C8.17686 13.2789 8 13.7831 8 14.3028C8 14.9057 8.19744 15.4786 8.5446 15.9443C6.53418 15.6155 5 13.8704 5 11.7669C5 10.4589 5.46792 9.19394 6.3192 8.20078Z\"])",
+      "hide-sidebar-sponsored-content": ".side-nav .tw-transition:has(a[class*=\"side-nav-card__link--promoted\"]),.side-nav .tw-transition:has(a[class*=\"side-nav-card__collapsed\"])",
+      "hide-sidebar-play-luna": ".side-nav .side-nav-section:has([data-test-selector=\"luna-side-nav-game\"])",
+      "hide-sidebar-ap-anniversary": ".side-nav-card div div:has(.tw-svg > svg path[d=\"M3 4.5a2.5 2.5 0 1 1 4.945.522L22 9.902a19.687 19.687 0 0 1-.817 1.793 19.486 19.486 0 0 1-12.375 9.907c-.629.164-1.27.297-1.92.398L5.315 6.993A2.5 2.5 0 0 1 3 4.5Zm6.68 3.202-2.418-.84.61 5.814L9.68 7.702Zm-1.332 9.516 3.222-8.86 3.196 1.109-3.303 9.082c-.915.44-1.872.8-2.862 1.077l-.253-2.408Zm5.834-.292a17.584 17.584 0 0 0 5.134-5.88l-2.66-.923-2.474 6.803Z\"])",
+      "hide-sidebar-creator-badge-drop": ".side-nav-card div div:has(.tw-svg > svg path[d=\"M13 2h-2v4h2V2Zm6 2h-2v2h2V4ZM5 4h2v2H5V4Z\"])",
+      "hide-sidebar-first-streamversary": ".side-nav-card div div:has(.tw-svg > svg path[d=\"M13 9a1 1 0 0 0-1 1l7 7-14 5-3-3L7 5l3.438 3.438A2.998 2.998 0 0 1 13 7h2v2h-2Zm-5.18-.351-.725 2.03 3.762 7.106 2.572-.92-2.934-5.542L7.82 8.649Zm-2.976 8.334 1.235-3.458 2.67 5.012-2.592.926-1.313-2.48Z\"])",
       "hide-player-cc": "[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M2 5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5Zm2 0h16v14H4V5Z\"]),[data-a-target=\"player-settings-menu\"] div:has(> button.tw-interactable [d=\"M4 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4Zm6.642 10.242c-.301.494-.763.758-1.163.758-.66 0-1.488-.717-1.488-2s.828-2 1.488-2c.4 0 .862.264 1.163.758l.858-.494C11.05 9.498 10.313 9 9.479 9 8.109 9 7 10.343 7 12s1.11 3 2.479 3c.834 0 1.572-.499 2.021-1.264l-.858-.494Zm5.5 0c-.301.494-.763.758-1.163.758-.66 0-1.488-.717-1.488-2s.828-2 1.488-2c.4 0 .862.264 1.163.758l.858-.494C16.55 9.498 15.813 9 14.979 9c-1.37 0-2.479 1.343-2.479 3s1.11 3 2.479 3c.834 0 1.572-.499 2.021-1.264l-.858-.494Z\"])",
       "hide-player-disclosure": ".disclosure-tool",
       "hide-player-mrv": ".video-player__overlay :is(.player-overlay-background--darkness-3):has(.offline-recommendations-video-card)",
       "hide-about-section": "section#live-channel-about-panel:has(.about-section)",
       "hide-watch-streak": ".rewards-list > div:has([style*=\"cursor: pointer\"] svg [d*=\"M5.295 8.05 10 2l3 4 2-3 3.8 5.067a11 11 0 0 1 2.2 6.6A7.333 7.333 0 0 1 13.667 22h-3.405A7.262 7.262 0 0 1 3 14.738c0-2.423.807-4.776 2.295-6.688Zm7.801 1.411 2-3L17.2 9.267a9 9 0 0 1 1.8 5.4 5.334 5.334 0 0 1-4.826 5.31 3 3 0 0 0 .174-3.748L12 13l-2.348 3.229a3 3 0 0 0 .18 3.754A5.263 5.263 0 0 1 5 14.738c0-1.978.66-3.9 1.873-5.46l3.098-3.983 3.125 4.166Z\"])",
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
-      "hide-sidebar-sponsored-content": ".side-nav .tw-transition:has(a[class*=\"side-nav-card__link--promoted\"]),.side-nav .tw-transition:has(a[class*=\"side-nav-card__collapsed\"])",
-      "hide-play-luna": ".side-nav .side-nav-section:has([data-test-selector=\"luna-side-nav-game\"])",
       "hide-play-luna-front-page": "#front-page-main-content div:has(> .tw-tower a[href*=\"https://luna.amazon.com/\"])",
     };
   }
@@ -62,14 +65,20 @@ export default class Declutter {
     this.toggleHide("hide-sidebar-gift-discount", this.settings.get("addon.trubbel.appearance.declutter.sidebar.gift_discount"));
     this.toggleHide("hide-sidebar-save-streak", this.settings.get("addon.trubbel.appearance.declutter.sidebar.save_streak"));
     this.toggleHide("hide-sidebar-watch-streak", this.settings.get("addon.trubbel.appearance.declutter.sidebar.watch_streak"));
+    this.toggleHide("hide-sidebar-sponsored-content", this.settings.get("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent"));
+    this.toggleHide("hide-sidebar-play-luna", this.settings.get("addon.trubbel.appearance.declutter.sidebar.play_luna"));
+    this.toggleHide("hide-sidebar-ap-anniversary", this.settings.get("addon.trubbel.appearance.declutter.sidebar.ap_anniversary"));
+    this.toggleHide("hide-sidebar-creator-badge-drop", this.settings.get("addon.trubbel.appearance.declutter.sidebar.creator_badge_drop"));
+    this.toggleHide("hide-sidebar-first-streamversary", this.settings.get("addon.trubbel.appearance.declutter.sidebar.first_streamversary"));
+
+
+
     this.toggleHide("hide-player-cc", this.settings.get("addon.trubbel.appearance.declutter.player.cc"));
     this.toggleHide("hide-player-disclosure", this.settings.get("addon.trubbel.appearance.declutter.player.disclosure"));
     this.toggleHide("hide-player-mrv", this.settings.get("addon.trubbel.appearance.declutter.player.most_recent_video"));
     this.toggleHide("hide-about-section", this.settings.get("addon.trubbel.appearance.declutter.stream.about_section"));
     this.toggleHide("hide-watch-streak", this.settings.get("addon.trubbel.appearance.declutter.stream.watch_streak"));
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
-    this.toggleHide("hide-sidebar-sponsored-content", this.settings.get("addon.trubbel.appearance.declutter.sidebar.SideNavPromotedFollowedCardComponent"));
-    this.toggleHide("hide-play-luna", this.settings.get("addon.trubbel.appearance.declutter.sidebar.play_luna"));
     this.toggleHide("hide-play-luna-front-page", this.settings.get("addon.trubbel.appearance.declutter.front-page.luna"));
     this.updateCSS();
 
