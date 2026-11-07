@@ -201,7 +201,7 @@ class NoBadEmotes extends Addon {
 
 		this.on('chat:pre-send-message', this.processOutbound);
 
-		this.emotes.addFilter({
+		this.emotes.addAliasFilter({
 			type: 'nobademotes',
 			test: this.doesEmoteMatch
 		});
@@ -280,9 +280,18 @@ class NoBadEmotes extends Addon {
 		const bad_emotes = new Set;
 
 		for(const set of this.emotes.getSets(user?.id, user?.login, null, event.channel)) {
+			for(const emote of Object.values(set.emotes)) {
+				if ( Array.isArray(emote.aliases) && Array.isArray(emote.filtered_aliases) && emote.aliases.length !== emote.filtered_aliases.length ) {
+					for(const alias of emote.aliases)
+						if ( ! emote.filtered_aliases.includes(alias) )
+							bad_emotes.add(alias);
+				}
+			}
+
 			for(const emote of Object.values(set.disabled_emotes)) {
-				if ( emote?.name )
-					bad_emotes.add(emote.name);
+				if ( Array.isArray(emote.aliases) )
+					for(const alias of emote.aliases)
+						bad_emotes.add(alias);
 			}
 		}
 
@@ -305,7 +314,7 @@ class NoBadEmotes extends Addon {
 
 	// Filtering
 
-	doesEmoteMatch(emote, set) {
+	doesEmoteMatch(name, emote, set) {
 		if ( set ) {
 			if ( this.settings.get('addon.nobademotes.no-filter-global') && this.emotes.default_sets.includes(set.id) )
 				return false;
@@ -315,37 +324,37 @@ class NoBadEmotes extends Addon {
 		}
 
 		const no_short = this.settings.get('addon.nobademotes.ban-short');
-		if ( no_short && emote.name.length < 3 )
+		if ( no_short && name.length < 3 )
 			return true;
 
-		const lname = emote.name.toLowerCase();
+		const lname = name.toLowerCase();
 
 		const no_lower = this.settings.get('addon.nobademotes.use-all-lower');
-		if ( no_lower && lname === emote.name )
+		if ( no_lower && lname === name )
 			return true;
 
-		if ( this.doesCommonNameMatch(emote, lname) )
+		if ( this.doesCommonNameMatch(emote, name, lname) )
 			return true;
 
-		if ( this.doesCustomMatch(emote) )
+		if ( this.doesCustomMatch(emote, name) )
 			return true;
 	}
 
-	doesCommonNameMatch(emote, lname) {
+	doesCommonNameMatch(emote, name, lname) {
 		if ( ! this._use_common || ! this.common_words )
 			return false;
 
 		const cap_mode = this.settings.get('addon.nobademotes.capitalization-mode');
-		if ( cap_mode === 0 && lname !== emote.name )
+		if ( cap_mode === 0 && lname !== name )
 			return false;
 
-		if ( cap_mode === 1 && emote.name.slice(1) !== lname.slice(1) )
+		if ( cap_mode === 1 && name.slice(1) !== lname.slice(1) )
 			return false;
 
 		return this.common_words.includes(lname);
 	}
 
-	doesCustomMatch(emote) {
+	doesCustomMatch(emote, name) {
 		const filters = this.settings.get('__filter:addon.nobademotes.custom-names');
 		if ( ! filters )
 			return false;
@@ -353,7 +362,7 @@ class NoBadEmotes extends Addon {
 		for(let i = 0; i < filters.length; i++) {
 			if ( filters[i] ) {
 				filters[i].lastIndex = -1;
-				if ( filters[i].test(emote.name) )
+				if ( filters[i].test(name) )
 					return true;
 			}
 		}
