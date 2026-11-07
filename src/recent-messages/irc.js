@@ -154,6 +154,29 @@ function parseClearMsg(tags, when, types, mods) {
 	});
 }
 
+function parseAnnouncement(parts, tags, when, room, types) {
+	const login = tags.login;
+	if (!login)
+		return null;
+
+	// The announcer is the login tag. The IRC prefix is tmi.twitch.tv.
+	const action = stripAction(trailingText(parts));
+	const msg = historyEvent(types.Message, tags, when, {
+		user: parseUser(login, tags),
+		message: action.text,
+		messageBody: action.text,
+		_action: action.action,
+		messageParts: [],
+		badges: parseBadges(badgeSource(tags)),
+		ffz_type: 'announcement',
+		announcement_color: tags['msg-param-color'] || 'PRIMARY'
+	});
+	if (tags.emotes)
+		msg.emotes = parseEmotes(tags.emotes, action.prefix);
+	attachRoom(msg, room, tags['source-room-id']);
+	return msg;
+}
+
 function parseNotice(parts, tags, when, types) {
 	const text = tags['system-msg'] || trailingText(parts);
 	if (!text)
@@ -206,6 +229,8 @@ export function parseHistoryLine(rawLine, room, types, mods) {
 		return parseClear(parts, tags, when, types, mods);
 	if (command === 'CLEARMSG')
 		return parseClearMsg(tags, when, types, mods);
+	if (command === 'USERNOTICE' && tags['msg-id'] === 'announcement')
+		return parseAnnouncement(parts, tags, when, room, types);
 	if (command === 'NOTICE' || command === 'USERNOTICE')
 		return parseNotice(parts, tags, when, types);
 	if (command !== 'PRIVMSG' || parts.length < 4)
