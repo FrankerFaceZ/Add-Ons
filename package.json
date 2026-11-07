@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "Addons for FrankerFaceZ",
 	"private": true,
+	"packageManager": "pnpm@10.34.5",
 	"scripts": {
 		"start": "cross-env NODE_ENV=development webpack serve",
 		"start:prod": "cross-env NODE_ENV=production webpack serve",
