@@ -154,27 +154,171 @@ function parseClearMsg(tags, when, types, mods) {
 	});
 }
 
-function parseAnnouncement(parts, tags, when, room, types) {
-	const login = tags.login;
+function tagInt(tags, key) {
+	const value = parseInt(tags[key], 10);
+	return Number.isFinite(value) ? value : 0;
+}
+
+function subPlan(tags) {
+	const plan = tags['msg-param-sub-plan'] || '';
+	return {
+		plan,
+		prime: plan === 'Prime',
+		planName: tags['msg-param-sub-plan-name'] || ''
+	};
+}
+
+function multiMonth(tags) {
+	const count = tagInt(tags, 'msg-param-multimonth-duration');
+	if (!count)
+		return null;
+	return {count, tenure: tagInt(tags, 'msg-param-multimonth-tenure')};
+}
+
+function isAnonGifter(tags, msgId) {
+	return msgId.startsWith('anon') || tags.login === 'ananonymousgifter';
+}
+
+function blankMessage(msg) {
+	msg.message = '';
+	msg.messageBody = '';
+	msg._action = false;
+	delete msg.emotes;
+	return msg;
+}
+
+// USERNOTICE is sent by tmi.twitch.tv. The person is the login tag.
+function chatLine(parts, tags, when, room, types, extra) {
+	const login = tags.login || tags['msg-param-login'];
 	if (!login)
 		return null;
 
-	// The announcer is the login tag. The IRC prefix is tmi.twitch.tv.
 	const action = stripAction(trailingText(parts));
+	const user = parseUser(login, tags);
+	if (!user.displayName && tags['msg-param-displayName']) {
+		user.displayName = tags['msg-param-displayName'];
+		user.userDisplayName = tags['msg-param-displayName'];
+	}
+
 	const msg = historyEvent(types.Message, tags, when, {
-		user: parseUser(login, tags),
+		user,
 		message: action.text,
 		messageBody: action.text,
 		_action: action.action,
 		messageParts: [],
 		badges: parseBadges(badgeSource(tags)),
-		ffz_type: 'announcement',
-		announcement_color: tags['msg-param-color'] || 'PRIMARY'
+		...extra
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
 	attachRoom(msg, room, tags['source-room-id']);
 	return msg;
+}
+
+function subRecipient(tags) {
+	const login = tags['msg-param-recipient-user-name'] || '';
+	return {
+		id: tags['msg-param-recipient-id'],
+		login,
+		displayName: tags['msg-param-recipient-display-name'] || login
+	};
+}
+
+// FFZ draws these itself. _noticeKind is the blocked-types name it checks.
+function parseUserNotice(parts, tags, when, room, types) {
+	const id = tags['msg-id'] || '';
+
+	if (id === 'announcement') {
+		return chatLine(parts, tags, when, room, types, {
+			ffz_type: 'announcement',
+			announcement_color: tags['msg-param-color'] || 'PRIMARY',
+			_noticeKind: 'AnnouncementMessage'
+		});
+	}
+
+	if (id === 'sub' || id === 'resub') {
+		const msg = chatLine(parts, tags, when, room, types, {
+			ffz_type: 'resub',
+			sub_plan: subPlan(tags),
+			sub_months: tagInt(tags, 'msg-param-months') || (id === 'sub' ? 1 : 0),
+			sub_cumulative: tagInt(tags, 'msg-param-cumulative-months'),
+			sub_streak: tagInt(tags, 'msg-param-streak-months'),
+			sub_share_streak: tags['msg-param-should-share-streak'] === '1',
+			sub_multi: multiMonth(tags),
+			_noticeKind: id === 'sub' ? 'Subscription' : 'Resubscription'
+		});
+		// A new sub has no user message. FFZ clears the body.
+		if (msg && id === 'sub')
+			blankMessage(msg);
+		return msg;
+	}
+
+	if (id === 'subgift' || id === 'anonsubgift') {
+		const anon = isAnonGifter(tags, id);
+		const msg = chatLine(parts, tags, when, room, types, {
+			ffz_type: 'sub_gift',
+			sub_anon: anon,
+			sub_plan: subPlan(tags),
+			sub_months: tagInt(tags, 'msg-param-gift-months') || 1,
+			sub_total: tagInt(tags, 'msg-param-sender-count'),
+			sub_recipient: subRecipient(tags),
+			_noticeKind: anon ? 'AnonSubGift' : 'SubGift'
+		});
+		if (msg)
+			blankMessage(msg);
+		return msg;
+	}
+
+	if (id === 'submysterygift' || id === 'anonsubmysterygift') {
+		const anon = isAnonGifter(tags, id);
+		const msg = chatLine(parts, tags, when, room, types, {
+			ffz_type: 'sub_mystery',
+			sub_anon: anon,
+			// The mystery renderer reads the plan string, not the plan object.
+			sub_plan: tags['msg-param-sub-plan'] || '',
+			sub_count: tagInt(tags, 'msg-param-mass-gift-count'),
+			sub_total: tagInt(tags, 'msg-param-sender-count'),
+			_noticeKind: anon ? 'AnonSubMysteryGift' : 'SubMysteryGift'
+		});
+		if (msg)
+			blankMessage(msg);
+		return msg;
+	}
+
+	if (id === 'raid') {
+		const msg = chatLine(parts, tags, when, room, types, {
+			ffz_type: 'raid_notice',
+			raid_viewer_count: tagInt(tags, 'msg-param-viewerCount'),
+			_noticeKind: 'Raid'
+		});
+		if (msg)
+			blankMessage(msg);
+		return msg;
+	}
+
+	if (id === 'ritual') {
+		return chatLine(parts, tags, when, room, types, {
+			ffz_type: 'ritual',
+			ritual: tags['msg-param-ritual-name'] || '',
+			_noticeKind: 'Ritual'
+		});
+	}
+
+	if (id === 'viewermilestone') {
+		const msg = chatLine(parts, tags, when, room, types, {
+			ffz_type: 'watch_streak',
+			watch_streak: tagInt(tags, 'msg-param-value'),
+			copo_reward: tagInt(tags, 'msg-param-copoReward'),
+			_noticeKind: 'ViewerMilestone'
+		});
+		if (msg && !msg.message)
+			msg.ffz_no_actions = true;
+		return msg;
+	}
+
+	// Paid upgrades, bits badges, modiversaries, raids ending, and shared-chat
+	// notices have no FFZ line type. Twitch shows system-msg, so we do too.
+	return parseNotice(parts, tags, when, types);
 }
 
 function parseNotice(parts, tags, when, types) {
@@ -229,9 +373,9 @@ export function parseHistoryLine(rawLine, room, types, mods) {
 		return parseClear(parts, tags, when, types, mods);
 	if (command === 'CLEARMSG')
 		return parseClearMsg(tags, when, types, mods);
-	if (command === 'USERNOTICE' && tags['msg-id'] === 'announcement')
-		return parseAnnouncement(parts, tags, when, room, types);
-	if (command === 'NOTICE' || command === 'USERNOTICE')
+	if (command === 'USERNOTICE')
+		return parseUserNotice(parts, tags, when, room, types);
+	if (command === 'NOTICE')
 		return parseNotice(parts, tags, when, types);
 	if (command !== 'PRIVMSG' || parts.length < 4)
 		return null;

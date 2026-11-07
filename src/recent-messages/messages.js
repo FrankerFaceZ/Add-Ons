@@ -156,6 +156,21 @@ export function defaultUserColour(name, colours) {
 	return colours[hash % colours.length];
 }
 
+export function hiddenNotice(msg, blocked, subsShow) {
+	const kind = msg && msg._noticeKind;
+	if (!kind)
+		return false;
+	if (blocked && typeof blocked.has === 'function' && blocked.has(kind))
+		return true;
+	// Same gates as FFZ's live sub handlers. The line renderer still hides
+	// the notice text for the other Display Subs choices.
+	if (kind === 'Subscription' && subsShow < 3)
+		return true;
+	if (kind === 'Resubscription' && subsShow < 2 && !msg.message)
+		return true;
+	return false;
+}
+
 export function bufferMessages(buffer) {
 	const out = [];
 	if (buffer && Array.isArray(buffer.buffer))

@@ -21,6 +21,7 @@ import {
 	delayedEvent,
 	historyNoticeIndex,
 	historyUrl,
+	hiddenNotice,
 	insertAt,
 	mergeHistory,
 	messageId,
@@ -302,6 +303,7 @@ class RecentMessages extends Addon {
 	collectHistory(lines, room, cutoff) {
 		const history = [];
 		let skipped = 0;
+		const {blocked, subsShow} = this.noticeSettings();
 		for (const rawLine of lines) {
 			const msg = this.parseLine(rawLine, room);
 			if (!msg) {
@@ -310,6 +312,8 @@ class RecentMessages extends Addon {
 			}
 			const when = messageTime(msg);
 			if (cutoff && when > 0 && when < cutoff)
+				continue;
+			if (hiddenNotice(msg, blocked, subsShow))
 				continue;
 			if (isBackfillLine(rawLine))
 				msg._backfill = true;
@@ -327,6 +331,20 @@ class RecentMessages extends Addon {
 			history.push(msg);
 		}
 		return {history, skipped};
+	}
+
+	noticeSettings() {
+		let blocked = null;
+		let subsShow = 3;
+		try {
+			blocked = this.chat.context.get('chat.filtering.blocked-types');
+			const show = parseInt(this.chat.context.get('chat.subs.show'), 10);
+			if (Number.isFinite(show))
+				subsShow = show;
+		} catch {
+			/* show the line */
+		}
+		return {blocked, subsShow};
 	}
 
 	rememberInserted(buffer, inserted) {
