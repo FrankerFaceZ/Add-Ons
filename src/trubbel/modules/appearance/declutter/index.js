@@ -18,16 +18,16 @@ export default class Declutter {
       "hide-sidebar-sort-paragraph": "[data-a-target=\"side-nav-header-expanded\"] p",
       "hide-sidebar-guest-avatar": ".side-nav-card .primary-with-small-avatar__mini-avatar:not(:has(img[src*=\"hype-train\"]))",
       "hide-sidebar-guest-number": ".side-nav-card [data-a-target=\"side-nav-card-metadata\"] :is(p):nth-child(2)",
-      "hide-sidebar-all-time-high-train": ".side-nav-card div:has(> .hype-train-icon__trophy)",
-      "hide-sidebar-community-train": ".side-nav-card div:has(> .hype-train-icon__train--community)",
-      "hide-sidebar-golden-kappa-train": ".side-nav-card div:has(> .hype-train-icon__train--golden-kappa)",
-      "hide-sidebar-mythic-train": ".side-nav-card div:has(> .hype-train-icon__train--mythic)",
-      "hide-sidebar-shared-hype-train": ".side-nav-card div:has(> .hype-train-icon__train--shared)",
-      "hide-sidebar-treasure-train": ".side-nav-card div:has(> .hype-train-icon__train--treasure)",
-      "hide-sidebar-hype-train": ".side-nav-card div:has(> .hype-train-icon__train--default)",
+      "hide-sidebar-all-time-high-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__trophy)",
+      "hide-sidebar-community-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--community)",
+      "hide-sidebar-golden-kappa-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--golden-kappa)",
+      "hide-sidebar-mythic-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--mythic)",
+      "hide-sidebar-shared-hype-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--shared)",
+      "hide-sidebar-treasure-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--treasure)",
+      "hide-sidebar-hype-train": ".side-nav .side-nav-card div:has(> div > .hype-train-icon__train--default)",
       "hide-sidebar-gift-discount": ".side-nav-card div:has(> [class*=\"giftGradient--\"])",
       "hide-sidebar-save-streak": ".side-nav div[role=\"group\"]:has(a[class*=\"saveYourStreakSideNavRow\"])",
-      "hide-sidebar-watch-streak": ".side-nav-card div:has(> div > svg path[d=\"M11 4.5L9 2L4.80069 6.8992C3.63871 8.25484 3 9.98143 3 11.7669C3 15.2094 5.79065 18 9.23308 18H10.8803C14.2601 18 17 15.2601 17 11.8803C17 10.0192 16.3475 8.21702 15.1561 6.78728L12 3L11 4.5ZM6.3192 8.20078L9 5L11 7.5L12 6L13.6196 8.06765C14.5115 9.13795 15 10.4871 15 11.8803C15 13.965 13.4516 15.688 11.4421 15.962C11.7975 15.4931 12 14.9133 12 14.3028C12 13.7831 11.8231 13.2789 11.4985 12.8731L10 11L8.50148 12.8731C8.17686 13.2789 8 13.7831 8 14.3028C8 14.9057 8.19744 15.4786 8.5446 15.9443C6.53418 15.6155 5 13.8704 5 11.7669C5 10.4589 5.46792 9.19394 6.3192 8.20078Z\"])",
+      "hide-sidebar-watch-streak": ".side-nav .side-nav-card__link > div:nth-child(2) > div:has(svg path[d^=\"M11 4.5L9 2L4.80069 6.8992\"])",
       "hide-sidebar-sponsored-content": ".side-nav .tw-transition:has(a[class*=\"side-nav-card__link--promoted\"]),.side-nav .tw-transition:has(a[class*=\"side-nav-card__collapsed\"])",
       "hide-sidebar-play-luna": ".side-nav .side-nav-section:has([data-test-selector=\"luna-side-nav-game\"])",
       "hide-sidebar-ap-anniversary": ".side-nav-card div div:has(.tw-svg > svg path[d=\"M3 4.5a2.5 2.5 0 1 1 4.945.522L22 9.902a19.687 19.687 0 0 1-.817 1.793 19.486 19.486 0 0 1-12.375 9.907c-.629.164-1.27.297-1.92.398L5.315 6.993A2.5 2.5 0 0 1 3 4.5Zm6.68 3.202-2.418-.84.61 5.814L9.68 7.702Zm-1.332 9.516 3.222-8.86 3.196 1.109-3.303 9.082c-.915.44-1.872.8-2.862 1.077l-.253-2.408Zm5.834-.292a17.584 17.584 0 0 0 5.134-5.88l-2.66-.923-2.474 6.803Z\"])",
@@ -70,9 +70,6 @@ export default class Declutter {
     this.toggleHide("hide-sidebar-ap-anniversary", this.settings.get("addon.trubbel.appearance.declutter.sidebar.ap_anniversary"));
     this.toggleHide("hide-sidebar-creator-badge-drop", this.settings.get("addon.trubbel.appearance.declutter.sidebar.creator_badge_drop"));
     this.toggleHide("hide-sidebar-first-streamversary", this.settings.get("addon.trubbel.appearance.declutter.sidebar.first_streamversary"));
-
-
-
     this.toggleHide("hide-player-cc", this.settings.get("addon.trubbel.appearance.declutter.player.cc"));
     this.toggleHide("hide-player-disclosure", this.settings.get("addon.trubbel.appearance.declutter.player.disclosure"));
     this.toggleHide("hide-player-mrv", this.settings.get("addon.trubbel.appearance.declutter.player.most_recent_video"));
@@ -95,6 +92,11 @@ export default class Declutter {
     // Appearance - Declutter - Directory - Hide promoted event cards
     this.settings.getChanges("addon.trubbel.appearance.declutter.directory.promotional", val => {
       this.loadable.toggle("PromotedEventCard", !val);
+    });
+
+    // Appearance - Declutter - Directory - Hide Recent Recaps
+    this.settings.getChanges("addon.trubbel.appearance.declutter.directory.recent_recaps", val => {
+      this.loadable.toggle("CategoryRecapsShelf", !val);
     });
 
     // Appearance - Declutter - Left Navigation - Hide sponsored content
