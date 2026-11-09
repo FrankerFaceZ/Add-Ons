@@ -126,6 +126,18 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: val => this.declutter.loadable.toggle("PromotedEventCard", !val)
     });
 
+    // Appearance - Declutter - Directory - Hide Recent Recaps
+    this.settings.add("addon.trubbel.appearance.declutter.directory.recent_recaps", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Directory",
+        title: "Hide Recent Recaps",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.loadable.toggle("CategoryRecapsShelf", !val)
+    });
+
 
 
     // Appearance - Declutter - Front Page - Hide front page carousel
