@@ -1,0 +1,16 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main",
+		"clips"
+	],
+	"version": "1.0.0",
+	"name": "Recent Messages",
+	"author": "iMarbot",
+	"description": "When you open a channel, earlier chat is loaded from a log and placed above the messages Twitch already has. If both have the same message, Twitch's copy is kept. Timeouts, deletions, and chat clears are replayed so FrankerFaceZ can apply your normal chat settings to them.",
+	"website": "https://logs.zonian.dev",
+	"settings": "add_ons.recent_messages",
+	"created": "2026-11-06T23:16:00.000Z",
+	"updated": "2026-11-06T23:16:00.000Z"
+}
