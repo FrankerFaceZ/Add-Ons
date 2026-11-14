@@ -23,6 +23,7 @@ import {
 	historyUrl,
 	hiddenNotice,
 	insertAt,
+	matchingRaidIndex,
 	mergeHistory,
 	messageId,
 	messageText,
@@ -358,6 +359,7 @@ class RecentMessages extends Addon {
 
 	// If Twitch delivers a line we already inserted, drop our copy first so
 	// Twitch's object (replies, bits, moderation) is the one that stays.
+	// A raid often arrives under a different id than the logged USERNOTICE.
 	watchForTwitchCopies(buffer) {
 		if (buffer._historyIds)
 			return buffer._historyIds;
@@ -381,16 +383,24 @@ class RecentMessages extends Addon {
 	}
 
 	dropHistoryCopy(buffer, ids, msg) {
-		const id = messageId(msg);
-		if (!id || !ids.has(id) || !Array.isArray(buffer.buffer))
+		if (!msg || msg._fromHistory || !Array.isArray(buffer.buffer))
 			return;
-		const index = buffer.buffer.findIndex(line => line && line._fromHistory && messageId(line) === id);
+		const id = messageId(msg);
+		let index = -1;
+		if (id && ids.has(id))
+			index = buffer.buffer.findIndex(line => line && line._fromHistory && messageId(line) === id);
+		if (index === -1)
+			index = matchingRaidIndex(buffer.buffer, msg);
 		if (index === -1)
 			return;
+		const removedId = messageId(buffer.buffer[index]);
 		buffer.buffer.splice(index, 1);
 		if (typeof buffer.slidingWindowEnd === 'number' && buffer.slidingWindowEnd > index)
 			buffer.slidingWindowEnd--;
-		ids.delete(id);
+		if (id)
+			ids.delete(id);
+		if (removedId)
+			ids.delete(removedId);
 		this.notifyBuffer(buffer);
 	}
 

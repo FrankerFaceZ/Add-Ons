@@ -10,7 +10,7 @@ export function messageId(msg) {
 export function messageTime(msg) {
 	if (!msg)
 		return 0;
-	const stamp = Number(msg.timestamp);
+	const stamp = msg.timestamp instanceof Date ? msg.timestamp.getTime() : Number(msg.timestamp);
 	if (Number.isFinite(stamp) && stamp > 0)
 		return stamp;
 	if (msg.sentAt) {
@@ -48,19 +48,112 @@ export function fallbackKey(msg) {
 	return `${login}\n${when}\n${text}`;
 }
 
-function markSeen(ids, keys, msg) {
+// FFZ stamps a live raid with Date.now() as the viewer arrives. The log line
+// keeps tmi-sent-ts from when the raid was sent. Thirty seconds covers the
+// redirect and the chat connect.
+const RAID_MATCH_MS = 30 * 1000;
+
+function isRaidNotice(msg) {
+	if (!msg)
+		return false;
+	if (msg.ffz_type === 'raid_notice' || msg._noticeKind === 'Raid')
+		return true;
+	const params = msg.params;
+	const kind = params && (params.msgId || params.msgid || params['msg-id']);
+	return kind === 'raid';
+}
+
+// Twitch's own raid line keeps the raider on params, not user.
+function raidLogin(msg) {
+	const login = messageLogin(msg);
+	if (login)
+		return login;
+	const params = msg && msg.params;
+	return String(params && (params.login || params.userLogin) || '').toLowerCase();
+}
+
+function raidViewers(msg) {
+	if (msg && msg.raid_viewer_count != null && msg.raid_viewer_count !== '') {
+		const count = Number(msg.raid_viewer_count);
+		if (Number.isFinite(count))
+			return count;
+	}
+	const params = msg && msg.params;
+	if (!params)
+		return null;
+	const raw = params.viewerCount != null ? params.viewerCount : params.viewer_count;
+	if (raw == null || raw === '')
+		return null;
+	const count = Number(raw);
+	return Number.isFinite(count) ? count : null;
+}
+
+function raidIdentity(msg) {
+	if (!isRaidNotice(msg))
+		return null;
+	const login = raidLogin(msg);
+	const viewers = raidViewers(msg);
+	if (!login || viewers == null)
+		return null;
+	return {login, viewers, time: messageTime(msg)};
+}
+
+// Same raider and party size, close enough in time to be one raid.
+export function sameRaid(a, b) {
+	const left = raidIdentity(a);
+	const right = raidIdentity(b);
+	if (!left || !right)
+		return false;
+	if (left.login !== right.login || left.viewers !== right.viewers)
+		return false;
+	if (!left.time || !right.time)
+		return false;
+	return Math.abs(left.time - right.time) <= RAID_MATCH_MS;
+}
+
+// Closest loaded raid that is this same event. -1 when the line is ours
+// or there is no match inside the window.
+export function matchingRaidIndex(lines, msg) {
+	if (!Array.isArray(lines) || (msg && msg._fromHistory))
+		return -1;
+	const incoming = raidIdentity(msg);
+	if (!incoming || !incoming.time)
+		return -1;
+	let best = -1;
+	let bestGap = RAID_MATCH_MS + 1;
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		if (!line || !line._fromHistory)
+			continue;
+		const other = raidIdentity(line);
+		if (!other || !other.time || other.login !== incoming.login || other.viewers !== incoming.viewers)
+			continue;
+		const gap = Math.abs(other.time - incoming.time);
+		if (gap > RAID_MATCH_MS || gap >= bestGap)
+			continue;
+		bestGap = gap;
+		best = i;
+	}
+	return best;
+}
+
+function markSeen(ids, keys, raids, msg) {
 	const id = messageId(msg);
 	const key = fallbackKey(msg);
 	if (id)
 		ids.add(id);
 	if (key)
 		keys.add(key);
+	if (isRaidNotice(msg))
+		raids.push(msg);
 }
 
-function alreadySeen(ids, keys, msg) {
+function alreadySeen(ids, keys, raids, msg) {
 	const id = messageId(msg);
 	const key = fallbackKey(msg);
-	return !!((id && ids.has(id)) || (key && keys.has(key)));
+	if ((id && ids.has(id)) || (key && keys.has(key)))
+		return true;
+	return raids.some(other => sameRaid(other, msg));
 }
 
 // existing stays in its original order. history lines already covered by
@@ -68,15 +161,16 @@ function alreadySeen(ids, keys, msg) {
 export function mergeHistory(existing, history) {
 	const ids = new Set();
 	const keys = new Set();
+	const raids = [];
 	for (const msg of existing)
-		markSeen(ids, keys, msg);
+		markSeen(ids, keys, raids, msg);
 
 	const fresh = [];
 	for (const msg of history) {
-		if (alreadySeen(ids, keys, msg))
+		if (alreadySeen(ids, keys, raids, msg))
 			continue;
 		fresh.push(msg);
-		markSeen(ids, keys, msg);
+		markSeen(ids, keys, raids, msg);
 	}
 	fresh.sort((a, b) => messageTime(a) - messageTime(b));
 
