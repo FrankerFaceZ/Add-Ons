@@ -224,6 +224,15 @@ function subRecipient(tags) {
 	};
 }
 
+// first-msg=1 is the current new-chatter ritual. FFZ only has copy for that name.
+function ritualFields(name) {
+	return {
+		ffz_type: 'ritual',
+		ritual: name || '',
+		_noticeKind: 'Ritual'
+	};
+}
+
 // FFZ draws these itself. _noticeKind is the blocked-types name it checks.
 function parseUserNotice(parts, tags, when, room, types) {
 	const id = tags['msg-id'] || '';
@@ -296,13 +305,8 @@ function parseUserNotice(parts, tags, when, room, types) {
 		return msg;
 	}
 
-	if (id === 'ritual') {
-		return chatLine(parts, tags, when, room, types, {
-			ffz_type: 'ritual',
-			ritual: tags['msg-param-ritual-name'] || '',
-			_noticeKind: 'Ritual'
-		});
-	}
+	if (id === 'ritual')
+		return chatLine(parts, tags, when, room, types, ritualFields(tags['msg-param-ritual-name']));
 
 	if (id === 'viewermilestone') {
 		const msg = chatLine(parts, tags, when, room, types, {
@@ -353,7 +357,8 @@ function parsePrivmsg(parts, tags, room, types) {
 		_action: action.action,
 		// Twitch's line renderer calls messageParts.some() for highlights.
 		messageParts: [],
-		badges: parseBadges(badgeSource(tags))
+		badges: parseBadges(badgeSource(tags)),
+		...(tags['first-msg'] === '1' ? ritualFields('new_chatter') : {})
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
