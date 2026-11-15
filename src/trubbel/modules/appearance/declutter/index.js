@@ -40,6 +40,7 @@ export default class Declutter {
       "hide-watch-streak": ".rewards-list > div:has([style*=\"cursor: pointer\"] svg [d*=\"M5.295 8.05 10 2l3 4 2-3 3.8 5.067a11 11 0 0 1 2.2 6.6A7.333 7.333 0 0 1 13.667 22h-3.405A7.262 7.262 0 0 1 3 14.738c0-2.423.807-4.776 2.295-6.688Zm7.801 1.411 2-3L17.2 9.267a9 9 0 0 1 1.8 5.4 5.334 5.334 0 0 1-4.826 5.31 3 3 0 0 0 .174-3.748L12 13l-2.348 3.229a3 3 0 0 0 .18 3.754A5.263 5.263 0 0 1 5 14.738c0-1.978.66-3.9 1.873-5.46l3.098-3.983 3.125 4.166Z\"])",
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
       "hide-play-luna-front-page": "#front-page-main-content div:has(> .tw-tower a[href*=\"https://luna.amazon.com/\"])",
+      "hide-stream-play-luna": ".metadata-layout__support div div:has(a[href*=\"https://luna.amazon.com/\"])",
     };
   }
 
@@ -77,6 +78,7 @@ export default class Declutter {
     this.toggleHide("hide-watch-streak", this.settings.get("addon.trubbel.appearance.declutter.stream.watch_streak"));
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
     this.toggleHide("hide-play-luna-front-page", this.settings.get("addon.trubbel.appearance.declutter.front-page.luna"));
+    this.toggleHide("hide-stream-play-luna", this.settings.get("addon.trubbel.appearance.declutter.stream.play_luna"));
     this.updateCSS();
 
     // Appearance - Declutter - Amazon - Hide Shopping ads
