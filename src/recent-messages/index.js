@@ -31,6 +31,9 @@ import {
 	normalizeApiBase,
 	sleep
 } from './messages';
+import {
+	attachHighlightedReward
+} from './rewards';
 
 class RecentMessages extends Addon {
 	constructor(...args) {
@@ -316,6 +319,7 @@ class RecentMessages extends Addon {
 				continue;
 			if (hiddenNotice(msg, blocked, subsShow))
 				continue;
+			attachHighlightedReward(msg, room, () => this.siteChat());
 			if (isBackfillLine(rawLine))
 				msg._backfill = true;
 			if (msg.user) {

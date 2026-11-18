@@ -352,6 +352,10 @@ function hasReturningChatter(tags) {
 	return tags['returning-chatter'] === '1';
 }
 
+function hasHighlightedMessage(tags) {
+	return tags['msg-id'] === 'highlighted-message';
+}
+
 function parsePrivmsg(parts, tags, room, types) {
 	const login = parts[1].split('!')[0].replace(/^:/, '');
 	if (!login)
@@ -368,7 +372,14 @@ function parsePrivmsg(parts, tags, room, types) {
 		badges: parseBadges(badgeSource(tags)),
 		// History skips postMessageToCurrentChannel, where FFZ copies these flags.
 		...(hasFirstMsg(tags) ? {isFirstMsg: true, ffz_first_msg: true} : {}),
-		...(hasReturningChatter(tags) ? {isReturningChatter: true, ffz_returning: true} : {})
+		...(hasReturningChatter(tags) ? {isReturningChatter: true, ffz_returning: true} : {}),
+		// Live FFZ sets these from the channel-points event, which a log line never sees.
+		...(hasHighlightedMessage(tags) ? {
+			ffz_type: 'points',
+			ffz_reward_highlight: true,
+			_noticeKind: 'ChannelPointsReward',
+			...(tags['custom-reward-id'] ? {_customRewardId: tags['custom-reward-id']} : {})
+		} : {})
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
