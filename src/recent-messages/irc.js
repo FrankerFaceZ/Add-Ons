@@ -224,7 +224,7 @@ function subRecipient(tags) {
 	};
 }
 
-// first-msg=1 is the current new-chatter ritual. FFZ only has copy for that name.
+// USERNOTICE msg-id=ritual. The name is whatever the log stored.
 function ritualFields(name) {
 	return {
 		ffz_type: 'ritual',
@@ -344,6 +344,14 @@ function attachRoom(msg, room, sourceRoom) {
 		msg.sourceRoomID = sourceRoom;
 }
 
+function hasFirstMsg(tags) {
+	return tags['first-msg'] === '1';
+}
+
+function hasReturningChatter(tags) {
+	return tags['returning-chatter'] === '1';
+}
+
 function parsePrivmsg(parts, tags, room, types) {
 	const login = parts[1].split('!')[0].replace(/^:/, '');
 	if (!login)
@@ -358,9 +366,9 @@ function parsePrivmsg(parts, tags, room, types) {
 		// Twitch's line renderer calls messageParts.some() for highlights.
 		messageParts: [],
 		badges: parseBadges(badgeSource(tags)),
-		...(tags['first-msg'] === '1' ? ritualFields('new_chatter') : {}),
-		// History skips postMessageToCurrentChannel, which is where FFZ copies this flag.
-		...(tags['returning-chatter'] === '1' ? {isReturningChatter: true, ffz_returning: true} : {})
+		// History skips postMessageToCurrentChannel, where FFZ copies these flags.
+		...(hasFirstMsg(tags) ? {isFirstMsg: true, ffz_first_msg: true} : {}),
+		...(hasReturningChatter(tags) ? {isReturningChatter: true, ffz_returning: true} : {})
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
