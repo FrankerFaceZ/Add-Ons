@@ -358,7 +358,9 @@ function parsePrivmsg(parts, tags, room, types) {
 		// Twitch's line renderer calls messageParts.some() for highlights.
 		messageParts: [],
 		badges: parseBadges(badgeSource(tags)),
-		...(tags['first-msg'] === '1' ? ritualFields('new_chatter') : {})
+		...(tags['first-msg'] === '1' ? ritualFields('new_chatter') : {}),
+		// History skips postMessageToCurrentChannel, which is where FFZ copies this flag.
+		...(tags['returning-chatter'] === '1' ? {isReturningChatter: true, ffz_returning: true} : {})
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
