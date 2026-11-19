@@ -41,6 +41,7 @@ export default class Declutter {
       "hide-vod-muted-segment-popup": ".video-player .muted-segments-alert__scroll-wrapper",
       "hide-play-luna-front-page": "#front-page-main-content div:has(> .tw-tower a[href*=\"https://luna.amazon.com/\"])",
       "hide-stream-play-luna": ".metadata-layout__support div div:has(a[href*=\"https://luna.amazon.com/\"])",
+      "hide-user-menu-start-streaming": ".user-menu-dropdown__main-menu div:has(> a[href^=\"https://dashboard.twitch.tv/u/\"][href$=\"/stream\"])",
     };
   }
 
@@ -79,6 +80,7 @@ export default class Declutter {
     this.toggleHide("hide-vod-muted-segment-popup", this.settings.get("addon.trubbel.appearance.declutter.vods.muted_segment_popup"));
     this.toggleHide("hide-play-luna-front-page", this.settings.get("addon.trubbel.appearance.declutter.front-page.luna"));
     this.toggleHide("hide-stream-play-luna", this.settings.get("addon.trubbel.appearance.declutter.stream.play_luna"));
+    this.toggleHide("hide-user-menu-start-streaming", this.settings.get("addon.trubbel.appearance.declutter.user_menu.start_streaming"));
     this.updateCSS();
 
     // Appearance - Declutter - Amazon - Hide Shopping ads
