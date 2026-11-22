@@ -506,6 +506,46 @@
   display: block;
 }
 
+.cvc-moments-carousel__loading {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  color: var(--color-text-alt-2);
+}
+
+.cvc-moments-carousel__label {
+  margin-bottom: 5px;
+  color: var(--color-text-alt-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cvc-moments-carousel__empty-image {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.cvc-moments-carousel__empty-image img {
+  width: 40px;
+  box-sizing: content-box;
+  padding: 10px 30px;
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--border-radius-small);
+}
+
+.cvc-moments-carousel__empty-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 20px 10px;
+  border-radius: var(--border-radius-medium);
+  background: var(--color-background-alt);
+  text-align: center;
+  cursor: auto;
+}
+
 .cvc-moments-carousel__placeholder {
   width: 50px;
   height: 27.5px;

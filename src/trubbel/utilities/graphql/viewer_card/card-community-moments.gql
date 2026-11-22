@@ -1,9 +1,9 @@
-query Trubbel_ViewerCardCommunityMoments($userLogin: String!, $channelLogin: String!, $first: Int) {
+query Trubbel_ViewerCardCommunityMoments($userLogin: String!, $channelLogin: String!, $first: Int!, $cursor: Cursor) {
   channelViewer(userLogin: $userLogin, channelLogin: $channelLogin) {
     id
-    earnedCommunityMoments(first: $first) {
-      totalCount
+    earnedCommunityMoments(first: $first, after: $cursor) {
       edges {
+        cursor
         node {
           id
           claimCount
@@ -16,6 +16,14 @@ query Trubbel_ViewerCardCommunityMoments($userLogin: String!, $channelLogin: Str
           }
         }
       }
+      totalCount
+      pageInfo {
+        hasNextPage
+      }
     }
+  }
+  user(login: $channelLogin) {
+    id
+    primaryColorHex
   }
 }
