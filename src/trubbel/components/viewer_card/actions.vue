@@ -128,6 +128,15 @@
             {{ isFollowing ? "Unfollow" : "Follow" }}
           </div>
 
+          <div v-if="menuShown('gift-sub') && canGiftSub" :style="menuStyle('gift-sub')" class="cvc-popup-item" @click.stop="giftSub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M5 5.192V7H2v8h1v7h18v-7h1V7h-3V5.192a3.192 3.192 0 0 0-5.93-1.642L12 5.333 10.93 3.55A3.193 3.193 0 0 0 5 5.192ZM17 7V5.192a1.192 1.192 0 0 0-2.215-.613L13.332 7H17Zm-6.332 0L9.215 4.579A1.192 1.192 0 0 0 7 5.192V7h3.668ZM11 9v4H4V9h7Zm2 0v4h7V9h-7Zm-8 6h6v5H5v-5Zm8 0v5h6v-5h-6Z"
+                clip-rule="evenodd" />
+            </svg>
+            Gift a Sub
+          </div>
+
           <div v-if="menuShown('mention')" :style="menuStyle('mention')" class="cvc-popup-item" @click.stop="action('mention')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 10h2v2H9v-2Zm6 0h-2v2h2v-2Z" />
@@ -287,6 +296,13 @@ export default {
 
     isFollowing() {
       return this.loaded && this.user && this.user.self && this.user.self.follower !== null;
+    },
+
+    canGiftSub() {
+      var channel = this.user && this.user.channel,
+        product = channel && channel.subscriptionProducts && channel.subscriptionProducts[0];
+      return !!(this.loaded && product && !this.user.notFound && !this.isOwn && !this.isTargetBroadcaster &&
+        !this.isSuspended && !(product.self && !product.self.canGiftInChannel));
     },
 
     canShowFollow() {
@@ -609,6 +625,11 @@ export default {
       var room = chat.ChatService.first && chat.ChatService.first.props && chat.ChatService.first.props.channelLogin;
       if (!room) return;
       chat.sendMessage(room, "/block " + login);
+    },
+
+    giftSub() {
+      this.showMore = false;
+      this.$emit("gift-sub");
     },
 
     openSettings(event) {

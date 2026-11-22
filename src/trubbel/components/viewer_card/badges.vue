@@ -25,8 +25,7 @@ export default {
 
   methods: {
     badgeClick(badge) {
-      if (badge.clickURL)
-        window.open(badge.clickURL, "_blank", "noopener,noreferrer");
+      this.$emit("select", badge);
     }
   }
 }

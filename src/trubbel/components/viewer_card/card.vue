@@ -18,6 +18,7 @@
       :show-popout-button="showPopoutButton"
       @close="close"
       @close-all="$emit('close-all')"
+      @gift-sub="showGiftSub"
       @edit-note="noteEditRequest++"
       @pin="pin"
       @emit="ffzEmit" />
@@ -42,11 +43,33 @@
         target="_blank" rel="noopener noreferrer">Learn More</a>
     </div>
 
-    <card-badges v-if="loaded && showBadges !== false && !(user && user.notFound)" :badges="badges" />
+    <!-- Kept (hidden) while the moments page is open, so "Badges" returns to the same badge -->
+    <card-badge-carousel v-if="(page === 'badges' || page === 'moments') && loaded && user && !user.notFound"
+      v-show="page === 'badges'"
+      :badges="badges"
+      :selected="carouselBadge"
+      :user="user"
+      :get-f-f-z="getFFZ"
+      @back="showMain"
+      @moments="showMoments" />
 
-    <card-notes v-if="loaded && user && !user.notFound" :user="user" :get-f-f-z="getFFZ" :edit-request="noteEditRequest" />
+    <card-moments-carousel v-if="page === 'moments' && loaded && user && !user.notFound"
+      :user="user"
+      :badge="momentsBadge"
+      :get-f-f-z="getFFZ"
+      @back="page = 'badges'" />
 
-    <card-content v-if="loaded && user && !user.notFound"
+    <card-gift-sub v-if="page === 'gift' && loaded && user && !user.notFound"
+      :user="user"
+      :get-f-f-z="getFFZ"
+      @back="showMain"
+      @close="close" />
+
+    <card-badges v-if="page === 'main' && loaded && showBadges !== false && !(user && user.notFound)" :badges="badges" @select="showBadge" />
+
+    <card-notes v-show="page === 'main'" v-if="loaded && user && !user.notFound" :user="user" :get-f-f-z="getFFZ" :edit-request="noteEditRequest" />
+
+    <card-content v-show="page === 'main'" v-if="loaded && user && !user.notFound"
       :user="user"
       :get-f-f-z="getFFZ"
       :room="messageRoom"
@@ -68,6 +91,9 @@ import displace from "displacejs";
 import CardActions from "./actions.vue";
 import CardBanner from "./banner.vue";
 import CardBadges from "./badges.vue";
+import CardBadgeCarousel from "./badge-carousel.vue";
+import CardMomentsCarousel from "./moments-carousel.vue";
+import CardGiftSub from "./gift-sub.vue";
 import CardNotes from "./notes.vue";
 import CardContent from "./content.vue";
 import { paintStyle, styleToCss } from "./card-utils";
@@ -85,6 +111,9 @@ export default {
     "card-actions": CardActions,
     "card-banner": CardBanner,
     "card-badges": CardBadges,
+    "card-badge-carousel": CardBadgeCarousel,
+    "card-moments-carousel": CardMomentsCarousel,
+    "card-gift-sub": CardGiftSub,
     "card-notes": CardNotes,
     "card-content": CardContent
   },
@@ -94,6 +123,9 @@ export default {
   data() {
     return {
       noteEditRequest: 0,
+      page: "main",
+      carouselBadge: null,
+      momentsBadge: null,
       z: this.getZ(),
       loaded: false,
       user: null,
@@ -251,8 +283,8 @@ export default {
           onTouchStart: function() { self.onFocus(); },
           ignoreFn: function(e) {
             var t = e.target;
-            if (!t || !t.closest || !t.closest(".cvc-user-banner, .cvc-user-badges")) return true;
-            return t.closest(".cvc-action-btn, .cvc-card-actions, .cvc-badge-item, .cvc-badges-toggle, .cvc-username, a, button") != null;
+            if (!t || !t.closest || !t.closest(".cvc-user-banner, .cvc-user-badges, .cvc-badge-carousel")) return true;
+            return t.closest(".cvc-action-btn, .cvc-card-actions, .cvc-badge-item, .cvc-badges-toggle, .cvc-badge-carousel__slot, .cvc-username, a, button") != null;
           }
         });
       });
@@ -285,6 +317,26 @@ export default {
       else if (box.right > pbox.right) { el.style.left = (el.offsetLeft - (box.right - pbox.right)) + "px"; moved = true; }
 
       if (moved && this.displace) this.displace.reinit();
+    },
+
+    showBadge(badge) {
+      this.carouselBadge = badge;
+      this.page = "badges";
+      var ffz = this.getFFZ();
+      this.$nextTick(function() { ffz.emit("tooltips:cleanup"); });
+    },
+
+    showMoments(badge) {
+      this.momentsBadge = badge;
+      this.page = "moments";
+    },
+
+    showGiftSub() {
+      this.page = "gift";
+    },
+
+    showMain() {
+      this.page = "main";
     },
 
     onFocus() {

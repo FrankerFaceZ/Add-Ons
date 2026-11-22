@@ -77,8 +77,18 @@ query Trubbel_ViewerCard(
     id
     login
     displayName
+    subscriptionProducts {
+      id
+      self {
+        canGiftInChannel
+      }
+    }
     self {
       isModerator
+      canFollow
+      follower {
+        followedAt
+      }
     }
   }
 

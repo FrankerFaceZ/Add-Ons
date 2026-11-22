@@ -1,0 +1,10 @@
+query Trubbel_ViewerCardBadgeDeveloper($userID: ID) {
+  user(id: $userID) {
+    id
+    publicOrganizations {
+      id
+      name
+      url
+    }
+  }
+}

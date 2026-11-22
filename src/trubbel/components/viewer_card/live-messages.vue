@@ -70,6 +70,14 @@ export default {
       return !this.room || !this.room.id || String(room_id) === String(this.room.id);
     },
 
+    noticeType(m) {
+      var ctx = this.getFFZ().resolve("chat").context;
+      if (m.ffz_type) return m.ffz_type;
+      if (m.bits > 0 && ctx.get("chat.bits.cheer-notice")) return "cheer";
+      if ((m.ffz_first_msg || m.isFirstMsg) && ctx.get("chat.lines.first-time-chatter") !== 0) return "first_time_chatter";
+      return null;
+    },
+
     toLine(m) {
       var chat = this.getFFZ().resolve("chat"),
         badges_mod = chat && chat.badges,
@@ -96,7 +104,9 @@ export default {
           chatColor: m.user.color,
           displayBadges: display
         },
-        _ffzTokens: m.ffz_tokens || null
+        _ffzTokens: m.ffz_tokens || null,
+        _ffzNoticeType: this.noticeType(m),
+        _ffzNotice: function() { return m; }
       };
     },
 
