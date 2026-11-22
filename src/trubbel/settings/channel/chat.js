@@ -41,7 +41,7 @@ const VC_MORE_OPTIONS = [
   { id: "edit", name: "Edit (name & color overrides)", enabled: true },
   { id: "notes", name: "Notes", enabled: true },
   { id: "follow", name: "Follow / Unfollow", enabled: true },
-  { id: "gift-sub", name: "Gift Sub", enabled: true },
+  { id: "gift-sub", name: "Gift a Sub", enabled: true },
   { id: "mention", name: "Mention", enabled: true },
   { id: "mod", name: "Mod / Unmod", enabled: true },
   { id: "edit-profile", name: "Edit Profile (own card)", enabled: true },
