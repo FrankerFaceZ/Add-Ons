@@ -9,6 +9,8 @@ import FirstTimeChatter from "../../modules/channel/chat/ftc";
 import InfoMessage from "../../modules/channel/chat/info-message";
 import InputLatency from "../../modules/channel/chat/input-latency";
 import MessageHighlight from "../../modules/channel/chat/message-highlight";
+import ModNavigator from "../../modules/channel/chat/mod-navigator";
+import ModShortcuts from "../../modules/channel/chat/mod-shortcuts";
 import OldClipFormat from "../../modules/channel/chat/old-clip-format";
 import OldViewerList from "../../modules/channel/chat/old-viewer-list";
 import PopoutChatName from "../../modules/channel/chat/popout-header-name";
@@ -16,6 +18,7 @@ import PredictionNotifications from "../../modules/channel/chat/prediction-notif
 import RaidMessage from "../../modules/channel/chat/raid-message";
 import RaidPreview from "../../modules/channel/chat/raid-preview";
 import RecentMessages from "../../modules/channel/chat/recent-messages";
+import ReplyNavigator from "../../modules/channel/chat/reply-navigator";
 import SharedChatMessage from "../../modules/channel/chat/shared-chat";
 import SteamInspect from "../../modules/channel/chat/steam-inspect";
 import StopEmoteAnimate from "../../modules/channel/chat/stop-emote-animate";
@@ -26,6 +29,16 @@ import TimestampHandler from "../../modules/channel/chat/timestamps";
 import ViewerCards from "../../modules/channel/chat/viewer-card";
 
 const { createElement, ManagedStyle } = FrankerFaceZ.utilities.dom;
+
+const MOD_CLICK_MODIFIERS = [
+  { value: "shift", title: "Shift" },
+  { value: "ctrl", title: "Ctrl" },
+  { value: "alt", title: "Alt" },
+  { value: "ctrl+shift", title: "Ctrl + Shift" },
+  { value: "alt+shift", title: "Alt + Shift" },
+  { value: "ctrl+alt", title: "Ctrl + Alt" },
+  { value: "ctrl+alt+shift", title: "Ctrl + Alt + Shift" }
+];
 
 const VC_MOD_TABS = [
   { id: "messages", name: "Messages", enabled: true },
@@ -41,6 +54,7 @@ const VC_MORE_OPTIONS = [
   { id: "edit", name: "Edit (name & color overrides)", enabled: true },
   { id: "notes", name: "Notes", enabled: true },
   { id: "follow", name: "Follow / Unfollow", enabled: true },
+  { id: "gift-sub", name: "Gift a Sub", enabled: true },
   { id: "mention", name: "Mention", enabled: true },
   { id: "mod", name: "Mod / Unmod", enabled: true },
   { id: "edit-profile", name: "Edit Profile (own card)", enabled: true },
@@ -99,6 +113,8 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.infoMessage = new InfoMessage(this);
     this.inputLatency = new InputLatency(this);
     this.messageHighlight = new MessageHighlight(this);
+    this.modNavigator = new ModNavigator(this);
+    this.modShortcuts = new ModShortcuts(this);
     this.oldClipFormat = new OldClipFormat(this);
     this.oldViewerList = new OldViewerList(this);
     this.popoutChatName = new PopoutChatName(this);
@@ -106,6 +122,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage = new RaidMessage(this);
     this.raidPreview = new RaidPreview(this);
     this.recentMessages = new RecentMessages(this);
+    this.replyNavigator = new ReplyNavigator(this);
     this.sharedChatMessage = new SharedChatMessage(this);
     this.steamInspect = new SteamInspect(this);
     this.stopEmoteAnimate = new StopEmoteAnimate(this);
@@ -431,6 +448,257 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
 
 
 
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator", {
+      default: false,
+      requires: ["context.moderator"],
+      process(ctx, val) {
+        return ctx.get("context.moderator") ? val : false;
+      },
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Keyboard Moderation",
+        description: "Hold `CTRL` + `SHIFT` and press `↑`/`↓` to navigate through messages, then use the keys below. Press `ESC` to cancel.",
+        component: "setting-check-box"
+      },
+      changed: val => this.modNavigator.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.key", {
+      default: "ctrl+shift+up",
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Navigation Shortcut",
+        description: "Record the shortcut for moving **up** (e.g. `Ctrl` + `Shift` + `↑`). Moving down uses the same modifier keys with `↓`. Must include at least one modifier key, and can't use the same modifiers as [Quick Reply](~add_ons.trubbel_s_utilities.channel.chat.messages.reply_navigator).",
+        component: "setting-hotkey"
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.ban_key", {
+      default: "b",
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Ban Key",
+        component: "setting-hotkey"
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.timeout_key", {
+      default: "t",
+      ui: {
+        sort: 3,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Timeout Key",
+        component: "setting-hotkey"
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.delete_key", {
+      default: "d",
+      ui: {
+        sort: 4,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Delete Key",
+        component: "setting-hotkey"
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.timeout_duration", {
+      default: 600,
+      ui: {
+        sort: 5,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Timeout Duration",
+        description: "Timeout length in seconds. Valid range: 1 - 1209600 (14 days).",
+        component: "setting-text-box",
+        process: "to_int",
+        bounds: [1, 1209600]
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.confirm", {
+      default: 1,
+      ui: {
+        sort: 6,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Require Confirmation",
+        description: "Press the key a second time within 3 seconds to confirm.",
+        component: "setting-select-box",
+        data: [
+          { value: 0, title: "Never" },
+          { value: 1, title: "Ban only" },
+          { value: 2, title: "Ban and timeout" }
+        ]
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.color", {
+      default: "rgba(230, 153, 0, 0.8)",
+      ui: {
+        sort: 7,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Highlight Color",
+        description: "Color of the selected message.",
+        component: "setting-color-box",
+        openUp: true
+      },
+      changed: () => this.modNavigator.updateStyle()
+    });
+
+    // Channel - Chat - Moderation - Mod Navigator
+    this.settings.add("addon.trubbel.channel.chat.mod_navigator.stay", {
+      default: true,
+      ui: {
+        sort: 8,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Navigator",
+        title: "Stay on Message After Action",
+        description: "After banning, timing out or deleting, keep that message selected (greyed out) so you can keep navigating up or down from it. Press `ESC` to exit.",
+        component: "setting-check-box"
+      }
+    });
+
+    // Channel - Chat - Moderation - Navigator Conflict
+    this.settings.add("addon.trubbel.channel.chat.navigator_conflict", {
+      default: false,
+      requires: [
+        "addon.trubbel.channel.chat.reply_navigator",
+        "addon.trubbel.channel.chat.reply_navigator.key",
+        "addon.trubbel.channel.chat.mod_navigator",
+        "addon.trubbel.channel.chat.mod_navigator.key"
+      ],
+      process(ctx) {
+        if (!ctx.get("addon.trubbel.channel.chat.reply_navigator") || !ctx.get("addon.trubbel.channel.chat.mod_navigator"))
+          return false;
+
+        const modifiers = key => key ? key.split("+").slice(0, -1).join("+") : "";
+        return modifiers(ctx.get("addon.trubbel.channel.chat.reply_navigator.key"))
+          === modifiers(ctx.get("addon.trubbel.channel.chat.mod_navigator.key"));
+      },
+      changed: conflict => {
+        this.replyNavigator.handleNavigation();
+        this.modNavigator.handleNavigation();
+
+        if (conflict) {
+          this.site.children.chat.addNotice("*", "Quick Reply and Keyboard Moderation use the same shortcut, so both are turned off. Change one of them in the add-on settings.");
+          this.site.children.menu_button.addToast({
+            icon: "ffz-i-attention",
+            title: "Trubbel\u2019s Utilities",
+            text: "**[Conflict]**\n\n**Quick Reply** and **Keyboard Moderation** use the same shortcut, so both are turned off. Change one of them in the add-on settings.",
+            markdown: true
+          });
+        }
+      }
+    });
+
+
+
+    // Channel - Chat - Moderation - Mod Shortcuts
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts", {
+      default: false,
+      requires: ["context.moderator"],
+      process(ctx, val) {
+        return ctx.get("context.moderator") ? val : false;
+      },
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Shortcuts",
+        title: "Enable Mod Shortcuts",
+        description: "When clicking on the username, use the following key modifiers:",
+        component: "setting-check-box"
+      },
+      changed: val => this.modShortcuts.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Moderation - Mod Shortcuts
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts.delete", {
+      default: "shift",
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Shortcuts",
+        title: "Delete the message",
+        component: "setting-select-box",
+        data: MOD_CLICK_MODIFIERS
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Shortcuts
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts.timeout", {
+      default: "ctrl",
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Shortcuts",
+        title: "Timeout the user",
+        component: "setting-select-box",
+        data: MOD_CLICK_MODIFIERS
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Shortcuts
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts.ban", {
+      default: "ctrl+shift",
+      ui: {
+        sort: 3,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Shortcuts",
+        title: "Ban the user",
+        component: "setting-select-box",
+        data: MOD_CLICK_MODIFIERS
+      }
+    });
+
+    // Channel - Chat - Moderation - Mod Shortcuts
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts.timeout_duration", {
+      default: 300,
+      ui: {
+        sort: 4,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Moderation >> Mod Shortcuts",
+        title: "Timeout Duration",
+        description: "Timeout length in seconds. Valid range: 1 - 1209600 (14 days).",
+        component: "setting-text-box",
+        process: "to_int",
+        bounds: [1, 1209600]
+      }
+    });
+
+    // Channel - Chat - Moderation - Shortcuts Conflict
+    this.settings.add("addon.trubbel.channel.chat.mod_shortcuts.conflict", {
+      default: false,
+      requires: [
+        "addon.trubbel.channel.chat.mod_shortcuts",
+        "addon.trubbel.channel.chat.mod_shortcuts.delete",
+        "addon.trubbel.channel.chat.mod_shortcuts.timeout",
+        "addon.trubbel.channel.chat.mod_shortcuts.ban"
+      ],
+      process(ctx) {
+        if (!ctx.get("addon.trubbel.channel.chat.mod_shortcuts"))
+          return false;
+
+        const keys = [
+          ctx.get("addon.trubbel.channel.chat.mod_shortcuts.delete"),
+          ctx.get("addon.trubbel.channel.chat.mod_shortcuts.timeout"),
+          ctx.get("addon.trubbel.channel.chat.mod_shortcuts.ban")
+        ];
+        return new Set(keys).size !== keys.length;
+      },
+      changed: conflict => {
+        this.modShortcuts.handleNavigation();
+
+        if (conflict)
+          this.site.children.chat.addNotice("*", "Two Mod Shortcuts actions use the same modifier keys, so Mod Shortcuts is turned off. Change one of them in the add-on settings.");
+      }
+    });
+
+
+
     // Channel - Chat - Pinned Message - Auto-hide pinned messages
     this.settings.add("addon.trubbel.channel.chat.hide_pinned_message", {
       default: false,
@@ -441,6 +709,46 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.autoHidePinnedMessage.handleSettingChange(val)
+    });
+
+
+
+    // Channel - Chat - Messages - Reply Navigator
+    this.settings.add("addon.trubbel.channel.chat.reply_navigator", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Reply Navigator",
+        title: "Quick Reply",
+        description: "Hold `CTRL` and press `↑`/`↓` to navigate through messages to reply to. Press `ESC` to cancel.",
+        component: "setting-check-box"
+      },
+      changed: val => this.replyNavigator.handleSettingChange(val)
+    });
+
+    // Channel - Chat - Messages - Reply Navigator
+    this.settings.add("addon.trubbel.channel.chat.reply_navigator.key", {
+      default: "ctrl+up",
+      ui: {
+        sort: 1,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Reply Navigator",
+        title: "Reply Shortcut",
+        description: "Record the shortcut for moving **up** (e.g. `Ctrl` + `↑`). Moving down uses the same modifier keys with `↓`. Must include at least one modifier key, and can't use the same modifiers as [Keyboard Moderation](~add_ons.trubbel_s_utilities.channel.chat.moderation.mod_navigator).",
+        component: "setting-hotkey"
+      }
+    });
+
+    // Channel - Chat - Messages - Reply Navigator
+    this.settings.add("addon.trubbel.channel.chat.reply_navigator.color", {
+      default: "rgba(169, 112, 255, 0.8)",
+      ui: {
+        sort: 2,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Channel > Chat > Messages >> Reply Navigator",
+        title: "Highlight Color",
+        description: "Color of the message you're replying to.",
+        component: "setting-color-box"
+      },
+      changed: () => this.replyNavigator.updateStyle()
     });
 
 
@@ -1133,6 +1441,8 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.infoMessage.initialize();
     this.inputLatency.initialize();
     this.messageHighlight.initialize();
+    this.modNavigator.initialize();
+    this.modShortcuts.initialize();
     this.oldClipFormat.initialize();
     this.oldViewerList.initialize();
     this.popoutChatName.initialize();
@@ -1140,6 +1450,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage.initialize();
     this.raidPreview.initialize();
     this.recentMessages.initialize();
+    this.replyNavigator.initialize();
     this.sharedChatMessage.initialize();
     this.steamInspect.initialize();
     this.stopEmoteAnimate.initialize();
@@ -1162,6 +1473,8 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.infoMessage.handleNavigation();
     this.inputLatency.handleNavigation();
     this.messageHighlight.handleNavigation();
+    this.modNavigator.handleNavigation();
+    this.modShortcuts.handleNavigation();
     this.oldClipFormat.handleNavigation();
     this.oldViewerList.handleNavigation();
     this.popoutChatName.handleNavigation();
@@ -1169,6 +1482,7 @@ export class Channel_Chat extends FrankerFaceZ.utilities.module.Module {
     this.raidMessage.handleNavigation();
     this.raidPreview.handleNavigation();
     this.recentMessages.handleNavigation();
+    this.replyNavigator.handleNavigation();
     this.sharedChatMessage.handleNavigation();
     this.steamInspect.handleNavigation();
     this.stopEmoteAnimate.handleNavigation();

@@ -1,0 +1,6 @@
+query Trubbel_ViewerCardBadgeLeaderboardPeriod($channelLogin: String) {
+  channel(name: $channelLogin) {
+    id
+    leaderboardTimePeriod
+  }
+}

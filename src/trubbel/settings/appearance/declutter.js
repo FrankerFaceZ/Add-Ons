@@ -564,6 +564,19 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
       changed: () => this.declutter.updateCSS()
     });
 
+    // Appearance - Declutter - Stream - Hide Play on Luna
+    this.settings.add("addon.trubbel.appearance.declutter.stream.play_luna", {
+      default: false,
+      ui: {
+        sort: 8,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> Stream",
+        title: "Hide Play on Luna",
+        description: "This removes Play on Luna metadata button, next to the `Follow`/`Unfollow`-button.",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-stream-play-luna", val)
+    });
+
 
 
     // Appearance - Declutter - Top Navigation - Hide Shouts button
@@ -577,6 +590,20 @@ export class Appearance_Declutter extends FrankerFaceZ.utilities.module.Module {
         component: "setting-check-box"
       },
       changed: val => this.declutter.loadable.toggle("CreatorMessagesNavButton", !val)
+    });
+
+
+
+    // Appearance - Declutter - User Menu - Hide Start Streaming button
+    this.settings.add("addon.trubbel.appearance.declutter.user_menu.start_streaming", {
+      default: false,
+      ui: {
+        sort: 0,
+        path: "Add-Ons > Trubbel\u2019s Utilities > Appearance > Declutter >> User Menu",
+        title: "Hide Start Streaming button",
+        component: "setting-check-box"
+      },
+      changed: val => this.declutter.toggleHide("hide-user-menu-start-streaming", val)
     });
 
 

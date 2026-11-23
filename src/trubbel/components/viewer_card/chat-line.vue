@@ -80,6 +80,28 @@ export default {
       return parts;
     },
 
+    renderNotice(msg, typeName, sentAt, room, site, withTime) {
+      var chat_line = this.getFFZ().resolve("site.chat.chat_line"),
+        types = chat_line && chat_line.line_types,
+        type = types && (types[typeName] || types.unknown);
+      if (!type || !type.renderNotice) return null;
+
+      var notice;
+      try {
+        notice = type.renderNotice(msg, site.getUser(), { id: room.id, login: room.login }, {}, createElement);
+      } catch (err) {
+        console.error("[ViewerCards] Unable to render notice.", err);
+        return null;
+      }
+      if (!notice) return null;
+
+      return createElement("div", { className: "cvc-msg cvc-msg__notice" }, [
+        withTime ? createElement("span", { className: "cvc-msg__time" }, formatTime(sentAt)) : null,
+        notice.ffz_icon || null,
+        notice
+      ]);
+    },
+
     draw() {
       var m = this.msg;
       if (!m || !this.$el) return;
@@ -146,6 +168,8 @@ export default {
         ? (<span className="cvc-msg__deleted-by">{deletedBy ? ` (Deleted by ${deletedBy})` : " (Deleted)"}</span>)
         : null;
 
+      var notice = m._ffzNoticeType ? this.renderNotice(m._ffzNotice(), m._ffzNoticeType, m.sentAt, room, site, !text) : null;
+
       var line = createElement("div", {
         className: "cvc-msg",
         "data-room-id": room.id,
@@ -166,7 +190,10 @@ export default {
         deletedNote
       ]);
 
-      setChildren(this.$el, line);
+      if (notice)
+        setChildren(this.$el, text ? [notice, line] : notice);
+      else
+        setChildren(this.$el, line);
     }
   }
 }

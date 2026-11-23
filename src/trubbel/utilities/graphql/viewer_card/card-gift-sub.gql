@@ -1,0 +1,220 @@
+query Trubbel_ViewerCardGiftSub($channelLogin: String!, $giftRecipientLogin: String!, $withStandardGifting: Boolean!) {
+  channelUser: user(login: $channelLogin) {
+    id
+    login
+    displayName
+    subscriptionProducts {
+      ...subscriptionProduct
+    }
+  }
+}
+
+fragment subscriptionProduct on SubscriptionProduct {
+  id
+  price
+  url
+  emoteSetID
+  displayName
+  name
+  tier
+  type
+  hasAdFree
+  hasGifs
+  emotes {
+    ...subscriptionProductEmote
+  }
+  emoteModifiers {
+    ...subscriptionProductEmoteModifier
+  }
+  interval {
+    unit
+  }
+  self {
+    canGiftInChannel
+  }
+  offers {
+    ...subProductOfferFragment
+  }
+  gifting {
+    ...subStandardGiftingFragment
+    ...subCommunityGiftingFragment
+  }
+}
+
+fragment subProductOfferFragment on Offer {
+  id
+  tplr
+  platform
+  eligibility {
+    benefitsStartAt
+    isEligible
+    promotionInstance {
+      id
+    }
+  }
+  tagBindings {
+    key
+    value
+  }
+  giftType
+  listing {
+    chargeModel {
+      internal {
+        previewPrice {
+          id
+          currency
+          exponent
+          price
+          total
+          discount {
+            price
+            total
+          }
+        }
+        plan {
+          interval {
+            duration
+            unit
+          }
+          renewalPolicy
+        }
+      }
+    }
+  }
+  promotion {
+    id
+    name
+    promoDisplay {
+      discountPercent
+      discountType
+    }
+    eligibilityFilters {
+      value
+    }
+    priority
+    promoType
+    endAt
+  }
+  quantity {
+    min
+    max
+  }
+}
+
+fragment subStandardGiftingFragment on SubscriptionGifting {
+  standard(recipientLogin: $giftRecipientLogin) @include(if: $withStandardGifting) {
+    offer {
+      ...subProductOfferFragment
+    }
+  }
+}
+
+fragment subCommunityGiftingFragment on SubscriptionGifting {
+  community {
+    offer {
+      ...subProductOfferWithPromotions
+    }
+  }
+}
+
+fragment subProductOfferWithPromotions on Offer {
+  id
+  tplr
+  platform
+  eligibility {
+    benefitsStartAt
+    isEligible
+    promotionInstance {
+      id
+    }
+  }
+  tagBindings {
+    key
+    value
+  }
+  giftType
+  listing {
+    chargeModel {
+      internal {
+        previewPrice {
+          id
+          currency
+          exponent
+          price
+          total
+          discount {
+            price
+            total
+          }
+        }
+        plan {
+          interval {
+            duration
+            unit
+          }
+          renewalPolicy
+        }
+      }
+    }
+  }
+  promotion {
+    id
+    name
+    promoDisplay {
+      discountPercent
+      discountPrices {
+        ...money
+      }
+      discountType
+    }
+    eligibilityFilters {
+      value
+    }
+    priority
+    promoType
+    endAt
+  }
+  promotions {
+    id
+    name
+    promoDisplay {
+      discountPercent
+      discountPrices {
+        ...money
+      }
+      discountType
+    }
+    eligibilityFilters {
+      value
+    }
+    priority
+    promoType
+    endAt
+    quantity {
+      min
+      max
+    }
+  }
+  quantity {
+    min
+    max
+  }
+}
+
+fragment money on Money {
+  amount
+  minorUnits
+  currencyCode
+}
+
+fragment subscriptionProductEmote on Emote {
+  id
+  setID
+  token
+  assetType
+}
+
+fragment subscriptionProductEmoteModifier on EmoteModifier {
+  code
+  name
+}
