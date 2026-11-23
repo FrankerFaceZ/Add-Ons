@@ -156,6 +156,8 @@ export default class ViewerCards {
         return;
       }
 
+      if (this.hasModifier(event)) return;
+
       const target = event.target.closest(".chat-line__message-mention[data-login]");
       if (!target) return;
 
@@ -185,6 +187,8 @@ export default class ViewerCards {
         return;
       }
 
+      if (this.hasModifier(event)) return;
+
       const target = event.target.closest("#community-tab-content .chatter-list-item button");
       if (!target) return;
 
@@ -212,6 +216,8 @@ export default class ViewerCards {
         !this.settings.get("addon.trubbel.channel.chat.viewer-cards.handle-pinned-messages")) {
         return;
       }
+
+      if (this.hasModifier(event)) return;
 
       const target = event.target.closest(".pinned-chat__highlight-card .chatter-name span[style]");
       if (!target) return;
@@ -292,6 +298,8 @@ export default class ViewerCards {
     if (!this.settings.get("addon.trubbel.channel.chat.viewer-cards.enabled")) {
       return;
     }
+
+    if (this.hasModifier(evt.event)) return;
 
     evt.preventDefault();
 
@@ -750,6 +758,10 @@ export default class ViewerCards {
     this.open_cards.clear();
     this.last_card = null;
     this.updateStyle(null);
+  }
+
+  hasModifier(event) {
+    return !!(event && (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey));
   }
 }
 
