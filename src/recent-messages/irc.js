@@ -359,12 +359,32 @@ function hasHighlightedMessage(tags) {
 	return tags['msg-id'] === 'highlighted-message';
 }
 
+// Same object live chat stores on the line. FFZ's reply renderer reads these names.
+function replyFields(tags) {
+	const parentMsgId = tags['reply-parent-msg-id'];
+	if (!parentMsgId)
+		return null;
+	return {
+		parentDeleted: false,
+		parentMsgId,
+		parentUid: tags['reply-parent-user-id'],
+		parentUserLogin: tags['reply-parent-user-login'],
+		parentDisplayName: tags['reply-parent-display-name'],
+		parentMessageBody: tags['reply-parent-msg-body'],
+		threadParentMsgId: tags['reply-thread-parent-msg-id'],
+		threadParentUid: tags['reply-thread-parent-user-id'],
+		threadParentUserLogin: tags['reply-thread-parent-user-login'],
+		threadParentDisplayName: tags['reply-thread-parent-display-name']
+	};
+}
+
 function parsePrivmsg(parts, tags, room, types) {
 	const login = parts[1].split('!')[0].replace(/^:/, '');
 	if (!login)
 		return null;
 
 	const action = stripAction(trailingText(parts));
+	const reply = replyFields(tags);
 	const msg = historyEvent(types.Message, tags, Number(tags['tmi-sent-ts']), {
 		user: parseUser(login, tags),
 		message: action.text,
@@ -382,7 +402,8 @@ function parsePrivmsg(parts, tags, room, types) {
 			ffz_reward_highlight: true,
 			_noticeKind: 'ChannelPointsReward',
 			...(tags['custom-reward-id'] ? {_customRewardId: tags['custom-reward-id']} : {})
-		} : {})
+		} : {}),
+		...(reply ? {reply} : {})
 	});
 	if (tags.emotes)
 		msg.emotes = parseEmotes(tags.emotes, action.prefix);
