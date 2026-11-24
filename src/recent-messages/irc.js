@@ -235,7 +235,9 @@ function ritualFields(name) {
 
 // FFZ draws these itself. _noticeKind is the blocked-types name it checks.
 function parseUserNotice(parts, tags, when, room, types) {
-	const id = tags['msg-id'] || '';
+	// A shared-chat copy keeps the real type on source-msg-id.
+	const raw = tags['msg-id'] || '';
+	const id = raw === 'sharedchatnotice' ? (tags['source-msg-id'] || '') : raw;
 
 	if (id === 'announcement') {
 		return chatLine(parts, tags, when, room, types, {
@@ -320,8 +322,9 @@ function parseUserNotice(parts, tags, when, room, types) {
 		return msg;
 	}
 
-	// Paid upgrades, bits badges, modiversaries, raids ending, and shared-chat
-	// notices have no FFZ line type. Twitch shows system-msg, so we do too.
+	// Paid upgrades, bits badges, modiversaries, and raids ending have no FFZ
+	// line type. A sharedchatnotice whose source-msg-id is not one of the
+	// cases above lands here too. Twitch shows system-msg, so we do too.
 	return parseNotice(parts, tags, when, types);
 }
 
