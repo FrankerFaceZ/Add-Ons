@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "moddex",
+	"name": "moddex",
+	"author": "maersux",
+	"description": "Adds moddex.tv badges to Twitch chat, and keeps them up to date live.",
+	"website": "https://moddex.tv",
+	"settings": "add_ons.moddex",
+	"created": "2026-08-26T00:00:00.000Z",
+	"updated": "2026-08-28T22:02:22.749Z"
+}
