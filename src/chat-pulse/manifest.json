@@ -1,0 +1,15 @@
+{
+	"enabled": true,
+	"requires": [],
+	"targets": [
+		"main"
+	],
+	"version": "1.0.0",
+	"short_name": "ChatPulse",
+	"name": "Chat Pulse",
+	"author": "Sravan",
+	"description": "Live chat statistics at a glance. Adds a messages-per-minute badge under the player. Click it for the session picture: total messages, unique chatters, emote-only share, an activity sparkline, and the top chatters and emotes.",
+	"settings": "add_ons.chat_pulse",
+	"created": "2026-10-09T01:22:32.398Z",
+	"updated": "2026-10-09T01:47:54.266Z"
+}
