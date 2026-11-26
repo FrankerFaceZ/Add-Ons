@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"requires": [],
+	"version": "1.0.0",
+	"short_name": "VOD Chat Sync",
+	"name": "VOD Chat Sync",
+	"author": "BrOleg5",
+	"description": "Manually adjust the timing offset between Twitch VOD playback and Chat on Videos.",
+	"settings": "add_ons.vod_chat_sync"
+}
